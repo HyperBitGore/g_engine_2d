@@ -3,7 +3,8 @@
 #include <Windows.h>
 #include <gl/GL.h>
 #include <functional>
-
+#include <math.h>
+# define M_PI 3.14159265358979323846
 
 //added 2d primitives
 //load and draw 2d images
@@ -119,6 +120,7 @@ private:
 	HGLRC context;
 	std::function<void()> renderFund;
 public:
+	Engine();
 	Engine(LPCWSTR window_name, int width, int height, int x, int y) {
 		PIXELFORMATDESCRIPTOR windowPixelFormatDesc = { 0 };
 		windowPixelFormatDesc.nSize = sizeof(windowPixelFormatDesc);
@@ -172,16 +174,53 @@ public:
 	}
 	//primitive rendering
 	void drawTriangle(float x, float y, float size) {
-		
+		glBegin(GL_TRIANGLES);
+		glVertex2f(x-size, y-size);
+		glVertex2f(x, y);
+		glVertex2f(x + size, y-size);
+		glEnd();
 	}
-	void drawCircle() {
-		
+	void drawCircle(float x, float y, float r) {
+		float x1, y1;
+		glBegin(GL_POINTS);
+		for (float ang = 0; ang < 360; ang += 1.0f) {
+			x1 = r * cos(ang * M_PI / 180) + x;
+			y1 = r * sin(ang * M_PI / 180) + y;
+			glVertex2f(x1, y1);
+		}
+		glEnd();
 	}
-	void drawRectangle() {
-		
+	void drawPoint(float x, float y) {
+		glBegin(GL_POINTS);
+		glVertex2f(x, y);
+		glEnd();
 	}
-	void drawLine() {
-		
+	void drawRectangle(float x, float y, float w, float h) {
+		glBegin(GL_QUADS);
+		glVertex2f(x, y);
+		glVertex2f(x, y - h);
+		glVertex2f(x + w, y - h);
+		glVertex2f(x + w, y);
+		glEnd();
+	}
+	void drawLine(float x1, float y1, float x2, float y2) {
+		glBegin(GL_POINTS);
+		float dx = x2 - x1;
+		float dy = y2 - y1;
+		//draw points while we travel with angle to second point
+		if (x1 > x2) {
+			for (float x = x1; x > x2; x += -0.001f) {
+				float y = y1 + dy * (x - x1) / dx;
+				glVertex2f(x, y);
+			}
+		}
+		else {
+			for (float x = x1; x < x2; x += 0.001f) {
+				float y = y1 + dy * (x - x1) / dx;
+				glVertex2f(x, y);
+			}
+		}
+		glEnd();
 	}
 
 
