@@ -4,15 +4,30 @@
 #include <gl/GL.h>
 #include <functional>
 #include <math.h>
-# define M_PI 3.14159265358979323846
+#include "lodepng.h"
+#define M_PI 3.14159265358979323846
+#define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
+#define unpack_r(col) (uint8_t)((col>>24)&0xff)
+#define unpack_g(col) (uint8_t)((col>>16)&0xff)
+#define unpack_b(col) (uint8_t)((col >> 8)&0xff)
+#define unpack_a(col) (uint8_t)(col&0xff)
 
-//added 2d primitives
-//load and draw 2d images
-//pixel editing
+//rotate images
+//handle input from keyboard and mouse
+//bmp file loading
 //update to newer version of gl
 //add shader support
 //add 3d support
 
+
+struct g_img {
+	unsigned char* data;
+	GLuint tex;
+	unsigned int w;
+	unsigned int h;
+};
+
+typedef g_img* IMG;
 
 LRESULT	CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	HDC hdc = GetDC(hwnd);
@@ -149,10 +164,11 @@ public:
 		//glViewport(0, 0, rect.right - rect.left, rect.bottom - rect.top);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
+		glEnable(GL_TEXTURE_2D);
 		ShowWindow(wind->getHwnd(), SW_SHOW);
 	}
 	~Engine() {
-		
+
 	}
 	void setRenderFunction(std::function<void()> func) {
 		renderFund = func;
@@ -175,9 +191,9 @@ public:
 	//primitive rendering
 	void drawTriangle(float x, float y, float size) {
 		glBegin(GL_TRIANGLES);
-		glVertex2f(x-size, y-size);
+		glVertex2f(x - size, y - size);
 		glVertex2f(x, y);
-		glVertex2f(x + size, y-size);
+		glVertex2f(x + size, y - size);
 		glEnd();
 	}
 	void drawCircle(float x, float y, float r) {
@@ -226,6 +242,73 @@ public:
 
 	//file functions
 	void loadShader(std::string file) {
-		
+
 	}
+
+	//image functions
+	IMG loadPNG(std::string file, unsigned int w, unsigned int h) {
+		IMG f = new g_img;
+		unsigned error = lodepng_decode32_file((&(f->data)), &w, &h, file.c_str());
+		if (error) {
+			std::cout << lodepng_error_text(error) << std::endl;
+		}
+		f->w = w;
+		f->h = h;
+		glGenTextures(1, &f->tex);
+		glBindTexture(GL_TEXTURE_2D, f->tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		return f;
+	}
+	g_img loadBMP() {
+
+	}
+	uint32_t convertRGBAtoUint32(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+			
+	}
+	void renderImg(IMG img, float x, float y, int w, int h) {
+		float r_w = (float(w) / wind->getWidth());
+		float r_h = (float(h) / wind->getHeight());
+		glBindTexture(GL_TEXTURE_2D, img->tex);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2f(x, y);
+		glTexCoord2f(1, 0);
+		glVertex2f(x + r_w, y);
+		glTexCoord2f(1, 1);
+		glVertex2f(x + r_w, y - r_h);
+		glTexCoord2f(0, 1);
+		glVertex2f(x, y - r_h);
+		glEnd();
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+		size_t row = y * (img->w*4);
+		size_t col = x * 4;
+		img->data[row + col] = r;
+		img->data[row + col + 1] = g;
+		img->data[row + col + 2] = b;
+		img->data[row + col + 3] = a;
+	}
+	void setPixel(IMG img, int x, int y, uint32_t color) {
+		size_t row = y * (img->w * 4);
+		size_t col = x * 4;
+		img->data[row + col] = unpack_r(color);
+		img->data[row + col + 1] = unpack_g(color);
+		img->data[row + col + 2] = unpack_b(color);
+		img->data[row + col + 3] = unpack_a(color);
+	}
+	uint32_t getPixel(IMG img, int x, int y) {
+		size_t row = y * (img->w * 4);
+		size_t col = x * 4;
+		return pack_rgba(img->data[row + col], img->data[row + col + 1], img->data[row + col + 2], img->data[row + col + 3]);
+	}
+	//run after you've done all the editing of data you want to
+	void updateIMG(IMG img) {
+		glBindTexture(GL_TEXTURE_2D, img->tex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 };
