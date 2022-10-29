@@ -13,7 +13,8 @@ void renderFunction() {
 	//eng.drawCircle(0.1f, -0.6f, 0.1f);
 	eng.drawLine(0.1f, 0.2f, 0.6f, 0.4f);
 	eng.drawLine(-0.3f, 0.2f, -0.5f, -0.6f);
-	eng.renderImg(imgtest, -0.9f, 0.9f, 1024, 600);
+	eng.renderImg(imgtest, -0.9f, 0.9f, 300, 300);
+	eng.renderImgRotated(imgtest, -0.1f, 0.1f, 300, 300, 0);
 	//eng.drawGLLine(0.1f, 0.2f, -0.5f, 0.6f);
 	//glDrawArrays(GL_TRIANGLES, triangs[0], 1);
 }
@@ -29,6 +30,10 @@ int main() {
 	std::cout << eng.getPixel(imgtest, 0, 10) << "\n";
 	eng.updateIMG(imgtest);
 	eng.setRenderFunction(renderFunction);
-	while (eng.updateWindow());
+	while (eng.updateWindow()) {
+		if (eng.getKeyDown(KEY_P)) {
+			std::cout << "key down\n";
+		}
+	}
 	return 0;
 }

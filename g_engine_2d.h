@@ -12,7 +12,10 @@
 #define unpack_b(col) (uint8_t)((col >> 8)&0xff)
 #define unpack_a(col) (uint8_t)(col&0xff)
 
-//rotate images
+enum g_KEY {KEY_A = 'a', KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P,
+			 KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z};
+
+
 //handle input from keyboard and mouse
 //bmp file loading
 //update to newer version of gl
@@ -134,6 +137,7 @@ private:
 	HDC dc;
 	HGLRC context;
 	std::function<void()> renderFund;
+	HKL layout;
 public:
 	Engine();
 	Engine(LPCWSTR window_name, int width, int height, int x, int y) {
@@ -166,6 +170,7 @@ public:
 		glLoadIdentity();
 		glEnable(GL_TEXTURE_2D);
 		ShowWindow(wind->getHwnd(), SW_SHOW);
+		layout = LoadKeyboardLayout(L"00000409", KLF_ACTIVATE);
 	}
 	~Engine() {
 
@@ -264,9 +269,6 @@ public:
 	g_img loadBMP() {
 
 	}
-	uint32_t convertRGBAtoUint32(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-			
-	}
 	void renderImg(IMG img, float x, float y, int w, int h) {
 		float r_w = (float(w) / wind->getWidth());
 		float r_h = (float(h) / wind->getHeight());
@@ -283,6 +285,29 @@ public:
 		glEnd();
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+	//rotates counter clockwise around top left point
+	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang) {
+		float r_ang = float(ang) * M_PI / 180.0f;
+		float r_cos = cosf(r_ang);
+		float r_sin = sinf(r_ang);
+		float r_x = (x*r_cos) - (y*r_sin);
+		float r_y = (x*r_sin) + (y*r_cos);
+		float r_w = (float(w) / wind->getWidth());
+		float r_h = (float(h) / wind->getHeight());
+		glBindTexture(GL_TEXTURE_2D, img->tex);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2f(((x * r_cos) - (y * r_sin)), ((x * r_sin) + (y * r_cos)));
+		glTexCoord2f(1, 0);
+		glVertex2f(((x + r_w) * r_cos) - (y * r_sin), (((x+r_w) * r_sin) + (y * r_cos)));
+		glTexCoord2f(1, 1);
+		glVertex2f(((x + r_w) * r_cos) - ((y-r_h) * r_sin), (((x+r_w) * r_sin) + ((y-r_h) * r_cos)));
+		glTexCoord2f(0, 1);
+		glVertex2f(((x * r_cos) - ((y-r_h) * r_sin)), ((x * r_sin) + ((y - r_h) * r_cos)));
+		glEnd();
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 	void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 		size_t row = y * (img->w*4);
 		size_t col = x * 4;
@@ -309,6 +334,18 @@ public:
 		glBindTexture(GL_TEXTURE_2D, img->tex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	//input functions
+	bool getKeyDown(g_KEY key) {
+		short t = VkKeyScanEx(key, layout);
+		short tb = GetKeyState((t&0xff));
+		if ((tb>>15) == -1) {
+			return true;
+		}
+		return false;
+	}
+	bool getKeyReleased(g_KEY key) {
+		return false;
 	}
 
 };
