@@ -12,12 +12,11 @@
 #define unpack_b(col) (uint8_t)((col >> 8)&0xff)
 #define unpack_a(col) (uint8_t)(col&0xff)
 
-enum g_KEY {KEY_A = 'a', KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P,
-			 KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z};
 
 
-//handle input from keyboard and mouse
+
 //bmp file loading
+//draw text
 //update to newer version of gl
 //add shader support
 //add 3d support
@@ -33,8 +32,8 @@ struct g_img {
 typedef g_img* IMG;
 
 LRESULT	CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-	HDC hdc = GetDC(hwnd);
-	PAINTSTRUCT ps;
+	//HDC hdc = GetDC(hwnd);
+	//PAINTSTRUCT ps;
 	switch (msg) {
 	case WM_PAINT:
 		
@@ -130,14 +129,64 @@ public:
 
 
 
+class Input {
+private:
+	HKL layout;
+	char keys[256];
+	char last_state[256];
+public:
+	Input() {
+		layout = LoadKeyboardLayout(L"00000409", KLF_ACTIVATE);
+	}
+	Input(const Input&) = delete;
+	Input& operator =(const Input&) = delete;
+	void setLastState() {
+		for (int i = 0; i < 256; i++) {
+			last_state[i] = keys[i];
+		}
+	}
+	//input functions
+	//probably switch to GetKeyboardState, so easier to use getKeyReleased
+	void getState() {
+		setLastState();
+		bool fail = GetKeyboardState((PBYTE)keys);
+	}
+
+
+	bool GetKeyDown(char key) {
+		getState();
+		short t = key;
+		if (key >= 97 && key <= 122) {
+			t = VkKeyScanEx(key, layout);
+		}
+		if ((keys[t] >> 15) == -1) {
+			return true;
+		}
+		return false;
+	}
+	bool getKeyReleased(char key) {
+		short t = key;
+		if (key >= 97 && key <= 122) {
+			t = VkKeyScanEx(key, layout);
+		}
+		if ((last_state[t]>>15) != (keys[t]>>15) && (keys[t]>>15) != -1) {
+			getState();
+			return true;
+		}
+		getState();
+		return false;
+	}
+};
+
+
 
 class Engine {
 private:
 	Window* wind;
+	Input* in;
 	HDC dc;
 	HGLRC context;
 	std::function<void()> renderFund;
-	HKL layout;
 public:
 	Engine();
 	Engine(LPCWSTR window_name, int width, int height, int x, int y) {
@@ -154,6 +203,7 @@ public:
 
 		//create window
 		wind = new Window(window_name, L"ENG1", width, height, x, y);
+		in = new Input();
 		//getting device context
 		dc = GetDC(wind->getHwnd());
 		//choosing pixel format
@@ -170,7 +220,7 @@ public:
 		glLoadIdentity();
 		glEnable(GL_TEXTURE_2D);
 		ShowWindow(wind->getHwnd(), SW_SHOW);
-		layout = LoadKeyboardLayout(L"00000409", KLF_ACTIVATE);
+		
 	}
 	~Engine() {
 
@@ -336,16 +386,12 @@ public:
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 	//input functions
-	bool getKeyDown(g_KEY key) {
-		short t = VkKeyScanEx(key, layout);
-		short tb = GetKeyState((t&0xff));
-		if ((tb>>15) == -1) {
-			return true;
-		}
-		return false;
+	//takes keys so you can use either virtual key codes or the char value for letters
+	bool getKeyDown(char key) {
+		return in->GetKeyDown(key);
 	}
-	bool getKeyReleased(g_KEY key) {
-		return false;
+	bool getKeyReleased(char key) {
+		return in->getKeyReleased(key);
 	}
 
 };

@@ -31,8 +31,11 @@ int main() {
 	eng.updateIMG(imgtest);
 	eng.setRenderFunction(renderFunction);
 	while (eng.updateWindow()) {
-		if (eng.getKeyDown(KEY_P)) {
+		if (eng.getKeyDown(VK_RETURN)) {
 			std::cout << "key down\n";
+		}
+		else if (eng.getKeyReleased('w')) {
+			std::cout << "key tapped\n";
 		}
 	}
 	return 0;
