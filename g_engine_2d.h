@@ -197,7 +197,7 @@ private:
 		char g_val;
 		char b_val;
 		size_t r_spot = j;
-		for (size_t i = offset; i < raw_size + offset; i++, j++) {
+		for (size_t i = 0; i < raw_size; i++, j++) {
 			switch (c) {
 			case 0:
 				r_spot = j;
@@ -222,14 +222,8 @@ private:
 				break;
 			}
 		}
-		/*for (size_t i = 0; i < f->h; i++) {
-			for (size_t j = 0; j < row_size * 4; j++) {
-				*fo = *t;
-				t++;
-				fo++;
-			}
-		}*/
 	}
+	//fix color being off, ie read color table
 	static void readBMPPixels24(IMG f, std::string str, size_t offset, size_t raw_size) {
 		char* t = (char*)str.c_str();
 		char* fo = (char*)f->data;
