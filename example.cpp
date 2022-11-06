@@ -16,7 +16,7 @@ void renderFunction() {
 	eng.drawLine(-0.3f, 0.2f, -0.5f, -0.6f);
 	eng.renderImg(imgtest, -0.9f, 0.9f, 300, 300);
 	eng.renderImgRotated(imgtest, -0.1f, 0.1f, 300, 300, 0);
-	eng.renderImg(bmptest, 0.1f, 0.2f, 200, 200);
+	eng.renderImg(bmptest, 0.1f, 0.8f, 200, 200);
 	//eng.drawGLLine(0.1f, 0.2f, -0.5f, 0.6f);
 	//glDrawArrays(GL_TRIANGLES, triangs[0], 1);
 }
@@ -24,7 +24,7 @@ void renderFunction() {
 //4278190335
 int main() {
 	imgtest = ImageLoader::loadPNG("Bliss_(Windows_XP).png", 300, 241);
-	bmptest = ImageLoader::loadBMP("test2.bmp");
+	bmptest = ImageLoader::loadBMP("test1.bmp");
 	for (int x = 0; x < 100; x++) {
 		//eng.setPixel(imgtest, x, 100, 255, 0, 0, 255);
 		eng.setPixel(imgtest, x, 100, 4278190335);

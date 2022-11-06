@@ -182,45 +182,59 @@ public:
 
 class ImageLoader {
 private:
-	static void readBMPPixels32(IMG f, std::string str, size_t offset, size_t raw_size) {
-		char* t = (char*)str.c_str();
-		char* fo = (char*)f->data;
-		t += offset;
-		size_t row_size = f->w;
-		if (f->w % 4 != 0) {
-			row_size += (f->w % 4);
+	//this doesn't work
+	static void readBMPPixels32(IMG f, std::stringstream& str, size_t offset, size_t raw_size) {
+		return;
+		//char* t = (char*)str.c_str();
+		//these are bitmasks
+		//std::vector<int> color_table;
+		//read color table
+		/*size_t off = 54;
+		t += 54;
+		int* tpo = (int*)t;
+		for (off; off < offset; off += 4) {
+			color_table.push_back(*tpo);
+			tpo++;
+		}*/
+		//
+		//std::string top = str.str();
+		//const char* t = top.c_str();
+		for (int i = 0; i < 54; i++) {
+			str.get();
 		}
+		std::string top = str.str();
+		//t += offset;
 		size_t j = 0;
 		int c = 0;
 		char alpha_val = 0;
 		char r_val;
 		char g_val;
 		char b_val;
-		size_t r_spot = j;
-		for (size_t i = 0; i < raw_size; i++, j++) {
+		size_t r_spot = 0;
+		for (size_t i = offset; i < offset + raw_size; i++, j++) {
 			switch (c) {
 			case 0:
 				r_spot = j;
-				alpha_val = *(t + i);
-				c++;
+				alpha_val = top[i];
 				break;
 			case 1:
-				r_val = *(t + i);
-				c++;
+				r_val = top[i];
 				break;
 			case 2:
-				g_val = *(t + i);
-				c++;
+				g_val = top[i];
 				break;
 			case 3:
-				b_val = *(t + i);
+				b_val = top[i];
+				//uint32_t p = pack_rgba(r_val, g_val, b_val, 255);
+				//p = (p & color_table[alpha_val]);
 				f->data[r_spot] = r_val;
 				f->data[r_spot + 1] = g_val;
 				f->data[r_spot + 2] = b_val;
-				f->data[r_spot + 3] = alpha_val;
-				c = 0;
+				f->data[r_spot + 3] = 255;
+				c = -1;
 				break;
 			}
+			c++;
 		}
 	}
 	//fix color being off, ie read color table
@@ -228,9 +242,34 @@ private:
 		char* t = (char*)str.c_str();
 		char* fo = (char*)f->data;
 		t += offset;
-		std::memcpy(f->data, t, raw_size);
+		//this is in bgr8  not rgb8 so gotta convert
+		size_t j = 0;
+		int c = 0;
+		size_t rspot = j;
+		char r_val;
+		char g_val;
+		char b_val;
+		for (size_t i = 0; i < raw_size; i++, j++) {
+			switch (c) {
+			case 0:
+				rspot = j;
+				b_val = t[i];
+				break;
+			case 1:
+				g_val = t[i];
+				break;
+			case 2:
+				r_val = t[i];
+				f->data[rspot] = r_val;
+				f->data[rspot + 1] = g_val;
+				f->data[rspot + 2] = b_val;
+				c = -1;
+				break;
+			}
+			c++;
+		}
 	}
-	static void parseBMPData(IMG f, std::string str, size_t offset, unsigned short bitsperpixel, size_t size) {
+	static void parseBMPData(IMG f, std::stringstream& str, size_t offset, unsigned short bitsperpixel, size_t size) {
 		//add reading color table later
 
 		//read pixel data
@@ -246,7 +285,7 @@ private:
 		case 16:
 			break;
 		case 24:
-			readBMPPixels24(f, str, offset, size);
+			readBMPPixels24(f, str.str(), offset, size);
 			glGenTextures(1, &f->tex);
 			glBindTexture(GL_TEXTURE_2D, f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, f->w, f->h, 0, GL_RGB, GL_UNSIGNED_BYTE, f->data);
@@ -267,10 +306,12 @@ public:
 	//https://docs.fileformat.com/image/bmp/
 	//https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
 	//https://en.wikipedia.org/wiki/BMP_file_format
+	//https://www.fileformat.info/format/bmp/egff.htm
+	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
 	static IMG loadBMP(std::string file) {
 		std::ifstream f;
 		f.open(file);
-		std::ostringstream stram;
+		std::stringstream stram;
 		stram << f.rdbuf();
 		std::string t = stram.str();
 		//declaring all the attribute variables
@@ -317,7 +358,7 @@ public:
 		out->w = width;
 		out->h = height;
 		out->data = (unsigned char*)std::malloc(raw_size);
-		parseBMPData(out, t, 54, bitsperpixel, raw_size);
+		parseBMPData(out, stram, 54, bitsperpixel, raw_size);
 		return out;
 	}
 	static IMG loadPNG(std::string file, unsigned int w, unsigned int h) {
