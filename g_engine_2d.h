@@ -17,12 +17,15 @@
 
 
 
-//bmp file loading
-//draw text
+
 //update to newer version of gl
 //add shader support
+//draw text
 //add 3d support
-
+//add 3d line rendering
+//add 3d primitives
+//voxel engine plug-in
+//isometric engine plug-in
 
 struct g_img {
 	unsigned char* data;
@@ -184,7 +187,7 @@ class ImageLoader {
 private:
 	//this doesn't work
 	static void readBMPPixels32(IMG f, std::stringstream& str, size_t offset, size_t raw_size) {
-		return;
+		//return;
 		//char* t = (char*)str.c_str();
 		//these are bitmasks
 		//std::vector<int> color_table;
@@ -310,7 +313,7 @@ public:
 	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
 	static IMG loadBMP(std::string file) {
 		std::ifstream f;
-		f.open(file);
+		f.open(file, std::ios::binary);
 		std::stringstream stram;
 		stram << f.rdbuf();
 		std::string t = stram.str();
@@ -493,7 +496,47 @@ public:
 		}
 		glEnd();
 	}
+	void drawLineBetter(float x1, float y1, float x2, float y2) {
+		glBegin(GL_POINTS);
+		float dx = std::abs(x2 - x1);
+		float dy = std::abs(y2 - y1);
+		if (dx > dy) {
+			if (x1 > x2) {
+				float t = x1;
+				x1 = x2;
+				x2 = t;
+				t = y1;
+				y1 = y2;
+				y2 = t;
+			}
+			float a = ((y2 - y1) / (x2 - x1)) / wind->getHeight();
+			float d = y1;
+			float inc = 1.0f / wind->getWidth();
+			for (float x = x1; x <= x2; x+=inc) {
+				glVertex2f(x, d);
+				d = d + a;
+			}
 
+		}
+		else {
+			if (y1 > y2) {
+				float t = x1;
+				x1 = x2;
+				x2 = t;
+				t = y1;
+				y1 = y2;
+				y2 = t;
+			}
+			float a = ((x2 - x1) / (y2 - y1)) / wind->getWidth();
+			float d = x1;
+			float inc = 1.0f / wind->getHeight();
+			for (float y = y1; y <= y2; y+=inc) {
+				glVertex2f(d, y);
+				d = d + a;
+			}
+		}
+		glEnd();
+	}
 
 	//file functions
 	void loadShader(std::string file) {

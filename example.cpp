@@ -12,8 +12,10 @@ void renderFunction() {
 	//eng.drawRectangle(-0.5f, -0.5f, 0.3f, 0.1f);
 	//eng.drawPoint(0.5f, 0.1f);
 	//eng.drawCircle(0.1f, -0.6f, 0.1f);
-	eng.drawLine(0.1f, 0.2f, 0.6f, 0.4f);
-	eng.drawLine(-0.3f, 0.2f, -0.5f, -0.6f);
+	eng.drawLineBetter(0.1f, 0.2f, 0.6f, 0.4f);
+	//eng.drawLine(0.1f, 0.2f, 0.6f, 0.4f);
+	eng.drawLineBetter(-0.3f, 0.2f, -0.5f, -0.6f);
+	//eng.drawLine(-0.3f, 0.2f, -0.5f, -0.6f);
 	eng.renderImg(imgtest, -0.9f, 0.9f, 300, 300);
 	eng.renderImgRotated(imgtest, -0.1f, 0.1f, 300, 300, 0);
 	eng.renderImg(bmptest, 0.1f, 0.8f, 200, 200);
