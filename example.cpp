@@ -1,6 +1,6 @@
 #include "g_engine_2d.h"
 
-Engine eng = Engine(L"Test Window", 640, 480, 250, 300);;
+Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 IMG imgtest;
 IMG bmptest;
 
