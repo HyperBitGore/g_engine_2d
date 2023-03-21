@@ -1,17 +1,15 @@
 #pragma once
-#include <Windows.h>
+
+
+#include "gl_defines.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <gl/GL.h>
-#include <glcorearb.h>
-#include <wglext.h>
-#include <wgl.h>
 #include <functional>
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include "lodepng.h"
-#define M_PI 3.14159265358979323846
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
 #define unpack_r(col) (uint8_t)((col>>24)&0xff)
 #define unpack_g(col) (uint8_t)((col>>16)&0xff)
@@ -22,12 +20,14 @@
 #include <intrin.h>
 #define Assert(cond) do { if (!(cond)) __debugbreak(); } while (0)
 
+
+
+
 static void FatalError(const char* message)
 {
 	MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
 	ExitProcess(0);
 }
-
 
 
 
@@ -123,8 +123,13 @@ public:
 	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
 	static IMG loadBMP(std::string file);
 	static IMG loadPNG(std::string file, unsigned int w, unsigned int h);
+	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+	static void setPixel(IMG img, int x, int y, uint32_t color);
+	static uint32_t getPixel(IMG img, int x, int y);
 };
 
+//https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
+//https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 
 class EngineNewGL {
 private:
@@ -133,15 +138,46 @@ private:
 	HDC dc_w;
 	HGLRC context;
 	std::function<void()> renderFund;
+	//GL defines
+	GLuint vertex_buffer;
+
+	//gl Shader programs
+	GLuint shader_2d;
+
+
+	
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
-	//port old functions into modern opengl
-	
-
 	//sets renderfunction
 	void setRenderFunction(std::function<void()> func) {
 		renderFund = func;
 	}
+	//updates the window
+	bool updateWindow();
+
+	//compiles shader from source
+	GLuint compileShader(const char* vertex, const char* fragment);
+
+	//2d drawing functions
+	
+	//draws a basic triangle
+	void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
+	//draws a point
+	void drawPoint(float x1, float y1);
+	//draws a circle
+	void drawCircle();
+	//draws a quad
+	void drawQuad();
+	//draws a line
+	void drawLine();
+
+	//3d drawing functions
+	
+
+
+	//function loading
+	//only run this after gl initilized
+	void loadFunctions();
 };
 
 
@@ -196,172 +232,19 @@ public:
 	}
 	//Create a modern opengl context
 	//https://gist.github.com/nickrolfe/1127313ed1dbf80254b614a721b3ee9c
-	bool updateWindow() {
-		UpdateWindow(wind->getHwnd());
-		if (!wind->ProcessMessage()) {
-			std::cout << "Closing window\n";
-			delete wind;
-			return false;
-		}
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		renderFund();
-		SwapBuffers(dc_w);
-		return true;
-	}
+	bool updateWindow();
 	//primitive rendering
-	void drawTriangle(float x, float y, float size) {
-		glBegin(GL_TRIANGLES);
-		glVertex2f(x - size, y - size);
-		glVertex2f(x, y);
-		glVertex2f(x + size, y - size);
-		glEnd();
-	}
-	void drawCircle(float x, float y, float r) {
-		float x1, y1;
-		glBegin(GL_POINTS);
-		for (float ang = 0; ang < 360; ang += 1.0f) {
-			x1 = r * cos(ang * M_PI / 180) + x;
-			y1 = r * sin(ang * M_PI / 180) + y;
-			glVertex2f(x1, y1);
-		}
-		glEnd();
-	}
-	void drawPoint(float x, float y) {
-		glBegin(GL_POINTS);
-		glVertex2f(x, y);
-		glEnd();
-	}
-	void drawRectangle(float x, float y, float w, float h) {
-		glBegin(GL_QUADS);
-		glVertex2f(x, y);
-		glVertex2f(x, y - h);
-		glVertex2f(x + w, y - h);
-		glVertex2f(x + w, y);
-		glEnd();
-	}
-	void drawLine(float x1, float y1, float x2, float y2) {
-		glBegin(GL_POINTS);
-		float dx = x2 - x1;
-		float dy = y2 - y1;
-		//draw points while we travel with angle to second point
-		if (x1 > x2) {
-			for (float x = x1; x > x2; x += -0.001f) {
-				float y = y1 + dy * (x - x1) / dx;
-				glVertex2f(x, y);
-			}
-		}
-		else {
-			for (float x = x1; x < x2; x += 0.001f) {
-				float y = y1 + dy * (x - x1) / dx;
-				glVertex2f(x, y);
-			}
-		}
-		glEnd();
-	}
-	void drawLineBetter(float x1, float y1, float x2, float y2) {
-		glBegin(GL_POINTS);
-		float dx = std::abs(x2 - x1);
-		float dy = std::abs(y2 - y1);
-		if (dx > dy) {
-			if (x1 > x2) {
-				float t = x1;
-				x1 = x2;
-				x2 = t;
-				t = y1;
-				y1 = y2;
-				y2 = t;
-			}
-			float a = ((y2 - y1) / (x2 - x1)) / wind->getHeight();
-			float d = y1;
-			float inc = 1.0f / wind->getWidth();
-			for (float x = x1; x <= x2; x+=inc) {
-				glVertex2f(x, d);
-				d = d + a;
-			}
-
-		}
-		else {
-			if (y1 > y2) {
-				float t = x1;
-				x1 = x2;
-				x2 = t;
-				t = y1;
-				y1 = y2;
-				y2 = t;
-			}
-			float a = ((x2 - x1) / (y2 - y1)) / wind->getWidth();
-			float d = x1;
-			float inc = 1.0f / wind->getHeight();
-			for (float y = y1; y <= y2; y+=inc) {
-				glVertex2f(d, y);
-				d = d + a;
-			}
-		}
-		glEnd();
-	}
+	void drawTriangle(float x, float y, float size);
+	void drawCircle(float x, float y, float r);
+	void drawPoint(float x, float y);
+	void drawRectangle(float x, float y, float w, float h);
+	void drawLine(float x1, float y1, float x2, float y2);
+	void drawLineBetter(float x1, float y1, float x2, float y2);
 
 	//image functions
-	void renderImg(IMG img, float x, float y, int w, int h) {
-		float r_w = (float(w) / wind->getWidth());
-		float r_h = (float(h) / wind->getHeight());
-		glBindTexture(GL_TEXTURE_2D, img->tex);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0, 0);
-		glVertex2f(x, y);
-		glTexCoord2f(1, 0);
-		glVertex2f(x + r_w, y);
-		glTexCoord2f(1, 1);
-		glVertex2f(x + r_w, y - r_h);
-		glTexCoord2f(0, 1);
-		glVertex2f(x, y - r_h);
-		glEnd();
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+	void renderImg(IMG img, float x, float y, int w, int h);
 	//rotates counter clockwise around top left point
-	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang) {
-		float r_ang = float(ang) * M_PI / 180.0f;
-		float r_cos = cosf(r_ang);
-		float r_sin = sinf(r_ang);
-		float r_x = (x*r_cos) - (y*r_sin);
-		float r_y = (x*r_sin) + (y*r_cos);
-		float r_w = (float(w) / wind->getWidth());
-		float r_h = (float(h) / wind->getHeight());
-		glBindTexture(GL_TEXTURE_2D, img->tex);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0, 0);
-		glVertex2f(((x * r_cos) - (y * r_sin)), ((x * r_sin) + (y * r_cos)));
-		glTexCoord2f(1, 0);
-		glVertex2f(((x + r_w) * r_cos) - (y * r_sin), (((x+r_w) * r_sin) + (y * r_cos)));
-		glTexCoord2f(1, 1);
-		glVertex2f(((x + r_w) * r_cos) - ((y-r_h) * r_sin), (((x+r_w) * r_sin) + ((y-r_h) * r_cos)));
-		glTexCoord2f(0, 1);
-		glVertex2f(((x * r_cos) - ((y-r_h) * r_sin)), ((x * r_sin) + ((y - r_h) * r_cos)));
-		glEnd();
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-		size_t row = y * (img->w*4);
-		size_t col = x * 4;
-		img->data[row + col] = r;
-		img->data[row + col + 1] = g;
-		img->data[row + col + 2] = b;
-		img->data[row + col + 3] = a;
-	}
-	void setPixel(IMG img, int x, int y, uint32_t color) {
-		size_t row = y * (img->w * 4);
-		size_t col = x * 4;
-		img->data[row + col] = unpack_r(color);
-		img->data[row + col + 1] = unpack_g(color);
-		img->data[row + col + 2] = unpack_b(color);
-		img->data[row + col + 3] = unpack_a(color);
-	}
-	uint32_t getPixel(IMG img, int x, int y) {
-		size_t row = y * (img->w * 4);
-		size_t col = x * 4;
-		return pack_rgba(img->data[row + col], img->data[row + col + 1], img->data[row + col + 2], img->data[row + col + 3]);
-	}
+	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang);
 	//run after you've done all the editing of data you want to
 	void updateIMG(IMG img) {
 		glBindTexture(GL_TEXTURE_2D, img->tex);

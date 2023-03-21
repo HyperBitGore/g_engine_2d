@@ -1,4 +1,31 @@
 #include "g_engine_2d.h"
+
+
+void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	size_t row = y * (img->w * 4);
+	size_t col = x * 4;
+	img->data[row + col] = r;
+	img->data[row + col + 1] = g;
+	img->data[row + col + 2] = b;
+	img->data[row + col + 3] = a;
+}
+
+void ImageLoader::setPixel(IMG img, int x, int y, uint32_t color) {
+	size_t row = y * (img->w * 4);
+	size_t col = x * 4;
+	img->data[row + col] = unpack_r(color);
+	img->data[row + col + 1] = unpack_g(color);
+	img->data[row + col + 2] = unpack_b(color);
+	img->data[row + col + 3] = unpack_a(color);
+}
+
+uint32_t ImageLoader::getPixel(IMG img, int x, int y) {
+	size_t row = y * (img->w * 4);
+	size_t col = x * 4;
+	return pack_rgba(img->data[row + col], img->data[row + col + 1], img->data[row + col + 2], img->data[row + col + 3]);
+}
+
+
 //this doesn't work
 void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, size_t raw_size) {
 		//return;

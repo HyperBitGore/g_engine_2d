@@ -29,10 +29,10 @@ int main() {
 	bmptest = ImageLoader::loadBMP("test1.bmp");
 	for (int x = 0; x < 100; x++) {
 		//eng.setPixel(imgtest, x, 100, 255, 0, 0, 255);
-		eng.setPixel(imgtest, x, 100, 4278190335);
+		ImageLoader::setPixel(imgtest, x, 100, 4278190335);
 	}
-	std::cout << eng.getPixel(imgtest, 0, 100) << "\n";
-	std::cout << eng.getPixel(imgtest, 0, 10) << "\n";
+	std::cout << ImageLoader::getPixel(imgtest, 0, 100) << "\n";
+	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	eng.updateIMG(imgtest);
 	eng.setRenderFunction(renderFunction);
 	while (eng.updateWindow()) {
