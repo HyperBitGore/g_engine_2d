@@ -30,8 +30,8 @@ void Engine::drawCircle(float x, float y, float r) {
 	float x1, y1;
 	glBegin(GL_POINTS);
 	for (float ang = 0; ang < 360; ang += 1.0f) {
-		x1 = r * cos(ang * M_PI / 180) + x;
-		y1 = r * sin(ang * M_PI / 180) + y;
+		x1 = float(r * cos(ang * M_PI / 180) + x);
+		y1 = float(r * sin(ang * M_PI / 180) + y);
 		glVertex2f(x1, y1);
 	}
 	glEnd();
@@ -119,7 +119,7 @@ void Engine::drawLineBetter(float x1, float y1, float x2, float y2) {
 void Engine::renderImg(IMG img, float x, float y, int w, int h) {
 	float r_w = (float(w) / wind->getWidth());
 	float r_h = (float(h) / wind->getHeight());
-	glBindTexture(GL_TEXTURE_2D, img->tex);
+	glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0);
 	glVertex2f(x, y);
@@ -134,14 +134,14 @@ void Engine::renderImg(IMG img, float x, float y, int w, int h) {
 }
 
 void Engine::renderImgRotated(IMG img, float x, float y, int w, int h, int ang) {
-	float r_ang = float(ang) * M_PI / 180.0f;
+	float r_ang = float(ang) * float(M_PI / 180.0f);
 	float r_cos = cosf(r_ang);
 	float r_sin = sinf(r_ang);
 	float r_x = (x * r_cos) - (y * r_sin);
 	float r_y = (x * r_sin) + (y * r_cos);
 	float r_w = (float(w) / wind->getWidth());
 	float r_h = (float(h) / wind->getHeight());
-	glBindTexture(GL_TEXTURE_2D, img->tex);
+	glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0);
 	glVertex2f(((x * r_cos) - (y * r_sin)), ((x * r_sin) + (y * r_cos)));

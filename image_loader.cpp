@@ -131,7 +131,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		case 24:
 			readBMPPixels24(f, str.str(), offset, size);
 			glGenTextures(1, (GLuint*)&f->tex);
-			glBindTexture(GL_TEXTURE_2D, f->tex);
+			glBindTexture(GL_TEXTURE_2D, (GLuint)f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, f->w, f->h, 0, GL_RGB, GL_UNSIGNED_BYTE, f->data);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -139,7 +139,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		case 32:
 			readBMPPixels32(f, str, offset, size);
 			glGenTextures(1, (GLuint*)&f->tex);
-			glBindTexture(GL_TEXTURE_2D, f->tex);
+			glBindTexture(GL_TEXTURE_2D, (GLuint)f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, f->w, f->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -198,8 +198,8 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		fi++;
 		//read actual file
 		IMG out = new g_img;
-		out->w = width;
-		out->h = height;
+		out->w = (unsigned int)width;
+		out->h = (unsigned int)height;
 		out->data = (unsigned char*)std::malloc(raw_size);
 		parseBMPData(out, stram, 54, bitsperpixel, raw_size);
 		return out;
@@ -213,7 +213,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		f->w = w;
 		f->h = h;
 		glGenTextures(1, (GLuint*)&f->tex);
-		glBindTexture(GL_TEXTURE_2D, f->tex);
+		glBindTexture(GL_TEXTURE_2D, (GLuint)f->tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

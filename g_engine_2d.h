@@ -247,7 +247,7 @@ public:
 	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang);
 	//run after you've done all the editing of data you want to
 	void updateIMG(IMG img) {
-		glBindTexture(GL_TEXTURE_2D, img->tex);
+		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
