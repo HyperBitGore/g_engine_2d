@@ -2,11 +2,42 @@
 
 
 
+//2d drawing functions
 
-void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-	
+void EngineNewGL::draw2dFrame() {
+	float vertices[] = {
+		// first triangle
+		 0.5f,  0.5f, 0.0f,  // top right
+		 0.5f, -0.5f, 0.0f,  // bottom right
+		-0.5f,  0.5f, 0.0f,  // top left 
+		// second triangle
+		 0.5f, -0.5f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f,  // bottom left
+		-0.5f,  0.5f, 0.0f   // top left
+	};
+	glUseProgram_g(shader_2d);
+	glBindVertexArray_g(VAO2D);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	//glBufferData_g(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec3), &buffer_2d[0], GL_STATIC_DRAW);
+	glVertexAttribPointer_g(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray_g(0);
+	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	buffer_2d.clear();
+	glDisableVertexAttribArray_g(0);
 }
 
+
+void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+	buffer_2d.push_back({ x1, y1, 1.0f });
+	buffer_2d.push_back({ x2, y2, 1.0f });
+	buffer_2d.push_back({ x3, y3, 1.0f });
+
+}
+
+
+
+//utility type functions
 
 
 bool EngineNewGL::updateWindow() {
@@ -16,10 +47,15 @@ bool EngineNewGL::updateWindow() {
 		delete wind;
 		return false;
 	}
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 	renderFund();
-	SwapBuffers(dc_w);
+	
+
+	if (!SwapBuffers(dc_w))
+	{
+		FatalError("Failed to swap OpenGL buffers!");
+	}
 	return true;
 }
 
@@ -162,22 +198,35 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		std::cerr << "Failed to make context current\n";
 	}
 	//glViewport(0, 0, rect.right - rect.left, rect.bottom - rect.top);
-	loadFunctions();
-	glMatrixMode(GL_PROJECTION);
+	/*GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		// Problem: glewInit failed, something is seriously wrong. 
+		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+		
+	}
+	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));*/
+	//glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glEnable(GL_TEXTURE_2D);
-	
+	loadFunctions();
+
+
 	//start modern opengl needed stuff like shaders and vertex buffers
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glGenVertexArrays_g(1, &VAO2D);
+	glBindVertexArray_g(VAO2D);
+
+	glGenBuffers_g(1, &vertex_buffer);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	//shader compiles
-	const char* vertex_shader_2d = "#version 330 core\nlayout(location = 0) in vec3 aPos;\nvoid main(){\ngl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\0";
+	const char* vertex_shader_2d = "#version 330 core\nlayout(location = 0) in vec3 aPos;\nvoid main(){\ngl_Position = vec4(aPos.x, aPos.y, 1.0, 1.0);}\0";
 	const char* fragment_shader_2d = "#version 330 core\n"
-		"out vec4 FragColor;\n"
+		"out vec3 color;\n"
 		"void main(){\n"
-		"FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+		"color = vec3(1.0f, 0.0f, 0.0f);\n"
 		"}\0";
 	shader_2d = compileShader(vertex_shader_2d, fragment_shader_2d);
+
 
 	ShowWindow(wind->getHwnd(), SW_SHOW);
 }
@@ -187,45 +236,45 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 
 GLuint EngineNewGL::compileShader(const char* vertex, const char* fragment) {
 	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	vertexShader = glCreateShader_g(GL_VERTEX_SHADER);
 	
-	glShaderSource(vertexShader, 1, &vertex, NULL);
-	glCompileShader(vertexShader);
+	glShaderSource_g(vertexShader, 1, &vertex, NULL);
+	glCompileShader_g(vertexShader);
 
 	int  success;
 	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	glGetShaderiv_g(vertexShader, GL_COMPILE_STATUS, &success);
 
 	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		glGetShaderInfoLog_g(vertexShader, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 
 	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragment, NULL);
-	glCompileShader(fragmentShader);
+	fragmentShader = glCreateShader_g(GL_FRAGMENT_SHADER);
+	glShaderSource_g(fragmentShader, 1, &fragment, NULL);
+	glCompileShader_g(fragmentShader);
 
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	glGetShaderiv_g(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		glGetShaderInfoLog_g(vertexShader, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 	//actually creating program
 	GLuint program;
-	program = glCreateProgram();
-	glAttachShader(program, vertexShader);
-	glAttachShader(program, fragmentShader);
-	glLinkProgram(program);
+	program = glCreateProgram_g();
+	glAttachShader_g(program, vertexShader);
+	glAttachShader_g(program, fragmentShader);
+	glLinkProgram_g(program);
 	//check error
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
+	glGetProgramiv_g(program, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(program, 512, NULL, infoLog);
+		glGetProgramInfoLog_g(program, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::LINK::FAILED\n" << infoLog << std::endl;
 	}
 
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	glDeleteShader_g(vertexShader);
+	glDeleteShader_g(fragmentShader);
 	return program;
 }

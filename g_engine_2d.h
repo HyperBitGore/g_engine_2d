@@ -128,6 +128,15 @@ public:
 	static uint32_t getPixel(IMG img, int x, int y);
 };
 
+
+struct vec3 {
+	float x;
+	float y;
+	float z;
+};
+
+
+
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 
@@ -138,14 +147,20 @@ private:
 	HDC dc_w;
 	HGLRC context;
 	std::function<void()> renderFund;
+	//color constants
+
+
 	//GL defines
 	GLuint vertex_buffer;
+
+	GLuint VAO2D;
 
 	//gl Shader programs
 	GLuint shader_2d;
 
+	//vertex arrays
+	std::vector<vec3> buffer_2d;
 
-	
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
 	//sets renderfunction
@@ -159,7 +174,8 @@ public:
 	GLuint compileShader(const char* vertex, const char* fragment);
 
 	//2d drawing functions
-	
+	//draws 2d frame from buffer
+	void draw2dFrame();
 	//draws a basic triangle
 	void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 	//draws a point
@@ -170,6 +186,27 @@ public:
 	void drawQuad();
 	//draws a line
 	void drawLine();
+
+	//image functions
+	void renderImg(IMG img, float x, float y, int w, int h);
+	//rotates counter clockwise around top left point
+	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang);
+	//run after you've done all the editing of data you want to
+	void updateIMG(IMG img) {
+		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	//input functions
+	//takes keys so you can use either virtual key codes or the char value for letters
+	bool getKeyDown(char key) {
+		return in->GetKeyDown(key);
+	}
+	bool getKeyReleased(char key) {
+		return in->getKeyReleased(key);
+	}
+
+
 
 	//3d drawing functions
 	
