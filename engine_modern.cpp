@@ -4,41 +4,244 @@
 
 //2d drawing functions
 
-void EngineNewGL::draw2dFrame() {
-	float vertices[] = {
-		// first triangle
-		 0.5f,  0.5f, 0.0f,  // top right
-		 0.5f, -0.5f, 0.0f,  // bottom right
-		-0.5f,  0.5f, 0.0f,  // top left 
-		// second triangle
-		 0.5f, -0.5f, 0.0f,  // bottom right
-		-0.5f, -0.5f, 0.0f,  // bottom left
-		-0.5f,  0.5f, 0.0f   // top left
-	};
+void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+	buffer_2d.push_back({ x1, y1});
+	buffer_2d.push_back({ x2, y2});
+	buffer_2d.push_back({ x3, y3});
 	glUseProgram_g(shader_2d);
-	glBindVertexArray_g(VAO2D);
+	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	//glBufferData_g(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec3), &buffer_2d[0], GL_STATIC_DRAW);
-	glVertexAttribPointer_g(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray_g(0);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	//glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	//glEnableVertexAttribArray_g(0);
+	
+	
+	
 	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
 	buffer_2d.clear();
-	glDisableVertexAttribArray_g(0);
-}
+	//glDisableVertexAttribArray_g(0);
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 
-
-void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-	buffer_2d.push_back({ x1, y1, 1.0f });
-	buffer_2d.push_back({ x2, y2, 1.0f });
-	buffer_2d.push_back({ x3, y3, 1.0f });
 
 }
 
+void EngineNewGL::drawTriangles() {
+	glUseProgram_g(shader_2d);
+	glBindVertexArray_g(VAO_Triangle);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+}
+
+//draws a point
+void EngineNewGL::drawPoint(float x1, float y1) {
+	glEnable(GL_PROGRAM_POINT_SIZE);
+	buffer_2d.push_back({ x1, y1});
+
+	glUseProgram_g(shader_point);
+	glBindVertexArray_g(VAO_Points);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_POINTS, 0, buffer_2d.size());
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glDisable(GL_PROGRAM_POINT_SIZE);
+}
+
+//draws points from the buffer_2d
+void EngineNewGL::drawPoints() {
+
+	glEnable(GL_PROGRAM_POINT_SIZE);
+	glUseProgram_g(shader_point);
+	glBindVertexArray_g(VAO_Points);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_POINTS, 0, buffer_2d.size());
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glDisable(GL_PROGRAM_POINT_SIZE);
+}
+
+
+//draws a circle
+void EngineNewGL::drawCircle(float x, float y, float r) {
+	//use a seperate shader from points
+	float x1, y1;
+	for (float ang = 0; ang < 360; ang += 0.5f) {
+		x1 = float(r * cos(ang * M_PI / 180) + x);
+		y1 = float(r * sin(ang * M_PI / 180) + y);
+
+		buffer_2d.push_back({ x1, y1});
+		buffer_2d.push_back({x, y});
+	}
+	drawLines(1.0f);
+
+}
+//draws a quad, w and h have to be positive
+void EngineNewGL::drawQuad(float x, float y, float w, float h) {
+	//triangle 1
+	buffer_2d.push_back({ x, y});
+	buffer_2d.push_back({ x + w, y });
+	buffer_2d.push_back({ x, y+h });
+	//triangle 2
+	buffer_2d.push_back({ x+w, y });
+	buffer_2d.push_back({ x + w, y+h });
+	buffer_2d.push_back({ x, y + h });
+	//drawing triangles
+	glUseProgram_g(shader_2d);
+	glBindVertexArray_g(VAO_Triangle);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	//cleanup
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+}
+
+//draws quads from buffer_2d
+void EngineNewGL::drawQuads() {
+	//drawing triangles
+	glUseProgram_g(shader_2d);
+	glBindVertexArray_g(VAO_Triangle);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	//cleanup
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+}
+
+//draws a line
+void EngineNewGL::drawLine(float x1, float y1, float x2, float y2, float width) {
+	glLineWidth(width);
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	//write seperate shader
+	glUseProgram_g(shader_line);
+	buffer_2d.push_back({ x1, y1 });
+	buffer_2d.push_back({ x2, y2 });
+
+
+	glBindVertexArray_g(VAO_Line);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_LINES, 0, buffer_2d.size());
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glDisable(GL_BLEND);
+	glDisable(GL_LINE_SMOOTH);
+}
+//draws line from buffer_2d
+void EngineNewGL::drawLines(float width) {
+	glLineWidth(width);
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	//write seperate shader
+	glUseProgram_g(shader_line);
+
+	glBindVertexArray_g(VAO_Line);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glDrawArrays(GL_LINES, 0, buffer_2d.size());
+	buffer_2d.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glDisable(GL_BLEND);
+	glDisable(GL_LINE_SMOOTH);
+}
+
+//2d image drawing functions
+//
+void EngineNewGL::renderImg(IMG img, float x, float y, int w, int h) {
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+	/*//triangle 1
+	buffer_2d.push_back({ x, y });
+	buffer_2d.push_back({ x + w, y });
+	buffer_2d.push_back({ x, y + h });
+	//triangle 2
+	buffer_2d.push_back({ x + w, y });
+	buffer_2d.push_back({ x + w, y + h });
+	buffer_2d.push_back({ x, y + h });*/
+	
+	buffer_img.push_back({ x, y, 0, 0 });
+	buffer_img.push_back({ x + w, y, 1, 0 });
+	buffer_img.push_back({ x, y + h, 0, 1 });
+	buffer_img.push_back({ x + w, y, 1, 0 });
+	buffer_img.push_back({ x + w, y + h, 1, 1 });
+	buffer_img.push_back({ x, y + h, 0, 1 });
+
+/*	//uv triangle 1
+	buffer_uv.push_back({ 0, 0 });
+	buffer_uv.push_back({ 1, 0 });
+	buffer_uv.push_back({ 0, 1 });
+	//uv triangle 2
+	buffer_uv.push_back({ 1, 0 });
+	buffer_uv.push_back({ 1, 1 });
+	buffer_uv.push_back({ 0, 1 });
+	
+	float verts[] = { x, y, x + w, y, x, y + h, x + w, y, x + w, y + h,x, y + h };
+	float uvs[] = { 0,0,1,0,0,1,1,0,1,1,0,1 };
+
+	*/
+	glUseProgram_g(shader_img);
+	glActiveTexture_g(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
+
+	GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
+	glUniform1i_g(texUniformLocation, 0);
+
+	glBindVertexArray_g(VAO_Img);
+	
+	GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
+	glEnableVertexAttribArray_g(position);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_img.size() * sizeof(vec4), &buffer_img[0], GL_STATIC_DRAW);
+	glVertexAttribPointer_g(position, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	//glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	//glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
+	
+	/*glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
+	glEnableVertexAttribArray_g(position);
+	glVertexAttribPointer_g(position, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	GLuint position1 = glGetAttribLocation_g(shader_img, "uv");
+	glEnableVertexAttribArray_g(position1);
+	glVertexAttribPointer_g(position1, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);*/
+	
+	glDrawArrays(GL_TRIANGLES, 0, buffer_img.size());
+	
+
+	//buffer_2d.clear();
+	//buffer_uv.clear();
+	buffer_img.clear();
+	//glDisableVertexAttribArray_g(0);
+	//glDisableVertexAttribArray_g(1);
+	glDisableVertexAttribArray_g(position);
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//glDisable(GL_BLEND);
+}
 
 
 //utility type functions
-
 
 bool EngineNewGL::updateWindow() {
 	UpdateWindow(wind->getHwnd());
@@ -47,7 +250,7 @@ bool EngineNewGL::updateWindow() {
 		delete wind;
 		return false;
 	}
-	glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	renderFund();
 	
@@ -62,7 +265,7 @@ bool EngineNewGL::updateWindow() {
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
 EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
-	PIXELFORMATDESCRIPTOR windowPixelFormatDesc = { 0 };
+	/*PIXELFORMATDESCRIPTOR windowPixelFormatDesc = {0};
 	windowPixelFormatDesc.nSize = sizeof(windowPixelFormatDesc);
 	windowPixelFormatDesc.nVersion = 1;
 	windowPixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
@@ -71,17 +274,13 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	windowPixelFormatDesc.cAlphaBits = 8;
 	windowPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
 	windowPixelFormatDesc.cDepthBits = 24;
-	windowPixelFormatDesc.cStencilBits = 8;
+	windowPixelFormatDesc.cStencilBits = 8;*/
 
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
 	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 
-	//create window
-	wind = new Window(window_name, L"ENG1", width, height, 300, 300);
-	in = new Input();
 	//getting device context
-	dc_w = GetDC(wind->getHwnd());
 	{
 		// to get WGL functions we need valid GL context, so create dummy window for dummy GL contetx
 		HWND dummy = CreateWindowExW(
@@ -97,9 +296,9 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		{
 			desc.nSize = sizeof(desc),
 			desc.nVersion = 1,
-			desc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+			desc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER, 
 			desc.iPixelType = PFD_TYPE_RGBA,
-			desc.cColorBits = 24,
+			desc.cColorBits = 32,
 		};
 
 		int format = ChoosePixelFormat(dc, &desc);
@@ -136,6 +335,9 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		ReleaseDC(dummy, dc);
 		DestroyWindow(dummy);
 	}
+	//create window
+	wind = new Window(window_name, L"ENG1", width, height, 300, 300);
+	in = new Input();
 	dc_w = GetDC(wind->getHwnd());
 
 	// set pixel format for OpenGL context
@@ -144,11 +346,14 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		{
 			WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
 			WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-			WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
-			WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
-			WGL_COLOR_BITS_ARB,     24,
-			WGL_DEPTH_BITS_ARB,     24,
-			WGL_STENCIL_BITS_ARB,   8,
+			WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+			/* WGL_SWAP_EXCHANGE_ARB causes problems with window menu in fullscreen */
+			WGL_SWAP_METHOD_ARB, WGL_SWAP_COPY_ARB,
+			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+			WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+			WGL_COLOR_BITS_ARB, 32,
+			WGL_ALPHA_BITS_ARB, 8,
+			WGL_DEPTH_BITS_ARB, 24,
 
 			// uncomment for sRGB framebuffer, from WGL_ARB_framebuffer_sRGB extension
 			// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
@@ -159,7 +364,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 			//WGL_SAMPLE_BUFFERS_ARB, 1,
 			//WGL_SAMPLES_ARB,        4, // 4x MSAA
 
-			0,
+			0
 		};
 
 		int format;
@@ -171,6 +376,11 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 
 		PIXELFORMATDESCRIPTOR desc;
 		desc.nSize = sizeof(desc);
+	//	desc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+		//desc.iPixelType = PFD_TYPE_RGBA;
+		//desc.cColorBits = 32;
+
+
 		int ok = DescribePixelFormat(dc_w, format, sizeof(desc), &desc);
 		Assert(ok && "Failed to describe OpenGL pixel format");
 
@@ -182,99 +392,179 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	//now create opengl context
 	int attrib[] =
 	{
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 5,
+		WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+		WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 		WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 	#ifndef NDEBUG
 		// ask for debug context for non "Release" builds
 		// this is so we can enable debug callback
 		WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
 	#endif
-		0,
+		0
 	};
 	context = wglCreateContextAttribsARB(dc_w, NULL, attrib);
 	//context = wglCreateContext(dc);
 	if (!wglMakeCurrent(dc_w, context)) {
 		std::cerr << "Failed to make context current\n";
 	}
-	//glViewport(0, 0, rect.right - rect.left, rect.bottom - rect.top);
-	/*GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		// Problem: glewInit failed, something is seriously wrong. 
-		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-		
-	}
-	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));*/
-	//glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
+	glDisable(GL_CULL_FACE);
+	//glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
 	loadFunctions();
 
 
 	//start modern opengl needed stuff like shaders and vertex buffers
-	glGenVertexArrays_g(1, &VAO2D);
-	glBindVertexArray_g(VAO2D);
 
+	glGenBuffers_g(1, &uv_buffer);
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	glGenBuffers_g(1, &vertex_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	//shader compiles
-	const char* vertex_shader_2d = "#version 330 core\nlayout(location = 0) in vec3 aPos;\nvoid main(){\ngl_Position = vec4(aPos.x, aPos.y, 1.0, 1.0);}\0";
+	//2d triangle shader and vertex array
+	const char* vertex_shader_2d = "#version 330 core\nlayout(location = 0) in vec2 aPos;\nvoid main(){\ngl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\0";
 	const char* fragment_shader_2d = "#version 330 core\n"
 		"out vec3 color;\n"
 		"void main(){\n"
 		"color = vec3(1.0f, 0.0f, 0.0f);\n"
 		"}\0";
 	shader_2d = compileShader(vertex_shader_2d, fragment_shader_2d);
+	glUseProgram_g(shader_2d);
+	glGenVertexArrays_g(1, &VAO_Triangle);
+	glBindVertexArray_g(VAO_Triangle);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray_g(0);
+	//2d point shader and vertex array
+	const char* vertex_shader_point = "#version 330 core\nlayout(location = 0) in vec2 pos;\nvoid main(){\ngl_Position = vec4(pos.x, pos.y, 1.0, 1.0);\ngl_PointSize=1.0;}\0";
+	const char* fragment_shader_point = "#version 330 core\nout vec3 color;\nvoid main(){\ncolor = vec3(0.8f, 0.5f, 0.0f);}\0";
 
+	shader_point = compileShader(vertex_shader_point, fragment_shader_point);
+	glUseProgram_g(shader_point);
+	glGenVertexArrays_g(1, &VAO_Points);
+	glBindVertexArray_g(VAO_Points);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray_g(0);
+
+	const char* vertex_shader_line = "#version 330 core\nlayout(location = 0) in vec2 pos;\nvoid main(){\ngl_Position = vec4(pos.x, pos.y, 1.0, 1.0);\n}\0";
+	const char* fragment_shader_line = "#version 330 core\nout vec3 color;\nvoid main(){\ncolor = vec3(0.8f, 0.5f, 0.0f);}\0";
+
+	shader_line = compileShader(vertex_shader_line, fragment_shader_line);
+	glUseProgram_g(shader_line);
+	glGenVertexArrays_g(1, &VAO_Line);
+	glBindVertexArray_g(VAO_Line);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray_g(0);
+
+	const char* vertex_shader_img = "#version 330 core\nin vec2 vec_pos;\nin vec2 uv;\nout vec2 tex_coords;\nvoid main(){\n"
+		"gl_Position = vec4(vec_pos.x, vec_pos.y, 1.0, 1.0);\n"
+		"tex_coords = vec2(uv.x, uv.y);\n"
+		"}\0";
+	const char* fragment_shader_img = "#version 330 core\nin vec2 tex_coords;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
+		"color = texture(image_tex, tex_coords);\n}\0";
+		//"color = vec3(1.0f, 0.2f, 0.2f);\n}\0";
+	
+	const char* vertex_shader_img2 = "#version 330 core\nin vec4 vec_pos;\nout vec2 tex_coords;\nvoid main(){\n"
+		"gl_Position = vec4(vec_pos.x, vec_pos.y, 1.0, 1.0);\n"
+		"tex_coords = vec2(vec_pos.z, vec_pos.w);\n"
+		"}\0";
+	const char* fragment_shader_img2 = "#version 330 core\nin vec2 tex_coords;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
+		"color = texture(image_tex, tex_coords);\n}\0";
+
+	compileShader(vertex_shader_img, fragment_shader_img);
+	shader_img = compileShader(vertex_shader_img2, fragment_shader_img2);
+	if (glIsShader_g(shader_img) == GL_TRUE) {
+		std::cout << "true\n";
+	}
+	std::cout << std::to_string(glIsShader_g(shader_img)) << "\n";
+	glUseProgram_g(shader_img);
+	glGenVertexArrays_g(1, &VAO_Img);
+	glBindVertexArray_g(VAO_Img);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
+	glVertexAttribPointer_g(position, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glEnableVertexAttribArray_g(position);
+
+	/*glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	position = glGetAttribLocation_g(shader_img, "uv");
+	glEnableVertexAttribArray_g(position);
+	glVertexAttribPointer_g(position, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);*/
+
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray_g(0);
+	//speed up push_backs
+	buffer_2d.reserve(1000);
+	buffer_3d.reserve(1000);
+	//buffer_uv.reserve(1000);
+	buffer_img.reserve(1000);
 
 	ShowWindow(wind->getHwnd(), SW_SHOW);
 }
 
 
+//shader functions
 
+GLuint EngineNewGL::compileShader(const char* vertex_file, const char* fragment_file) {
+	// Create the shaders
+	GLuint VertexShaderID = glCreateShader_g(GL_VERTEX_SHADER);
+	GLuint FragmentShaderID = glCreateShader_g(GL_FRAGMENT_SHADER);
 
-GLuint EngineNewGL::compileShader(const char* vertex, const char* fragment) {
-	unsigned int vertexShader;
-	vertexShader = glCreateShader_g(GL_VERTEX_SHADER);
-	
-	glShaderSource_g(vertexShader, 1, &vertex, NULL);
-	glCompileShader_g(vertexShader);
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
 
-	int  success;
-	char infoLog[512];
-	glGetShaderiv_g(vertexShader, GL_COMPILE_STATUS, &success);
+	// Compile Vertex Shader
+	std::cout << "Compiling vertex shader" << std::endl;
+	char const* VertexSourcePointer = vertex_file;
+	glShaderSource_g(VertexShaderID, 1, &VertexSourcePointer, NULL);
+	glCompileShader_g(VertexShaderID);
 
-	if (!success)
-	{
-		glGetShaderInfoLog_g(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	// Check Vertex Shader
+	glGetShaderiv_g(VertexShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv_g(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if (InfoLogLength > 0) {
+		std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
+		glGetShaderInfoLog_g(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+		printf("%s\n", &VertexShaderErrorMessage[0]);
 	}
 
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader_g(GL_FRAGMENT_SHADER);
-	glShaderSource_g(fragmentShader, 1, &fragment, NULL);
-	glCompileShader_g(fragmentShader);
 
-	glGetShaderiv_g(fragmentShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog_g(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-	//actually creating program
-	GLuint program;
-	program = glCreateProgram_g();
-	glAttachShader_g(program, vertexShader);
-	glAttachShader_g(program, fragmentShader);
-	glLinkProgram_g(program);
-	//check error
-	glGetProgramiv_g(program, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog_g(program, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::LINK::FAILED\n" << infoLog << std::endl;
+	// Compile Fragment Shader
+	std::cout << "Compiling fragment shader" << std::endl;;
+	char const* FragmentSourcePointer = fragment_file;
+	glShaderSource_g(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
+	glCompileShader_g(FragmentShaderID);
+
+	// Check Fragment Shader
+	glGetShaderiv_g(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv_g(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if (InfoLogLength > 0) {
+		std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
+		glGetShaderInfoLog_g(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+		printf("%s\n", &FragmentShaderErrorMessage[0]);
 	}
 
-	glDeleteShader_g(vertexShader);
-	glDeleteShader_g(fragmentShader);
-	return program;
+	// Link the program
+	std::cout << "Linking program" << std::endl;
+	GLuint ProgramID = glCreateProgram_g();
+	glAttachShader_g(ProgramID, VertexShaderID);
+	glAttachShader_g(ProgramID, FragmentShaderID);
+	glLinkProgram_g(ProgramID);
+
+	// Check the program
+	glGetProgramiv_g(ProgramID, GL_LINK_STATUS, &Result);
+	glGetProgramiv_g(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if (InfoLogLength > 0) {
+		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
+		glGetProgramInfoLog_g(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		printf("%s\n", &ProgramErrorMessage[0]);
+	}
+
+	glDetachShader_g(ProgramID, VertexShaderID);
+	glDetachShader_g(ProgramID, FragmentShaderID);
+
+	glDeleteShader_g(VertexShaderID);
+	glDeleteShader_g(FragmentShaderID);
+	return ProgramID;
 }

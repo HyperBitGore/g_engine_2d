@@ -7,18 +7,12 @@ void* GetGLFuncAddress(const char* name) {
 		HMODULE module = LoadLibraryA("opengl32.dll");
 		p = (void*)GetProcAddress(module, name);
 	}
+	std::cout << p << "\n";
 	return p;
 }
 
 
-static const char* strs[] = {
-	"glBindBuffer", "glGenBuffers", "glAttachShader", "glCompileShader", "glCreateProgram", "glCreateShader",
-	"glDeleteShader", "glGetProgramiv", "glCreateShader", "glGetProgramInfoLog", "glGetShaderiv", "glGetShaderInfoLog",
-	"glLinkProgram", "glShaderSource", "glVertexAttribPointer", "glEnableVertexAttribArray", "glUseProgram", "glBufferData",
-	"glDisableVertexAttribArray", "glGenVertexArrays", "glBindVertexArray"
-};
 
-void* myglfunc[NUMFUNCTIONS];
 
 
 PFNGLBINDBUFFERPROC glBindBuffer_g;
@@ -41,6 +35,13 @@ PFNGLSHADERSOURCEPROC glShaderSource_g;
 PFNGLGETSHADERIVPROC glGetShaderiv_g;
 PFNGLUSEPROGRAMPROC glUseProgram_g;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer_g;
+PFNGLUNIFORM1IPROC glUniform1i_g;
+PFNGLACTIVETEXTUREPROC glActiveTexture_g;
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation_g;
+PFNGLISSHADERPROC glIsShader_g;
+PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation_g;
+PFNGLVALIDATEPROGRAMPROC glValidateProgram_g;
+PFNGLDETACHSHADERPROC glDetachShader_g;
 
 void EngineNewGL::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
@@ -63,8 +64,11 @@ void EngineNewGL::loadFunctions() {
 	glGetShaderiv_g = (PFNGLGETSHADERIVPROC)GetGLFuncAddress("glGetShaderiv");
 	glUseProgram_g = (PFNGLUSEPROGRAMPROC)GetGLFuncAddress("glUseProgram");
 	glVertexAttribPointer_g = (PFNGLVERTEXATTRIBPOINTERPROC)GetGLFuncAddress("glVertexAttribPointer");
-
-	for (int i = 0; i < NUMFUNCTIONS; i++) {
-		myglfunc[i] = GetGLFuncAddress(strs[i]);
-	}
+	glUniform1i_g = (PFNGLUNIFORM1IPROC)GetGLFuncAddress("glUniform1i");
+	glActiveTexture_g = (PFNGLACTIVETEXTUREPROC)GetGLFuncAddress("glActiveTexture");
+	glGetUniformLocation_g = (PFNGLGETUNIFORMLOCATIONPROC)GetGLFuncAddress("glGetUniformLocation");
+	glIsShader_g = (PFNGLISSHADERPROC)GetGLFuncAddress("glIsShader");
+	glGetAttribLocation_g = (PFNGLGETATTRIBLOCATIONPROC)GetGLFuncAddress("glGetAttribLocation");
+	glValidateProgram_g = (PFNGLVALIDATEPROGRAMPROC)GetGLFuncAddress("glValidateProgram");
+	glDetachShader_g = (PFNGLDETACHSHADERPROC)GetGLFuncAddress("glDetachShader");
 }

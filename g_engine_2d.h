@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "gl_defines.h"
 #include <iostream>
 #include <fstream>
@@ -32,7 +31,6 @@ static void FatalError(const char* message)
 
 
 
-//update to newer version of gl
 //add shader support
 //draw text
 //add 3d support
@@ -87,8 +85,8 @@ public:
 	}
 	Input(const Input&) = delete;
 	Input& operator =(const Input&) = delete;
-	void setLastState();
 	//input functions
+	void setLastState();
 	//probably switch to GetKeyboardState, so easier to use getKeyReleased
 	void getState();
 
@@ -100,7 +98,7 @@ public:
 
 struct g_img {
 	unsigned char* data;
-	size_t tex;
+	GLuint tex;
 	unsigned int w;
 	unsigned int h;
 };
@@ -128,6 +126,10 @@ public:
 	static uint32_t getPixel(IMG img, int x, int y);
 };
 
+struct vec2 {
+	float x;
+	float y;
+};
 
 struct vec3 {
 	float x;
@@ -135,7 +137,12 @@ struct vec3 {
 	float z;
 };
 
-
+struct vec4 {
+	float x;
+	float y;
+	float z;
+	float w;
+};
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
@@ -150,16 +157,29 @@ private:
 	//color constants
 
 
-	//GL defines
+	//Vertex buffers
 	GLuint vertex_buffer;
+	GLuint uv_buffer;
 
-	GLuint VAO2D;
+	//vertex arrays
+	GLuint VAO_Triangle;
+	GLuint VAO_Points;
+	GLuint VAO_Line;
+	GLuint VAO_Img;
 
 	//gl Shader programs
 	GLuint shader_2d;
+	GLuint shader_point;
+	GLuint shader_line;
+	GLuint shader_img;
 
-	//vertex arrays
-	std::vector<vec3> buffer_2d;
+	//uv vectors
+	//std::vector<vec2> buffer_uv;
+
+	//vertex vectors
+	std::vector<vec2> buffer_2d;
+	std::vector<vec4> buffer_img;
+	std::vector<vec4> buffer_3d;
 
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
@@ -174,21 +194,35 @@ public:
 	GLuint compileShader(const char* vertex, const char* fragment);
 
 	//2d drawing functions
-	//draws 2d frame from buffer
-	void draw2dFrame();
 	//draws a basic triangle
 	void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
+	//draws triangles from buffer_2d
+	void drawTriangles();
+
 	//draws a point
 	void drawPoint(float x1, float y1);
+	//draws points from the buffer_2d
+	void drawPoints();
+
 	//draws a circle
-	void drawCircle();
+	void drawCircle(float x, float y, float r);
 	//draws a quad
-	void drawQuad();
+	void drawQuad(float x, float y, float w, float h);
+	//draws quads from buffer_2d
+	void drawQuads();
+
 	//draws a line
-	void drawLine();
+	void drawLine(float x1, float y1, float x2, float y2, float width);
+
+	//draws lines from buffer_2d
+	void drawLines(float width);
 
 	//image functions
+	//draws an img once
 	void renderImg(IMG img, float x, float y, int w, int h);
+	//mass draws an image based on buffer_2d
+	void renderImgs(IMG img, int w, int h);
+
 	//rotates counter clockwise around top left point
 	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang);
 	//run after you've done all the editing of data you want to
@@ -206,12 +240,27 @@ public:
 		return in->getKeyReleased(key);
 	}
 
+	//vertice functions
+	void add2DPoint(float x, float y) {
+		buffer_2d.push_back({ x, y });
+	}
+	void add2DPoints(std::vector<vec2> points) {
+		buffer_2d.insert(buffer_2d.end(), points.begin(), points.end());
+	}
 
 
 	//3d drawing functions
+	//
+	void drawPoint3D();
+	//
+	void drawTriangle3D();
+	//
+	void drawCube();
+	//
+	void drawSphere();
+	//
+	void drawLine3D();
 	
-
-
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

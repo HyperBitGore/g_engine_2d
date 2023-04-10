@@ -36,12 +36,15 @@ Window::Window(LPCWSTR title, LPCWSTR CLASS_NAME, int h, int w, int x, int y)
 {
 	class_name = CLASS_NAME;
 	WNDCLASS wnd = {};
-	wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wnd.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wnd.lpszClassName = CLASS_NAME;
 	wnd.hInstance = m_hinstance;
 	wnd.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-	wnd.hCursor = LoadIcon(NULL, IDC_ARROW);
-	wnd.hbrBackground = 0;
+	wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wnd.hbrBackground = NULL;
+	wnd.lpszMenuName = NULL;
+	wnd.cbClsExtra = 0;
+	wnd.cbWndExtra = 0;
 	wnd.lpfnWndProc = WindowProc;
 
 	RegisterClass(&wnd);
