@@ -23,7 +23,6 @@ void renderFunction() {
 
 //4278190335
 int main() {
-	imgtest = ImageLoader::loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	bmptest = ImageLoader::loadBMP("test1.bmp");
 	for (int x = 0; x < 100; x++) {
 		//ImageLoader::setPixel(imgtest, x, 100, 4278190335);
@@ -32,6 +31,7 @@ int main() {
 	//std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	//eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
+	imgtest = ImageLoader::loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	while (eng2.updateWindow()) {
 		if (eng2.getKeyDown(VK_RETURN)) {
 			std::cout << "key down\n";

@@ -42,6 +42,17 @@ PFNGLISSHADERPROC glIsShader_g;
 PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation_g;
 PFNGLVALIDATEPROGRAMPROC glValidateProgram_g;
 PFNGLDETACHSHADERPROC glDetachShader_g;
+PFNGLGENERATEMIPMAPPROC glGenerateMipmap_g;
+
+PFNGLCREATETEXTURESPROC glCreateTextures_g;
+PFNGLBINDTEXTUREUNITPROC glBindTextureUnit_g;
+PFNGLTEXTUREPARAMETERIPROC glTextureParameteri_g;
+PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D_g;
+PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D_g;
+
+PFNGLDRAWARRAYSEXTPROC glDrawArrays_g;
+//PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
+
 
 void EngineNewGL::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
@@ -71,4 +82,15 @@ void EngineNewGL::loadFunctions() {
 	glGetAttribLocation_g = (PFNGLGETATTRIBLOCATIONPROC)GetGLFuncAddress("glGetAttribLocation");
 	glValidateProgram_g = (PFNGLVALIDATEPROGRAMPROC)GetGLFuncAddress("glValidateProgram");
 	glDetachShader_g = (PFNGLDETACHSHADERPROC)GetGLFuncAddress("glDetachShader");
+	glGenerateMipmap_g = (PFNGLGENERATEMIPMAPPROC)GetGLFuncAddress("glGenerateMipmap");
+
+	glCreateTextures_g = (PFNGLCREATETEXTURESPROC)GetGLFuncAddress("glCreateTextures");
+	glBindTextureUnit_g = (PFNGLBINDTEXTUREUNITPROC)GetGLFuncAddress("glBindTextureUnit");
+	glTextureParameteri_g = (PFNGLTEXTUREPARAMETERIPROC)GetGLFuncAddress("glTextureParameteri");
+	glTextureStorage2D_g = (PFNGLTEXTURESTORAGE2DPROC)GetGLFuncAddress("glTextureStorage2D");
+	glTextureSubImage2D_g = (PFNGLTEXTURESUBIMAGE2DPROC)GetGLFuncAddress("glTextureSubImage2D");
+
+	glDrawArrays_g = (PFNGLDRAWARRAYSEXTPROC)GetGLFuncAddress("glDrawArrays");
+	//glDebugMessageCallback_g = (PFNGLDEBUGMESSAGECALLBACKPROC)GetGLFuncAddress("glDebugMessageCallback");
+
 }

@@ -46,3 +46,13 @@ extern PFNGLISSHADERPROC glIsShader_g;
 extern PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation_g;
 extern PFNGLVALIDATEPROGRAMPROC glValidateProgram_g;
 extern PFNGLDETACHSHADERPROC glDetachShader_g;
+extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap_g;
+
+extern PFNGLCREATETEXTURESPROC glCreateTextures_g;
+extern PFNGLBINDTEXTUREUNITPROC glBindTextureUnit_g;
+extern PFNGLTEXTUREPARAMETERIPROC glTextureParameteri_g;
+extern PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D_g;
+extern PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D_g;
+extern PFNGLDRAWARRAYSEXTPROC glDrawArrays_g;
+
+//extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;

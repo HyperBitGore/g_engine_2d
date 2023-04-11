@@ -163,28 +163,22 @@ void EngineNewGL::drawLines(float width) {
 
 //2d image drawing functions
 //
-void EngineNewGL::renderImg(IMG img, float x, float y, int w, int h) {
+void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 //	glEnable(GL_BLEND);
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-	/*//triangle 1
+	//triangle 1
 	buffer_2d.push_back({ x, y });
 	buffer_2d.push_back({ x + w, y });
-	buffer_2d.push_back({ x, y + h });
+	buffer_2d.push_back({ x, y - h });
 	//triangle 2
 	buffer_2d.push_back({ x + w, y });
-	buffer_2d.push_back({ x + w, y + h });
-	buffer_2d.push_back({ x, y + h });*/
+	buffer_2d.push_back({ x + w, y - h });
+	buffer_2d.push_back({ x, y - h });
 	
-	buffer_img.push_back({ x, y, 0, 0 });
-	buffer_img.push_back({ x + w, y, 1, 0 });
-	buffer_img.push_back({ x, y + h, 0, 1 });
-	buffer_img.push_back({ x + w, y, 1, 0 });
-	buffer_img.push_back({ x + w, y + h, 1, 1 });
-	buffer_img.push_back({ x, y + h, 0, 1 });
 
-/*	//uv triangle 1
+	//uv triangle 1
 	buffer_uv.push_back({ 0, 0 });
 	buffer_uv.push_back({ 1, 0 });
 	buffer_uv.push_back({ 0, 1 });
@@ -193,50 +187,40 @@ void EngineNewGL::renderImg(IMG img, float x, float y, int w, int h) {
 	buffer_uv.push_back({ 1, 1 });
 	buffer_uv.push_back({ 0, 1 });
 	
-	float verts[] = { x, y, x + w, y, x, y + h, x + w, y, x + w, y + h,x, y + h };
-	float uvs[] = { 0,0,1,0,0,1,1,0,1,1,0,1 };
 
-	*/
+	
 	glUseProgram_g(shader_img);
-	glActiveTexture_g(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, img->tex);
+	//glActiveTexture_g(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, img->tex);
+	glBindTextureUnit_g(0, img->tex);
 
 	GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
 	glUniform1i_g(texUniformLocation, 0);
 
 	glBindVertexArray_g(VAO_Img);
 	
-	GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
-	glEnableVertexAttribArray_g(position);
+	//GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
+	//glEnableVertexAttribArray_g(position);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData_g(GL_ARRAY_BUFFER, buffer_img.size() * sizeof(vec4), &buffer_img[0], GL_STATIC_DRAW);
-	glVertexAttribPointer_g(position, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	//glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
-	//glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
-	
-	/*glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
-	glEnableVertexAttribArray_g(position);
-	glVertexAttribPointer_g(position, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	//glVertexAttribPointer_g(position, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
-	GLuint position1 = glGetAttribLocation_g(shader_img, "uv");
-	glEnableVertexAttribArray_g(position1);
-	glVertexAttribPointer_g(position1, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);*/
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
 	
-	glDrawArrays(GL_TRIANGLES, 0, buffer_img.size());
+	glDrawArrays_g(GL_TRIANGLES, 0, buffer_2d.size());
 	
 
-	//buffer_2d.clear();
-	//buffer_uv.clear();
-	buffer_img.clear();
+	buffer_2d.clear();
+	buffer_uv.clear();
+	//buffer_img.clear();
 	//glDisableVertexAttribArray_g(0);
 	//glDisableVertexAttribArray_g(1);
-	glDisableVertexAttribArray_g(position);
+	//glDisableVertexAttribArray_g(position);
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTextureUnit_g(0, 0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 	//glDisable(GL_BLEND);
 }
 
@@ -392,8 +376,8 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	//now create opengl context
 	int attrib[] =
 	{
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+		WGL_CONTEXT_MINOR_VERSION_ARB, 6,
 		WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 	#ifndef NDEBUG
 		// ask for debug context for non "Release" builds
@@ -408,6 +392,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		std::cerr << "Failed to make context current\n";
 	}
 	//glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_DEBUG_OUTPUT);
 	glDisable(GL_CULL_FACE);
 	//glEnable(GL_BLEND);
 	glEnable(GL_LINE_SMOOTH);
@@ -456,35 +441,30 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindVertexArray_g(VAO_Line);
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray_g(0);
-
-	const char* vertex_shader_img = "#version 330 core\nin vec2 vec_pos;\nin vec2 uv;\nout vec2 tex_coords;\nvoid main(){\n"
-		"gl_Position = vec4(vec_pos.x, vec_pos.y, 1.0, 1.0);\n"
-		"tex_coords = vec2(uv.x, uv.y);\n"
-		"}\0";
-	const char* fragment_shader_img = "#version 330 core\nin vec2 tex_coords;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
-		"color = texture(image_tex, tex_coords);\n}\0";
-		//"color = vec3(1.0f, 0.2f, 0.2f);\n}\0";
 	
-	const char* vertex_shader_img2 = "#version 330 core\nin vec4 vec_pos;\nout vec2 tex_coords;\nvoid main(){\n"
-		"gl_Position = vec4(vec_pos.x, vec_pos.y, 1.0, 1.0);\n"
-		"tex_coords = vec2(vec_pos.z, vec_pos.w);\n"
-		"}\0";
-	const char* fragment_shader_img2 = "#version 330 core\nin vec2 tex_coords;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
-		"color = texture(image_tex, tex_coords);\n}\0";
 
-	compileShader(vertex_shader_img, fragment_shader_img);
+	glBindVertexArray_g(0);
+
+	const char* vertex_shader_img2 = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\nout vec2 UV;\nvoid main(){\n"
+		"gl_Position = vec4(vec_pos, 0.0, 1.0);\n"
+		"UV = tex_point;\n"
+		"}\0";
+	const char* fragment_shader_img2 = "#version 330 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
+		"color = texture(image_tex, UV);\n}\0";	
+
+
+	//compileShader(vertex_shader_img, fragment_shader_img);
 	shader_img = compileShader(vertex_shader_img2, fragment_shader_img2);
-	if (glIsShader_g(shader_img) == GL_TRUE) {
-		std::cout << "true\n";
-	}
-	std::cout << std::to_string(glIsShader_g(shader_img)) << "\n";
-	glUseProgram_g(shader_img);
+	//glValidateProgram_g(shader_img);
 	glGenVertexArrays_g(1, &VAO_Img);
+	glUseProgram_g(shader_img);
 	glBindVertexArray_g(VAO_Img);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
-	glVertexAttribPointer_g(position, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	glEnableVertexAttribArray_g(position);
+	glEnableVertexAttribArray_g(0);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	glEnableVertexAttribArray_g(1);
+	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	/*glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	position = glGetAttribLocation_g(shader_img, "uv");

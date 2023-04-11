@@ -174,7 +174,7 @@ private:
 	GLuint shader_img;
 
 	//uv vectors
-	//std::vector<vec2> buffer_uv;
+	std::vector<vec2> buffer_uv;
 
 	//vertex vectors
 	std::vector<vec2> buffer_2d;
@@ -219,7 +219,7 @@ public:
 
 	//image functions
 	//draws an img once
-	void renderImg(IMG img, float x, float y, int w, int h);
+	void renderImg(IMG img, float x, float y, float w, float h);
 	//mass draws an image based on buffer_2d
 	void renderImgs(IMG img, int w, int h);
 
