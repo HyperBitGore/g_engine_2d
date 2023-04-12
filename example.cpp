@@ -6,6 +6,8 @@ EngineNewGL eng2 = EngineNewGL(L"Test Window", 640, 480);
 IMG imgtest;
 IMG bmptest;
 
+int ang = 0;
+int c = 0;
 
 void renderFunction() {
 	eng2.drawTriangle(0.5f, 0.3f, 0.6f, 0.5f, 0.8f, 0.3f);
@@ -15,7 +17,18 @@ void renderFunction() {
 	}
 	//eng2.drawLine(-0.4f, -0.4f, 0.1f, -0.8f, 2.0f);
 	//eng2.drawCircle(0.4f, -0.6f, 0.1f);
+	c++;
+	if (c >= 50) {
+		c = 0;
+		ang++;
+		if (ang > 360) {
+			ang = 0;
+		}
+	}
+	float r = float(ang) * M_PI / 180.0;
+	//std::cout << r << "\n";
 	eng2.renderImg(imgtest, 0.3f, 0.3f, 0.2f, 0.2f);
+	eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 }
 
 
@@ -23,15 +36,17 @@ void renderFunction() {
 
 //4278190335
 int main() {
-	bmptest = ImageLoader::loadBMP("test1.bmp");
+	ImageLoader img_ld;
+
+	bmptest = img_ld.loadBMP("test1.bmp");
+	imgtest = img_ld.loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	for (int x = 0; x < 100; x++) {
-		//ImageLoader::setPixel(imgtest, x, 100, 4278190335);
+		ImageLoader::setPixel(imgtest, x, 100, 4278190335);
 	}
-	//std::cout << ImageLoader::getPixel(imgtest, 0, 100) << "\n";
-	//std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
-	//eng2.updateIMG(imgtest);
+	std::cout << ImageLoader::getPixel(imgtest, 0, 100) << "\n";
+	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
+	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	imgtest = ImageLoader::loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	while (eng2.updateWindow()) {
 		if (eng2.getKeyDown(VK_RETURN)) {
 			std::cout << "key down\n";

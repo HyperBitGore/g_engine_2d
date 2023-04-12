@@ -32,6 +32,8 @@ static void FatalError(const char* message)
 
 
 //add shader support
+//convert to using screen space instead of opengl coords
+//optimize drawing
 //draw text
 //add 3d support
 //add 3d line rendering
@@ -101,6 +103,7 @@ struct g_img {
 	GLuint tex;
 	unsigned int w;
 	unsigned int h;
+	int pos;
 };
 
 typedef g_img* IMG;
@@ -113,14 +116,15 @@ private:
 	//fix color being off, ie read color table
 	static void readBMPPixels24(IMG f, std::string str, size_t offset, size_t raw_size);
 	static void parseBMPData(IMG f, std::stringstream& str, size_t offset, unsigned short bitsperpixel, size_t size);
+	int cur_tex = 0;
 public:
 	//https://docs.fileformat.com/image/bmp/
 	//https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
 	//https://en.wikipedia.org/wiki/BMP_file_format
 	//https://www.fileformat.info/format/bmp/egff.htm
 	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
-	static IMG loadBMP(std::string file);
-	static IMG loadPNG(std::string file, unsigned int w, unsigned int h);
+	IMG loadBMP(std::string file);
+	IMG loadPNG(std::string file, unsigned int w, unsigned int h);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	static void setPixel(IMG img, int x, int y, uint32_t color);
 	static uint32_t getPixel(IMG img, int x, int y);
@@ -160,18 +164,21 @@ private:
 	//Vertex buffers
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
+	GLuint rot_buffer;
 
 	//vertex arrays
 	GLuint VAO_Triangle;
 	GLuint VAO_Points;
 	GLuint VAO_Line;
 	GLuint VAO_Img;
+	GLuint VAO_Imgr;
 
 	//gl Shader programs
 	GLuint shader_2d;
 	GLuint shader_point;
 	GLuint shader_line;
 	GLuint shader_img;
+	GLuint shader_imgr;
 
 	//uv vectors
 	std::vector<vec2> buffer_uv;
@@ -180,6 +187,9 @@ private:
 	std::vector<vec2> buffer_2d;
 	std::vector<vec4> buffer_img;
 	std::vector<vec4> buffer_3d;
+
+	//rotation vectors
+	std::vector<float> rotations;
 
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
@@ -224,7 +234,9 @@ public:
 	void renderImgs(IMG img, int w, int h);
 
 	//rotates counter clockwise around top left point
-	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang);
+	void renderImgRotated(IMG img, float x, float y, float w, float h, float ang);
+	//mass draws an image with rotations
+	void renderImgsRotated(IMG img, float w, float h);
 	//run after you've done all the editing of data you want to
 	void updateIMG(IMG img) {
 		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
@@ -247,6 +259,9 @@ public:
 	void add2DPoints(std::vector<vec2> points) {
 		buffer_2d.insert(buffer_2d.end(), points.begin(), points.end());
 	}
+	//image call functions
+	void addImageCall(float x, float y, float w, float h);
+	void addImageRotatedCall(float x, float y, float w, float h);
 
 
 	//3d drawing functions

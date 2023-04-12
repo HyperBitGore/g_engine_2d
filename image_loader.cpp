@@ -130,8 +130,8 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 			break;
 		case 24:
 			readBMPPixels24(f, str.str(), offset, size);
-			glGenTextures(1, (GLuint*)&f->tex);
-			glBindTexture(GL_TEXTURE_2D, (GLuint)f->tex);
+			glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
+			glBindTextureUnit_g(f->pos, f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, f->w, f->h, 0, GL_RGB, GL_UNSIGNED_BYTE, f->data);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -141,7 +141,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		case 32:
 			readBMPPixels32(f, str, offset, size);
 			glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
-			glBindTextureUnit_g(0, f->tex);
+			glBindTextureUnit_g(f->pos, f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, f->w, f->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -205,7 +205,9 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		out->w = (unsigned int)width;
 		out->h = (unsigned int)height;
 		out->data = (unsigned char*)std::malloc(raw_size);
+		out->pos = cur_tex;
 		parseBMPData(out, stram, 54, bitsperpixel, raw_size);
+		cur_tex++;
 		return out;
 	}
 	IMG ImageLoader::loadPNG(std::string file, unsigned int w, unsigned int h) {
@@ -216,11 +218,11 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		}
 		f->w = w;
 		f->h = h;
-		
+		f->pos = cur_tex;
 		
 		//glGenTextures(1, &f->tex);
 		glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
-		glBindTextureUnit_g(0, f->tex);
+		glBindTextureUnit_g(f->pos, f->tex);
 		//glActiveTexture_g(GL_TEXTURE0);
 		//glBindTexture(GL_TEXTURE_2D, f->tex);
 		
@@ -240,5 +242,6 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		
 		//glBindTexture(GL_TEXTURE_2D, 0);
 		glBindTextureUnit_g(0, 0);
+		cur_tex++;
 		return f;
 	}

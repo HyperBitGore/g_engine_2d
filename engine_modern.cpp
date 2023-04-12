@@ -190,20 +190,15 @@ void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 
 	
 	glUseProgram_g(shader_img);
-	//glActiveTexture_g(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, img->tex);
-	glBindTextureUnit_g(0, img->tex);
+	glBindTextureUnit_g(img->pos, img->tex);
 
 	GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
-	glUniform1i_g(texUniformLocation, 0);
+	glUniform1i_g(texUniformLocation, img->pos);
 
 	glBindVertexArray_g(VAO_Img);
 	
-	//GLuint position = glGetAttribLocation_g(shader_img, "vec_pos");
-	//glEnableVertexAttribArray_g(position);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
-	//glVertexAttribPointer_g(position, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
@@ -213,15 +208,72 @@ void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 
 	buffer_2d.clear();
 	buffer_uv.clear();
-	//buffer_img.clear();
-	//glDisableVertexAttribArray_g(0);
-	//glDisableVertexAttribArray_g(1);
-	//glDisableVertexAttribArray_g(position);
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindTextureUnit_g(0, 0);
-	//glBindTexture(GL_TEXTURE_2D, 0);
 	//glDisable(GL_BLEND);
+}
+
+//rotates counter clockwise around top left point, angle is in raidans
+void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, float ang) {
+
+
+
+	//triangle 1
+	buffer_2d.push_back({ x, y });
+	buffer_2d.push_back({ x + w, y });
+	buffer_2d.push_back({ x, y - h });
+	//triangle 2
+	buffer_2d.push_back({ x + w, y });
+	buffer_2d.push_back({ x + w, y - h });
+	buffer_2d.push_back({ x, y - h });
+
+
+	//uv triangle 1
+	buffer_uv.push_back({ 0, 0 });
+	buffer_uv.push_back({ 1, 0 });
+	buffer_uv.push_back({ 0, 1 });
+	//uv triangle 2
+	buffer_uv.push_back({ 1, 0 });
+	buffer_uv.push_back({ 1, 1 });
+	buffer_uv.push_back({ 0, 1 });
+	//rotations
+	rotations.push_back(ang);
+	rotations.push_back(ang);
+	rotations.push_back(ang);
+	rotations.push_back(ang);
+	rotations.push_back(ang);
+	rotations.push_back(ang);
+
+	glUseProgram_g(shader_imgr);
+	glBindTextureUnit_g(img->pos, img->tex);
+
+	GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
+	glUniform1i_g(texUniformLocation, img->pos);
+
+	GLuint rot_point = glGetUniformLocation_g(shader_imgr, "rot_point");
+	glUniform2f_g(rot_point, x, y);
+
+	glBindVertexArray_g(VAO_Imgr);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, rotations.size() * sizeof(float), &rotations[0], GL_STATIC_DRAW);
+
+	glDrawArrays_g(GL_TRIANGLES, 0, buffer_2d.size());
+
+
+	buffer_2d.clear();
+	buffer_uv.clear();
+	rotations.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glBindTextureUnit_g(0, 0);
 }
 
 
@@ -249,17 +301,6 @@ bool EngineNewGL::updateWindow() {
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
 EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
-	/*PIXELFORMATDESCRIPTOR windowPixelFormatDesc = {0};
-	windowPixelFormatDesc.nSize = sizeof(windowPixelFormatDesc);
-	windowPixelFormatDesc.nVersion = 1;
-	windowPixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-	windowPixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	windowPixelFormatDesc.cColorBits = 32;
-	windowPixelFormatDesc.cAlphaBits = 8;
-	windowPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
-	windowPixelFormatDesc.cDepthBits = 24;
-	windowPixelFormatDesc.cStencilBits = 8;*/
-
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
 	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
@@ -403,6 +444,8 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 
 	//start modern opengl needed stuff like shaders and vertex buffers
 
+	glGenBuffers_g(1, &rot_buffer);
+	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
 	glGenBuffers_g(1, &uv_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	glGenBuffers_g(1, &vertex_buffer);
@@ -466,18 +509,37 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glEnableVertexAttribArray_g(1);
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	/*glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
-	position = glGetAttribLocation_g(shader_img, "uv");
-	glEnableVertexAttribArray_g(position);
-	glVertexAttribPointer_g(position, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);*/
-
+	const char* vertex_shader_img_r = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\nlayout (location = 2) in float rot;\n"
+		"out vec2 UV;\nuniform vec2 rot_point;\nvoid main() {\n"
+		"vec2 p1 = vec2(vec_pos.x - rot_point.x, vec_pos.y - rot_point.y);\n"
+		"vec2 p = vec2(p1.x*cos(rot)-p1.y*sin(rot), p1.y*cos(rot) + p1.x*sin(rot));\n"
+		"p = vec2(p.x + rot_point.x, p.y + rot_point.y);\n"
+		"gl_Position = vec4(p, 0.0, 1.0);\n"
+		"UV = tex_point;\n"
+		"}\0";
+	const char* fragment_shader_img_r = "#version 330 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
+		"color = texture(image_tex, UV);\n}\0";
+	shader_imgr = compileShader(vertex_shader_img_r, fragment_shader_img_r);
+	glGenVertexArrays_g(1, &VAO_Imgr);
+	glUseProgram_g(shader_img);
+	glBindVertexArray_g(VAO_Imgr);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glEnableVertexAttribArray_g(0);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	glEnableVertexAttribArray_g(1);
+	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
+	glEnableVertexAttribArray_g(2);
+	glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray_g(0);
 	//speed up push_backs
 	buffer_2d.reserve(1000);
 	buffer_3d.reserve(1000);
-	//buffer_uv.reserve(1000);
+	buffer_uv.reserve(1000);
+	rotations.reserve(1000);
 	buffer_img.reserve(1000);
 
 	ShowWindow(wind->getHwnd(), SW_SHOW);
