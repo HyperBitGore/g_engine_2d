@@ -7,6 +7,7 @@ IMG imgtest;
 IMG bmptest;
 
 int ang = 0;
+int r_ang = 360;
 int c = 0;
 
 void renderFunction() {
@@ -21,14 +22,25 @@ void renderFunction() {
 	if (c >= 50) {
 		c = 0;
 		ang++;
+		r_ang--;
+		(r_ang <= 0) ? r_ang = 360 : r_ang; 
 		if (ang > 360) {
 			ang = 0;
 		}
 	}
 	float r = float(ang) * M_PI / 180.0;
+	float r_r = float(r_ang) * M_PI / 180.0;
 	//std::cout << r << "\n";
-	eng2.renderImg(imgtest, 0.3f, 0.3f, 0.2f, 0.2f);
-	eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
+	eng2.addImageCall(0.2f, 0.2f, 0.2f, 0.2f);
+	eng2.addImageCall(-0.4f, -0.4f, 0.3f, 0.3f);
+	eng2.addImageCall(0.5f, -0.5f, 0.2f, 0.2f);
+	eng2.renderImgs(imgtest);
+	//eng2.renderImg(imgtest, 0.3f, 0.3f, 0.2f, 0.2f);
+	eng2.addImageRotatedCall(-0.2f, -0.1f, 0.2f, 0.2f, r);
+	eng2.addImageRotatedCall(-0.5f, 0.2f, 0.2f, 0.2f, r);
+	eng2.addImageRotatedCall(0.5f, -0.6f, 0.2f, 0.2f, r_r);
+	eng2.renderImgsRotated(imgtest);
+	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 }
 
 

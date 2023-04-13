@@ -213,6 +213,32 @@ void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 	glBindTextureUnit_g(0, 0);
 	//glDisable(GL_BLEND);
 }
+//mass draws an image based on buffer_2d
+void EngineNewGL::renderImgs(IMG img) {
+	glUseProgram_g(shader_img);
+	glBindTextureUnit_g(img->pos, img->tex);
+
+	GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
+	glUniform1i_g(texUniformLocation, img->pos);
+
+	glBindVertexArray_g(VAO_Img);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
+
+	glDrawArrays_g(GL_TRIANGLES, 0, buffer_2d.size());
+
+
+	buffer_2d.clear();
+	buffer_uv.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glBindTextureUnit_g(0, 0);
+}
+
 
 //rotates counter clockwise around top left point, angle is in raidans
 void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, float ang) {
@@ -244,6 +270,13 @@ void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, 
 	rotations.push_back(ang);
 	rotations.push_back(ang);
 	rotations.push_back(ang);
+	//rot_points
+	rot_points.push_back({ x, y });
+	rot_points.push_back({ x, y });
+	rot_points.push_back({ x, y });
+	rot_points.push_back({ x, y });
+	rot_points.push_back({ x, y });
+	rot_points.push_back({ x, y });
 
 	glUseProgram_g(shader_imgr);
 	glBindTextureUnit_g(img->pos, img->tex);
@@ -251,8 +284,11 @@ void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, 
 	GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
 	glUniform1i_g(texUniformLocation, img->pos);
 
-	GLuint rot_point = glGetUniformLocation_g(shader_imgr, "rot_point");
+	/*GLuint rot_point = glGetUniformLocation_g(shader_imgr, "rot_point");
 	glUniform2f_g(rot_point, x, y);
+
+	GLuint ang_uniform = glGetUniformLocation_g(shader_imgr, "ang");
+	glUniform1f_g(ang_uniform, ang);*/
 
 	glBindVertexArray_g(VAO_Imgr);
 
@@ -265,12 +301,50 @@ void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, 
 	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, rotations.size() * sizeof(float), &rotations[0], GL_STATIC_DRAW);
 
+	glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, rot_points.size() * sizeof(vec2), &rot_points[0], GL_STATIC_DRAW);
+
 	glDrawArrays_g(GL_TRIANGLES, 0, buffer_2d.size());
 
 
 	buffer_2d.clear();
 	buffer_uv.clear();
 	rotations.clear();
+	rot_points.clear();
+	glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+	glBindTextureUnit_g(0, 0);
+}
+
+//mass draws an image with rotations
+void EngineNewGL::renderImgsRotated(IMG img) {
+	glUseProgram_g(shader_imgr);
+	glBindTextureUnit_g(img->pos, img->tex);
+
+	GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
+	glUniform1i_g(texUniformLocation, img->pos);
+
+	glBindVertexArray_g(VAO_Imgr);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, rotations.size() * sizeof(float), &rotations[0], GL_STATIC_DRAW);
+
+	glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
+	glBufferData_g(GL_ARRAY_BUFFER, rot_points.size() * sizeof(vec2), &rot_points[0], GL_STATIC_DRAW);
+
+	glDrawArrays_g(GL_TRIANGLES, 0, buffer_2d.size());
+
+
+	buffer_2d.clear();
+	buffer_uv.clear();
+	rotations.clear();
+	rot_points.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindTextureUnit_g(0, 0);
@@ -443,7 +517,8 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 
 
 	//start modern opengl needed stuff like shaders and vertex buffers
-
+	glGenBuffers_g(1, &rotpoint_buffer);
+	glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
 	glGenBuffers_g(1, &rot_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
 	glGenBuffers_g(1, &uv_buffer);
@@ -509,10 +584,10 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glEnableVertexAttribArray_g(1);
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	const char* vertex_shader_img_r = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\nlayout (location = 2) in float rot;\n"
-		"out vec2 UV;\nuniform vec2 rot_point;\nvoid main() {\n"
+	const char* vertex_shader_img_r = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
+		"layout (location = 2) in float ang;\nlayout (location = 3) in vec2 rot_point;\nout vec2 UV;\n;\nvoid main() {\n"
 		"vec2 p1 = vec2(vec_pos.x - rot_point.x, vec_pos.y - rot_point.y);\n"
-		"vec2 p = vec2(p1.x*cos(rot)-p1.y*sin(rot), p1.y*cos(rot) + p1.x*sin(rot));\n"
+		"vec2 p = vec2(p1.x*cos(ang)-p1.y*sin(ang), p1.y*cos(ang) + p1.x*sin(ang));\n"
 		"p = vec2(p.x + rot_point.x, p.y + rot_point.y);\n"
 		"gl_Position = vec4(p, 0.0, 1.0);\n"
 		"UV = tex_point;\n"
@@ -532,6 +607,10 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
 	glEnableVertexAttribArray_g(2);
 	glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
+	glEnableVertexAttribArray_g(3);
+	glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray_g(0);
@@ -541,6 +620,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	buffer_uv.reserve(1000);
 	rotations.reserve(1000);
 	buffer_img.reserve(1000);
+	rot_points.reserve(1000);
 
 	ShowWindow(wind->getHwnd(), SW_SHOW);
 }

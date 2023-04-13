@@ -31,10 +31,10 @@ static void FatalError(const char* message)
 
 
 
-//add shader support
 //convert to using screen space instead of opengl coords
 //optimize drawing
 //draw text
+//switch circle to entirly shader based instead of using lines
 //add 3d support
 //add 3d line rendering
 //add 3d primitives
@@ -165,6 +165,7 @@ private:
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
 	GLuint rot_buffer;
+	GLuint rotpoint_buffer;
 
 	//vertex arrays
 	GLuint VAO_Triangle;
@@ -189,6 +190,7 @@ private:
 	std::vector<vec4> buffer_3d;
 
 	//rotation vectors
+	std::vector<vec2> rot_points;
 	std::vector<float> rotations;
 
 public:
@@ -231,12 +233,12 @@ public:
 	//draws an img once
 	void renderImg(IMG img, float x, float y, float w, float h);
 	//mass draws an image based on buffer_2d
-	void renderImgs(IMG img, int w, int h);
+	void renderImgs(IMG img);
 
 	//rotates counter clockwise around top left point
 	void renderImgRotated(IMG img, float x, float y, float w, float h, float ang);
 	//mass draws an image with rotations
-	void renderImgsRotated(IMG img, float w, float h);
+	void renderImgsRotated(IMG img);
 	//run after you've done all the editing of data you want to
 	void updateIMG(IMG img) {
 		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
@@ -253,6 +255,22 @@ public:
 	}
 
 	//vertice functions
+	void addQuad(float x, float y, float w, float h) {
+		//triangle 1
+		buffer_2d.push_back({ x, y });
+		buffer_2d.push_back({ x + w, y });
+		buffer_2d.push_back({ x, y + h });
+		//triangle 2
+		buffer_2d.push_back({ x + w, y });
+		buffer_2d.push_back({ x + w, y + h });
+		buffer_2d.push_back({ x, y + h });
+	}
+	void addTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+		buffer_2d.push_back({ x1, y1 });
+		buffer_2d.push_back({ x2, y2 });
+		buffer_2d.push_back({ x3, y3 });
+	}
+
 	void add2DPoint(float x, float y) {
 		buffer_2d.push_back({ x, y });
 	}
@@ -260,8 +278,57 @@ public:
 		buffer_2d.insert(buffer_2d.end(), points.begin(), points.end());
 	}
 	//image call functions
-	void addImageCall(float x, float y, float w, float h);
-	void addImageRotatedCall(float x, float y, float w, float h);
+	void addImageCall(float x, float y, float w, float h) {
+		//triangle 1
+		buffer_2d.push_back({ x, y });
+		buffer_2d.push_back({ x + w, y });
+		buffer_2d.push_back({ x, y - h });
+		//triangle 2
+		buffer_2d.push_back({ x + w, y });
+		buffer_2d.push_back({ x + w, y - h });
+		buffer_2d.push_back({ x, y - h });
+		//uv triangle 1
+		buffer_uv.push_back({ 0, 0 });
+		buffer_uv.push_back({ 1, 0 });
+		buffer_uv.push_back({ 0, 1 });
+		//uv triangle 2
+		buffer_uv.push_back({ 1, 0 });
+		buffer_uv.push_back({ 1, 1 });
+		buffer_uv.push_back({ 0, 1 });
+	}
+	//angle in radians
+	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
+		//triangle 1
+		buffer_2d.push_back({ x, y });
+		buffer_2d.push_back({ x + w, y });
+		buffer_2d.push_back({ x, y - h });
+		//triangle 2
+		buffer_2d.push_back({ x + w, y });
+		buffer_2d.push_back({ x + w, y - h });
+		buffer_2d.push_back({ x, y - h });
+		//uv triangle 1
+		buffer_uv.push_back({ 0, 0 });
+		buffer_uv.push_back({ 1, 0 });
+		buffer_uv.push_back({ 0, 1 });
+		//uv triangle 2
+		buffer_uv.push_back({ 1, 0 });
+		buffer_uv.push_back({ 1, 1 });
+		buffer_uv.push_back({ 0, 1 });
+		//rotations
+		rotations.push_back(ang);
+		rotations.push_back(ang);
+		rotations.push_back(ang);
+		rotations.push_back(ang);
+		rotations.push_back(ang);
+		rotations.push_back(ang);
+		//rot points
+		rot_points.push_back({ x, y });
+		rot_points.push_back({ x, y });
+		rot_points.push_back({ x, y });
+		rot_points.push_back({ x, y });
+		rot_points.push_back({ x, y });
+		rot_points.push_back({ x, y });
+	}
 
 
 	//3d drawing functions

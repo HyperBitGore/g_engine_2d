@@ -52,6 +52,7 @@ PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D_g;
 
 PFNGLDRAWARRAYSEXTPROC glDrawArrays_g;
 PFNGLUNIFORM2FPROC glUniform2f_g;
+PFNGLUNIFORM1FPROC glUniform1f_g;
 
 //PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
 
@@ -93,6 +94,7 @@ void EngineNewGL::loadFunctions() {
 	glTextureSubImage2D_g = (PFNGLTEXTURESUBIMAGE2DPROC)GetGLFuncAddress("glTextureSubImage2D");
 	glDrawArrays_g = (PFNGLDRAWARRAYSEXTPROC)GetGLFuncAddress("glDrawArrays");
 	glUniform2f_g = (PFNGLUNIFORM2FPROC)GetGLFuncAddress("glUniform2f");
+	glUniform1f_g = (PFNGLUNIFORM1FPROC)GetGLFuncAddress("glUniform1f");
 
 	//glDebugMessageCallback_g = (PFNGLDEBUGMESSAGECALLBACKPROC)GetGLFuncAddress("glDebugMessageCallback");
 

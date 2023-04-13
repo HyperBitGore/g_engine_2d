@@ -1,7 +1,7 @@
 #pragma once
 #define GL_GLEXT_PROTOTYPES
-//#define WIN32_LEAN_AND_MEAN
-//#define WIN32_EXTRA_LEAN
+#define WIN32_LEAN_AND_MEAN
+#define WIN32_EXTRA_LEAN
 
 #include <Windows.h>
 #include <gl/GL.h>
@@ -54,5 +54,8 @@ extern PFNGLTEXTUREPARAMETERIPROC glTextureParameteri_g;
 extern PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D_g;
 extern PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D_g;
 extern PFNGLDRAWARRAYSEXTPROC glDrawArrays_g;
+
+extern PFNGLUNIFORM2FPROC glUniform2f_g;
+extern PFNGLUNIFORM1FPROC glUniform1f_g;
 
 //extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
