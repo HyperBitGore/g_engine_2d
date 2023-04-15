@@ -30,10 +30,9 @@ static void FatalError(const char* message)
 
 
 
-
 //convert to using screen space instead of opengl coords
-//optimize drawing
 //draw text
+//optimize drawing
 //switch circle to entirly shader based instead of using lines
 //add 3d support
 //add 3d line rendering
@@ -159,6 +158,8 @@ private:
 	HGLRC context;
 	std::function<void()> renderFund;
 	//color constants
+	vec4 draw_color;
+	vec4 clear_color;
 
 
 	//Vertex buffers
@@ -175,11 +176,19 @@ private:
 	GLuint VAO_Imgr;
 
 	//gl Shader programs
-	GLuint shader_2d;
+	GLuint shader_triangle2d;
 	GLuint shader_point;
 	GLuint shader_line;
 	GLuint shader_img;
 	GLuint shader_imgr;
+
+	//gl uniforms
+	GLuint texuniform_imgr;
+	GLuint texuniform_img;
+
+	GLuint coloruniform_tri;
+	GLuint coloruniform_point;
+	GLuint coloruniform_line;
 
 	//uv vectors
 	std::vector<vec2> buffer_uv;
@@ -192,6 +201,20 @@ private:
 	//rotation vectors
 	std::vector<vec2> rot_points;
 	std::vector<float> rotations;
+
+	//delta time
+	clock_t delta = 0;
+	clock_t delta_f = 0;
+	clock_t begin_f;
+	clock_t end_f;
+	size_t frames = 0;
+	double frameRate = 30;
+	double averageFrameTimeMilliseconds = 33.333;
+	double clockToMilliseconds(clock_t ticks) {
+		// units/(units/time) => time (seconds) * 1000 = milliseconds
+		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
+	}
+
 
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
@@ -252,6 +275,20 @@ public:
 	}
 	bool getKeyReleased(char key) {
 		return in->getKeyReleased(key);
+	}
+
+	//color functions
+	void setDrawColor(vec4 c) {
+		draw_color = c;
+	}
+	void setClearColor(vec4 c) {
+		clear_color = c;
+	}
+	vec4 getDrawColor() {
+		return draw_color;
+	}
+	vec4 getClearColor() {
+		return clear_color;
 	}
 
 	//vertice functions
@@ -343,6 +380,26 @@ public:
 	//
 	void drawLine3D();
 	
+	//delta time
+	//returns the frame time in seconds
+	double getDelta() {
+		clock_t d = delta;
+		delta = 0;
+		return d / (double)CLOCKS_PER_SEC;
+	}
+	//returns number of frames in a second and the average frame time in milliseconds, every second. 
+	std::pair<double, double> getFrames() {
+		if (clockToMilliseconds(delta_f) > 1000.0) { //every second
+			frameRate = (double)frames * 0.5 + frameRate * 0.5; //more stable
+			//std::cout << "Frames: " << frameRate << "\n";
+			frames = 0;
+			delta_f -= CLOCKS_PER_SEC;
+			averageFrameTimeMilliseconds = 1000.0 / (frameRate == 0 ? 0.001 : frameRate);
+			//std::cout << "CPU time was:" << averageFrameTimeMilliseconds << std::endl;
+			return { frameRate, averageFrameTimeMilliseconds };
+		}
+		return { frameRate, averageFrameTimeMilliseconds};
+	}
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

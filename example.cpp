@@ -11,13 +11,16 @@ int r_ang = 360;
 int c = 0;
 
 void renderFunction() {
+	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
 	eng2.drawTriangle(0.5f, 0.3f, 0.6f, 0.5f, 0.8f, 0.3f);
-	//eng2.drawQuad(-0.4f, 0.3f, 0.2f, 0.2f);
+	eng2.drawQuad(-0.4f, 0.3f, 0.2f, 0.2f);
+	eng2.setDrawColor({ 1.0f, 0.3f, 0.1f, 0.0f });
 	for (float y = 0.4f; y >= -0.1f; y -= 0.01f) {
-		//eng2.drawPoint(0.3f, y);
+		eng2.drawPoint(0.3f, y);
 	}
-	//eng2.drawLine(-0.4f, -0.4f, 0.1f, -0.8f, 2.0f);
-	//eng2.drawCircle(0.4f, -0.6f, 0.1f);
+	eng2.setDrawColor({ 0.0f, 1.0f, 0.4f, 0.0f });
+	eng2.drawLine(-0.4f, -0.4f, 0.1f, -0.8f, 2.0f);
+	eng2.drawCircle(0.4f, -0.6f, 0.1f);
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -59,7 +62,17 @@ int main() {
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
+	double d = 0;
 	while (eng2.updateWindow()) {
+		double del = eng2.getDelta();
+		//std::cout << del << "\n";
+		d += del;
+		std::pair<double, double> frames = eng2.getFrames();
+		if(d >= 1.0){
+			std::cout << "1 second\n";
+			std::cout << "Frames: " << frames.first << ", average time: " << frames.second << "\n";
+			d = 0;
+		}
 		if (eng2.getKeyDown(VK_RETURN)) {
 			std::cout << "key down\n";
 		}

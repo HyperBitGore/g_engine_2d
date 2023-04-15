@@ -8,7 +8,8 @@ void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3,
 	buffer_2d.push_back({ x1, y1});
 	buffer_2d.push_back({ x2, y2});
 	buffer_2d.push_back({ x3, y3});
-	glUseProgram_g(shader_2d);
+	glUseProgram_g(shader_triangle2d);
+	glUniform4f_g(coloruniform_tri, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -27,7 +28,8 @@ void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3,
 }
 
 void EngineNewGL::drawTriangles() {
-	glUseProgram_g(shader_2d);
+	glUseProgram_g(shader_triangle2d);
+	glUniform4f_g(coloruniform_tri, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -43,6 +45,7 @@ void EngineNewGL::drawPoint(float x1, float y1) {
 	buffer_2d.push_back({ x1, y1});
 
 	glUseProgram_g(shader_point);
+	glUniform4f_g(coloruniform_point, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Points);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -58,6 +61,7 @@ void EngineNewGL::drawPoints() {
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glUseProgram_g(shader_point);
+	glUniform4f_g(coloruniform_point, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Points);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -94,7 +98,8 @@ void EngineNewGL::drawQuad(float x, float y, float w, float h) {
 	buffer_2d.push_back({ x + w, y+h });
 	buffer_2d.push_back({ x, y + h });
 	//drawing triangles
-	glUseProgram_g(shader_2d);
+	glUseProgram_g(shader_triangle2d);
+	glUniform4f_g(coloruniform_tri, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -108,7 +113,8 @@ void EngineNewGL::drawQuad(float x, float y, float w, float h) {
 //draws quads from buffer_2d
 void EngineNewGL::drawQuads() {
 	//drawing triangles
-	glUseProgram_g(shader_2d);
+	glUseProgram_g(shader_triangle2d);
+	glUniform4f_g(coloruniform_tri, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -127,6 +133,7 @@ void EngineNewGL::drawLine(float x1, float y1, float x2, float y2, float width) 
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//write seperate shader
 	glUseProgram_g(shader_line);
+	glUniform4f_g(coloruniform_line, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	buffer_2d.push_back({ x1, y1 });
 	buffer_2d.push_back({ x2, y2 });
 
@@ -149,7 +156,7 @@ void EngineNewGL::drawLines(float width) {
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//write seperate shader
 	glUseProgram_g(shader_line);
-
+	glUniform4f_g(coloruniform_line, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Line);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -192,8 +199,8 @@ void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 	glUseProgram_g(shader_img);
 	glBindTextureUnit_g(img->pos, img->tex);
 
-	GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
-	glUniform1i_g(texUniformLocation, img->pos);
+	//GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
+	glUniform1i_g(texuniform_img, img->pos);
 
 	glBindVertexArray_g(VAO_Img);
 	
@@ -218,8 +225,8 @@ void EngineNewGL::renderImgs(IMG img) {
 	glUseProgram_g(shader_img);
 	glBindTextureUnit_g(img->pos, img->tex);
 
-	GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
-	glUniform1i_g(texUniformLocation, img->pos);
+	//GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
+	glUniform1i_g(texuniform_img, img->pos);
 
 	glBindVertexArray_g(VAO_Img);
 
@@ -281,8 +288,8 @@ void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, 
 	glUseProgram_g(shader_imgr);
 	glBindTextureUnit_g(img->pos, img->tex);
 
-	GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
-	glUniform1i_g(texUniformLocation, img->pos);
+	//GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
+	glUniform1i_g(texuniform_imgr, img->pos);
 
 	/*GLuint rot_point = glGetUniformLocation_g(shader_imgr, "rot_point");
 	glUniform2f_g(rot_point, x, y);
@@ -321,8 +328,8 @@ void EngineNewGL::renderImgsRotated(IMG img) {
 	glUseProgram_g(shader_imgr);
 	glBindTextureUnit_g(img->pos, img->tex);
 
-	GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
-	glUniform1i_g(texUniformLocation, img->pos);
+	//GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
+	glUniform1i_g(texuniform_imgr, img->pos);
 
 	glBindVertexArray_g(VAO_Imgr);
 
@@ -360,6 +367,7 @@ bool EngineNewGL::updateWindow() {
 		delete wind;
 		return false;
 	}
+	begin_f = clock();
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	renderFund();
@@ -369,6 +377,10 @@ bool EngineNewGL::updateWindow() {
 	{
 		FatalError("Failed to swap OpenGL buffers!");
 	}
+	end_f = clock();
+	delta = end_f - begin_f;
+	delta_f += end_f - begin_f;
+	frames++;
 	return true;
 }
 
@@ -441,6 +453,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 
 	// set pixel format for OpenGL context
 	{
+		//https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
 		int attrib[] =
 		{
 			WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
@@ -501,6 +514,8 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	#endif
 		0
 	};
+	//https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
+	//
 	context = wglCreateContextAttribsARB(dc_w, NULL, attrib);
 	//context = wglCreateContext(dc);
 	if (!wglMakeCurrent(dc_w, context)) {
@@ -527,21 +542,29 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	//shader compiles
 	//2d triangle shader and vertex array
-	const char* vertex_shader_2d = "#version 330 core\nlayout(location = 0) in vec2 aPos;\nvoid main(){\ngl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\0";
-	const char* fragment_shader_2d = "#version 330 core\n"
-		"out vec3 color;\n"
+	const char* vertex_shader_triangle2d = "#version 330 core\nlayout(location = 0) in vec2 aPos;\nvoid main(){\ngl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\0";
+	const char* fragment_shader_triangle2d = "#version 330 core\n"
+		"out vec4 color;\n"
+		"uniform vec4 set_color;\n"
 		"void main(){\n"
-		"color = vec3(1.0f, 0.0f, 0.0f);\n"
+		"color = set_color;\n"
+		//"color = vec4(1.0f, 0.0f, 0.0f, 0.0f);\n"
 		"}\0";
-	shader_2d = compileShader(vertex_shader_2d, fragment_shader_2d);
-	glUseProgram_g(shader_2d);
+	shader_triangle2d = compileShader(vertex_shader_triangle2d, fragment_shader_triangle2d);
+	glUseProgram_g(shader_triangle2d);
 	glGenVertexArrays_g(1, &VAO_Triangle);
 	glBindVertexArray_g(VAO_Triangle);
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray_g(0);
+	coloruniform_tri = glGetUniformLocation_g(shader_triangle2d, "set_color");
+
 	//2d point shader and vertex array
 	const char* vertex_shader_point = "#version 330 core\nlayout(location = 0) in vec2 pos;\nvoid main(){\ngl_Position = vec4(pos.x, pos.y, 1.0, 1.0);\ngl_PointSize=1.0;}\0";
-	const char* fragment_shader_point = "#version 330 core\nout vec3 color;\nvoid main(){\ncolor = vec3(0.8f, 0.5f, 0.0f);}\0";
+	const char* fragment_shader_point = "#version 330 core\nout vec4 color;\n"
+		"uniform vec4 set_color;\n"
+		"void main() {\n"
+		"color = set_color;\n}\0";
+		//"color = vec3(0.8f, 0.5f, 0.0f); }\0";
 
 	shader_point = compileShader(vertex_shader_point, fragment_shader_point);
 	glUseProgram_g(shader_point);
@@ -549,9 +572,14 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindVertexArray_g(VAO_Points);
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray_g(0);
+	coloruniform_point = glGetUniformLocation_g(shader_point, "set_color");
 
 	const char* vertex_shader_line = "#version 330 core\nlayout(location = 0) in vec2 pos;\nvoid main(){\ngl_Position = vec4(pos.x, pos.y, 1.0, 1.0);\n}\0";
-	const char* fragment_shader_line = "#version 330 core\nout vec3 color;\nvoid main(){\ncolor = vec3(0.8f, 0.5f, 0.0f);}\0";
+	const char* fragment_shader_line = "#version 330 core\nout vec4 color;\n"
+		"uniform vec4 set_color;\n"
+		"void main(){\n"
+		"color = set_color;\n}\0";
+	//"color = vec3(0.8f, 0.5f, 0.0f); }\0";
 
 	shader_line = compileShader(vertex_shader_line, fragment_shader_line);
 	glUseProgram_g(shader_line);
@@ -559,7 +587,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindVertexArray_g(VAO_Line);
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray_g(0);
-	
+	coloruniform_line = glGetUniformLocation_g(shader_line, "set_color");
 
 	glBindVertexArray_g(0);
 
@@ -583,6 +611,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	glEnableVertexAttribArray_g(1);
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	texuniform_img = glGetUniformLocation_g(shader_img, "image_tex");
 
 	const char* vertex_shader_img_r = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
 		"layout (location = 2) in float ang;\nlayout (location = 3) in vec2 rot_point;\nout vec2 UV;\n;\nvoid main() {\n"
@@ -610,7 +639,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
 	glEnableVertexAttribArray_g(3);
 	glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
+	texuniform_imgr = glGetUniformLocation_g(shader_imgr, "image_tex");
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray_g(0);

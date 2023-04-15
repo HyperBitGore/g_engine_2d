@@ -57,5 +57,6 @@ extern PFNGLDRAWARRAYSEXTPROC glDrawArrays_g;
 
 extern PFNGLUNIFORM2FPROC glUniform2f_g;
 extern PFNGLUNIFORM1FPROC glUniform1f_g;
+extern PFNGLUNIFORM4FPROC glUniform4f_g;
 
 //extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
