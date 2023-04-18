@@ -7,7 +7,7 @@ void* GetGLFuncAddress(const char* name) {
 		HMODULE module = LoadLibraryA("opengl32.dll");
 		p = (void*)GetProcAddress(module, name);
 	}
-	std::cout << p << "\n";
+	//std::cout << p << "\n";
 	return p;
 }
 

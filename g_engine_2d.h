@@ -30,9 +30,10 @@ static void FatalError(const char* message)
 
 
 
-//convert to using screen space instead of opengl coords
 //draw text
 //optimize drawing
+//	-remove uniform calls in draw calls, so move color setting to a different function
+//	-maybe switch to a seperate queue for all the calls and call of them at once
 //switch circle to entirly shader based instead of using lines
 //add 3d support
 //add 3d line rendering
@@ -73,6 +74,12 @@ public:
 	}
 };
 
+class FontRenderer {
+private:
+
+public:
+
+};
 
 
 class Input {
@@ -335,6 +342,9 @@ public:
 	}
 	//angle in radians
 	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
+
+		
+		int b = buffer_2d.size();
 		//triangle 1
 		buffer_2d.push_back({ x, y });
 		buffer_2d.push_back({ x + w, y });
@@ -343,6 +353,32 @@ public:
 		buffer_2d.push_back({ x + w, y });
 		buffer_2d.push_back({ x + w, y - h });
 		buffer_2d.push_back({ x, y - h });
+
+		for (int i = b; i < buffer_2d.size(); i++) {
+			float out_x = buffer_2d[i].x / float(wind->getWidth());
+			float out_y = buffer_2d[i].y / float(wind->getHeight());
+			out_x = (out_x * 2.0f) - 1;
+			out_y = (out_y * 2.0f) - 1;
+
+			float rotx = buffer_2d[i].x / float(wind->getWidth());
+			float roty = buffer_2d[i].y / float(wind->getHeight());
+			rotx = (rotx * 2.0f) - 1;
+			roty = (roty * 2.0f) - 1;
+
+
+			out_x = (out_x - rotx);
+			out_y = (out_y - roty);
+
+			out_x = out_x * cos(ang) - out_y * sin(ang);
+			out_y = out_y * cos(ang) + out_x * sin(ang);
+
+			out_x += rotx;
+			out_y += roty;
+			buffer_2d[i].x = out_x;
+			buffer_2d[i].y = out_y;
+		}
+
+
 		//uv triangle 1
 		buffer_uv.push_back({ 0, 0 });
 		buffer_uv.push_back({ 1, 0 });
@@ -359,12 +395,12 @@ public:
 		rotations.push_back(ang);
 		rotations.push_back(ang);
 		//rot points
-		rot_points.push_back({ x, y });
-		rot_points.push_back({ x, y });
-		rot_points.push_back({ x, y });
-		rot_points.push_back({ x, y });
-		rot_points.push_back({ x, y });
-		rot_points.push_back({ x, y });
+		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y});
+		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
+		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
+		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
+		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
+		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
 	}
 
 
@@ -403,86 +439,4 @@ public:
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
-};
-
-
-
-class Engine {
-private:
-	Window* wind;
-	Input* in;
-	HDC dc_w;
-	HGLRC context;
-	std::function<void()> renderFund;
-public:
-	Engine();
-	Engine(LPCWSTR window_name, int width, int height, int x, int y) {
-		PIXELFORMATDESCRIPTOR windowPixelFormatDesc = { 0 };
-		windowPixelFormatDesc.nSize = sizeof(windowPixelFormatDesc);
-		windowPixelFormatDesc.nVersion = 1;
-		windowPixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-		windowPixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-		windowPixelFormatDesc.cColorBits = 32;
-		windowPixelFormatDesc.cAlphaBits = 8;
-		windowPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
-		windowPixelFormatDesc.cDepthBits = 24;
-		windowPixelFormatDesc.cStencilBits = 8;
-
-		//create window
-		wind = new Window(window_name, L"ENG1", width, height, x, y);
-		in = new Input();
-		//getting device context
-		dc_w = GetDC(wind->getHwnd());
-		//choosing pixel format
-		int pixelFormat = ChoosePixelFormat(dc_w, &windowPixelFormatDesc);
-		//set pixel format
-		SetPixelFormat(dc_w, pixelFormat, &windowPixelFormatDesc);
-		//now create opengl context
-		context = wglCreateContext(dc_w);
-		if (!wglMakeCurrent(dc_w, context)) {
-			std::cerr << "Failed to make context current\n";
-		}
-		//glViewport(0, 0, rect.right - rect.left, rect.bottom - rect.top);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glEnable(GL_TEXTURE_2D);
-		ShowWindow(wind->getHwnd(), SW_SHOW);
-		
-	}
-	~Engine() {
-
-	}
-	void setRenderFunction(std::function<void()> func) {
-		renderFund = func;
-	}
-	//Create a modern opengl context
-	//https://gist.github.com/nickrolfe/1127313ed1dbf80254b614a721b3ee9c
-	bool updateWindow();
-	//primitive rendering
-	void drawTriangle(float x, float y, float size);
-	void drawCircle(float x, float y, float r);
-	void drawPoint(float x, float y);
-	void drawRectangle(float x, float y, float w, float h);
-	void drawLine(float x1, float y1, float x2, float y2);
-	void drawLineBetter(float x1, float y1, float x2, float y2);
-
-	//image functions
-	void renderImg(IMG img, float x, float y, int w, int h);
-	//rotates counter clockwise around top left point
-	void renderImgRotated(IMG img, float x, float y, int w, int h, int ang);
-	//run after you've done all the editing of data you want to
-	void updateIMG(IMG img) {
-		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-	//input functions
-	//takes keys so you can use either virtual key codes or the char value for letters
-	bool getKeyDown(char key) {
-		return in->GetKeyDown(key);
-	}
-	bool getKeyReleased(char key) {
-		return in->getKeyReleased(key);
-	}
-
 };

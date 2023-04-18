@@ -9,18 +9,45 @@ IMG bmptest;
 int ang = 0;
 int r_ang = 360;
 int c = 0;
+float pos = 0;
+float posy = 0;
+bool dir = false;
+bool dir2 = false;
+double timer = 0;
 
 void renderFunction() {
-	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
-	eng2.drawTriangle(0.5f, 0.3f, 0.6f, 0.5f, 0.8f, 0.3f);
-	eng2.drawQuad(-0.4f, 0.3f, 0.2f, 0.2f);
-	eng2.setDrawColor({ 1.0f, 0.3f, 0.1f, 0.0f });
-	for (float y = 0.4f; y >= -0.1f; y -= 0.01f) {
-		eng2.drawPoint(0.3f, y);
+	if (timer >= 0.01f) {
+		if (pos <= 0.0f) {
+			dir = false;
+		}
+		else if (pos >= 640.0f) {
+			dir = true;
+		}
+		if (posy <= 0.0f) {
+			dir2 = false;
+		}
+		else if (posy >= 480.0f) {
+			dir2 = true;
+		}
+		(!dir) ? pos += 1.0f : pos -= 1.0f;
+		(!dir2) ? posy += 1.0f : posy -= 1.0f;
+		timer = 0;
 	}
+	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
+	eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
+	eng2.drawQuad(pos, 10.0f, 60.0f, 60.0f);
+	eng2.drawQuad(0.0f, posy, 50.0f, 50.0f);
+	eng2.drawQuad(600.0f, 300.0f, 50.0f, 50.0f);
+	eng2.drawQuad(640.0f, 400.0f, 50.0f, 50.0f);
+	eng2.setDrawColor({ 1.0f, 0.3f, 0.1f, 0.0f });
+	for (float y = 100.0f; y <= 300.0f; y += 1.00f) {
+		eng2.add2DPoint(50.0f, y);
+		//eng2.drawPoint(50.0f, y);
+	}
+	eng2.drawPoints();
 	eng2.setDrawColor({ 0.0f, 1.0f, 0.4f, 0.0f });
-	eng2.drawLine(-0.4f, -0.4f, 0.1f, -0.8f, 2.0f);
-	eng2.drawCircle(0.4f, -0.6f, 0.1f);
+	eng2.drawLine(350.0f, 200.0f, 450.0f, 420.0f, 2.0f);
+	eng2.drawCircle(400.0f, 250.0f, 50.0f);
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -34,14 +61,14 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	//std::cout << r << "\n";
-	eng2.addImageCall(0.2f, 0.2f, 0.2f, 0.2f);
-	eng2.addImageCall(-0.4f, -0.4f, 0.3f, 0.3f);
-	eng2.addImageCall(0.5f, -0.5f, 0.2f, 0.2f);
+	eng2.addImageCall(450.0f, 300.0f, 50.0f, 50.0f);
+	eng2.addImageCall(250.0f, 250.0f, 80.0f, 80.0f);
+	eng2.addImageCall(360.0f, 250.0f, 50.0f, 50.0f);
 	eng2.renderImgs(imgtest);
 	//eng2.renderImg(imgtest, 0.3f, 0.3f, 0.2f, 0.2f);
-	eng2.addImageRotatedCall(-0.2f, -0.1f, 0.2f, 0.2f, r);
-	eng2.addImageRotatedCall(-0.5f, 0.2f, 0.2f, 0.2f, r);
-	eng2.addImageRotatedCall(0.5f, -0.6f, 0.2f, 0.2f, r_r);
+	eng2.addImageRotatedCall(150.0f, 80.0f, 50.0f, 50.0f, r);
+	eng2.addImageRotatedCall(325.0f, 160.0f, 50.0f, 50.0f, r);
+	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
 	eng2.renderImgsRotated(imgtest);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 }
@@ -67,6 +94,7 @@ int main() {
 		double del = eng2.getDelta();
 		//std::cout << del << "\n";
 		d += del;
+		timer += del;
 		std::pair<double, double> frames = eng2.getFrames();
 		if(d >= 1.0){
 			std::cout << "1 second\n";
