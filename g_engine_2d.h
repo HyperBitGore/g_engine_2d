@@ -1,11 +1,10 @@
 #pragma once
 
 #include "gl_defines.h"
-#include <iostream>
+#include "g_primitive_funcs.h"
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <functional>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "lodepng.h"
@@ -74,11 +73,25 @@ public:
 	}
 };
 
+struct Glyph {
+	char c;
+	int n_con;
+
+};
+
+//speed this up with a hashmap when done
+struct Font {
+	std::string name;
+	std::vector<Glyph> glyphs;
+};
+
+
 class FontRenderer {
 private:
 
 public:
-
+	void loadFont(std::string file);
+	void drawText(std::string text, Font font);
 };
 
 

@@ -89,6 +89,8 @@ int main() {
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
+	FontRenderer fr;
+	fr.loadFont("EnvyCodeR.ttf");
 	double d = 0;
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();
