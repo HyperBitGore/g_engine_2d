@@ -75,7 +75,6 @@ public:
 
 struct Glyph {
 	char c;
-	int n_con;
 
 };
 
