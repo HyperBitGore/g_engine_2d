@@ -32,6 +32,7 @@ static void FatalError(const char* message)
 //draw text
 //optimize drawing
 //	-remove uniform calls in draw calls, so move color setting to a different function
+//  -reduce shader changes
 //	-maybe switch to a seperate queue for all the calls and call of them at once
 //switch circle to entirly shader based instead of using lines
 //add 3d support
@@ -166,6 +167,24 @@ struct vec4 {
 	float w;
 };
 
+struct img_vertex {
+	float x;
+	float y;
+	float z;
+	float uvx; //tex coord x
+	float uvy; //tex coord y
+	float rotation; //rotation in radians
+	float rot_x; //point x to rotate around
+	float rot_y; //point y to rotate around
+	uint8_t r; //red mod value
+	uint8_t g; //green mod value
+	uint8_t b; //blue mod value
+	uint8_t a; //alpha mod value
+	//maybe add texture index, so we would have a big texture array instead of binding them seperataly everytime
+};
+
+
+
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 
@@ -215,7 +234,7 @@ private:
 	//vertex vectors
 	std::vector<vec2> buffer_2d;
 	std::vector<vec4> buffer_img;
-	std::vector<vec4> buffer_3d;
+	std::vector<img_vertex> img_buffer;
 
 	//rotation vectors
 	std::vector<vec2> rot_points;

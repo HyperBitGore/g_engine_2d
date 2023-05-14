@@ -690,11 +690,12 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindVertexArray_g(0);
 	//speed up push_backs
 	buffer_2d.reserve(1000);
-	buffer_3d.reserve(1000);
 	buffer_uv.reserve(1000);
 	rotations.reserve(1000);
 	buffer_img.reserve(1000);
 	rot_points.reserve(1000);
+	img_buffer.reserve(1000);
+
 
 	ShowWindow(wind->getHwnd(), SW_SHOW);
 }

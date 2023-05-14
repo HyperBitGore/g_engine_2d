@@ -38,11 +38,18 @@ struct font_dir {
 	std::vector<table_dir> table;
 };
 
+struct glyph_index {
+	int index;
+	UINT16 c;
+};
+
 struct cmap_table {
 	UINT16 platformID;
 	UINT16 platformSpecificID;
 	UINT32 offset;
+	std::vector<glyph_index> indexs;
 };
+
 
 
 struct cmap {
@@ -98,9 +105,104 @@ int getOffset(std::string comp, font_dir dir) {
 		}
 	}
 }
+struct format4 {
+	UINT16 format;
+	UINT16 length;
+	UINT16 language;
+	UINT16 segCountX2;
+	UINT16 searchRange;
+	UINT16 entrySelector;
+	UINT16 rangeShift;
+	std::vector<UINT16> endcode;
+	UINT16 reservedPad; //left for padding
+	std::vector<UINT16> startCode;
+	std::vector<UINT16> idDelta;
+	std::vector<UINT16> idRangeOffset;
+	std::vector<UINT16> glyphIndexArray;
+};
+int get_glyph_index_format4(UINT16 c, format4* f, UINT16* idRangeStart) {
+	int index = -1;
+	for (int i = 0; i < f->segCountX2 / 2; i++) {
+		if (f->endcode[i] > c) {
+			index = i;
+			break;
+		}
+	}
+	if (index == -1) {
+		return 0;
+	}
+	if (f->startCode[index] < c) {
+		UINT16* ptr = nullptr;
+		if (f->idRangeOffset[index] != 0) {
+			ptr = idRangeStart + index + f->idRangeOffset[index] / 2;
+			ptr += c - f->startCode[index];
+			if (SwapTwoBytes(*ptr) == 0) { return 0; }
+			return SwapTwoBytes(*ptr) + f->idDelta[index];
+		}
+		else {
+			return c + f->idDelta[index];
+		}
+	}
 
+	return 0;
+}
 
+//c should be at the start of the cmap table so the table.offset works
+void readFormat4(char* c, cmap_table table) {
+	//now we get to reading, probably make cmap_table have array of glyph indexs so easier to store
+	char* m = c + table.offset;
+	UINT16* t = (UINT16*)m;
+	format4 form;
+	form.format = SwapTwoBytes(*t);
+	t++;
+	form.length = SwapTwoBytes(*t);
+	t++;
+	form.language = SwapTwoBytes(*t);
+	t++;
+	form.segCountX2 = SwapTwoBytes(*t);
+	t++;
+	form.searchRange = SwapTwoBytes(*t);
+	t++;
+	form.entrySelector = SwapTwoBytes(*t);
+	t++;
+	form.rangeShift = SwapTwoBytes(*t);
+	t++;
+	//now we read through the rest of the data of the format
+	//get the actual correct values
+	for (int i = 0; i < form.segCountX2 / 2; i++) {
+		form.endcode.push_back(SwapTwoBytes(*(t + i)));
 
+	}
+	t += form.segCountX2 / 2 + 1; //add one because there is apparentaly a padding two bytes between endcode list and rest
+	for (int i = 0; i < form.segCountX2 / 2; i++) {
+		form.startCode.push_back(SwapTwoBytes(*(t + i)));
+
+	}
+	t += form.segCountX2 / 2;
+	for (int i = 0; i < form.segCountX2 / 2; i++) {
+		form.idDelta.push_back(SwapTwoBytes(*(t + i)));
+
+	}
+	t += form.segCountX2 / 2;
+	UINT16* idRangeStart = t;
+	for (int i = 0; i < form.segCountX2 / 2; i++) {
+		form.idRangeOffset.push_back(SwapTwoBytes(*(t + i)));
+
+	}
+	t += form.segCountX2 / 2;
+	//now we read the glyphidarray
+	int remaining = form.length - (((char*)t) - m);
+
+	for (int i = 0; i < remaining / 2; i++) {
+		form.glyphIndexArray.push_back(SwapTwoBytes(*(t + i)));
+	}
+	//now we read all of the character codes
+	UINT16 start = 32;
+	for (start; start <= 563; start++) {
+		table.indexs.push_back({ get_glyph_index_format4(start, &form, idRangeStart), start});
+	}
+	std::cout << table.indexs[0].c << " : " << table.indexs[0].index << "\n";
+}
 
 //https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
 //need to write support for the formats and figure out how to get format the tables are in
@@ -124,14 +226,49 @@ cmap readCmap(char* c, int offset, int length) {
 		te++;
 		t = (UINT16*)te;
 		map.tables.push_back(table); //offset is from start of cmap
+		int format = (m + map.tables[i].offset)[0] << 8 | (m + map.tables[i].offset)[1];
+		switch (format) {
+		case 4:
+			//most common
+			readFormat4(m, map.tables[i]);
+			break;
+		case 0:
+			break;
+		case 2:
+			break;
+		case 6:
+			break;
+		case 8:
+			break;
+		case 10:
+			break;
+		case 12:
+			//most common
+			
+			break;
+		case 13:
+			break;
+		case 14:
+			break;
+		}
 	}
+	
+
+
 	return map;
+}
+
+void readLoca(char* c, int offset, int length) {
+
 }
 
 void readDirectorys(font_dir* directory, Font* f, char* c) {
 	for (auto& i : directory->table) {
 		if (i.t.compare("cmap") == 0) {
 			readCmap(c, i.offset, i.length);
+		}
+		else if (i.t.compare("loca") == 0) {
+			readLoca(c, i.offset, i.length);
 		}
 	}
 }
@@ -144,7 +281,6 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 //https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01
 // http://stevehanov.ca/blog/?id=143
 //https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
-//need to figure out how to turn characters in triangle data
 //big endian so characters will be reversed to me
 void FontRenderer::loadFont(std::string file) {
 	std::ifstream f;
@@ -174,7 +310,7 @@ void drawBezier() {
 
 }
 
-
+//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 void FontRenderer::drawText(std::string text, Font font) {
 	
 }
