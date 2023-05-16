@@ -1,5 +1,5 @@
 #include "g_engine_2d.h"
-
+#include <bitset>
 
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2 = EngineNewGL(L"Test Window", 640, 480);
@@ -73,7 +73,9 @@ void renderFunction() {
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 }
 
-
+int nthBit(int number, int n) {
+	return (number >> n) & 1;
+}
 
 
 //4278190335
@@ -91,6 +93,11 @@ int main() {
 	eng2.setRenderFunction(renderFunction);
 	FontRenderer fr;
 	fr.loadFont("EnvyCodeR.ttf");
+
+	std::bitset<32> x(10);
+	std::cout << x << "\n";
+	std::cout << nthBit(10, 2) << "\n";
+	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();

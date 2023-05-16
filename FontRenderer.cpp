@@ -1,4 +1,9 @@
 #include "g_engine_2d.h"
+#include <array>
+#include <algorithm>
+#include <bitset>
+
+
 
 #define SwapTwoBytes(data) \
 ( (((data) >> 8) & 0x00FF) | (((data) << 8) & 0xFF00) ) 
@@ -374,18 +379,225 @@ TTFHeader readHead(char* c, int offset, int length) {
 
 
 
-//glyf time
+struct glyf {
+	short numberOfContours;
 
-void readGlyf(char* c, int offset, int length) {
+	//supposed to be FWords but fuck em
+	short xMin;
+	short yMin;
+	short xMax;
+	short yMax;
+};
 
+
+
+struct simp_glyf : glyf {
+	UINT16 instructionLength;
+	std::vector<UINT8> instructions; 
+	std::vector<UINT8> flags;
+	std::vector<short> xCoords; //apparently this can also be a uint8 but we'll see
+	std::vector<short> yCoords;
+	std::vector<UINT16> endPtsOfCountours;
+};
+//for later use
+struct comp_glyf : glyf {
+
+};
+
+
+
+struct glyph_table {
+	std::vector<simp_glyf> simple_glyphs;
+	std::vector<comp_glyf> compound_glyphs;
+};
+
+int getnthBit(short number, int n) {
+	return (number >> n) & 1;
+}
+int getnthBit(UINT8 number, int n) {
+	return (number >> n) & 1;
 }
 
+
+UINT8 swap1Byte(UINT8 n) {
+	UINT8 n2 = 0;
+	for (int i = 0, j = 7; i < 8; i++, j--) {
+		int s = getnthBit(n, j);
+		if (s == 1) {
+			n2 |= 1 << i;
+		}
+	}
+	return n2;
+	//return (((n >> 7) & 1) | ((n >> 6) & 1) | ((n >> 5) & 1) | ((n >> 4) & 1) | ((n >> 3) & 1) | ((n >> 2) & 1) | ((n >> 1) & 1) | ((n >> 0) & 1));
+}
+
+
+//glyf time
+
+glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) {
+	glyph_table table;
+	for (int i = 0; i < locas.size(); i++) {
+		char* m = c + offset + locas[i].offset;
+		short* s = (short*)m;
+		glyf g;
+		g.numberOfContours = SwapTwoBytes(*s);
+		s++;
+		g.xMin = SwapTwoBytes(*s);
+		s++;
+		g.yMin = SwapTwoBytes(*s);
+		s++;
+		g.xMax = SwapTwoBytes(*s);
+		s++;
+		g.yMax = SwapTwoBytes(*s);
+		s++;
+		if (g.numberOfContours >= 0) {
+			//simple glyph
+			simp_glyf sg;
+			sg.numberOfContours = g.numberOfContours;
+			sg.xMin = g.xMin;
+			sg.yMin = g.yMin;
+			sg.xMax = g.xMax;
+			sg.yMax = g.yMax;
+			//now we read endpts of countours
+			UINT16* t = (UINT16*)s;
+			for (int j = 0; j < sg.numberOfContours; j++) {
+				sg.endPtsOfCountours.push_back(SwapTwoBytes(*t));
+				t++;
+			}
+			//instructions now
+			sg.instructionLength = *t;
+			//sg.instructionLength /= 8;
+			t++;
+			UINT8* d = (UINT8*)t;
+			//have to swap these probably?
+			for (int j = 0; j < sg.instructionLength; j++) {
+				sg.instructions.push_back(*d);
+				d++;
+			}
+			//now flags
+			int last_index = sg.endPtsOfCountours[sg.numberOfContours - 1];
+			for (int j = 0; j < (last_index + 1); j++) {
+				sg.flags.push_back(*d);
+				d++;
+				if (((sg.flags[j] >> 3) & 1) == 1) {
+					UINT8 repeat_count = *d;
+					while (repeat_count-- > 0) {
+						j++;
+						sg.flags.push_back(sg.flags[j - 1]);
+					}
+					d++;
+				}
+			}
+			//have to swap these
+			//http://stevehanov.ca/blog/?id=143
+			//xcoords
+			short prev_coord = 0;
+			short cur_coord = 0;
+			s = (short*)d;
+			short val = 0;
+			for (int j = 0; j < (last_index + 1); j++) {
+				//fuck ur combined flag bitch
+				//int flag_combined = ((getnthBit(sg.flags[j], 1) << 1) | (getnthBit(sg.flags[j], 4)));
+				if (getnthBit(sg.flags[j], 1) == 1) {
+					//one byte
+					UINT8 temp = swap1Byte(*d);
+					d++;
+					short out = temp;
+					if (getnthBit(sg.flags[j], 4) != 1) {
+						out *= -1;
+					}
+					val += out;
+					//cur_coord = out;
+				}
+				else {
+					//two byte
+					short* ss = (short*)d;
+					short out = SwapTwoBytes(*ss);
+					d += 2;
+					if (getnthBit(sg.flags[j], 4) == 1) {
+						//same as previous
+						val += out;
+						//cur_coord = prev_coord;
+					}
+					else {
+						//signed 16 bit delta vector, ie change in x
+						//cur_coord = prev_coord + out;
+					}
+					
+				}
+				//sg.xCoords.push_back(cur_coord + prev_coord);
+				sg.xCoords.push_back(val);
+				prev_coord = cur_coord;
+			}
+			//ycoords
+			prev_coord = 0;
+			cur_coord = 0;
+			for (int j = 0; j < (last_index + 1); j++) {
+				int flag_combined = ((getnthBit(sg.flags[j], 2)) | (getnthBit(sg.flags[j], 5)));
+				switch (flag_combined) {
+				case 0: {
+					cur_coord = SwapTwoBytes(*s);
+					s++;
+				} break;
+				case 1: { cur_coord = 0; }break;
+				case 2: { cur_coord = swap1Byte((*(UINT8*)s)) * -1; s++; }break;
+				case 3: { cur_coord = swap1Byte((*(UINT8*)s)); s++; } break;
+				}
+				sg.yCoords.push_back(cur_coord + prev_coord);
+				prev_coord = cur_coord;
+			}
+			table.simple_glyphs.push_back(sg);
+		}
+		else {
+			//compound glyph do nothing for now
+		}
+
+	}
+	return table;
+}
+
+
+table_dir* findTable(std::string table, font_dir* directory) {
+	for (int i = 0; i < directory->table.size(); i++) {
+		if (directory->table[i].t.compare(table) == 0) {
+			return &directory->table[i];
+		}
+	}
+	return nullptr;
+}
+
+
 void readDirectorys(font_dir* directory, Font* f, char* c) {
+	//testcaste for swap1byte
+	/*
+	UINT8 tf = 10;
+	std::bitset<8> x(tf);
+	std::cout << x << "\n";
+	std::bitset<8> y(swap1Byte(tf));
+	std::cout << y << "\n";*/
+	struct
+	{
+		bool operator()(table_dir a, table_dir b) const { return a.t[0] < b.t[0]; }
+	}
+	compareTableDir;
+
 	//need to sort directorys so you do them in right order
 	cmap c_map;
 	TTFHeader header;
 	std::vector<loca> locas;
-	for (auto& i : directory->table) {
+	glyph_table g_table;
+	table_dir* tab = nullptr;
+	tab = findTable("cmap", directory);
+	c_map = readCmap(c, tab->offset, tab->length);
+	tab = findTable("head", directory);
+	header = readHead(c, tab->offset, tab->length);
+	tab = findTable("loca", directory);
+	locas = readLoca(c, tab->offset, tab->length, header.indexToLocFormat, &c_map);
+	tab = findTable("glyf", directory);
+	g_table = readGlyfs(c, tab->offset, tab->length, locas);
+	std::cout << g_table.simple_glyphs[65].instructionLength << "\n";
+	//std::sort(directory->table.begin(), directory->table.end(), compareTableDir);
+	/*for (auto& i : directory->table) {
 		if (i.t.compare("cmap") == 0) {
 			c_map = readCmap(c, i.offset, i.length);
 		}
@@ -395,7 +607,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 		else if (i.t.compare("loca") == 0) {
 			locas = readLoca(c, i.offset, i.length, header.indexToLocFormat, &c_map);
 		}
-	}
+	}*/
 }
 
 
@@ -406,6 +618,9 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 //https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01
 // http://stevehanov.ca/blog/?id=143
 //https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
+// https://learn.microsoft.com/en-us/typography/opentype/spec/
+// https://tchayen.github.io/posts/ttf-file-parsing
+// https://fontdrop.info/
 //big endian so characters will be reversed to me
 void FontRenderer::loadFont(std::string file) {
 	std::ifstream f;
