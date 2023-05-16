@@ -464,12 +464,11 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				sg.endPtsOfCountours.push_back(SwapTwoBytes(*t));
 				t++;
 			}
-			//instructions now
-			sg.instructionLength = *t;
-			//sg.instructionLength /= 8;
+			//instructions now, can't believe I forgot to swap this smh, like an hour wasted 
+			sg.instructionLength = SwapTwoBytes(*t);
 			t++;
 			UINT8* d = (UINT8*)t;
-			//have to swap these probably?
+			//don't have to swap 
 			for (int j = 0; j < sg.instructionLength; j++) {
 				sg.instructions.push_back(*d);
 				d++;
@@ -494,56 +493,76 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			short prev_coord = 0;
 			short cur_coord = 0;
 			s = (short*)d;
-			short val = 0;
 			for (int j = 0; j < (last_index + 1); j++) {
 				//fuck ur combined flag bitch
 				//int flag_combined = ((getnthBit(sg.flags[j], 1) << 1) | (getnthBit(sg.flags[j], 4)));
+				bool dor = false;
 				if (getnthBit(sg.flags[j], 1) == 1) {
 					//one byte
-					UINT8 temp = swap1Byte(*d);
+					UINT8 temp = *d;
 					d++;
 					short out = temp;
 					if (getnthBit(sg.flags[j], 4) != 1) {
 						out *= -1;
 					}
-					val += out;
-					//cur_coord = out;
+					cur_coord = out + prev_coord;
 				}
 				else {
 					//two byte
-					short* ss = (short*)d;
-					short out = SwapTwoBytes(*ss);
-					d += 2;
 					if (getnthBit(sg.flags[j], 4) == 1) {
 						//same as previous
-						val += out;
-						//cur_coord = prev_coord;
+						cur_coord = prev_coord;
+						//dor = true;
 					}
 					else {
+						short* ss = (short*)d;
+						short out = SwapTwoBytes(*ss);
+						d += 2;
 						//signed 16 bit delta vector, ie change in x
-						//cur_coord = prev_coord + out;
+						cur_coord = out + prev_coord;
+
 					}
 					
 				}
-				//sg.xCoords.push_back(cur_coord + prev_coord);
-				sg.xCoords.push_back(val);
+				//(dor) ? sg.xCoords.push_back(prev_coord) : sg.xCoords.push_back(cur_coord + prev_coord);
+				sg.xCoords.push_back(cur_coord);
 				prev_coord = cur_coord;
+				
 			}
 			//ycoords
 			prev_coord = 0;
 			cur_coord = 0;
 			for (int j = 0; j < (last_index + 1); j++) {
-				int flag_combined = ((getnthBit(sg.flags[j], 2)) | (getnthBit(sg.flags[j], 5)));
-				switch (flag_combined) {
-				case 0: {
-					cur_coord = SwapTwoBytes(*s);
-					s++;
-				} break;
-				case 1: { cur_coord = 0; }break;
-				case 2: { cur_coord = swap1Byte((*(UINT8*)s)) * -1; s++; }break;
-				case 3: { cur_coord = swap1Byte((*(UINT8*)s)); s++; } break;
+				bool dor = false;
+				if (getnthBit(sg.flags[j], 2) == 1) {
+					//one byte
+					UINT8 temp = *d;
+					d++;
+					short out = temp;
+					if (getnthBit(sg.flags[j], 5) != 1) {
+						out *= -1;
+					}
+					cur_coord = out + prev_coord;
 				}
-				sg.yCoords.push_back(cur_coord + prev_coord);
+				else {
+					//two byte
+					if (getnthBit(sg.flags[j], 5) == 1) {
+						//same as previous
+						cur_coord = prev_coord;
+						//dor = true;
+					}
+					else {
+						short* ss = (short*)d;
+						short out = SwapTwoBytes(*ss);
+						d += 2;
+						//signed 16 bit delta vector, ie change in x
+						cur_coord = out + prev_coord;
+
+					}
+
+				}
+				//(dor) ? sg.xCoords.push_back(prev_coord) : sg.xCoords.push_back(cur_coord + prev_coord);
+				sg.yCoords.push_back(cur_coord);
 				prev_coord = cur_coord;
 			}
 			table.simple_glyphs.push_back(sg);
