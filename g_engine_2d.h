@@ -164,7 +164,7 @@ struct img_vertex {
 };
 
 struct Glyph {
-	char c;
+	UINT16 c; //for unicode
 	std::vector<vec2> points;
 };
 
@@ -268,6 +268,8 @@ public:
 	//draws points from the buffer_2d
 	void drawPoints();
 
+	//adds quadratic bezier points but doesnt do a draw call
+	void addquadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
 	//draws a quadratic bezier curve
 	void quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
 	//draws a cubic bezier curve
@@ -463,7 +465,7 @@ public:
 	}
 	//font functions
 	Font loadFont(std::string file);
-	void drawText(std::string text, Font font);
+	void drawText(std::string text, Font font, int ptsize);
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

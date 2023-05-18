@@ -264,7 +264,7 @@ cmap readCmap(char* c, int offset, int length) {
 
 //stores character code and offset
 struct loca {
-	char c;
+	UINT16 c;
 	UINT32 offset;
 };
 
@@ -380,7 +380,7 @@ TTFHeader readHead(char* c, int offset, int length) {
 
 
 struct glyf {
-	char c;
+	UINT16 c;
 	short numberOfContours;
 
 	//supposed to be FWords but fuck em
@@ -615,14 +615,31 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 	for (auto& i : g_table.simple_glyphs) {
 		Glyph g;
 		g.c = i.c;
-		for (int j = 0; j < i.flags.size(); j++) {
-			if (getnthBit(i.flags[j], 0) == 1) {
-				g.points.push_back({ (float)i.xCoords[j], (float)i.yCoords[j] });
-			}
-			else {
-				
+
+		int k = 0;
+		for (int j = 0; j < i.numberOfContours; j++) {
+			for (; k < i.endPtsOfCountours[j]; k++) {
+				if (getnthBit(i.flags[k], 0) == 1) {
+					g.points.push_back({ (float)i.xCoords[k], (float)i.yCoords[k] });
+				}
+				else{
+					vec2 p1 = { (float)i.xCoords[k - 1], (float)i.yCoords[k - 1] };
+					vec2 p2 = { (float)i.xCoords[k], (float)i.yCoords[k] };
+					vec2 p3 = { (float)i.xCoords[k + 1], (float)i.yCoords[k + 1] };
+					//get the middle point between p1 and p3
+					if (getnthBit(i.flags[k + 1], 0) == 1) {
+						p3.x = p2.x + (p3.x - p2.x) / 2.0;
+						p3.y = p2.y + (p3.y - p2.y) / 2.0;
+					}
+					g.points.push_back(p1);
+					g.points.push_back(p2);
+					g.points.push_back(p3);
+					//generate points
+
+				}
 			}
 		}
+		f->glyphs.push_back(g);
 	}
 	std::cout << g_table.simple_glyphs[65].instructionLength << "\n";
 
@@ -663,8 +680,19 @@ Font EngineNewGL::loadFont(std::string file) {
 	return font;
 }
 
+void drawChar(UINT16 c, Font font, int ptsize) {
+
+}
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
-void EngineNewGL::drawText(std::string text, Font font) {
-	
+void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
+	for (int i = 1; i < font.glyphs[32].points.size() - 1; i++) {
+		//vec2 p1 = {  font.glyphs[32].points[i - 1].x / 8 + 250, font.glyphs[32].points[i - 1].y / 8 + 250 };
+		//vec2 p2 = { font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 };;
+		//vec2 p3 = { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 };;
+		//addquadraticBezier(p1, p2, p3, 20);
+		buffer_2d.push_back({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250});
+	}
+	//drawLines(0.2f);
+	drawPoints();
 }

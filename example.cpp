@@ -5,6 +5,7 @@
 EngineNewGL eng2 = EngineNewGL(L"Test Window", 640, 480);
 IMG imgtest;
 IMG bmptest;
+Font f_test;
 
 int ang = 0;
 int r_ang = 360;
@@ -56,7 +57,7 @@ void renderFunction() {
 	eng2.drawPoints();
 	eng2.setDrawColor({ 0.0f, 1.0f, 0.4f, 0.0f });
 	eng2.drawLine(350.0f, 200.0f, 450.0f, 420.0f, 2.0f);
-	eng2.drawCircle(400.0f, 250.0f, 50.0f);
+	//eng2.drawCircle(400.0f, 250.0f, 50.0f);
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -70,10 +71,10 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	//std::cout << r << "\n";
-	eng2.addImageCall(450.0f, 300.0f, 50.0f, 50.0f);
-	eng2.addImageCall(250.0f, 250.0f, 80.0f, 80.0f);
-	eng2.addImageCall(360.0f, 250.0f, 50.0f, 50.0f);
-	eng2.renderImgs(imgtest);
+	//eng2.addImageCall(450.0f, 300.0f, 50.0f, 50.0f);
+	//eng2.addImageCall(250.0f, 250.0f, 80.0f, 80.0f);
+	//eng2.addImageCall(360.0f, 250.0f, 50.0f, 50.0f);
+	//eng2.renderImgs(imgtest);
 	//eng2.renderImg(imgtest, 0.3f, 0.3f, 0.2f, 0.2f);
 	eng2.addImageRotatedCall(150.0f, 80.0f, 50.0f, 50.0f, r);
 	eng2.addImageRotatedCall(325.0f, 160.0f, 50.0f, 50.0f, r);
@@ -82,9 +83,12 @@ void renderFunction() {
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 
 	//testing beziers
-	eng2.quadraticBezier({ 300.0f, 100.0f }, { 350.0f, 150.0f }, { 400.0f, 100.0f }, 20);
-	eng2.cubicBezier({ 300.0f, 400.0f }, { 325.0f, 425.0f }, { 350.0f, 425.0f }, { 375.0f, 400.0f }, 20);
+	//eng2.quadraticBezier({ 300.0f, 100.0f }, { 350.0f, 150.0f }, { 400.0f, 100.0f }, 20);
+	//eng2.cubicBezier({ 300.0f, 400.0f }, { 325.0f, 425.0f }, { 350.0f, 425.0f }, { 375.0f, 400.0f }, 20);
 	eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
+
+	//testing font rendering
+	eng2.drawText("Hello World", f_test, 24);
 }
 
 int nthBit(int number, int n) {
@@ -105,7 +109,7 @@ int main() {
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	eng2.loadFont("EnvyCodeR.ttf");
+	f_test = eng2.loadFont("EnvyCodeR.ttf");
 
 	std::bitset<32> x(10);
 	std::cout << x << "\n";
