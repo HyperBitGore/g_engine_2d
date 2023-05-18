@@ -380,6 +380,7 @@ TTFHeader readHead(char* c, int offset, int length) {
 
 
 struct glyf {
+	char c;
 	short numberOfContours;
 
 	//supposed to be FWords but fuck em
@@ -440,6 +441,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 		char* m = c + offset + locas[i].offset;
 		short* s = (short*)m;
 		glyf g;
+		g.c = locas[i].c;
 		g.numberOfContours = SwapTwoBytes(*s);
 		s++;
 		g.xMin = SwapTwoBytes(*s);
@@ -587,19 +589,13 @@ table_dir* findTable(std::string table, font_dir* directory) {
 
 
 void readDirectorys(font_dir* directory, Font* f, char* c) {
-	//testcaste for swap1byte
+	//test case for swap1byte
 	/*
 	UINT8 tf = 10;
 	std::bitset<8> x(tf);
 	std::cout << x << "\n";
 	std::bitset<8> y(swap1Byte(tf));
 	std::cout << y << "\n";*/
-	struct
-	{
-		bool operator()(table_dir a, table_dir b) const { return a.t[0] < b.t[0]; }
-	}
-	compareTableDir;
-
 	//need to sort directorys so you do them in right order
 	cmap c_map;
 	TTFHeader header;
@@ -614,19 +610,22 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 	locas = readLoca(c, tab->offset, tab->length, header.indexToLocFormat, &c_map);
 	tab = findTable("glyf", directory);
 	g_table = readGlyfs(c, tab->offset, tab->length, locas);
+	//don't want to store pointers to anything in font file
+	//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization, 2.2
+	for (auto& i : g_table.simple_glyphs) {
+		Glyph g;
+		g.c = i.c;
+		for (int j = 0; j < i.flags.size(); j++) {
+			if (getnthBit(i.flags[j], 0) == 1) {
+				g.points.push_back({ (float)i.xCoords[j], (float)i.yCoords[j] });
+			}
+			else {
+				
+			}
+		}
+	}
 	std::cout << g_table.simple_glyphs[65].instructionLength << "\n";
-	//std::sort(directory->table.begin(), directory->table.end(), compareTableDir);
-	/*for (auto& i : directory->table) {
-		if (i.t.compare("cmap") == 0) {
-			c_map = readCmap(c, i.offset, i.length);
-		}
-		else if (i.t.compare("head") == 0){
-			header = readHead(c, i.offset, i.length);
-		}
-		else if (i.t.compare("loca") == 0) {
-			locas = readLoca(c, i.offset, i.length, header.indexToLocFormat, &c_map);
-		}
-	}*/
+
 }
 
 
@@ -641,7 +640,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 // https://tchayen.github.io/posts/ttf-file-parsing
 // https://fontdrop.info/
 //big endian so characters will be reversed to me
-void FontRenderer::loadFont(std::string file) {
+Font EngineNewGL::loadFont(std::string file) {
 	std::ifstream f;
 	f.open(file.c_str(), std::ios::binary);
 	//read the file into memory
@@ -661,15 +660,11 @@ void FontRenderer::loadFont(std::string file) {
 	font.name = file;
 	readDirectorys(&directory, &font, c);
 
-	return;
+	return font;
 }
 
-//draw a bezier curve
-void drawBezier() {
-
-}
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
-void FontRenderer::drawText(std::string text, Font font) {
+void EngineNewGL::drawText(std::string text, Font font) {
 	
 }

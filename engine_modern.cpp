@@ -73,6 +73,45 @@ void EngineNewGL::drawPoints() {
 }
 
 
+//draw a bezier curve
+//could probably throw this onto the gpu as a seperate shader, if I need to draw a gazillion curves
+void EngineNewGL::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv) {
+	float step = 1.0f / subdiv;
+	float lx = 0, ly = 0;
+	for (int i = 0; i <= subdiv; i++) {
+		float t = i * step;
+		float t1 = (1.0f - t);
+		float t2 = t * t;
+		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
+		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
+		(i == 0) ? lx = x, ly = y : lx, ly;
+		buffer_2d.push_back({ lx, ly });
+		buffer_2d.push_back({ x, y });
+		lx = x;
+		ly = y;
+	}
+	drawLines(0.5f);
+	//drawPoints();
+}
+
+void EngineNewGL::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv) {
+	float step = 1.0f / subdiv;
+	float lx = 0, ly = 0;
+	for (int i = 0; i <= subdiv; i++) {
+		float t = i * step;
+		float t1 = (1.0f - t);
+		float t2 = t * t;
+		float x = t1 * t1 * t1 * p1.x + 3*t1*t1*t*p2.x + 3*t1*t2*p3.x + t2*t*p4.x;
+		float y = t1 * t1 * t1 * p1.y + 3 * t1 * t1 * t * p2.y + 3 * t1 * t2 * p3.y + t2 * t * p4.y;
+		(i == 0) ? lx = x, ly = y : lx, ly;
+		buffer_2d.push_back({ lx, ly });
+		buffer_2d.push_back({ x, y });
+		lx = x;
+		ly = y;
+	}
+	drawLines(0.5f);
+}
+
 //draws a circle
 void EngineNewGL::drawCircle(float x, float y, float r) {
 	//use a seperate shader from points

@@ -44,8 +44,6 @@ static void FatalError(const char* message)
 
 
 
-
-
 //added customizability and clean up
 class Window {
 private:
@@ -74,25 +72,7 @@ public:
 	}
 };
 
-struct Glyph {
-	char c;
 
-};
-
-//speed this up with a hashmap when done
-struct Font {
-	std::string name;
-	std::vector<Glyph> glyphs;
-};
-
-
-class FontRenderer {
-private:
-
-public:
-	void loadFont(std::string file);
-	void drawText(std::string text, Font font);
-};
 
 
 class Input {
@@ -181,6 +161,17 @@ struct img_vertex {
 	uint8_t b; //blue mod value
 	uint8_t a; //alpha mod value
 	//maybe add texture index, so we would have a big texture array instead of binding them seperataly everytime
+};
+
+struct Glyph {
+	char c;
+	std::vector<vec2> points;
+};
+
+//speed this up with a hashmap when done
+struct Font {
+	std::string name;
+	std::vector<Glyph> glyphs;
 };
 
 
@@ -277,6 +268,10 @@ public:
 	//draws points from the buffer_2d
 	void drawPoints();
 
+	//draws a quadratic bezier curve
+	void quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
+	//draws a cubic bezier curve
+	void cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
 	//draws a circle
 	void drawCircle(float x, float y, float r);
 	//draws a quad
@@ -295,7 +290,6 @@ public:
 	void renderImg(IMG img, float x, float y, float w, float h);
 	//mass draws an image based on buffer_2d
 	void renderImgs(IMG img);
-
 	//rotates counter clockwise around top left point
 	void renderImgRotated(IMG img, float x, float y, float w, float h, float ang);
 	//mass draws an image with rotations
@@ -467,6 +461,9 @@ public:
 		}
 		return { frameRate, averageFrameTimeMilliseconds};
 	}
+	//font functions
+	Font loadFont(std::string file);
+	void drawText(std::string text, Font font);
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

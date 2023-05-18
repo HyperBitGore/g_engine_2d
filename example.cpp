@@ -15,6 +15,9 @@ bool dir = false;
 bool dir2 = false;
 double timer = 0;
 
+//bezier testing
+vec2 bez_m = { 120.0f, 130.0f };
+
 void renderFunction() {
 	if (timer >= 0.01f) {
 		if (pos <= 0.0f) {
@@ -32,6 +35,12 @@ void renderFunction() {
 		(!dir) ? pos += 1.0f : pos -= 1.0f;
 		(!dir2) ? posy += 1.0f : posy -= 1.0f;
 		timer = 0;
+	}
+	if (eng2.getKeyDown(VK_RIGHT)) {
+		bez_m.x += 0.01f;
+	}
+	else if (eng2.getKeyDown(VK_LEFT)) {
+		bez_m.x -= 0.01f;
 	}
 	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
 	eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
@@ -71,6 +80,11 @@ void renderFunction() {
 	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
 	eng2.renderImgsRotated(imgtest);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
+
+	//testing beziers
+	eng2.quadraticBezier({ 300.0f, 100.0f }, { 350.0f, 150.0f }, { 400.0f, 100.0f }, 20);
+	eng2.cubicBezier({ 300.0f, 400.0f }, { 325.0f, 425.0f }, { 350.0f, 425.0f }, { 375.0f, 400.0f }, 20);
+	eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
 }
 
 int nthBit(int number, int n) {
@@ -91,8 +105,7 @@ int main() {
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	FontRenderer fr;
-	fr.loadFont("EnvyCodeR.ttf");
+	eng2.loadFont("EnvyCodeR.ttf");
 
 	std::bitset<32> x(10);
 	std::cout << x << "\n";
