@@ -587,6 +587,23 @@ table_dir* findTable(std::string table, font_dir* directory) {
 	return nullptr;
 }
 
+void tesslateBezier(Glyph* g, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
+	float step = 1.0 / subdiv;
+	float lx = 0, ly = 0;
+	for (int i = 0; i <= subdiv; i++) {
+		float t = i * step;
+		float t1 = (1.0f - t);
+		float t2 = t * t;
+		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
+		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
+		(i == 0) ? lx = x, ly = y : lx, ly;
+		g->points.push_back({ lx, ly });
+		g->points.push_back({ x, y });
+		lx = x;
+		ly = y;
+	}
+}
+
 
 void readDirectorys(font_dir* directory, Font* f, char* c) {
 	//test case for swap1byte
@@ -618,25 +635,47 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 
 		int k = 0;
 		for (int j = 0; j < i.numberOfContours; j++) {
-			for (; k < i.endPtsOfCountours[j]; k++) {
+			int generated_points_start_index;
+			(g.points.size() > 0) ? generated_points_start_index = g.points.size() - 1: generated_points_start_index = 0;
+			for (; k <= i.endPtsOfCountours[j]; k++) {
+				//g.points.push_back({ (float)i.xCoords[k], (float)i.yCoords[k] });
 				if (getnthBit(i.flags[k], 0) == 1) {
+					size_t p3_in = k + 1;
+					if (k == i.endPtsOfCountours[j]) {
+						p3_in = 0;
+					}
+					vec2 p1 = { (float)i.xCoords[k], (float)i.yCoords[k] };
+					vec2 p2 = { (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] };
+					vec2 p3;
+					p3.x = p2.x + (p1.x - p2.x) / 2.0;
+					p3.y = p2.y + (p1.y - p2.y) / 2.0;
+					//tesslateBezier(&g, p1, p2, p3, 20);
 					g.points.push_back({ (float)i.xCoords[k], (float)i.yCoords[k] });
+					//g.points.push_back({ (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] });
+					
 				}
 				else{
-					vec2 p1 = { (float)i.xCoords[k - 1], (float)i.yCoords[k - 1] };
+					size_t p3_in = k + 1;
+					if (k == i.endPtsOfCountours[j]) {
+						p3_in = 0;
+					}
+					vec2 p1 = g.points[g.points.size() - 1];
 					vec2 p2 = { (float)i.xCoords[k], (float)i.yCoords[k] };
-					vec2 p3 = { (float)i.xCoords[k + 1], (float)i.yCoords[k + 1] };
+					vec2 p3 = { (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] };
 					//get the middle point between p1 and p3
-					if (getnthBit(i.flags[k + 1], 0) == 1) {
+					if (getnthBit(i.flags[p3_in], 0) == 1) {
 						p3.x = p2.x + (p3.x - p2.x) / 2.0;
 						p3.y = p2.y + (p3.y - p2.y) / 2.0;
 					}
-					g.points.push_back(p1);
-					g.points.push_back(p2);
-					g.points.push_back(p3);
+					//g.points.push_back(p1);
+					//g.points.push_back(p2);
+					//g.points.push_back(p3);
 					//generate points
-
+					tesslateBezier(&g, p1, p2, p3, 5);
 				}
+			}
+			if (getnthBit(i.flags[k - 1], 0) == 1) {
+				//g.points.push_back(g.points[generated_points_start_index]);
 			}
 		}
 		f->glyphs.push_back(g);
@@ -685,14 +724,16 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 }
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
+//do a bunch of memcpys for when i actually want to draw text
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	for (int i = 1; i < font.glyphs[32].points.size() - 1; i++) {
+	for (int i = 0; i < font.glyphs[32].points.size(); i++) {
 		//vec2 p1 = {  font.glyphs[32].points[i - 1].x / 8 + 250, font.glyphs[32].points[i - 1].y / 8 + 250 };
 		//vec2 p2 = { font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 };;
 		//vec2 p3 = { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 };;
 		//addquadraticBezier(p1, p2, p3, 20);
+		//std::cout << "x: " << font.glyphs[32].points[i].x << ", y= " << font.glyphs[32].points[i].y << "\n";
 		buffer_2d.push_back({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250});
 	}
-	//drawLines(0.2f);
 	drawPoints();
+	//drawLines(0.2f);
 }

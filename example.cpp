@@ -19,6 +19,8 @@ double timer = 0;
 //bezier testing
 vec2 bez_m = { 120.0f, 130.0f };
 
+vec2 mos = { 200.0f, 300.0f };
+
 void renderFunction() {
 	if (timer >= 0.01f) {
 		if (pos <= 0.0f) {
@@ -36,6 +38,10 @@ void renderFunction() {
 		(!dir) ? pos += 1.0f : pos -= 1.0f;
 		(!dir2) ? posy += 1.0f : posy -= 1.0f;
 		timer = 0;
+	}
+	if (eng2.getMouseLeftDown()) {
+		mos = eng2.getMousePos();
+		std::cout << mos.x << " : " << mos.y << "\n";
 	}
 	if (eng2.getKeyDown(VK_RIGHT)) {
 		bez_m.x += 0.01f;
@@ -63,7 +69,7 @@ void renderFunction() {
 		c = 0;
 		ang++;
 		r_ang--;
-		(r_ang <= 0) ? r_ang = 360 : r_ang; 
+		(r_ang <= 0) ? r_ang = 360 : r_ang;
 		if (ang > 360) {
 			ang = 0;
 		}
@@ -89,6 +95,8 @@ void renderFunction() {
 
 	//testing font rendering
 	eng2.drawText("Hello World", f_test, 24);
+	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
+	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
 }
 
 int nthBit(int number, int n) {

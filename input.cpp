@@ -26,7 +26,7 @@ bool Input::GetKeyDown(char key) {
 	}
 	return false;
 }
-bool Input::getKeyReleased(char key) {
+bool Input::GetKeyReleased(char key) {
 	short t = key;
 	if (key >= 97 && key <= 122) {
 		t = VkKeyScanEx(key, layout);
@@ -38,3 +38,4 @@ bool Input::getKeyReleased(char key) {
 	getState();
 	return false;
 }
+

@@ -93,7 +93,8 @@ public:
 
 
 	bool GetKeyDown(char key);
-	bool getKeyReleased(char key);
+	bool GetKeyReleased(char key);
+
 };
 
 
@@ -281,6 +282,9 @@ public:
 	//draws quads from buffer_2d
 	void drawQuads();
 
+	//draw line of points
+	void drawLinePoints(vec2 p1, vec2 p2);
+
 	//draws a line
 	void drawLine(float x1, float y1, float x2, float y2, float width);
 
@@ -308,8 +312,31 @@ public:
 		return in->GetKeyDown(key);
 	}
 	bool getKeyReleased(char key) {
-		return in->getKeyReleased(key);
+		return in->GetKeyReleased(key);
 	}
+
+	vec2 getMousePos() {
+		vec2 p;
+		LPPOINT po = new tagPOINT;
+		GetCursorPos(po);
+		ScreenToClient(wind->getHwnd(), po);
+		p.x = (float)po->x;
+		p.y = (float)po->y;
+		//gotta translate the y axis for my coord system
+		p.y = p.y - wind->getHeight();
+		p.y = std::abs(p.y);
+
+		delete po;
+		return p;
+	}
+	//ease of use
+	bool getMouseLeftDown() { return in->GetKeyDown(VK_LBUTTON); }
+	bool getMouseRightDown() { return in->GetKeyDown(VK_RBUTTON); }
+	bool getMouseMiddleDown() { return in->GetKeyDown(VK_MBUTTON); }
+
+	bool getMouseLeftReleased() { return in->GetKeyReleased(VK_LBUTTON); }
+	bool getMouseRightReleased() { return in->GetKeyReleased(VK_RBUTTON); }
+	bool getMouseMiddleReleased() { return in->GetKeyReleased(VK_MBUTTON); }
 
 	//color functions
 	void setDrawColor(vec4 c) {
@@ -381,7 +408,7 @@ public:
 		buffer_2d.push_back({ x + w, y - h });
 		buffer_2d.push_back({ x, y - h });
 
-		for (int i = b; i < buffer_2d.size(); i++) {
+		for (size_t i = (size_t)b; i < buffer_2d.size(); i++) {
 			float out_x = buffer_2d[i].x / float(wind->getWidth());
 			float out_y = buffer_2d[i].y / float(wind->getHeight());
 			out_x = (out_x * 2.0f) - 1;

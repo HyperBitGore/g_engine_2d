@@ -128,6 +128,19 @@ void EngineNewGL::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv) {
 	}
 	drawLines(0.5f);
 }
+//draw line of points, using a linear bezier curve
+void EngineNewGL::drawLinePoints(vec2 p1, vec2 p2) {
+	int subdiv = (int)std::abs(p1.x - p2.x) + (int)std::abs(p1.y - p2.y);
+	float step = 1.0f / (float)subdiv;
+	//passing point or not reaching it, need to re-examine how many subdiv to do
+	for (int i = 0; i < subdiv; i++) {
+		float t = i * step;
+		float x = (1 - t) * p1.x + t * p2.x;
+		float y = (1 - t) * p1.y + t * p2.y;
+		buffer_2d.push_back({ x, y });
+	}
+	drawPoints();
+}
 
 //draws a circle
 void EngineNewGL::drawCircle(float x, float y, float r) {
@@ -317,7 +330,7 @@ void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, 
 	buffer_2d.push_back({ x + w, y - h });
 	buffer_2d.push_back({ x, y - h });
 
-	for (int i = b; i < buffer_2d.size(); i++) {
+	for (size_t i = b; i < buffer_2d.size(); i++) {
 		float out_x = buffer_2d[i].x / float(wind->getWidth());
 		float out_y = buffer_2d[i].y / float(wind->getHeight());
 		out_x = (out_x * 2.0f) - 1;
