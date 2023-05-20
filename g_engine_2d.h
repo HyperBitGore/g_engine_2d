@@ -285,6 +285,8 @@ public:
 	//draw line of points
 	void drawLinePoints(vec2 p1, vec2 p2);
 
+	void addLinePoints(vec2 p1, vec2 p2);
+
 	//draws a line
 	void drawLine(float x1, float y1, float x2, float y2, float width);
 

@@ -675,7 +675,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 				}
 			}
 			if (getnthBit(i.flags[k - 1], 0) == 1) {
-				//g.points.push_back(g.points[generated_points_start_index]);
+				g.points.push_back(g.points[generated_points_start_index]);
 			}
 		}
 		f->glyphs.push_back(g);
@@ -725,14 +725,16 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //do a bunch of memcpys for when i actually want to draw text
+//convert to seperate line and contour storage in glyph
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	for (int i = 0; i < font.glyphs[32].points.size(); i++) {
+	for (int i = 0; i < font.glyphs[32].points.size() - 1; i++) {
 		//vec2 p1 = {  font.glyphs[32].points[i - 1].x / 8 + 250, font.glyphs[32].points[i - 1].y / 8 + 250 };
 		//vec2 p2 = { font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 };;
 		//vec2 p3 = { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 };;
 		//addquadraticBezier(p1, p2, p3, 20);
 		//std::cout << "x: " << font.glyphs[32].points[i].x << ", y= " << font.glyphs[32].points[i].y << "\n";
-		buffer_2d.push_back({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250});
+		//buffer_2d.push_back({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250});
+		addLinePoints({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 }, { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 });
 	}
 	drawPoints();
 	//drawLines(0.2f);

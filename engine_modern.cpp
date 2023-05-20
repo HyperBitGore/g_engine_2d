@@ -142,6 +142,18 @@ void EngineNewGL::drawLinePoints(vec2 p1, vec2 p2) {
 	drawPoints();
 }
 
+void EngineNewGL::addLinePoints(vec2 p1, vec2 p2) {
+	int subdiv = (int)std::abs(p1.x - p2.x) + (int)std::abs(p1.y - p2.y);
+	float step = 1.0f / (float)subdiv;
+	//passing point or not reaching it, need to re-examine how many subdiv to do
+	for (int i = 0; i < subdiv; i++) {
+		float t = i * step;
+		float x = (1 - t) * p1.x + t * p2.x;
+		float y = (1 - t) * p1.y + t * p2.y;
+		buffer_2d.push_back({ x, y });
+	}
+}
+
 //draws a circle
 void EngineNewGL::drawCircle(float x, float y, float r) {
 	//use a seperate shader from points
