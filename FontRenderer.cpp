@@ -201,9 +201,9 @@ void readFormat4(char* c, cmap_table* table) {
 	for (int i = 0; i < remaining / 2; i++) {
 		form.glyphIndexArray.push_back(SwapTwoBytes(*(t + i)));
 	}
-	//now we read all of the character codes
+	//now we read all of the character codes, change back to 32
 	UINT16 start = 32;
-	for (start; start <= 563; start++) {
+	for (start; start <= 159; start++) {
 		table->indexs.push_back({ get_glyph_index_format4(start, &form, idRangeStart), start});
 	}
 	//std::cout << table->indexs[0].c << " : " << table->indexs[0].index << "\n";
@@ -605,6 +605,24 @@ void tesslateBezier(Glyph* g, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
 }
 
 
+std::vector<Line> generate_edges(Glyph* g) {
+	std::vector<Line> lines;
+	int j = 0;
+	for (int i = 0; i < g->end_contours.size(); i++) {
+		for (; j < g->end_contours[i] - 1; j++) {
+			Line l;
+			l.p1.x = g->points[j].x;
+			l.p1.y = g->points[j].y;
+			l.p2.x = g->points[j + 1].x;
+			l.p2.y = g->points[j + 1].y;
+			lines.push_back(l);
+		}
+		j++;
+	}
+	return lines;
+}
+
+
 void readDirectorys(font_dir* directory, Font* f, char* c) {
 	//test case for swap1byte
 	/*
@@ -635,9 +653,21 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 
 		int k = 0;
 		for (int j = 0; j < i.numberOfContours; j++) {
-			int generated_points_start_index;
-			(g.points.size() > 0) ? generated_points_start_index = g.points.size() - 1: generated_points_start_index = 0;
+			int generated_points_start_index = g.points.size() - 1;
+			if (generated_points_start_index < 0) {
+				generated_points_start_index = 0;
+			}
+			int contour_start_index = k;
+			bool contour_start = true;
+			bool contour_started_off = false;
+			//this was the issue
 			for (; k <= i.endPtsOfCountours[j]; k++) {
+				int contour_len = i.endPtsOfCountours[j] - contour_start_index + 1;
+				int cur_index = k;
+				int next_index = (k + 1 - contour_start_index) % contour_len + contour_start_index;
+
+				float x = i.xCoords[k];
+				float y = i.yCoords[k];
 				//g.points.push_back({ (float)i.xCoords[k], (float)i.yCoords[k] });
 				if (getnthBit(i.flags[k], 0) == 1) {
 					size_t p3_in = k + 1;
@@ -650,22 +680,37 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 					p3.x = p2.x + (p1.x - p2.x) / 2.0;
 					p3.y = p2.y + (p1.y - p2.y) / 2.0;
 					//tesslateBezier(&g, p1, p2, p3, 20);
-					g.points.push_back({ (float)i.xCoords[k], (float)i.yCoords[k] });
+					g.points.push_back({ x, y});
 					//g.points.push_back({ (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] });
+					
 					
 				}
 				else{
-					size_t p3_in = k + 1;
-					if (k == i.endPtsOfCountours[j]) {
-						p3_in = 0;
+					//if this is the first contour point
+					if (contour_start) {
+						contour_started_off = true; 
+						//next point is on curve
+						if (getnthBit(i.flags[next_index], 0) == 1) {
+							g.points.push_back({ (float)i.xCoords[next_index], (float)i.yCoords[next_index] });
+							k++;
+							continue;
+						}
+						x = x + (i.xCoords[next_index] - x) / 2.0;
+						y = y + (i.yCoords[next_index] - y) / 2.0;
+						g.points.push_back({ x, y });
+						
 					}
+					
 					vec2 p1 = g.points[g.points.size() - 1];
-					vec2 p2 = { (float)i.xCoords[k], (float)i.yCoords[k] };
-					vec2 p3 = { (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] };
+					vec2 p2 = { (float)x, (float)y };
+					vec2 p3 = { (float)i.xCoords[next_index], (float)i.yCoords[next_index] };
 					//get the middle point between p1 and p3
-					if (getnthBit(i.flags[p3_in], 0) == 1) {
+					if (getnthBit(i.flags[next_index], 0) == 1) {
 						p3.x = p2.x + (p3.x - p2.x) / 2.0;
 						p3.y = p2.y + (p3.y - p2.y) / 2.0;
+					}
+					else {
+						k++;
 					}
 					//g.points.push_back(p1);
 					//g.points.push_back(p2);
@@ -673,14 +718,26 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 					//generate points
 					tesslateBezier(&g, p1, p2, p3, 5);
 				}
+				contour_start = false;
 			}
 			if (getnthBit(i.flags[k - 1], 0) == 1) {
-				g.points.push_back(g.points[generated_points_start_index]);
+				//g.points.push_back(g.points[generated_points_start_index]);
+				g.points.push_back({ (float)i.xCoords[contour_start_index] , (float)i.yCoords[contour_start_index] });
 			}
+			if (contour_started_off) {
+				vec2 p1 = g.points[g.points.size() - 1];
+				vec2 p2;
+				p2.x = (float)i.xCoords[contour_start_index];
+				p2.y = (float)i.yCoords[contour_start_index];
+				vec2 p3 = g.points[generated_points_start_index];
+
+				tesslateBezier(&g, p1, p2, p3, 5);
+			}
+			g.end_contours.push_back(g.points.size());
 		}
+		g.contours = generate_edges(&g);
 		f->glyphs.push_back(g);
 	}
-	std::cout << g_table.simple_glyphs[65].instructionLength << "\n";
 
 }
 
@@ -725,17 +782,24 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //do a bunch of memcpys for when i actually want to draw text
-//convert to seperate line and contour storage in glyph
+//fix gaps in text outline
+//cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	for (int i = 0; i < font.glyphs[32].points.size() - 1; i++) {
+	//for (int i = 0; i < font.glyphs[32].points.size() - 1; i++) {
 		//vec2 p1 = {  font.glyphs[32].points[i - 1].x / 8 + 250, font.glyphs[32].points[i - 1].y / 8 + 250 };
 		//vec2 p2 = { font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 };;
 		//vec2 p3 = { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 };;
 		//addquadraticBezier(p1, p2, p3, 20);
 		//std::cout << "x: " << font.glyphs[32].points[i].x << ", y= " << font.glyphs[32].points[i].y << "\n";
 		//buffer_2d.push_back({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250});
-		addLinePoints({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 }, { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 });
+		//addLinePoints({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 }, { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 });
+	//}
+	for (int i = 0; i < font.glyphs[32].contours.size(); i++) {
+		Line l = font.glyphs[32].contours[i];
+		//addLinePoints({ l.p1.x / 8 + 250, l.p1.y / 8 + 250 }, { l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
+		buffer_2d.push_back({l.p1.x / 8 + 250, l.p1.y / 8 + 250});
+		buffer_2d.push_back({ l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
 	}
-	drawPoints();
-	//drawLines(0.2f);
+	//drawPoints();
+	drawLines(0.1f);
 }

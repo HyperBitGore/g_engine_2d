@@ -164,9 +164,25 @@ struct img_vertex {
 	//maybe add texture index, so we would have a big texture array instead of binding them seperataly everytime
 };
 
+struct Line {
+	vec2 p1;
+	vec2 p2;
+};
+
+struct BezierLine {
+	vec2 p1;
+	vec2 p2;
+	vec2 p3;
+};
+
 struct Glyph {
 	UINT16 c; //for unicode
 	std::vector<vec2> points;
+	std::vector<Line> contours;
+	std::vector<int> end_contours;
+	//std::vector<vec2> bezier_points;
+	//std::vector<Line> lines;
+	//std::vector<BezierLine> beziers;
 };
 
 //speed this up with a hashmap when done
