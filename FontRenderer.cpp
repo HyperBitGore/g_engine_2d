@@ -609,6 +609,7 @@ std::vector<Line> generate_edges(Glyph* g) {
 	std::vector<Line> lines;
 	int j = 0;
 	for (int i = 0; i < g->end_contours.size(); i++) {
+		int first = j;
 		for (; j < g->end_contours[i] - 1; j++) {
 			Line l;
 			l.p1.x = g->points[j].x;
@@ -617,6 +618,8 @@ std::vector<Line> generate_edges(Glyph* g) {
 			l.p2.y = g->points[j + 1].y;
 			lines.push_back(l);
 		}
+		//have to add endpoint of contour and last point of contour as a line, so we can fix any possible gaps in glyphs
+		lines.push_back({ { g->points[first].x, g->points[first].y}, {g->points[j].x, g->points[j].y} }); 
 		j++;
 	}
 	return lines;
@@ -731,6 +734,10 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 				p2.y = (float)i.yCoords[contour_start_index];
 				vec2 p3 = g.points[generated_points_start_index];
 
+				//g.points.push_back(p1);
+				//g.points.push_back(p2);
+				//g.points.push_back(p3);
+
 				tesslateBezier(&g, p1, p2, p3, 5);
 			}
 			g.end_contours.push_back(g.points.size());
@@ -782,20 +789,10 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //do a bunch of memcpys for when i actually want to draw text
-//fix gaps in text outline
 //cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	//for (int i = 0; i < font.glyphs[32].points.size() - 1; i++) {
-		//vec2 p1 = {  font.glyphs[32].points[i - 1].x / 8 + 250, font.glyphs[32].points[i - 1].y / 8 + 250 };
-		//vec2 p2 = { font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 };;
-		//vec2 p3 = { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 };;
-		//addquadraticBezier(p1, p2, p3, 20);
-		//std::cout << "x: " << font.glyphs[32].points[i].x << ", y= " << font.glyphs[32].points[i].y << "\n";
-		//buffer_2d.push_back({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250});
-		//addLinePoints({ font.glyphs[32].points[i].x / 8 + 250, font.glyphs[32].points[i].y / 8 + 250 }, { font.glyphs[32].points[i + 1].x / 8 + 250, font.glyphs[32].points[i + 1].y / 8 + 250 });
-	//}
-	for (int i = 0; i < font.glyphs[32].contours.size(); i++) {
-		Line l = font.glyphs[32].contours[i];
+	for (int i = 0; i < font.glyphs[64].contours.size(); i++) {
+		Line l = font.glyphs[64].contours[i];
 		//addLinePoints({ l.p1.x / 8 + 250, l.p1.y / 8 + 250 }, { l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
 		buffer_2d.push_back({l.p1.x / 8 + 250, l.p1.y / 8 + 250});
 		buffer_2d.push_back({ l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
