@@ -125,9 +125,13 @@ public:
 	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
 	IMG loadBMP(std::string file);
 	IMG loadPNG(std::string file, unsigned int w, unsigned int h);
+	//for when you create img data yourself and need to actually bind a texture easily
+	void createTexture(IMG img); 
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	static void setPixel(IMG img, int x, int y, uint32_t color);
 	static uint32_t getPixel(IMG img, int x, int y);
+	//generates an img struct with no texture assigned but with generated blank data
+	static IMG generateBlankIMG(int w, int h);
 };
 
 struct vec2 {
@@ -169,20 +173,18 @@ struct Line {
 	vec2 p2;
 };
 
-struct BezierLine {
-	vec2 p1;
-	vec2 p2;
-	vec2 p3;
-};
+
 
 struct Glyph {
 	UINT16 c; //for unicode
 	std::vector<vec2> points;
 	std::vector<Line> contours;
 	std::vector<int> end_contours;
-	//std::vector<vec2> bezier_points;
-	//std::vector<Line> lines;
-	//std::vector<BezierLine> beziers;
+	IMG data; //img we rasterize to
+	short yMax;
+	short yMin;
+	short xMax;
+	short xMin;
 };
 
 //speed this up with a hashmap when done
@@ -191,6 +193,13 @@ struct Font {
 	std::vector<Glyph> glyphs;
 };
 
+//eventually use this for efficient font handling
+class FontHandler {
+private:
+
+public:
+
+};
 
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
@@ -511,6 +520,7 @@ public:
 	//font functions
 	Font loadFont(std::string file);
 	void drawText(std::string text, Font font, int ptsize);
+	void rasterizeGlyph(Glyph* g, int w, int h, uint32_t color);
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

@@ -264,8 +264,6 @@ void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 	buffer_2d.push_back({ x + w, y });
 	buffer_2d.push_back({ x + w, y - h });
 	buffer_2d.push_back({ x, y - h });
-	
-
 	//uv triangle 1
 	buffer_uv.push_back({ 0, 0 });
 	buffer_uv.push_back({ 1, 0 });

@@ -653,7 +653,10 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 	for (auto& i : g_table.simple_glyphs) {
 		Glyph g;
 		g.c = i.c;
-
+		g.xMax = i.xMax;
+		g.yMax = i.yMax;
+		g.yMax = i.yMin;
+		g.xMin = i.xMin;
 		int k = 0;
 		for (int j = 0; j < i.numberOfContours; j++) {
 			int generated_points_start_index = g.points.size() - 1;
@@ -783,11 +786,70 @@ Font EngineNewGL::loadFont(std::string file) {
 	return font;
 }
 
+void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
+	//have to scale glyph contour points
+	std::vector<Line> lines;
+	float scale = (float)h / (float)(g->yMax - g->yMin);
+	for (int i = 0; i < g->contours.size(); i++) {
+		Line l;
+		l.p1.x = (g->contours[i].p1.x - g->xMin) * scale;
+		l.p1.y = (g->contours[i].p1.y - g->yMin) * scale;
+		l.p2.x = (g->contours[i].p2.x - g->xMin) * scale;
+		l.p2.y = (g->contours[i].p2.y - g->yMin) * scale;
+		lines.push_back(l);
+	}
+
+	std::vector<float> intersections;
+	g->data = ImageLoader::generateBlankIMG(w, h);
+	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
+	//probably just loop through every pixel and check if it would be contained in the contours in which case set that pixel
+	for (int i = 0; i < g->data->h; i++) {
+		float scanline = i;
+		for (int j = 0; j < lines.size(); j++) {
+			Line l = lines[j];
+
+			float bigger_y = max(l.p1.y, l.p2.y);
+			float smaller_y = min(l.p1.y, l.p2.y);
+
+			//if (scanline <= smaller_y) continue;
+			//if (scanline > bigger_y) continue;
+
+			float dx = std::abs(l.p2.x - l.p1.x);
+			float dy = std::abs(l.p2.y - l.p1.y);
+			//intersections
+			if (dy == 0) { continue; }
+			float inter;
+			if (dx == 0) {
+				inter = l.p1.x;
+			}
+			else {
+				inter = (scanline - l.p1.y) * (dx / dy) + l.p1.x;
+			}
+			intersections.push_back(inter);
+		}
+		//sort the intersections
+		std::sort(intersections.begin(), intersections.end());
+
+		if (intersections.size() > 0) {
+			for (int k = 0; k < intersections.size(); k+=2) {
+				//filling scanlines
+				int start_index = intersections[k];
+				int end_index = intersections[k + 1];
+				for (int j = start_index; j <= end_index; j++) {
+					ImageLoader::setPixel(g->data, j, i, color);
+				}
+			}
+		}
+	}
+}
+
+
 void drawChar(UINT16 c, Font font, int ptsize) {
 
 }
 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
+//2.4.4
 //do a bunch of memcpys for when i actually want to draw text
 //cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {

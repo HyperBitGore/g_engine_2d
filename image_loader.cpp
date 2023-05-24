@@ -1,5 +1,30 @@
 #include "g_engine_2d.h"
 
+IMG ImageLoader::generateBlankIMG(int w, int h) {
+	IMG n_img = new g_img;
+	n_img->h = h;
+	n_img->w = w;
+	n_img->data = (unsigned char*)std::malloc((w * 4) * h); //pixel is four bytes so w*4 is the stride
+	std::memset(n_img->data, 0, (w * 4) * h);
+	return n_img;
+}
+
+void ImageLoader::createTexture(IMG img) {
+	img->pos = cur_tex;
+	glCreateTextures_g(GL_TEXTURE_2D, 1, &img->tex);
+	glBindTextureUnit_g(img->pos, img->tex);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D_g(img->tex, 1, GL_RGBA8, img->w, img->h);
+	glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+	glGenerateMipmap_g(GL_TEXTURE_2D);
+
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTextureUnit_g(0, 0);
+	cur_tex++;
+}
 
 void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	size_t row = y * (img->w * 4);
