@@ -19,6 +19,27 @@
   (((data) << 40) & 0x00FF000000000000) | (((data) << 56) & 0xFF00000000000000) ) 
 
 
+int getnthBit(short number, int n) {
+	return (number >> n) & 1;
+}
+int getnthBit(UINT8 number, int n) {
+	return (number >> n) & 1;
+}
+
+
+UINT8 swap1Byte(UINT8 n) {
+	UINT8 n2 = 0;
+	for (int i = 0, j = 7; i < 8; i++, j--) {
+		int s = getnthBit(n, j);
+		if (s == 1) {
+			n2 |= 1 << i;
+		}
+	}
+	return n2;
+	//return (((n >> 7) & 1) | ((n >> 6) & 1) | ((n >> 5) & 1) | ((n >> 4) & 1) | ((n >> 3) & 1) | ((n >> 2) & 1) | ((n >> 1) & 1) | ((n >> 0) & 1));
+}
+
+
 //ttf file structs
 
 struct off_subtable {
@@ -295,7 +316,7 @@ std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap*
 	else {
 		for (int i = 0; i < map->tables[0].indexs.size(); i++) {
 			loca l;
-			l.c = map->tables[0].indexs[i].c;
+			l.c = (map->tables[0].indexs[i].c);
 			l.offset = readLoca32(m, map->tables[0].indexs[i].index);
 			locas.push_back(l);
 		}
@@ -412,25 +433,6 @@ struct glyph_table {
 	std::vector<comp_glyf> compound_glyphs;
 };
 
-int getnthBit(short number, int n) {
-	return (number >> n) & 1;
-}
-int getnthBit(UINT8 number, int n) {
-	return (number >> n) & 1;
-}
-
-
-UINT8 swap1Byte(UINT8 n) {
-	UINT8 n2 = 0;
-	for (int i = 0, j = 7; i < 8; i++, j--) {
-		int s = getnthBit(n, j);
-		if (s == 1) {
-			n2 |= 1 << i;
-		}
-	}
-	return n2;
-	//return (((n >> 7) & 1) | ((n >> 6) & 1) | ((n >> 5) & 1) | ((n >> 4) & 1) | ((n >> 3) & 1) | ((n >> 2) & 1) | ((n >> 1) & 1) | ((n >> 0) & 1));
-}
 
 
 //glyf time
@@ -460,6 +462,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			sg.yMin = g.yMin;
 			sg.xMax = g.xMax;
 			sg.yMax = g.yMax;
+			sg.c = g.c;
 			//now we read endpts of countours
 			UINT16* t = (UINT16*)s;
 			for (int j = 0; j < sg.numberOfContours; j++) {
@@ -655,7 +658,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 		g.c = i.c;
 		g.xMax = i.xMax;
 		g.yMax = i.yMax;
-		g.yMax = i.yMin;
+		g.yMin = i.yMin;
 		g.xMin = i.xMin;
 		int k = 0;
 		for (int j = 0; j < i.numberOfContours; j++) {
@@ -786,16 +789,69 @@ Font EngineNewGL::loadFont(std::string file) {
 	return font;
 }
 
+bool range(float n, float brange, float trange) {
+	return n >= brange && n <= trange;
+}
+
+bool checkIntersection(Line l1, Line l2, int w, int h) {
+	vec2 delta_l1 = { l1.p2.x - l1.p1.x, l1.p2.y - l1.p1.y };
+	float m1;
+	(delta_l1.x == 0) ? m1 = 0 : m1 = delta_l1.y / delta_l1.x;
+	float b1 = l1.p1.y - (m1 * l1.p1.x);
+
+	vec2 delta_l2 = { l2.p2.x - l2.p1.x, l2.p2.y - l2.p1.y };
+	float m2;
+	(delta_l2.x == 0) ? m2 = 0 : m2 = delta_l2.y / delta_l2.x;
+	float b2 = l2.p1.y - (m1 * l2.p1.x);
+
+	float interx = (b2 - b1) / (m1 - m2);
+	float intery = (m1 * b1 - b2 * m2) / m1 - m2;
+	return !(interx > w || interx < 0 || intery > h || intery < 0);
+}
+//https://www.youtube.com/watch?v=4bIsntTiKfM
+vec2 getIntersection(Line l1, Line l2) {
+	vec2 delta_l1 = {l1.p2.x - l1.p1.x, l1.p2.y - l1.p1.y};
+	float m1;
+	(delta_l1.x == 0) ? m1 = 0 : m1 = delta_l1.y / delta_l1.x;
+	float b1 = l1.p1.y - (m1 * l1.p1.x);
+	
+	vec2 delta_l2 = { l2.p2.x - l2.p1.x, l2.p2.y - l2.p1.y };
+	float m2;
+	(delta_l2.x == 0) ? m2 = 0: m2 = delta_l2.y / delta_l2.x;
+	float b2 = l2.p1.y - (m1 * l2.p1.x);
+
+	float interx = (b2 - b1) / (m1 - m2);
+	float intery = m1 * (interx)+b1;
+	//float intery = (m1*b1 - b2*m2)/m1-m2;
+	return { interx, intery };
+}
+
+float convertToRange(float n, float min, float max, float old_min, float old_max) {
+	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
+}
+
+
 void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
-	float scale = (float)h / (float)(g->yMax - g->yMin);
+	float scaleh = (float)h / (float)(g->yMax - g->yMin);
+	float scalew = (float)w / (float)(g->xMax - g->xMin);
 	for (int i = 0; i < g->contours.size(); i++) {
-		Line l;
-		l.p1.x = (g->contours[i].p1.x - g->xMin) * scale;
-		l.p1.y = (g->contours[i].p1.y - g->yMin) * scale;
-		l.p2.x = (g->contours[i].p2.x - g->xMin) * scale;
-		l.p2.y = (g->contours[i].p2.y - g->yMin) * scale;
+		Line l = g->contours[i];
+		//l.p1.x = w / g->contours[i].p1.x;
+		//l.p1.y = h / g->contours[i].p1.y;
+		l.p1.x = convertToRange(l.p1.x, 0, w, g->xMin, g->xMax);
+		l.p1.y = convertToRange(l.p1.y, 0, h, g->yMin, g->yMax);
+		//l.p1.x = (g->contours[i].p1.x - (float)g->xMin) / (w);
+		//l.p1.y = (g->contours[i].p1.y - (float)g->yMin) / (h);
+		//l.p2.x = w / g->contours[i].p2.x;
+		//l.p2.y = h / g->contours[i].p2.y;
+
+		l.p2.x = convertToRange(l.p2.x, 0, w, g->xMin, g->xMax);
+		l.p2.y = convertToRange(l.p2.y, 0, h, g->yMin, g->yMax);
+
+		//l.p2.x = (g->contours[i].p2.x - (float)g->xMin) / (w);
+		//l.p2.y = (g->contours[i].p2.y - (float)g->yMin) / (h);
 		lines.push_back(l);
 	}
 
@@ -803,7 +859,34 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	g->data = ImageLoader::generateBlankIMG(w, h);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	//probably just loop through every pixel and check if it would be contained in the contours in which case set that pixel
-	for (int i = 0; i < g->data->h; i++) {
+
+	for (int i = 0; i < lines.size(); i++) {
+		//ImageLoader::setPixel(g->data, lines[i].p1.x, lines[i].p1.y, color);
+		//ImageLoader::setPixel(g->data, lines[i].p2.x, lines[i].p2.y, color);
+	}
+
+
+	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+	for (int y = 0; y < g->data->h; y++) {
+		Line test_line = { {0, y}, {w, y} };
+		std::vector<Line> lines_inter; //list of lines we intersect
+		std::vector<vec2> inters; //list of intersection points
+		for (int i = 0; i < lines.size(); i++) {
+			vec2 l = getIntersection(test_line, lines[i]);
+			if (l.x >= 0 && l.x <= w) {
+				inters.push_back({l.x, (float)y});
+				lines_inter.push_back(lines[i]);
+				//test_line.p1.x = l.x;
+			}
+		}
+		//do point setting now
+		for (int i = 0; i < inters.size(); i++) {
+			ImageLoader::setPixel(g->data, inters[i].x, y, color);
+		}
+	}
+
+
+	/*for (int i = 0; i < g->data->h; i++) {
 		float scanline = i;
 		for (int j = 0; j < lines.size(); j++) {
 			Line l = lines[j];
@@ -814,8 +897,8 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 			//if (scanline <= smaller_y) continue;
 			//if (scanline > bigger_y) continue;
 
-			float dx = std::abs(l.p2.x - l.p1.x);
-			float dy = std::abs(l.p2.y - l.p1.y);
+			float dx = (l.p2.x - l.p1.x);
+			float dy = (l.p2.y - l.p1.y);
 			//intersections
 			if (dy == 0) { continue; }
 			float inter;
@@ -825,7 +908,7 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 			else {
 				inter = (scanline - l.p1.y) * (dx / dy) + l.p1.x;
 			}
-			intersections.push_back(inter);
+			//intersections.push_back(inter);
 		}
 		//sort the intersections
 		std::sort(intersections.begin(), intersections.end());
@@ -833,21 +916,26 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 		if (intersections.size() > 0) {
 			for (int k = 0; k < intersections.size(); k+=2) {
 				//filling scanlines
+				//for (int j = intersections[k]; j <= w && j >= 0; j++) {
+					//ImageLoader::setPixel(g->data, j, i, color);
+				//}
+				
 				int start_index = intersections[k];
 				int end_index = intersections[k + 1];
 				for (int j = start_index; j <= end_index; j++) {
-					ImageLoader::setPixel(g->data, j, i, color);
+					//ImageLoader::setPixel(g->data, j, i, color);
 				}
 			}
 		}
-	}
+		intersections.clear();
+	}*/
 }
 
 
 void drawChar(UINT16 c, Font font, int ptsize) {
 
 }
-
+//https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
 //do a bunch of memcpys for when i actually want to draw text
