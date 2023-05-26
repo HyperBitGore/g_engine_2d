@@ -809,21 +809,43 @@ bool checkIntersection(Line l1, Line l2, int w, int h) {
 	return !(interx > w || interx < 0 || intery > h || intery < 0);
 }
 //https://www.youtube.com/watch?v=4bIsntTiKfM
+//coding math is the goat
+//this can't do collinear lines yet
 vec2 getIntersection(Line l1, Line l2) {
-	vec2 delta_l1 = {l1.p2.x - l1.p1.x, l1.p2.y - l1.p1.y};
-	float m1;
-	(delta_l1.x == 0) ? m1 = 0 : m1 = delta_l1.y / delta_l1.x;
-	float b1 = l1.p1.y - (m1 * l1.p1.x);
+	float A1 = (l1.p2.y - l1.p1.y);
+	float B1 = (l1.p1.x - l1.p2.x);
+	float C1 = (A1 * l1.p1.x + B1 * l1.p1.y);
+	float A2 = (l2.p2.y - l2.p1.y);
+	float B2 = (l2.p1.x - l2.p2.x);
+	float C2 = (A2 * l2.p1.x + B2 * l2.p1.y);
+	float denominator = A1 * B2 - A2 * B1;
 	
+	//checking if line is collinear or parallel
+	vec2 delta_l1 = { l1.p2.x - l1.p1.x, l1.p2.y - l1.p1.y };
 	vec2 delta_l2 = { l2.p2.x - l2.p1.x, l2.p2.y - l2.p1.y };
-	float m2;
-	(delta_l2.x == 0) ? m2 = 0: m2 = delta_l2.y / delta_l2.x;
-	float b2 = l2.p1.y - (m1 * l2.p1.x);
+	float slope1 = delta_l1.y / delta_l1.x;
+	float slope2 = delta_l2.y / delta_l2.x;
+	float in1 = l1.p1.y - (slope1 * l1.p1.x);
+	float in2 = l2.p1.y - (slope2 * l2.p1.x);
 
-	float interx = (b2 - b1) / (m1 - m2);
-	float intery = m1 * (interx)+b1;
-	//float intery = (m1*b1 - b2*m2)/m1-m2;
-	return { interx, intery };
+	if (denominator == 0 && in1 != in2) {
+		//line is parallel
+		return { -1, -1 };
+	}
+	else if (in1 == in2) {
+		//line is collinear
+		return { -2, -2 };
+	}
+	//checking if intersection lies on the segment
+	vec2 inter = { (B2 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator };
+	float rx0 = (inter.x - l1.p1.x) / (l1.p2.x - l1.p1.x);
+	float ry0 = (inter.y - l1.p1.y) / (l1.p2.y - l1.p1.y);
+	float rx1 = (inter.x - l2.p1.x) / (l2.p2.x - l2.p1.x);
+	float ry1 = (inter.y - l2.p1.y) / (l2.p2.y - l2.p1.y);
+	if (((rx0 >= 0 && rx0 <= 1) || (ry0 >= 0 && ry0 <= 1)) && ((rx1 >= 0 && rx1 <= 1) || (ry1 >= 0 && ry1 <= 1))) {
+		return inter;
+	}
+	return { -1, -1 };
 }
 
 float convertToRange(float n, float min, float max, float old_min, float old_max) {
@@ -838,20 +860,13 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	float scalew = (float)w / (float)(g->xMax - g->xMin);
 	for (int i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
-		//l.p1.x = w / g->contours[i].p1.x;
-		//l.p1.y = h / g->contours[i].p1.y;
-		l.p1.x = convertToRange(l.p1.x, 0, w, g->xMin, g->xMax);
-		l.p1.y = convertToRange(l.p1.y, 0, h, g->yMin, g->yMax);
-		//l.p1.x = (g->contours[i].p1.x - (float)g->xMin) / (w);
-		//l.p1.y = (g->contours[i].p1.y - (float)g->yMin) / (h);
-		//l.p2.x = w / g->contours[i].p2.x;
-		//l.p2.y = h / g->contours[i].p2.y;
+		l.p1.x = convertToRange(l.p1.x, 0, w-1, g->xMin, g->xMax);
+		l.p1.y = convertToRange(l.p1.y, 0, h-1, g->yMin, g->yMax);
+		
 
-		l.p2.x = convertToRange(l.p2.x, 0, w, g->xMin, g->xMax);
-		l.p2.y = convertToRange(l.p2.y, 0, h, g->yMin, g->yMax);
+		l.p2.x = convertToRange(l.p2.x, 0, w-1, g->xMin, g->xMax);
+		l.p2.y = convertToRange(l.p2.y, 0, h-1, g->yMin, g->yMax);
 
-		//l.p2.x = (g->contours[i].p2.x - (float)g->xMin) / (w);
-		//l.p2.y = (g->contours[i].p2.y - (float)g->yMin) / (h);
 		lines.push_back(l);
 	}
 
@@ -860,23 +875,31 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	//probably just loop through every pixel and check if it would be contained in the contours in which case set that pixel
 
-	for (int i = 0; i < lines.size(); i++) {
-		//ImageLoader::setPixel(g->data, lines[i].p1.x, lines[i].p1.y, color);
-		//ImageLoader::setPixel(g->data, lines[i].p2.x, lines[i].p2.y, color);
-	}
 
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-	for (int y = 0; y < g->data->h; y++) {
+	for (int y = 0; y < h; y++) {
 		Line test_line = { {0, y}, {w, y} };
-		std::vector<Line> lines_inter; //list of lines we intersect
 		std::vector<vec2> inters; //list of intersection points
 		for (int i = 0; i < lines.size(); i++) {
 			vec2 l = getIntersection(test_line, lines[i]);
 			if (l.x >= 0 && l.x <= w) {
 				inters.push_back({l.x, (float)y});
-				lines_inter.push_back(lines[i]);
 				//test_line.p1.x = l.x;
+			}
+			else if (l.x == -2) {
+				//get collinear lines working correctly
+				Line t_line = { {inters[inters.size() - 1].x, y}, {w, y} };
+				for (int j = inters[inters.size() - 1].x; j <= w; j++) {
+					vec2 l2 = getIntersection(t_line, lines[j]);
+					if (l2.x < 0) {
+						inters.push_back({ (float)j, (float)y });
+						t_line.p1.x++;
+					}
+					else {
+						j = w + 1;
+					}
+				}
 			}
 		}
 		//do point setting now
@@ -884,51 +907,6 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 			ImageLoader::setPixel(g->data, inters[i].x, y, color);
 		}
 	}
-
-
-	/*for (int i = 0; i < g->data->h; i++) {
-		float scanline = i;
-		for (int j = 0; j < lines.size(); j++) {
-			Line l = lines[j];
-
-			float bigger_y = max(l.p1.y, l.p2.y);
-			float smaller_y = min(l.p1.y, l.p2.y);
-
-			//if (scanline <= smaller_y) continue;
-			//if (scanline > bigger_y) continue;
-
-			float dx = (l.p2.x - l.p1.x);
-			float dy = (l.p2.y - l.p1.y);
-			//intersections
-			if (dy == 0) { continue; }
-			float inter;
-			if (dx == 0) {
-				inter = l.p1.x;
-			}
-			else {
-				inter = (scanline - l.p1.y) * (dx / dy) + l.p1.x;
-			}
-			//intersections.push_back(inter);
-		}
-		//sort the intersections
-		std::sort(intersections.begin(), intersections.end());
-
-		if (intersections.size() > 0) {
-			for (int k = 0; k < intersections.size(); k+=2) {
-				//filling scanlines
-				//for (int j = intersections[k]; j <= w && j >= 0; j++) {
-					//ImageLoader::setPixel(g->data, j, i, color);
-				//}
-				
-				int start_index = intersections[k];
-				int end_index = intersections[k + 1];
-				for (int j = start_index; j <= end_index; j++) {
-					//ImageLoader::setPixel(g->data, j, i, color);
-				}
-			}
-		}
-		intersections.clear();
-	}*/
 }
 
 
@@ -941,8 +919,8 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 //do a bunch of memcpys for when i actually want to draw text
 //cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	for (int i = 0; i < font.glyphs[64].contours.size(); i++) {
-		Line l = font.glyphs[64].contours[i];
+	for (int i = 0; i < font.glyphs[32].contours.size(); i++) {
+		Line l = font.glyphs[32].contours[i];
 		//addLinePoints({ l.p1.x / 8 + 250, l.p1.y / 8 + 250 }, { l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
 		buffer_2d.push_back({l.p1.x / 8 + 250, l.p1.y / 8 + 250});
 		buffer_2d.push_back({ l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
