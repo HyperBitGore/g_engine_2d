@@ -209,6 +209,7 @@ class EngineNewGL {
 private:
 	Window* wind;
 	Input* in;
+	ImageLoader img_l;
 	HDC dc_w;
 	HGLRC context;
 	std::function<void()> renderFund;
@@ -333,6 +334,16 @@ public:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+	void createTexture(IMG img) {
+		img_l.createTexture(img);
+	}
+	IMG loadPNG(std::string file, unsigned int w, unsigned int h) {
+		return img_l.loadPNG(file, w, h);
+	}
+	IMG loadBMP(std::string file) {
+		return img_l.loadBMP(file);
+	}
+
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
 	bool getKeyDown(char key) {

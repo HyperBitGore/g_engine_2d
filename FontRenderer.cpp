@@ -721,11 +721,11 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 					else {
 						k++;
 					}
-					//g.points.push_back(p1);
-					//g.points.push_back(p2);
-					//g.points.push_back(p3);
+					g.points.push_back(p1);
+					g.points.push_back(p2);
+					g.points.push_back(p3);
 					//generate points
-					tesslateBezier(&g, p1, p2, p3, 5);
+					//tesslateBezier(&g, p1, p2, p3, 5);
 				}
 				contour_start = false;
 			}
@@ -740,11 +740,11 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 				p2.y = (float)i.yCoords[contour_start_index];
 				vec2 p3 = g.points[generated_points_start_index];
 
-				//g.points.push_back(p1);
-				//g.points.push_back(p2);
-				//g.points.push_back(p3);
+				g.points.push_back(p1);
+				g.points.push_back(p2);
+				g.points.push_back(p3);
 
-				tesslateBezier(&g, p1, p2, p3, 5);
+				//tesslateBezier(&g, p1, p2, p3, 5);
 			}
 			g.end_contours.push_back(g.points.size());
 		}
@@ -793,21 +793,7 @@ bool range(float n, float brange, float trange) {
 	return n >= brange && n <= trange;
 }
 
-bool checkIntersection(Line l1, Line l2, int w, int h) {
-	vec2 delta_l1 = { l1.p2.x - l1.p1.x, l1.p2.y - l1.p1.y };
-	float m1;
-	(delta_l1.x == 0) ? m1 = 0 : m1 = delta_l1.y / delta_l1.x;
-	float b1 = l1.p1.y - (m1 * l1.p1.x);
 
-	vec2 delta_l2 = { l2.p2.x - l2.p1.x, l2.p2.y - l2.p1.y };
-	float m2;
-	(delta_l2.x == 0) ? m2 = 0 : m2 = delta_l2.y / delta_l2.x;
-	float b2 = l2.p1.y - (m1 * l2.p1.x);
-
-	float interx = (b2 - b1) / (m1 - m2);
-	float intery = (m1 * b1 - b2 * m2) / m1 - m2;
-	return !(interx > w || interx < 0 || intery > h || intery < 0);
-}
 //https://www.youtube.com/watch?v=4bIsntTiKfM
 //coding math is the goat
 //this can't do collinear lines yet
@@ -828,6 +814,9 @@ vec2 getIntersection(Line l1, Line l2) {
 	float in1 = l1.p1.y - (slope1 * l1.p1.x);
 	float in2 = l2.p1.y - (slope2 * l2.p1.x);
 
+	vec2 inter = { (B2 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator };
+
+
 	if (denominator == 0 && in1 != in2) {
 		//line is parallel
 		return { -1, -1 };
@@ -837,7 +826,6 @@ vec2 getIntersection(Line l1, Line l2) {
 		return { -2, -2 };
 	}
 	//checking if intersection lies on the segment
-	vec2 inter = { (B2 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator };
 	float rx0 = (inter.x - l1.p1.x) / (l1.p2.x - l1.p1.x);
 	float ry0 = (inter.y - l1.p1.y) / (l1.p2.y - l1.p1.y);
 	float rx1 = (inter.x - l2.p1.x) / (l2.p2.x - l2.p1.x);
@@ -875,7 +863,9 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	//probably just loop through every pixel and check if it would be contained in the contours in which case set that pixel
 
-
+	struct sortInters {
+		bool operator() (vec2 l1, vec2 l2) { return l1.x < l2.x; }
+	} sortVec2;
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	for (int y = 0; y < h; y++) {
@@ -885,28 +875,26 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 			vec2 l = getIntersection(test_line, lines[i]);
 			if (l.x >= 0 && l.x <= w) {
 				inters.push_back({l.x, (float)y});
-				//test_line.p1.x = l.x;
 			}
-			else if (l.x == -2) {
-				//get collinear lines working correctly
-				Line t_line = { {inters[inters.size() - 1].x, y}, {w, y} };
-				for (int j = inters[inters.size() - 1].x; j <= w; j++) {
-					vec2 l2 = getIntersection(t_line, lines[j]);
-					if (l2.x < 0) {
-						inters.push_back({ (float)j, (float)y });
-						t_line.p1.x++;
-					}
-					else {
-						j = w + 1;
-					}
+		}
+		std::sort(inters.begin(), inters.end(), sortVec2);
+		//do point setting now
+		bool setpixel = true;
+		int cur_inter = 0;
+		for (int x = inters[0].x; x <= w; x++) {
+			for (int i = 0; i < inters.size(); i++) {
+				if (x == (int)inters[i].x && i > cur_inter) {
+					setpixel = !setpixel;
+					cur_inter = i;
+					break;
 				}
 			}
-		}
-		//do point setting now
-		for (int i = 0; i < inters.size(); i++) {
-			ImageLoader::setPixel(g->data, inters[i].x, y, color);
+			if (setpixel) {
+				ImageLoader::setPixel(g->data, x, y, color);
+			}
 		}
 	}
+
 }
 
 

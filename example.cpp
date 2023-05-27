@@ -89,7 +89,7 @@ void renderFunction() {
 	eng2.renderImgsRotated(imgtest);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 
-	eng2.renderImg(f_test.glyphs[32].data, 100.0f, 100.0f, 64, 64);
+	eng2.renderImg(f_test.glyphs[33].data, 100.0f, 100.0f, 64, 64);
 	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
 
 	//testing beziers
@@ -110,10 +110,10 @@ int nthBit(int number, int n) {
 
 //4278190335
 int main() {
-	ImageLoader img_ld;
+	//ImageLoader img_ld;
 
-	bmptest = img_ld.loadBMP("test1.bmp");
-	imgtest = img_ld.loadPNG("Bliss_(Windows_XP).png", 300, 241);
+	bmptest = eng2.loadBMP("test1.bmp");
+	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	for (int x = 0; x < 100; x++) {
 		ImageLoader::setPixel(imgtest, x, 100, 4278190335);
 	}
@@ -124,14 +124,14 @@ int main() {
 	f_test = eng2.loadFont("EnvyCodeR.ttf");
 
 	//testing font rasterizing
-	eng2.rasterizeGlyph(&f_test.glyphs[32], 64, 64, 4278190335);
-	img_ld.createTexture(f_test.glyphs[32].data);
+	eng2.rasterizeGlyph(&f_test.glyphs[33], 64, 64, 4278190335);
+	eng2.createTexture(f_test.glyphs[33].data);
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100);
 	for (int i = 0; i < 100; i++) {
 		ImageLoader::setPixel(blank_test, i, 50, 4278190335);
 	}
-	img_ld.createTexture(blank_test);
+	eng2.createTexture(blank_test);
 
 
 	std::bitset<32> x(10);
