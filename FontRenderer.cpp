@@ -864,7 +864,7 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	//probably just loop through every pixel and check if it would be contained in the contours in which case set that pixel
 
 	struct sortInters {
-		bool operator() (vec2 l1, vec2 l2) { return l1.x < l2.x; }
+		bool operator() (vec2 l1, vec2 l2) { return l1.x > l2.x; }
 	} sortVec2;
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
@@ -875,21 +875,26 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 			vec2 l = getIntersection(test_line, lines[i]);
 			if (l.x >= 0 && l.x <= w) {
 				inters.push_back({l.x, (float)y});
+			//	test_line.p1.x = l.x;
 			}
 		}
 		std::sort(inters.begin(), inters.end(), sortVec2);
 		//do point setting now
-		bool setpixel = true;
-		int cur_inter = 0;
-		for (int x = inters[0].x; x <= w; x++) {
-			for (int i = 0; i < inters.size(); i++) {
-				if (x == (int)inters[i].x && i > cur_inter) {
-					setpixel = !setpixel;
-					cur_inter = i;
-					break;
-				}
+
+
+
+		for (int i = 0; i < inters.size(); i+=2) {
+			float x1 = inters[i].x;
+			float x2;
+			if (inters.size() > i + 1) {
+				x2 = inters[i + 1].x;
 			}
-			if (setpixel) {
+			else {
+				//float t = x1;
+				x2 = x1;
+				x1 = inters[i - 1].x;
+			}
+			for (int x = x1; x >= x2; x--) {
 				ImageLoader::setPixel(g->data, x, y, color);
 			}
 		}
@@ -907,8 +912,8 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 //do a bunch of memcpys for when i actually want to draw text
 //cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	for (int i = 0; i < font.glyphs[32].contours.size(); i++) {
-		Line l = font.glyphs[32].contours[i];
+	for (int i = 0; i < font.glyphs[64].contours.size(); i++) {
+		Line l = font.glyphs[64].contours[i];
 		//addLinePoints({ l.p1.x / 8 + 250, l.p1.y / 8 + 250 }, { l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
 		buffer_2d.push_back({l.p1.x / 8 + 250, l.p1.y / 8 + 250});
 		buffer_2d.push_back({ l.p2.x / 8 + 250, l.p2.y / 8 + 250 });

@@ -89,7 +89,7 @@ void renderFunction() {
 	eng2.renderImgsRotated(imgtest);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 
-	eng2.renderImg(f_test.glyphs[33].data, 100.0f, 100.0f, 64, 64);
+	eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
 	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
 
 	//testing beziers
@@ -124,8 +124,8 @@ int main() {
 	f_test = eng2.loadFont("EnvyCodeR.ttf");
 
 	//testing font rasterizing
-	eng2.rasterizeGlyph(&f_test.glyphs[33], 64, 64, 4278190335);
-	eng2.createTexture(f_test.glyphs[33].data);
+	eng2.rasterizeGlyph(&f_test.glyphs[17], 64, 64, 4278190335);
+	eng2.createTexture(f_test.glyphs[17].data);
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100);
 	for (int i = 0; i < 100; i++) {
