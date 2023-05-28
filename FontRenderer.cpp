@@ -628,6 +628,27 @@ std::vector<Line> generate_edges(Glyph* g) {
 	return lines;
 }
 
+bool compareLine(Line l1, Line l2) {
+	return (l1.p1.x == l2.p1.x && l1.p1.y == l2.p1.y && l1.p2.x == l2.p2.x && l1.p2.y == l2.p2.y);
+}
+
+void cullEdges(Glyph* g) {
+	for (int i = 0; i < g->contours.size();) {
+		bool cull = false;
+		for (int j = 0; j < g->contours.size(); j++) {
+			if (compareLine(g->contours[i], g->contours[j]) && i != j){ 
+				cull = true;
+				break;
+			}
+		}
+		if (cull) {
+			g->contours.erase(g->contours.begin() + i);
+		}
+		else {
+			i++;
+		}
+	}
+}
 
 void readDirectorys(font_dir* directory, Font* f, char* c) {
 	//test case for swap1byte
@@ -725,7 +746,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 					g.points.push_back(p2);
 					g.points.push_back(p3);
 					//generate points
-					//tesslateBezier(&g, p1, p2, p3, 5);
+					//tesslateBezier(&g, p1, p2, p3, 2);
 				}
 				contour_start = false;
 			}
@@ -744,11 +765,13 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 				g.points.push_back(p2);
 				g.points.push_back(p3);
 
-				//tesslateBezier(&g, p1, p2, p3, 5);
+				//tesslateBezier(&g, p1, p2, p3, 2);
 			}
 			g.end_contours.push_back(g.points.size());
 		}
 		g.contours = generate_edges(&g);
+		//cull duplicate lines
+		cullEdges(&g);
 		f->glyphs.push_back(g);
 	}
 
@@ -841,6 +864,33 @@ float convertToRange(float n, float min, float max, float old_min, float old_max
 }
 
 
+void cullInters(std::vector<vec2>& inters) {
+	for (int i = 0; i < inters.size();) {
+		bool remove = false;
+		for (int j = i; j < inters.size(); j++) {
+			if (roundf(inters[i].x) == roundf(inters[j].x) && roundf(inters[i].y) == roundf(inters[j].y) && i != j) {
+				remove = true;
+				break;
+			}
+		}
+		if (remove) {
+			inters.erase(inters.begin() + i);
+		}
+		else {
+			i++;
+		}
+	}
+}
+void removeDupePoint(std::vector<vec2>& inters, vec2 p) {
+	for (int i = 0; i < inters.size(); i++) {
+		if (inters[i].x == p.x && inters[i].y == p.y) {
+			inters.erase(inters.begin() + i);
+			return;
+		}
+	}
+}
+
+
 void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
@@ -861,43 +911,139 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	std::vector<float> intersections;
 	g->data = ImageLoader::generateBlankIMG(w, h);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
-	//probably just loop through every pixel and check if it would be contained in the contours in which case set that pixel
+	struct sortContours {
+		bool operator() (Line l1, Line l2) { return l1.p1.y < l2.p1.y; }
+	} sortLines;
+	std::sort(lines.begin(), lines.end(), sortLines);
 
 	struct sortInters {
-		bool operator() (vec2 l1, vec2 l2) { return l1.x > l2.x; }
+		bool operator() (vec2 l1, vec2 l2) { return l1.y < l2.y; }
 	} sortVec2;
+	struct sortInters2 {
+		bool operator() (vec2 l1, vec2 l2) { return l1.x > l2.x; }
+	} sortVec2Bigger;
+
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-	for (int y = 0; y < h; y++) {
-		Line test_line = { {0, y}, {w, y} };
+	//do vertical scanlines
+	//so test line changes in y not x and points are set on the y axis
+	for (int x = 0; x < w; x++) {
+		Line test_line = { {x, 0}, {x, h} };
 		std::vector<vec2> inters; //list of intersection points
+		std::vector<Line> adds;
 		for (int i = 0; i < lines.size(); i++) {
 			vec2 l = getIntersection(test_line, lines[i]);
 			if (l.x >= 0 && l.x <= w) {
-				inters.push_back({l.x, (float)y});
-			//	test_line.p1.x = l.x;
+				adds.push_back(lines[i]);
+				inters.push_back({ (float)x, (float)l.y });
+			}
+	}
+	std::sort(inters.begin(), inters.end(), sortVec2);
+	for (int i = 1; i < inters.size() && i < adds.size();) {
+		float y1 = inters[i - 1].y;
+		float y2 = inters[i].y;
+
+
+		//ImageLoader::setPixel(g->data, x, y1, pack_rgba(0, 255, 50, 255));
+		//ImageLoader::setPixel(g->data, x, y2, pack_rgba(0, 255, 50, 255));
+		for (int y = y1; y <= y2; y++) {
+			ImageLoader::setPixel(g->data, x, y, color);
+		}
+		if (inters.size() % 2 == 0) {
+			i += 2;
+		}
+		else {
+			i++;
+		}
+	}
+
+	/*for (int y = 0; y < h; y++) {
+		Line test_line = { {0, y}, {w, y} };
+		std::vector<vec2> inters; //list of intersection points
+		std::vector<Line> adds;
+		std::vector<vec2> collinears;
+		for (int i = 0; i < lines.size(); i++) {
+			vec2 l = getIntersection(test_line, lines[i]);
+			if (l.x >= 0 && l.x <= w) {
+				adds.push_back(lines[i]);
+				//if ((y != (int)lines[i].p1.y && y != (int)lines[i].p2.y) || inters.size() == 0 || l.x == w-1) {
+					inters.push_back({ l.x, (float)y });
+				//}
+				//test_line.p1.x = l.x;
+			}
+			else if (l.x == -2) {
+				//removeDupePoint(inters, lines[i].p1);
+				//removeDupePoint(inters, lines[i].p2);
+				//inters.push_back(lines[i].p1);
+				//inters.push_back(lines[i].p2);
+				//now we remove point that is same as either one of these
+				
+
+
+				collinears.push_back({ lines[i].p1.x, (float)y});
+				collinears.push_back({ lines[i].p2.x, (float)y });
+				
 			}
 		}
-		std::sort(inters.begin(), inters.end(), sortVec2);
-		//do point setting now
-
-
-
-		for (int i = 0; i < inters.size(); i+=2) {
-			float x1 = inters[i].x;
-			float x2;
-			if (inters.size() > i + 1) {
-				x2 = inters[i + 1].x;
+		//problem is y=49 intersections
+		cullInters(inters);*/
+		/*std::sort(inters.begin(), inters.end(), sortVec2Bigger);
+		for (int i = 1; i < inters.size() && i < adds.size(); i += 2) {
+			float x1 = inters[i - 1].x;
+			float x2 = inters[i].x;
+			for (int x = x1; x >= x2; x--) {
+				ImageLoader::setPixel(g->data, x, y, color);
+			}
+			ImageLoader::setPixel(g->data, x1, y, pack_rgba(0, 255, 50, 255));
+			ImageLoader::setPixel(g->data, x2, y, pack_rgba(0, 255, 50, 255));
+			if (inters.size() % 2 == 0) {
+				i += 2;
 			}
 			else {
-				//float t = x1;
-				x2 = x1;
-				x1 = inters[i - 1].x;
+				i++;
+			}
+		}*/
+		
+		
+		/*std::sort(inters.begin(), inters.end(), sortVec2);
+		for (int i = 1; i < inters.size() && i < adds.size();) {
+			float x1 = inters[i - 1].x;
+			float x2 = inters[i].x;
+
+			
+			ImageLoader::setPixel(g->data, x1, y, pack_rgba(0, 255, 50, 255));
+			ImageLoader::setPixel(g->data, x2, y, pack_rgba(0, 255, 50, 255));
+			for (int x = x1 + 1; x < x2; x++) {
+				ImageLoader::setPixel(g->data, x, y, color);
+			}
+			if (inters.size() % 2 == 0) {
+				i += 2;
+			}
+			else {
+				i++;
+			}
+		}*/
+
+		//std::sort(inters.begin(), inters.end(), sortVec2);
+		//do point setting now
+		//cullInters(inters);
+		//cullCollinears(inters, collinear_index);
+		//rewrite to go from 0 to width so collinear lines will actually fill in emtpy gaps
+		
+		//doing collinear line
+		/*for (int i = 0; i < collinears.size(); i += 2) {
+			float x1 = collinears[i].x;
+			float x2 = collinears[i + 1].x;
+			if (x2 > x1) {
+				float temp = x1;
+				x1 = x2;
+				x2 = temp;
 			}
 			for (int x = x1; x >= x2; x--) {
 				ImageLoader::setPixel(g->data, x, y, color);
 			}
-		}
+		}*/
+		
 	}
 
 }
