@@ -173,14 +173,16 @@ struct Line {
 	vec2 p2;
 };
 
-
+struct RasterGlyph {
+	UINT16 c;
+	IMG data; //img we rasterize to
+};
 
 struct Glyph {
 	UINT16 c; //for unicode
 	std::vector<vec2> points;
 	std::vector<Line> contours;
 	std::vector<int> end_contours;
-	IMG data; //img we rasterize to
 	short yMax;
 	short yMin;
 	short xMax;
@@ -191,14 +193,8 @@ struct Glyph {
 struct Font {
 	std::string name;
 	std::vector<Glyph> glyphs;
-};
-
-//eventually use this for efficient font handling
-class FontHandler {
-private:
-
-public:
-
+	std::vector<RasterGlyph> r_glyphs; //can ignore this if don't plan on using my rasterization
+	int ptsize;
 };
 
 
@@ -531,7 +527,9 @@ public:
 	//font functions
 	Font loadFont(std::string file);
 	void drawText(std::string text, Font font, int ptsize);
-	void rasterizeGlyph(Glyph* g, int w, int h, uint32_t color);
+	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color);
+	void rasterizeFont(Font* font, int ptsize, uint32_t color);
+	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

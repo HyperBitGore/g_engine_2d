@@ -89,7 +89,7 @@ void renderFunction() {
 	eng2.renderImgsRotated(imgtest);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 
-	eng2.renderImg(f_test.glyphs[15].data, 100.0f, 100.0f, 64, 64);
+	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
 	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
 
 	//testing beziers
@@ -99,6 +99,7 @@ void renderFunction() {
 
 	//testing font rendering
 	eng2.drawText("Hello World", f_test, 24);
+	eng2.drawRasterText(&f_test, "Hello World", 100.0f, 100.0f, 32);
 	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
 	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
 }
@@ -124,8 +125,9 @@ int main() {
 	f_test = eng2.loadFont("EnvyCodeR.ttf");
 
 	//testing font rasterizing
-	eng2.rasterizeGlyph(&f_test.glyphs[15], 64, 64, 4278190335);
-	eng2.createTexture(f_test.glyphs[15].data);
+	//eng2.rasterizeGlyph(&f_test.glyphs[17], 64, 64, 4278190335);
+	//eng2.createTexture(f_test.glyphs[17].data);
+	eng2.rasterizeFont(&f_test, 64, 4278190335);
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100);
 	for (int i = 0; i < 100; i++) {

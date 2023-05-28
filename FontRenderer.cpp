@@ -742,11 +742,11 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 					else {
 						k++;
 					}
-					g.points.push_back(p1);
-					g.points.push_back(p2);
-					g.points.push_back(p3);
+					//g.points.push_back(p1);
+					//g.points.push_back(p2);
+					//g.points.push_back(p3);
 					//generate points
-					//tesslateBezier(&g, p1, p2, p3, 2);
+					tesslateBezier(&g, p1, p2, p3, 2);
 				}
 				contour_start = false;
 			}
@@ -761,11 +761,11 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 				p2.y = (float)i.yCoords[contour_start_index];
 				vec2 p3 = g.points[generated_points_start_index];
 
-				g.points.push_back(p1);
-				g.points.push_back(p2);
-				g.points.push_back(p3);
+				//g.points.push_back(p1);
+				//g.points.push_back(p2);
+				//g.points.push_back(p3);
 
-				//tesslateBezier(&g, p1, p2, p3, 2);
+				tesslateBezier(&g, p1, p2, p3, 2);
 			}
 			g.end_contours.push_back(g.points.size());
 		}
@@ -891,7 +891,7 @@ void removeDupePoint(std::vector<vec2>& inters, vec2 p) {
 }
 
 
-void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
+RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	float scaleh = (float)h / (float)(g->yMax - g->yMin);
@@ -907,9 +907,10 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 
 		lines.push_back(l);
 	}
-
+	RasterGlyph r_g;
 	std::vector<float> intersections;
-	g->data = ImageLoader::generateBlankIMG(w, h);
+	r_g.c = g->c;
+	r_g.data = ImageLoader::generateBlankIMG(w, h);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	struct sortContours {
 		bool operator() (Line l1, Line l2) { return l1.p1.y < l2.p1.y; }
@@ -919,10 +920,6 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 	struct sortInters {
 		bool operator() (vec2 l1, vec2 l2) { return l1.y < l2.y; }
 	} sortVec2;
-	struct sortInters2 {
-		bool operator() (vec2 l1, vec2 l2) { return l1.x > l2.x; }
-	} sortVec2Bigger;
-
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	//do vertical scanlines
@@ -937,84 +934,14 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 				adds.push_back(lines[i]);
 				inters.push_back({ (float)x, (float)l.y });
 			}
-	}
-	std::sort(inters.begin(), inters.end(), sortVec2);
-	for (int i = 1; i < inters.size() && i < adds.size();) {
-		float y1 = inters[i - 1].y;
-		float y2 = inters[i].y;
-
-
-		//ImageLoader::setPixel(g->data, x, y1, pack_rgba(0, 255, 50, 255));
-		//ImageLoader::setPixel(g->data, x, y2, pack_rgba(0, 255, 50, 255));
-		for (int y = y1; y <= y2; y++) {
-			ImageLoader::setPixel(g->data, x, y, color);
 		}
-		if (inters.size() % 2 == 0) {
-			i += 2;
-		}
-		else {
-			i++;
-		}
-	}
-
-	/*for (int y = 0; y < h; y++) {
-		Line test_line = { {0, y}, {w, y} };
-		std::vector<vec2> inters; //list of intersection points
-		std::vector<Line> adds;
-		std::vector<vec2> collinears;
-		for (int i = 0; i < lines.size(); i++) {
-			vec2 l = getIntersection(test_line, lines[i]);
-			if (l.x >= 0 && l.x <= w) {
-				adds.push_back(lines[i]);
-				//if ((y != (int)lines[i].p1.y && y != (int)lines[i].p2.y) || inters.size() == 0 || l.x == w-1) {
-					inters.push_back({ l.x, (float)y });
-				//}
-				//test_line.p1.x = l.x;
-			}
-			else if (l.x == -2) {
-				//removeDupePoint(inters, lines[i].p1);
-				//removeDupePoint(inters, lines[i].p2);
-				//inters.push_back(lines[i].p1);
-				//inters.push_back(lines[i].p2);
-				//now we remove point that is same as either one of these
-				
-
-
-				collinears.push_back({ lines[i].p1.x, (float)y});
-				collinears.push_back({ lines[i].p2.x, (float)y });
-				
-			}
-		}
-		//problem is y=49 intersections
-		cullInters(inters);*/
-		/*std::sort(inters.begin(), inters.end(), sortVec2Bigger);
-		for (int i = 1; i < inters.size() && i < adds.size(); i += 2) {
-			float x1 = inters[i - 1].x;
-			float x2 = inters[i].x;
-			for (int x = x1; x >= x2; x--) {
-				ImageLoader::setPixel(g->data, x, y, color);
-			}
-			ImageLoader::setPixel(g->data, x1, y, pack_rgba(0, 255, 50, 255));
-			ImageLoader::setPixel(g->data, x2, y, pack_rgba(0, 255, 50, 255));
-			if (inters.size() % 2 == 0) {
-				i += 2;
-			}
-			else {
-				i++;
-			}
-		}*/
-		
-		
-		/*std::sort(inters.begin(), inters.end(), sortVec2);
+		std::sort(inters.begin(), inters.end(), sortVec2);
 		for (int i = 1; i < inters.size() && i < adds.size();) {
-			float x1 = inters[i - 1].x;
-			float x2 = inters[i].x;
+			float y1 = inters[i - 1].y;
+			float y2 = inters[i].y;
 
-			
-			ImageLoader::setPixel(g->data, x1, y, pack_rgba(0, 255, 50, 255));
-			ImageLoader::setPixel(g->data, x2, y, pack_rgba(0, 255, 50, 255));
-			for (int x = x1 + 1; x < x2; x++) {
-				ImageLoader::setPixel(g->data, x, y, color);
+			for (int y = y1; y <= y2; y++) {
+				ImageLoader::setPixel(r_g.data, x, y, color);
 			}
 			if (inters.size() % 2 == 0) {
 				i += 2;
@@ -1022,33 +949,43 @@ void EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
 			else {
 				i++;
 			}
-		}*/
-
-		//std::sort(inters.begin(), inters.end(), sortVec2);
-		//do point setting now
-		//cullInters(inters);
-		//cullCollinears(inters, collinear_index);
-		//rewrite to go from 0 to width so collinear lines will actually fill in emtpy gaps
-		
-		//doing collinear line
-		/*for (int i = 0; i < collinears.size(); i += 2) {
-			float x1 = collinears[i].x;
-			float x2 = collinears[i + 1].x;
-			if (x2 > x1) {
-				float temp = x1;
-				x1 = x2;
-				x2 = temp;
-			}
-			for (int x = x1; x >= x2; x--) {
-				ImageLoader::setPixel(g->data, x, y, color);
-			}
-		}*/
+		}
 		
 	}
-
+	return r_g;
+}
+void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color) {
+	font->ptsize = ptsize;
+	for (int i = 0; i < font->glyphs.size(); i++) {
+		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color));
+		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data);
+	}
 }
 
+int findFontChar(Font* f, UINT16 c) {
+	for (int i = 0; i < f->r_glyphs.size(); i++) {
+		if (f->r_glyphs[i].c == c) {
+			return i;
+		}
+	}
+	return 0;
+}
 
+void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y, int ptsize) {
+	if (font->r_glyphs.size() <= 0) {
+		std::cout << "Trying to draw an empty raster font " << std::endl;
+		return;
+	}
+	float x1 = x;
+	float y1 = y;
+	//have to scale images based on ptsize
+	float scale = font->ptsize / (font->ptsize / ptsize);
+	for (int i = 0; i < text.size(); i++) {
+		int index = findFontChar(font, text[i]);
+		renderImg(font->r_glyphs[index].data, x1, y1, scale, scale);
+		x1 += scale;
+	}
+}
 void drawChar(UINT16 c, Font font, int ptsize) {
 
 }
