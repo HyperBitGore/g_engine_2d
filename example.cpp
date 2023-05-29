@@ -98,8 +98,8 @@ void renderFunction() {
 	eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
 
 	//testing font rendering
-	eng2.drawText("Hello World", f_test, 24);
-	eng2.drawRasterText(&f_test, "Hello World", 100.0f, 100.0f, 32);
+	eng2.drawText("Hello World", &f_test, 100, 50, 24);
+	eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
 	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
 	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
 }
@@ -116,18 +116,19 @@ int main() {
 	bmptest = eng2.loadBMP("test1.bmp");
 	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	for (int x = 0; x < 100; x++) {
-		ImageLoader::setPixel(imgtest, x, 100, 4278190335);
+		ImageLoader::setPixel(imgtest, x, 1, 4278190335);
 	}
+
 	std::cout << ImageLoader::getPixel(imgtest, 0, 100) << "\n";
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = eng2.loadFont("EnvyCodeR.ttf");
+	f_test = eng2.loadFont("EnvyCodeR.ttf", 32, 127);
 
 	//testing font rasterizing
 	//eng2.rasterizeGlyph(&f_test.glyphs[17], 64, 64, 4278190335);
 	//eng2.createTexture(f_test.glyphs[17].data);
-	eng2.rasterizeFont(&f_test, 64, 4278190335);
+	eng2.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100);
 	for (int i = 0; i < 100; i++) {

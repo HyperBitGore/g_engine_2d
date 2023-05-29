@@ -174,7 +174,7 @@ int get_glyph_index_format4(UINT16 c, format4* f, UINT16* idRangeStart) {
 }
 
 //c should be at the start of the cmap table so the table.offset works
-void readFormat4(char* c, cmap_table* table) {
+void readFormat4(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	//now we get to reading, probably make cmap_table have array of glyph indexs so easier to store
 	char* m = c + table->offset;
 	UINT16* t = (UINT16*)m;
@@ -223,15 +223,15 @@ void readFormat4(char* c, cmap_table* table) {
 		form.glyphIndexArray.push_back(SwapTwoBytes(*(t + i)));
 	}
 	//now we read all of the character codes, change back to 32
-	UINT16 start = 32;
-	for (start; start <= 159; start++) {
-		table->indexs.push_back({ get_glyph_index_format4(start, &form, idRangeStart), start});
+	UINT16 start1 = start;
+	for (start1; start1 <= end; start1++) {
+		table->indexs.push_back({ get_glyph_index_format4(start1, &form, idRangeStart), start1 });
 	}
 	//std::cout << table->indexs[0].c << " : " << table->indexs[0].index << "\n";
 }
 
 //https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
-cmap readCmap(char* c, int offset, int length) {
+cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
 	cmap map;
 	char* m = c + offset;
 	UINT16* t = (UINT16*)m;
@@ -255,7 +255,7 @@ cmap readCmap(char* c, int offset, int length) {
 		switch (format) {
 		case 4:
 			//most common
-			readFormat4(m, &map.tables[i]);
+			readFormat4(m, &map.tables[i], start, end);
 			break;
 		case 0:
 			break;
@@ -650,7 +650,7 @@ void cullEdges(Glyph* g) {
 	}
 }
 
-void readDirectorys(font_dir* directory, Font* f, char* c) {
+void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 end) {
 	//test case for swap1byte
 	/*
 	UINT8 tf = 10;
@@ -665,7 +665,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 	glyph_table g_table;
 	table_dir* tab = nullptr;
 	tab = findTable("cmap", directory);
-	c_map = readCmap(c, tab->offset, tab->length);
+	c_map = readCmap(c, tab->offset, tab->length, start, end);
 	tab = findTable("head", directory);
 	header = readHead(c, tab->offset, tab->length);
 	tab = findTable("loca", directory);
@@ -789,7 +789,8 @@ void readDirectorys(font_dir* directory, Font* f, char* c) {
 // https://tchayen.github.io/posts/ttf-file-parsing
 // https://fontdrop.info/
 //big endian so characters will be reversed to me
-Font EngineNewGL::loadFont(std::string file) {
+//start and end variables are the start of characters you want to load and end is the last character to load
+Font EngineNewGL::loadFont(std::string file, UINT16 start, UINT16 end) {
 	std::ifstream f;
 	f.open(file.c_str(), std::ios::binary);
 	//read the file into memory
@@ -807,7 +808,7 @@ Font EngineNewGL::loadFont(std::string file) {
 	//now we read all of the directorys we need to
 	Font font;
 	font.name = file;
-	readDirectorys(&directory, &font, c);
+	readDirectorys(&directory, &font, c, start, end);
 
 	return font;
 }
@@ -863,35 +864,7 @@ float convertToRange(float n, float min, float max, float old_min, float old_max
 	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 }
 
-
-void cullInters(std::vector<vec2>& inters) {
-	for (int i = 0; i < inters.size();) {
-		bool remove = false;
-		for (int j = i; j < inters.size(); j++) {
-			if (roundf(inters[i].x) == roundf(inters[j].x) && roundf(inters[i].y) == roundf(inters[j].y) && i != j) {
-				remove = true;
-				break;
-			}
-		}
-		if (remove) {
-			inters.erase(inters.begin() + i);
-		}
-		else {
-			i++;
-		}
-	}
-}
-void removeDupePoint(std::vector<vec2>& inters, vec2 p) {
-	for (int i = 0; i < inters.size(); i++) {
-		if (inters[i].x == p.x && inters[i].y == p.y) {
-			inters.erase(inters.begin() + i);
-			return;
-		}
-	}
-}
-
-
-RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) {
+RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	float scaleh = (float)h / (float)(g->yMax - g->yMin);
@@ -923,7 +896,6 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) 
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	//do vertical scanlines
-	//so test line changes in y not x and points are set on the y axis
 	for (int x = 0; x < w; x++) {
 		Line test_line = { {x, 0}, {x, h} };
 		std::vector<vec2> inters; //list of intersection points
@@ -953,37 +925,66 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) 
 		
 	}
 	//flip the image
-	for (int y1 = 0, y2 = h-1; y1 <= y2; y1++, y2--) {
-		//flipping the current rows
-		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
-		std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
-		unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
-		std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
-		std::memcpy(c2, c1, w * 4);
-		std::free(c1);
-		/*for (int x = 0; x < w; x++) {
-			uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y1);
-			uint32_t c2 = ImageLoader::getPixel(r_g.data, x, y2);
-			//set the pixels
-			ImageLoader::setPixel(r_g.data, x, y2, c1);
-			ImageLoader::setPixel(r_g.data, x, y1, c2);
-		}*/
+	if (flipx) {
+		//hacky way to deal with fucked up L's
+		for (int y = 0; y < h - 1; y++) {
+			for (int x = 0, x1 = w - 1; x <= x1; x++, x1--) {
+				uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y);
+				uint32_t c2 = ImageLoader::getPixel(r_g.data, x1, y);
+				ImageLoader::setPixel(r_g.data, x, y, c2);
+				ImageLoader::setPixel(r_g.data, x1, y, c1);
+			}
+		}
 	}
-
+	else {
+		for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
+			//flipping the current rows
+			unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
+			std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
+			unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
+			std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
+			std::memcpy(c2, c1, w * 4);
+			std::free(c1);
+			/*for (int x = 0; x < w; x++) {
+				int flippedx = 0 + (w - x);
+				uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y1);
+				uint32_t c2 = ImageLoader::getPixel(r_g.data, flippedx, y1);
+				//set the pixels
+				ImageLoader::setPixel(r_g.data, x, y1, c2);
+				ImageLoader::setPixel(r_g.data, flippedx, y1, c1);
+			}*/
+		}
+	}
 
 	return r_g;
 }
-void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color) {
+//flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
+void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx) {
 	font->ptsize = ptsize;
 	for (int i = 0; i < font->glyphs.size(); i++) {
-		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color));
+		bool flip = false;
+		for (auto& j : flipx) {
+			if (font->glyphs[i].c == j) {
+				flip = true;
+				break;
+			}
+		}
+		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
 		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data);
 	}
 }
 
-int findFontChar(Font* f, UINT16 c) {
+int findFontCharRaster(Font* f, UINT16 c) {
 	for (int i = 0; i < f->r_glyphs.size(); i++) {
 		if (f->r_glyphs[i].c == c) {
+			return i;
+		}
+	}
+	return 0;
+}
+int findFontChar(Font* f, UINT16 c) {
+	for (int i = 0; i < f->glyphs.size(); i++) {
+		if (f->glyphs[i].c == c) {
 			return i;
 		}
 	}
@@ -1001,13 +1002,13 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 	float scale = font->ptsize / (font->ptsize / ptsize);
 	for (int i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
-			int index = findFontChar(font, text[i]);
+			int index = findFontCharRaster(font, text[i]);
 			renderImg(font->r_glyphs[index].data, x1, y1, scale, scale, true);
 		}
 		x1 += scale + 2;
 	}
 }
-void drawChar(UINT16 c, Font font, int ptsize) {
+void drawChar(Glyph* g, float x, float y, float scale) {
 
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
@@ -1015,13 +1016,34 @@ void drawChar(UINT16 c, Font font, int ptsize) {
 //2.4.4
 //do a bunch of memcpys for when i actually want to draw text
 //cutout memory inefficient parts of glyph like points
-void EngineNewGL::drawText(std::string text, Font font, int ptsize) {
-	for (int i = 0; i < font.glyphs[64].contours.size(); i++) {
+void EngineNewGL::drawText(std::string text, Font* font, float x, float y, int ptsize) {
+	
+	float x1 = x;
+	float y1 = y;
+	float scale = (font->ptsize / ptsize);
+	for (int i = 0; i < text.size(); i++) {
+		if (text[i] >= 33) {
+			int index = findFontChar(font, text[i]);
+			for (int j = 0; j < font->glyphs[index].contours.size(); j++) {
+				Line l = font->glyphs[index].contours[j];
+				//l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize, font->glyphs[index].xMin, font->glyphs[index].xMax);
+				//l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize, font->glyphs[index].xMin, font->glyphs[index].xMax);
+				//l.p1.y = convertToRange(l.p1.y, y1, y1 + ptsize, font->glyphs[index].yMin, font->glyphs[index].yMax);
+				//l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize, font->glyphs[index].yMin, font->glyphs[index].yMax);
+				buffer_2d.push_back({ l.p1.x / scale + x1, l.p1.y / scale + y1});
+				buffer_2d.push_back({ l.p2.x / scale + x1, l.p2.y / scale + y1});
+			}
+			drawLines(0.1f);
+		}
+		x1 += scale + 2;
+	}
+	
+
+	/*for (int i = 0; i < font.glyphs[64].contours.size(); i++) {
 		Line l = font.glyphs[64].contours[i];
 		//addLinePoints({ l.p1.x / 8 + 250, l.p1.y / 8 + 250 }, { l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
 		buffer_2d.push_back({l.p1.x / 8 + 250, l.p1.y / 8 + 250});
 		buffer_2d.push_back({ l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
-	}
+	}*/
 	//drawPoints();
-	drawLines(0.1f);
 }

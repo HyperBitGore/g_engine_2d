@@ -525,10 +525,10 @@ public:
 		return { frameRate, averageFrameTimeMilliseconds};
 	}
 	//font functions
-	Font loadFont(std::string file);
-	void drawText(std::string text, Font font, int ptsize);
-	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color);
-	void rasterizeFont(Font* font, int ptsize, uint32_t color);
+	Font loadFont(std::string file, UINT16 start, UINT16 end);
+	void drawText(std::string text, Font* font, float x, float y, int ptsize);
+	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
+	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
 	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
 	//function loading
 	//only run this after gl initilized
