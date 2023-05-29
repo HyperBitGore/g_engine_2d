@@ -952,6 +952,25 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color) 
 		}
 		
 	}
+	//flip the image
+	for (int y1 = 0, y2 = h-1; y1 <= y2; y1++, y2--) {
+		//flipping the current rows
+		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
+		std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
+		unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
+		std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
+		std::memcpy(c2, c1, w * 4);
+		std::free(c1);
+		/*for (int x = 0; x < w; x++) {
+			uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y1);
+			uint32_t c2 = ImageLoader::getPixel(r_g.data, x, y2);
+			//set the pixels
+			ImageLoader::setPixel(r_g.data, x, y2, c1);
+			ImageLoader::setPixel(r_g.data, x, y1, c2);
+		}*/
+	}
+
+
 	return r_g;
 }
 void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color) {
@@ -981,9 +1000,11 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 	//have to scale images based on ptsize
 	float scale = font->ptsize / (font->ptsize / ptsize);
 	for (int i = 0; i < text.size(); i++) {
-		int index = findFontChar(font, text[i]);
-		renderImg(font->r_glyphs[index].data, x1, y1, scale, scale);
-		x1 += scale;
+		if (text[i] >= 33) {
+			int index = findFontChar(font, text[i]);
+			renderImg(font->r_glyphs[index].data, x1, y1, scale, scale, true);
+		}
+		x1 += scale + 2;
 	}
 }
 void drawChar(UINT16 c, Font font, int ptsize) {

@@ -317,11 +317,11 @@ public:
 
 	//image functions
 	//draws an img once
-	void renderImg(IMG img, float x, float y, float w, float h);
+	void renderImg(IMG img, float x, float y, float w, float h, bool blend = false);
 	//mass draws an image based on buffer_2d
 	void renderImgs(IMG img);
 	//rotates counter clockwise around top left point
-	void renderImgRotated(IMG img, float x, float y, float w, float h, float ang);
+	void renderImgRotated(IMG img, float x, float y, float w, float h, float ang, bool blend = false);
 	//mass draws an image with rotations
 	void renderImgsRotated(IMG img);
 	//run after you've done all the editing of data you want to

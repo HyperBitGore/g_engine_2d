@@ -251,10 +251,11 @@ void EngineNewGL::drawLines(float width) {
 
 //2d image drawing functions
 //
-void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h, bool blend) {
+	if (blend) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	//triangle 1
 	buffer_2d.push_back({ x, y });
@@ -297,7 +298,9 @@ void EngineNewGL::renderImg(IMG img, float x, float y, float w, float h) {
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindTextureUnit_g(0, 0);
-	//glDisable(GL_BLEND);
+	if (blend) {
+		glDisable(GL_BLEND);
+	}
 }
 //mass draws an image based on buffer_2d
 void EngineNewGL::renderImgs(IMG img) {
@@ -327,8 +330,11 @@ void EngineNewGL::renderImgs(IMG img) {
 
 
 //rotates counter clockwise around top left point, angle is in raidans
-void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, float ang) {
-
+void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, float ang, bool blend) {
+	if (blend) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	int b = buffer_2d.size();
 	//triangle 1
@@ -423,6 +429,9 @@ void EngineNewGL::renderImgRotated(IMG img, float x, float y, float w, float h, 
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindTextureUnit_g(0, 0);
+	if (blend) {
+		glDisable(GL_BLEND);
+	}
 }
 
 //mass draws an image with rotations
