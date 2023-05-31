@@ -867,8 +867,6 @@ float convertToRange(float n, float min, float max, float old_min, float old_max
 RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
-	float scaleh = (float)h / (float)(g->yMax - g->yMin);
-	float scalew = (float)w / (float)(g->xMax - g->xMin);
 	for (int i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
 		l.p1.x = convertToRange(l.p1.x, 0, w-1, g->xMin, g->xMax);
@@ -1014,36 +1012,29 @@ void drawChar(Glyph* g, float x, float y, float scale) {
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
-//do a bunch of memcpys for when i actually want to draw text
 //cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font* font, float x, float y, int ptsize) {
 	
 	float x1 = x;
 	float y1 = y;
-	float scale = (font->ptsize / ptsize);
 	for (int i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontChar(font, text[i]);
 			for (int j = 0; j < font->glyphs[index].contours.size(); j++) {
 				Line l = font->glyphs[index].contours[j];
-				//l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize, font->glyphs[index].xMin, font->glyphs[index].xMax);
-				//l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize, font->glyphs[index].xMin, font->glyphs[index].xMax);
-				//l.p1.y = convertToRange(l.p1.y, y1, y1 + ptsize, font->glyphs[index].yMin, font->glyphs[index].yMax);
-				//l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize, font->glyphs[index].yMin, font->glyphs[index].yMax);
-				buffer_2d.push_back({ l.p1.x / scale + x1, l.p1.y / scale + y1});
-				buffer_2d.push_back({ l.p2.x / scale + x1, l.p2.y / scale + y1});
-			}
-			drawLines(0.1f);
-		}
-		x1 += scale + 2;
-	}
-	
+				//converting line points to ptsize
+				l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize - 1, font->glyphs[index].xMin, font->glyphs[index].xMax);
+				l.p1.y = convertToRange(l.p1.y, y1, y1 + ptsize - 1, font->glyphs[index].yMin, font->glyphs[index].yMax);
 
-	/*for (int i = 0; i < font.glyphs[64].contours.size(); i++) {
-		Line l = font.glyphs[64].contours[i];
-		//addLinePoints({ l.p1.x / 8 + 250, l.p1.y / 8 + 250 }, { l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
-		buffer_2d.push_back({l.p1.x / 8 + 250, l.p1.y / 8 + 250});
-		buffer_2d.push_back({ l.p2.x / 8 + 250, l.p2.y / 8 + 250 });
-	}*/
-	//drawPoints();
+
+				l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize - 1, font->glyphs[index].xMin, font->glyphs[index].xMax);
+				l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize - 1, font->glyphs[index].yMin, font->glyphs[index].yMax);
+				buffer_2d.push_back({ l.p1.x, l.p1.y});
+				buffer_2d.push_back({ l.p2.x, l.p2.y});
+			}
+		}
+		//increase the pos by ptsize and a small gap
+		x1 += ptsize + 2;
+	}
+	drawLines(0.1f);
 }

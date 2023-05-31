@@ -58,9 +58,11 @@ void renderFunction() {
 	eng2.drawQuad(640.0f, 400.0f, 50.0f, 50.0f);
 	eng2.setDrawColor({ 1.0f, 0.3f, 0.1f, 0.0f });
 	for (float y = 100.0f; y <= 300.0f; y += 1.00f) {
+		//eng2.addLinePoints({ 1.0f, y }, { 0.5f, y + 1.0f });
 		eng2.add2DPoint(50.0f, y);
 		//eng2.drawPoint(50.0f, y);
 	}
+	//eng2.drawLines(0.2f);
 	eng2.drawPoints();
 	eng2.setDrawColor({ 0.0f, 1.0f, 0.4f, 0.0f });
 	eng2.drawLine(350.0f, 200.0f, 450.0f, 420.0f, 2.0f);
@@ -98,8 +100,8 @@ void renderFunction() {
 	eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
 
 	//testing font rendering
-	eng2.drawText("Hello World", &f_test, 100, 50, 24);
 	eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
+	eng2.drawText("Hello World", &f_test, 100, 30, 24);
 	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
 	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
 }

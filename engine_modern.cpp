@@ -209,7 +209,7 @@ void EngineNewGL::drawQuads() {
 //draws a line
 void EngineNewGL::drawLine(float x1, float y1, float x2, float y2, float width) {
 	glLineWidth(width);
-	glEnable(GL_BLEND);
+	//glEnable(GL_BLEND);
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//write seperate shader
@@ -226,13 +226,13 @@ void EngineNewGL::drawLine(float x1, float y1, float x2, float y2, float width) 
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
-	glDisable(GL_BLEND);
+	//glDisable(GL_BLEND);
 	glDisable(GL_LINE_SMOOTH);
 }
 //draws line from buffer_2d
 void EngineNewGL::drawLines(float width) {
 	glLineWidth(width);
-	glEnable(GL_BLEND);
+	//glEnable(GL_BLEND);
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//write seperate shader
@@ -245,7 +245,7 @@ void EngineNewGL::drawLines(float width) {
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
-	glDisable(GL_BLEND);
+	//glDisable(GL_BLEND);
 	glDisable(GL_LINE_SMOOTH);
 }
 
