@@ -124,13 +124,6 @@ void read_table_directory(char* c, std::vector<table_dir>& table, int tbl_size) 
 	}
 }
 
-int getOffset(std::string comp, font_dir dir) {
-	for (auto& i : dir.table) {
-		if (comp.compare(i.t) == 0) {
-			return i.offset;
-		}
-	}
-}
 struct format4 {
 	UINT16 format;
 	UINT16 length;
@@ -306,7 +299,7 @@ std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap*
 	char* m = c + offset;
 	std::vector<loca> locas;
 	if (format == 0) {
-		for (int i = 0; i < map->tables[0].indexs.size(); i++) {
+		for (size_t i = 0; i < map->tables[0].indexs.size(); i++) {
 			loca l;
 			l.c = map->tables[0].indexs[i].c;
 			l.offset = readLoca16(m, map->tables[0].indexs[i].index);
@@ -314,7 +307,7 @@ std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap*
 		}
 	}
 	else {
-		for (int i = 0; i < map->tables[0].indexs.size(); i++) {
+		for (size_t i = 0; i < map->tables[0].indexs.size(); i++) {
 			loca l;
 			l.c = (map->tables[0].indexs[i].c);
 			l.offset = readLoca32(m, map->tables[0].indexs[i].index);
@@ -439,7 +432,7 @@ struct glyph_table {
 
 glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) {
 	glyph_table table;
-	for (int i = 0; i < locas.size(); i++) {
+	for (size_t i = 0; i < locas.size(); i++) {
 		char* m = c + offset + locas[i].offset;
 		short* s = (short*)m;
 		glyf g;
@@ -582,7 +575,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 
 
 table_dir* findTable(std::string table, font_dir* directory) {
-	for (int i = 0; i < directory->table.size(); i++) {
+	for (size_t i = 0; i < directory->table.size(); i++) {
 		if (directory->table[i].t.compare(table) == 0) {
 			return &directory->table[i];
 		}
@@ -590,8 +583,8 @@ table_dir* findTable(std::string table, font_dir* directory) {
 	return nullptr;
 }
 
-void tesslateBezier(Glyph* g, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
-	float step = 1.0 / subdiv;
+void tesslateBezier(std::vector<vec2>& points, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
+	float step = 1.0f / subdiv;
 	float lx = 0, ly = 0;
 	for (int i = 0; i <= subdiv; i++) {
 		float t = i * step;
@@ -600,29 +593,29 @@ void tesslateBezier(Glyph* g, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
 		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
 		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
 		(i == 0) ? lx = x, ly = y : lx, ly;
-		g->points.push_back({ lx, ly });
-		g->points.push_back({ x, y });
+		points.push_back({ lx, ly });
+		points.push_back({ x, y });
 		lx = x;
 		ly = y;
 	}
 }
 
 
-std::vector<Line> generate_edges(Glyph* g) {
+std::vector<Line> generate_edges(std::vector<int>& end_contours, std::vector<vec2>& points) {
 	std::vector<Line> lines;
 	int j = 0;
-	for (int i = 0; i < g->end_contours.size(); i++) {
+	for (size_t i = 0; i < end_contours.size(); i++) {
 		int first = j;
-		for (; j < g->end_contours[i] - 1; j++) {
+		for (; j < end_contours[i] - 1; j++) {
 			Line l;
-			l.p1.x = g->points[j].x;
-			l.p1.y = g->points[j].y;
-			l.p2.x = g->points[j + 1].x;
-			l.p2.y = g->points[j + 1].y;
+			l.p1.x = points[j].x;
+			l.p1.y = points[j].y;
+			l.p2.x = points[j + 1].x;
+			l.p2.y = points[j + 1].y;
 			lines.push_back(l);
 		}
 		//have to add endpoint of contour and last point of contour as a line, so we can fix any possible gaps in glyphs
-		lines.push_back({ { g->points[first].x, g->points[first].y}, {g->points[j].x, g->points[j].y} }); 
+		lines.push_back({ { points[first].x, points[first].y}, {points[j].x, points[j].y} }); 
 		j++;
 	}
 	return lines;
@@ -633,9 +626,9 @@ bool compareLine(Line l1, Line l2) {
 }
 
 void cullEdges(Glyph* g) {
-	for (int i = 0; i < g->contours.size();) {
+	for (size_t i = 0; i < g->contours.size();) {
 		bool cull = false;
-		for (int j = 0; j < g->contours.size(); j++) {
+		for (size_t j = 0; j < g->contours.size(); j++) {
 			if (compareLine(g->contours[i], g->contours[j]) && i != j){ 
 				cull = true;
 				break;
@@ -651,14 +644,7 @@ void cullEdges(Glyph* g) {
 }
 
 void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 end) {
-	//test case for swap1byte
-	/*
-	UINT8 tf = 10;
-	std::bitset<8> x(tf);
-	std::cout << x << "\n";
-	std::bitset<8> y(swap1Byte(tf));
-	std::cout << y << "\n";*/
-	//need to sort directorys so you do them in right order
+	//getting directorys in order we need them
 	cmap c_map;
 	TTFHeader header;
 	std::vector<loca> locas;
@@ -682,8 +668,10 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 		g.yMin = i.yMin;
 		g.xMin = i.xMin;
 		int k = 0;
+		std::vector<vec2> points;
+		std::vector<int> end_contours;
 		for (int j = 0; j < i.numberOfContours; j++) {
-			int generated_points_start_index = g.points.size() - 1;
+			int generated_points_start_index = points.size() - 1;
 			if (generated_points_start_index < 0) {
 				generated_points_start_index = 0;
 			}
@@ -707,10 +695,10 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 					vec2 p1 = { (float)i.xCoords[k], (float)i.yCoords[k] };
 					vec2 p2 = { (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] };
 					vec2 p3;
-					p3.x = p2.x + (p1.x - p2.x) / 2.0;
-					p3.y = p2.y + (p1.y - p2.y) / 2.0;
+					p3.x = p2.x + (p1.x - p2.x) / 2.0f;
+					p3.y = p2.y + (p1.y - p2.y) / 2.0f;
 					//tesslateBezier(&g, p1, p2, p3, 20);
-					g.points.push_back({ x, y});
+					points.push_back({ x, y});
 					//g.points.push_back({ (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] });
 					
 					
@@ -721,23 +709,23 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 						contour_started_off = true; 
 						//next point is on curve
 						if (getnthBit(i.flags[next_index], 0) == 1) {
-							g.points.push_back({ (float)i.xCoords[next_index], (float)i.yCoords[next_index] });
+							points.push_back({ (float)i.xCoords[next_index], (float)i.yCoords[next_index] });
 							k++;
 							continue;
 						}
-						x = x + (i.xCoords[next_index] - x) / 2.0;
-						y = y + (i.yCoords[next_index] - y) / 2.0;
-						g.points.push_back({ x, y });
+						x = x + (i.xCoords[next_index] - x) / 2.0f;
+						y = y + (i.yCoords[next_index] - y) / 2.0f;
+						points.push_back({ x, y });
 						
 					}
 					
-					vec2 p1 = g.points[g.points.size() - 1];
+					vec2 p1 = points[points.size() - 1];
 					vec2 p2 = { (float)x, (float)y };
 					vec2 p3 = { (float)i.xCoords[next_index], (float)i.yCoords[next_index] };
 					//get the middle point between p1 and p3
 					if (getnthBit(i.flags[next_index], 0) == 1) {
-						p3.x = p2.x + (p3.x - p2.x) / 2.0;
-						p3.y = p2.y + (p3.y - p2.y) / 2.0;
+						p3.x = p2.x + (p3.x - p2.x) / 2.0f;
+						p3.y = p2.y + (p3.y - p2.y) / 2.0f;
 					}
 					else {
 						k++;
@@ -746,30 +734,30 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 					//g.points.push_back(p2);
 					//g.points.push_back(p3);
 					//generate points
-					tesslateBezier(&g, p1, p2, p3, 2);
+					tesslateBezier(points, p1, p2, p3, 2);
 				}
 				contour_start = false;
 			}
 			if (getnthBit(i.flags[k - 1], 0) == 1) {
 				//g.points.push_back(g.points[generated_points_start_index]);
-				g.points.push_back({ (float)i.xCoords[contour_start_index] , (float)i.yCoords[contour_start_index] });
+				points.push_back({ (float)i.xCoords[contour_start_index] , (float)i.yCoords[contour_start_index] });
 			}
 			if (contour_started_off) {
-				vec2 p1 = g.points[g.points.size() - 1];
+				vec2 p1 = points[points.size() - 1];
 				vec2 p2;
 				p2.x = (float)i.xCoords[contour_start_index];
 				p2.y = (float)i.yCoords[contour_start_index];
-				vec2 p3 = g.points[generated_points_start_index];
+				vec2 p3 = points[generated_points_start_index];
 
 				//g.points.push_back(p1);
 				//g.points.push_back(p2);
 				//g.points.push_back(p3);
 
-				tesslateBezier(&g, p1, p2, p3, 2);
+				tesslateBezier(points, p1, p2, p3, 2);
 			}
-			g.end_contours.push_back(g.points.size());
+			end_contours.push_back(points.size());
 		}
-		g.contours = generate_edges(&g);
+		g.contours = generate_edges(end_contours, points);
 		//cull duplicate lines
 		cullEdges(&g);
 		f->glyphs.push_back(g);
@@ -867,14 +855,14 @@ float convertToRange(float n, float min, float max, float old_min, float old_max
 RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
-	for (int i = 0; i < g->contours.size(); i++) {
+	for (size_t i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
-		l.p1.x = convertToRange(l.p1.x, 0, w-1, g->xMin, g->xMax);
-		l.p1.y = convertToRange(l.p1.y, 0, h-1, g->yMin, g->yMax);
+		l.p1.x = convertToRange(l.p1.x, 0.0f, (float)w-1, g->xMin, g->xMax);
+		l.p1.y = convertToRange(l.p1.y, 0.0f, (float)h-1, g->yMin, g->yMax);
 		
 
-		l.p2.x = convertToRange(l.p2.x, 0, w-1, g->xMin, g->xMax);
-		l.p2.y = convertToRange(l.p2.y, 0, h-1, g->yMin, g->yMax);
+		l.p2.x = convertToRange(l.p2.x, 0.0f, (float)w-1, g->xMin, g->xMax);
+		l.p2.y = convertToRange(l.p2.y, 0.0f, (float)h-1, g->yMin, g->yMax);
 
 		lines.push_back(l);
 	}
@@ -895,10 +883,10 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	//do vertical scanlines
 	for (int x = 0; x < w; x++) {
-		Line test_line = { {x, 0}, {x, h} };
+		Line test_line = { {(float)x, 0.0f}, {(float)x, (float)h} };
 		std::vector<vec2> inters; //list of intersection points
 		std::vector<Line> adds;
-		for (int i = 0; i < lines.size(); i++) {
+		for (size_t i = 0; i < lines.size(); i++) {
 			vec2 l = getIntersection(test_line, lines[i]);
 			if (l.x >= 0 && l.x <= w) {
 				adds.push_back(lines[i]);
@@ -906,11 +894,11 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 			}
 		}
 		std::sort(inters.begin(), inters.end(), sortVec2);
-		for (int i = 1; i < inters.size() && i < adds.size();) {
+		for (size_t i = 1; i < inters.size() && i < adds.size();) {
 			float y1 = inters[i - 1].y;
 			float y2 = inters[i].y;
 
-			for (int y = y1; y <= y2; y++) {
+			for (int y = (int)y1; y <= y2; y++) {
 				ImageLoader::setPixel(r_g.data, x, y, color);
 			}
 			if (inters.size() % 2 == 0) {
@@ -943,14 +931,6 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 			std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
 			std::memcpy(c2, c1, w * 4);
 			std::free(c1);
-			/*for (int x = 0; x < w; x++) {
-				int flippedx = 0 + (w - x);
-				uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y1);
-				uint32_t c2 = ImageLoader::getPixel(r_g.data, flippedx, y1);
-				//set the pixels
-				ImageLoader::setPixel(r_g.data, x, y1, c2);
-				ImageLoader::setPixel(r_g.data, flippedx, y1, c1);
-			}*/
 		}
 	}
 
@@ -959,7 +939,7 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
 void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx) {
 	font->ptsize = ptsize;
-	for (int i = 0; i < font->glyphs.size(); i++) {
+	for (size_t i = 0; i < font->glyphs.size(); i++) {
 		bool flip = false;
 		for (auto& j : flipx) {
 			if (font->glyphs[i].c == j) {
@@ -973,7 +953,7 @@ void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vec
 }
 
 int findFontCharRaster(Font* f, UINT16 c) {
-	for (int i = 0; i < f->r_glyphs.size(); i++) {
+	for (size_t i = 0; i < f->r_glyphs.size(); i++) {
 		if (f->r_glyphs[i].c == c) {
 			return i;
 		}
@@ -981,7 +961,7 @@ int findFontCharRaster(Font* f, UINT16 c) {
 	return 0;
 }
 int findFontChar(Font* f, UINT16 c) {
-	for (int i = 0; i < f->glyphs.size(); i++) {
+	for (size_t i = 0; i < f->glyphs.size(); i++) {
 		if (f->glyphs[i].c == c) {
 			return i;
 		}
@@ -997,8 +977,8 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 	float x1 = x;
 	float y1 = y;
 	//have to scale images based on ptsize
-	float scale = font->ptsize / (font->ptsize / ptsize);
-	for (int i = 0; i < text.size(); i++) {
+	float scale = (float)font->ptsize / (float)(font->ptsize / ptsize);
+	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
 			renderImg(font->r_glyphs[index].data, x1, y1, scale, scale, true);
@@ -1014,13 +994,12 @@ void drawChar(Glyph* g, float x, float y, float scale) {
 //2.4.4
 //cutout memory inefficient parts of glyph like points
 void EngineNewGL::drawText(std::string text, Font* font, float x, float y, int ptsize) {
-	
 	float x1 = x;
 	float y1 = y;
-	for (int i = 0; i < text.size(); i++) {
+	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontChar(font, text[i]);
-			for (int j = 0; j < font->glyphs[index].contours.size(); j++) {
+			for (size_t j = 0; j < font->glyphs[index].contours.size(); j++) {
 				Line l = font->glyphs[index].contours[j];
 				//converting line points to ptsize
 				l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize - 1, font->glyphs[index].xMin, font->glyphs[index].xMax);

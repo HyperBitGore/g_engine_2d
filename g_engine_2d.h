@@ -180,9 +180,7 @@ struct RasterGlyph {
 
 struct Glyph {
 	UINT16 c; //for unicode
-	std::vector<vec2> points;
 	std::vector<Line> contours;
-	std::vector<int> end_contours;
 	short yMax;
 	short yMin;
 	short xMax;
