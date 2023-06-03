@@ -9,6 +9,7 @@
 #include <math.h>
 #include "lodepng.h"
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
+#define pack_rgb(r,g,b) (uint32_t)(r<<24|g<<16|b<<8)
 #define unpack_r(col) (uint8_t)((col>>24)&0xff)
 #define unpack_g(col) (uint8_t)((col>>16)&0xff)
 #define unpack_b(col) (uint8_t)((col >> 8)&0xff)
@@ -29,12 +30,10 @@ static void FatalError(const char* message)
 
 
 
-//draw text
 //optimize drawing
 //	-remove uniform calls in draw calls, so move color setting to a different function
 //  -reduce shader changes
 //	-maybe switch to a seperate queue for all the calls and call of them at once
-//switch circle to entirly shader based instead of using lines
 //add 3d support
 //add 3d line rendering
 //add 3d primitives
@@ -126,10 +125,20 @@ public:
 	IMG loadBMP(std::string file);
 	IMG loadPNG(std::string file, unsigned int w, unsigned int h);
 	//for when you create img data yourself and need to actually bind a texture easily
-	void createTexture(IMG img); 
+	void createTexture(IMG img, GLenum internalformat, GLenum format);
+	//all of these assume the color componenets are 8 bits each
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-	static void setPixel(IMG img, int x, int y, uint32_t color);
-	static uint32_t getPixel(IMG img, int x, int y);
+	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
+	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);
+	static void setPixel(IMG img, int x, int y, uint8_t r);
+	//assumed the color components are 8 bits each
+	static void setPixel(IMG img, int x, int y, uint32_t color, int bytes);
+
+
+
+	static uint64_t getPixel(IMG img, int x, int y, int bytes);
+
+
 	//generates an img struct with no texture assigned but with generated blank data
 	static IMG generateBlankIMG(int w, int h);
 };
@@ -328,8 +337,8 @@ public:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-	void createTexture(IMG img) {
-		img_l.createTexture(img);
+	void createTexture(IMG img, GLenum internalformat, GLenum format) {
+		img_l.createTexture(img, internalformat, format);
 	}
 	IMG loadPNG(std::string file, unsigned int w, unsigned int h) {
 		return img_l.loadPNG(file, w, h);

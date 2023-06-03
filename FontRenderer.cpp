@@ -899,7 +899,7 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 			float y2 = inters[i].y;
 
 			for (int y = (int)y1; y <= y2; y++) {
-				ImageLoader::setPixel(r_g.data, x, y, color);
+				ImageLoader::setPixel(r_g.data, x, y, color, 4);
 			}
 			if (inters.size() % 2 == 0) {
 				i += 2;
@@ -915,10 +915,10 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 		//hacky way to deal with fucked up L's
 		for (int y = 0; y < h - 1; y++) {
 			for (int x = 0, x1 = w - 1; x <= x1; x++, x1--) {
-				uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y);
-				uint32_t c2 = ImageLoader::getPixel(r_g.data, x1, y);
-				ImageLoader::setPixel(r_g.data, x, y, c2);
-				ImageLoader::setPixel(r_g.data, x1, y, c1);
+				uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y, 4);
+				uint32_t c2 = ImageLoader::getPixel(r_g.data, x1, y, 4);
+				ImageLoader::setPixel(r_g.data, x, y, c2, 4);
+				ImageLoader::setPixel(r_g.data, x1, y, c1, 4);
 			}
 		}
 	}
@@ -948,7 +948,7 @@ void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vec
 			}
 		}
 		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
-		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data);
+		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}
 }
 

@@ -118,11 +118,11 @@ int main() {
 	bmptest = eng2.loadBMP("test1.bmp");
 	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
 	for (int x = 0; x < 100; x++) {
-		ImageLoader::setPixel(imgtest, x, 1, 4278190335);
+		ImageLoader::setPixel(imgtest, x, 1, 4278190335, 4);
 	}
 
-	std::cout << ImageLoader::getPixel(imgtest, 0, 100) << "\n";
-	std::cout << ImageLoader::getPixel(imgtest, 0, 10) << "\n";
+	std::cout << ImageLoader::getPixel(imgtest, 0, 100, 4) << "\n";
+	std::cout << ImageLoader::getPixel(imgtest, 0, 10, 4) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
 	f_test = eng2.loadFont("EnvyCodeR.ttf", 32, 127);
@@ -134,9 +134,9 @@ int main() {
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100);
 	for (int i = 0; i < 100; i++) {
-		ImageLoader::setPixel(blank_test, i, 50, 4278190335);
+		ImageLoader::setPixel(blank_test, i, 50, 4278190335, 4);
 	}
-	eng2.createTexture(blank_test);
+	eng2.createTexture(blank_test, GL_RGBA8, GL_RGBA);
 
 
 	std::bitset<32> x(10);
