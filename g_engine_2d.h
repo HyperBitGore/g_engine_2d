@@ -143,6 +143,11 @@ public:
 	static IMG generateBlankIMG(int w, int h);
 };
 
+struct Point {
+	int x;
+	int y;
+};
+
 struct vec2 {
 	float x;
 	float y;
@@ -170,11 +175,8 @@ struct img_vertex {
 	float rotation; //rotation in radians
 	float rot_x; //point x to rotate around
 	float rot_y; //point y to rotate around
-	uint8_t r; //red mod value
-	uint8_t g; //green mod value
-	uint8_t b; //blue mod value
-	uint8_t a; //alpha mod value
 	//maybe add texture index, so we would have a big texture array instead of binding them seperataly everytime
+	int tex_index;
 };
 
 struct Line {
@@ -204,6 +206,20 @@ struct Font {
 	int ptsize;
 };
 
+//store a bunch of images which you can stich together
+//adding an image stiches it into the image
+class ImageAtlas {
+private:
+	Gore::HashMap<IMG> images;
+public:
+	ImageAtlas() {
+
+	}
+	void addImage(int x, int y);
+	Point getImagePos(IMG img);
+};
+
+
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
@@ -226,6 +242,7 @@ private:
 	GLuint uv_buffer;
 	GLuint rot_buffer;
 	GLuint rotpoint_buffer;
+	GLuint img_buffer;
 
 	//vertex arrays
 	GLuint VAO_Triangle;
@@ -249,17 +266,10 @@ private:
 	GLuint coloruniform_point;
 	GLuint coloruniform_line;
 
-	//uv vectors
-	std::vector<vec2> buffer_uv;
-
 	//vertex vectors
 	std::vector<vec2> buffer_2d;
-	std::vector<vec4> buffer_img;
-	std::vector<img_vertex> img_buffer;
-
-	//rotation vectors
-	std::vector<vec2> rot_points;
-	std::vector<float> rotations;
+	std::vector<IMG> imgs_drawn; //bind these textures because the user added them to be drawn
+	std::vector<img_vertex> img_vertexs;
 
 	//delta time
 	clock_t delta = 0;
@@ -273,7 +283,7 @@ private:
 		// units/(units/time) => time (seconds) * 1000 = milliseconds
 		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
 	}
-
+	int texture_units;
 
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
@@ -313,7 +323,7 @@ public:
 
 	//draw line of points
 	void drawLinePoints(vec2 p1, vec2 p2);
-
+	//adds line points to buffer but doesn't draw them
 	void addLinePoints(vec2 p1, vec2 p2);
 
 	//draws a line
@@ -323,14 +333,11 @@ public:
 	void drawLines(float width);
 
 	//image functions
-	//draws an img once
-	void renderImg(IMG img, float x, float y, float w, float h, bool blend = false);
 	//mass draws an image based on buffer_2d
-	void renderImgs(IMG img);
+	void renderImgs(IMG img, bool blend);
 	//rotates counter clockwise around top left point
-	void renderImgRotated(IMG img, float x, float y, float w, float h, float ang, bool blend = false);
 	//mass draws an image with rotations
-	void renderImgsRotated(IMG img);
+	void renderImgsRotated(IMG img, bool blend);
 	//run after you've done all the editing of data you want to
 	void updateIMG(IMG img) {
 		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
@@ -419,83 +426,61 @@ public:
 	//image call functions
 	void addImageCall(float x, float y, float w, float h) {
 		//triangle 1
-		buffer_2d.push_back({ x, y });
-		buffer_2d.push_back({ x + w, y });
-		buffer_2d.push_back({ x, y - h });
+		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f });
+
 		//triangle 2
-		buffer_2d.push_back({ x + w, y });
-		buffer_2d.push_back({ x + w, y - h });
-		buffer_2d.push_back({ x, y - h });
-		//uv triangle 1
-		buffer_uv.push_back({ 0, 0 });
-		buffer_uv.push_back({ 1, 0 });
-		buffer_uv.push_back({ 0, 1 });
-		//uv triangle 2
-		buffer_uv.push_back({ 1, 0 });
-		buffer_uv.push_back({ 1, 1 });
-		buffer_uv.push_back({ 0, 1 });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f });
+
 	}
+	float convertToRange(float n, float min, float max, float old_min, float old_max) {
+		return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
+	}
+
 	//angle in radians
 	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
 
-		
-		int b = buffer_2d.size();
+		float rotx = x / float(wind->getWidth());
+		float roty = y / float(wind->getHeight());
+		rotx = (rotx * 2.0f) - 1;
+		roty = (roty * 2.0f) - 1;
+		int b = img_vertexs.size();
 		//triangle 1
-		buffer_2d.push_back({ x, y });
-		buffer_2d.push_back({ x + w, y });
-		buffer_2d.push_back({ x, y - h });
+		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, ang, x, y, 0});
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y, 0 });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y, 0 });
 		//triangle 2
-		buffer_2d.push_back({ x + w, y });
-		buffer_2d.push_back({ x + w, y - h });
-		buffer_2d.push_back({ x, y - h });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y, 0 });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, ang, x, y, 0 });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y, 0 });
 
-		for (size_t i = (size_t)b; i < buffer_2d.size(); i++) {
-			float out_x = buffer_2d[i].x / float(wind->getWidth());
-			float out_y = buffer_2d[i].y / float(wind->getHeight());
+		
+
+		/*for (size_t i = (size_t)b; i < img_vertexs.size(); i++) {
+			//img_vertexs[i].x = convertToRange(img_vertexs[i].x,-1.0f, 1.0f, 0, wind->getWidth());
+			//img_vertexs[i].y = convertToRange(img_vertexs[i].y, -1.0f, 1.0f, 0, wind->getHeight());
+			//img_vertexs[i].rot_x = convertToRange(img_vertexs[i].rot_x, -1.0f, 1.0f, 0, wind->getWidth());
+			//img_vertexs[i].rot_y = convertToRange(img_vertexs[i].rot_y, -1.0f, 1.0f, 0, wind->getHeight());
+			float out_x = img_vertexs[i].x / float(wind->getWidth());
+			float out_y = img_vertexs[i].y / float(wind->getHeight());
 			out_x = (out_x * 2.0f) - 1;
 			out_y = (out_y * 2.0f) - 1;
-
-			float rotx = buffer_2d[i].x / float(wind->getWidth());
-			float roty = buffer_2d[i].y / float(wind->getHeight());
-			rotx = (rotx * 2.0f) - 1;
-			roty = (roty * 2.0f) - 1;
-
-
-			out_x = (out_x - rotx);
-			out_y = (out_y - roty);
-
-			out_x = out_x * cos(ang) - out_y * sin(ang);
-			out_y = out_y * cos(ang) + out_x * sin(ang);
-
+			out_x -= rotx;
+			out_y -= roty;
+			out_x = (out_x * cosf(ang) - out_y * sinf(ang), out_y * cosf(ang) + out_x * sinf(ang));
 			out_x += rotx;
 			out_y += roty;
-			buffer_2d[i].x = out_x;
-			buffer_2d[i].y = out_y;
-		}
 
+			
+			img_vertexs[i].x = out_x;
+			img_vertexs[i].y = out_y;
+			img_vertexs[i].rot_x = rotx;
+			img_vertexs[i].rot_y = roty;
 
-		//uv triangle 1
-		buffer_uv.push_back({ 0, 0 });
-		buffer_uv.push_back({ 1, 0 });
-		buffer_uv.push_back({ 0, 1 });
-		//uv triangle 2
-		buffer_uv.push_back({ 1, 0 });
-		buffer_uv.push_back({ 1, 1 });
-		buffer_uv.push_back({ 0, 1 });
-		//rotations
-		rotations.push_back(ang);
-		rotations.push_back(ang);
-		rotations.push_back(ang);
-		rotations.push_back(ang);
-		rotations.push_back(ang);
-		rotations.push_back(ang);
-		//rot points
-		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y});
-		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
-		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
-		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
-		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
-		rot_points.push_back({ buffer_2d[b].x, buffer_2d[b].y });
+		}*/
 	}
 
 

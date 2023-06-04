@@ -83,12 +83,12 @@ void renderFunction() {
 	eng2.addImageCall(450.0f, 300.0f, 50.0f, 50.0f);
 	eng2.addImageCall(250.0f, 250.0f, 80.0f, 80.0f);
 	eng2.addImageCall(360.0f, 250.0f, 50.0f, 50.0f);
-	eng2.renderImgs(imgtest);
+	eng2.renderImgs(imgtest, false);
 	//eng2.renderImg(imgtest, 100.0f, 100.0f, 40.0f, 40.0f);
 	eng2.addImageRotatedCall(150.0f, 80.0f, 50.0f, 50.0f, r);
 	eng2.addImageRotatedCall(325.0f, 160.0f, 50.0f, 50.0f, r);
 	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
-	eng2.renderImgsRotated(imgtest);
+	eng2.renderImgsRotated(imgtest, false);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 
 	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
@@ -128,8 +128,6 @@ int main() {
 	f_test = eng2.loadFont("EnvyCodeR.ttf", 32, 127);
 
 	//testing font rasterizing
-	//eng2.rasterizeGlyph(&f_test.glyphs[17], 64, 64, 4278190335);
-	//eng2.createTexture(f_test.glyphs[17].data);
 	eng2.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100);

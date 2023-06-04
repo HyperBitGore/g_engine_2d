@@ -848,9 +848,9 @@ vec2 getIntersection(Line l1, Line l2) {
 	return { -1, -1 };
 }
 
-float convertToRange(float n, float min, float max, float old_min, float old_max) {
+/*float convertToRange(float n, float min, float max, float old_min, float old_max) {
 	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
-}
+}*/
 
 RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
 	//have to scale glyph contour points
@@ -981,7 +981,8 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
-			renderImg(font->r_glyphs[index].data, x1, y1, scale, scale, true);
+			addImageCall(x1, y1, scale, scale);
+			renderImgs(font->r_glyphs[index].data, true);
 		}
 		x1 += scale + 2;
 	}
