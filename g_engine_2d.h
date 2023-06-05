@@ -442,11 +442,6 @@ public:
 
 	//angle in radians
 	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
-
-		float rotx = x / float(wind->getWidth());
-		float roty = y / float(wind->getHeight());
-		rotx = (rotx * 2.0f) - 1;
-		roty = (roty * 2.0f) - 1;
 		int b = img_vertexs.size();
 		//triangle 1
 		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, ang, x, y, 0});
@@ -457,13 +452,14 @@ public:
 		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, ang, x, y, 0 });
 		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y, 0 });
 
-		
-
-		/*for (size_t i = (size_t)b; i < img_vertexs.size(); i++) {
-			//img_vertexs[i].x = convertToRange(img_vertexs[i].x,-1.0f, 1.0f, 0, wind->getWidth());
-			//img_vertexs[i].y = convertToRange(img_vertexs[i].y, -1.0f, 1.0f, 0, wind->getHeight());
-			//img_vertexs[i].rot_x = convertToRange(img_vertexs[i].rot_x, -1.0f, 1.0f, 0, wind->getWidth());
-			//img_vertexs[i].rot_y = convertToRange(img_vertexs[i].rot_y, -1.0f, 1.0f, 0, wind->getHeight());
+		/*float rotx = convertToRange(x, -1.0f, 1.0f, 0, wind->getWidth());
+		float roty = convertToRange(y, -1.0f, 1.0f, 0, wind->getHeight());
+		for (size_t i = (size_t)b; i < img_vertexs.size(); i++) {
+			img_vertexs[i].x = convertToRange(img_vertexs[i].x,-1.0f, 1.0f, 0, wind->getWidth());
+			img_vertexs[i].y = convertToRange(img_vertexs[i].y, -1.0f, 1.0f, 0, wind->getHeight());
+			img_vertexs[i].rot_x = rotx;
+			img_vertexs[i].rot_y = roty;
+			
 			float out_x = img_vertexs[i].x / float(wind->getWidth());
 			float out_y = img_vertexs[i].y / float(wind->getHeight());
 			out_x = (out_x * 2.0f) - 1;

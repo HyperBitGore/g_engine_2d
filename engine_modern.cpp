@@ -297,7 +297,8 @@ void EngineNewGL::renderImgsRotated(IMG img, bool blend) {
 
 	//GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
 	glUniform1i_g(texuniform_imgr, img->pos);
-
+	GLuint screenu = glGetUniformLocation_g(shader_imgr, "screen"); //for some reason have to keep setting the screen data but it works so idc
+	glUniform2f_g(screenu, (float)wind->getWidth(), (float)wind->getHeight());
 	glBindVertexArray_g(VAO_Imgr);
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, img_buffer);

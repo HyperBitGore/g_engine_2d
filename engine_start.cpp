@@ -244,17 +244,15 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	//conver this to screen space
 	const char* vertex_shader_img_r = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
 		"layout (location = 2) in float ang;\nlayout (location = 3) in vec2 rot_point;\nout vec2 UV;\n"
-		"uniform vec2 screan;\n"
+		"uniform vec2 screen;\n"
 		"void main() { \n"
-		"vec2 test = vec2(640, 480);\n"
-		"vec2 rot_p = rot_point;\nrot_p /= test;\nrot_p = (rot_p * 2.0) - 1;\n"
-		"vec2 p3 = vec_pos;\np3 /= test;\np3 = (p3 * 2.0) - 1;\n"
+		//"vec2 test = vec2(640, 480);\n"
+		"vec2 test = screen;\n"
+		"vec2 rot_p = rot_point;\nrot_p = rot_p / test;\nrot_p = (rot_p * 2.0) - 1;\n"
+		"vec2 p3 = vec_pos;\np3 = p3 / test;\np3 = (p3 * 2.0) - 1;\n"
 		"vec2 p1 = vec2(p3.x - rot_p.x, p3.y - rot_p.y);\n"
 		"vec2 p = vec2(p1.x*cos(ang)-p1.y*sin(ang), p1.y*cos(ang) + p1.x*sin(ang));\n"
-		//"p = vec2(p.x + p4.x, p.y + p4.y);\n"
 		"p = vec2(p.x + rot_p.x, p.y + rot_p.y);\n"
-		//"p /= test;\n"
-		//"p = (p * 2.0) - 1;\n"
 		"gl_Position = vec4(p, 0.0, 1.0);\n"
 		"UV = tex_point;\n"
 		"}\0";
@@ -267,21 +265,21 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	
 	glBindBuffer_g(GL_ARRAY_BUFFER, img_buffer);
 	glEnableVertexAttribArray_g(0);
-	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)0);
 	
 	//glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	glEnableVertexAttribArray_g(1);
-	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)12);
+	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)12);
 	
 	//glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
 	glEnableVertexAttribArray_g(2);
-	glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, 0, (void*)20);
+	glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)20);
 	
 	//glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
 	glEnableVertexAttribArray_g(3);
-	glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)24);
+	glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)24);
 	
-	screenuniform_tri = glGetUniformLocation_g(shader_imgr, "screan");
+	screenuniform_tri = glGetUniformLocation_g(shader_imgr, "screen");
 	texuniform_imgr = glGetUniformLocation_g(shader_imgr, "image_tex");
 	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
 
