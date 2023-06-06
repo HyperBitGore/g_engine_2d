@@ -149,16 +149,15 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	std::cout << "Texture Units on this machine: " << texture_units << "\n";
 
 	//start modern opengl needed stuff like shaders and vertex buffers
-	glGenBuffers_g(1, &rotpoint_buffer);
-	glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
-	glGenBuffers_g(1, &rot_buffer);
-	glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
-	glGenBuffers_g(1, &uv_buffer);
-	glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
 	glGenBuffers_g(1, &img_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, img_buffer);
 	glGenBuffers_g(1, &vertex_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	//making ssbo
+	glGenBuffers_g(1, &texture_buffer);
+	glBindBuffer_g(GL_SHADER_STORAGE_BUFFER, texture_buffer);
+	
+
 	//shader compiles
 	//2d triangle shader and vertex array
 	const char* vertex_shader_triangle2d = "#version 330 core\nlayout(location = 0) in vec2 aPos;\nuniform vec2 screen;\n"
@@ -218,13 +217,13 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 
 	glBindVertexArray_g(0);
 
-	const char* vertex_shader_img2 = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\nout vec2 UV;\n"
+	const char* vertex_shader_img2 = "#version 430 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\nout vec2 UV;\n"
 		"uniform vec2 screen;\nvoid main() { \n"
 		"vec2 p = vec_pos;\np /= screen;\np = (p * 2.0) - 1;\n"
 		"gl_Position = vec4(p, 0.0, 1.0);\n"
 		"UV = tex_point;\n"
 		"}\0";
-	const char* fragment_shader_img2 = "#version 330 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
+	const char* fragment_shader_img2 = "#version 430 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
 		"color = texture(image_tex, UV);\n}\0";
 
 
@@ -242,7 +241,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
 
 	//conver this to screen space
-	const char* vertex_shader_img_r = "#version 330 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
+	const char* vertex_shader_img_r = "#version 430 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
 		"layout (location = 2) in float ang;\nlayout (location = 3) in vec2 rot_point;\nout vec2 UV;\n"
 		"uniform vec2 screen;\n"
 		"void main() { \n"
@@ -256,7 +255,9 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		"gl_Position = vec4(p, 0.0, 1.0);\n"
 		"UV = tex_point;\n"
 		"}\0";
-	const char* fragment_shader_img_r = "#version 330 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\nvoid main(){\n"
+	const char* fragment_shader_img_r = "#version 430 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\n"
+		""
+		"void main() { \n"
 		"color = texture(image_tex, UV);\n}\0";
 	shader_imgr = compileShader(vertex_shader_img_r, fragment_shader_img_r);
 	glGenVertexArrays_g(1, &VAO_Imgr);
@@ -267,15 +268,15 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glEnableVertexAttribArray_g(0);
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)0);
 	
-	//glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
+	
 	glEnableVertexAttribArray_g(1);
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)12);
 	
-	//glBindBuffer_g(GL_ARRAY_BUFFER, rot_buffer);
+	
 	glEnableVertexAttribArray_g(2);
 	glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)20);
 	
-	//glBindBuffer_g(GL_ARRAY_BUFFER, rotpoint_buffer);
+	
 	glEnableVertexAttribArray_g(3);
 	glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)24);
 	

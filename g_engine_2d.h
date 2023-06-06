@@ -116,12 +116,16 @@ private:
 	static void readBMPPixels24(IMG f, std::string str, size_t offset, size_t raw_size);
 	static void parseBMPData(IMG f, std::stringstream& str, size_t offset, unsigned short bitsperpixel, size_t size);
 	int cur_tex = 0;
+	std::vector<GLuint> textures;
+	Gore::HashMap<GLuint, int> indexs; //gives you index into texture vector based on the texture you give it
 public:
 	//https://docs.fileformat.com/image/bmp/
 	//https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
 	//https://en.wikipedia.org/wiki/BMP_file_format
 	//https://www.fileformat.info/format/bmp/egff.htm
 	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
+	int lookupTexture(GLuint texture);
+	
 	IMG loadBMP(std::string file);
 	IMG loadPNG(std::string file, unsigned int w, unsigned int h);
 	//for when you create img data yourself and need to actually bind a texture easily
@@ -210,7 +214,7 @@ struct Font {
 //adding an image stiches it into the image
 class ImageAtlas {
 private:
-	Gore::HashMap<IMG> images;
+	Gore::HashMap<IMG, Point> images;
 public:
 	ImageAtlas() {
 
@@ -239,10 +243,8 @@ private:
 
 	//Vertex buffers
 	GLuint vertex_buffer;
-	GLuint uv_buffer;
-	GLuint rot_buffer;
-	GLuint rotpoint_buffer;
 	GLuint img_buffer;
+	GLuint texture_buffer; //it's an ssbo! haha nice
 
 	//vertex arrays
 	GLuint VAO_Triangle;
@@ -268,7 +270,7 @@ private:
 
 	//vertex vectors
 	std::vector<vec2> buffer_2d;
-	std::vector<IMG> imgs_drawn; //bind these textures because the user added them to be drawn
+	std::vector<GLuint> imgs_drawn; //bind these textures because the user added them to be drawn
 	std::vector<img_vertex> img_vertexs;
 
 	//delta time
@@ -442,7 +444,6 @@ public:
 
 	//angle in radians
 	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
-		int b = img_vertexs.size();
 		//triangle 1
 		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, ang, x, y, 0});
 		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y, 0 });
@@ -451,32 +452,6 @@ public:
 		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y, 0 });
 		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, ang, x, y, 0 });
 		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y, 0 });
-
-		/*float rotx = convertToRange(x, -1.0f, 1.0f, 0, wind->getWidth());
-		float roty = convertToRange(y, -1.0f, 1.0f, 0, wind->getHeight());
-		for (size_t i = (size_t)b; i < img_vertexs.size(); i++) {
-			img_vertexs[i].x = convertToRange(img_vertexs[i].x,-1.0f, 1.0f, 0, wind->getWidth());
-			img_vertexs[i].y = convertToRange(img_vertexs[i].y, -1.0f, 1.0f, 0, wind->getHeight());
-			img_vertexs[i].rot_x = rotx;
-			img_vertexs[i].rot_y = roty;
-			
-			float out_x = img_vertexs[i].x / float(wind->getWidth());
-			float out_y = img_vertexs[i].y / float(wind->getHeight());
-			out_x = (out_x * 2.0f) - 1;
-			out_y = (out_y * 2.0f) - 1;
-			out_x -= rotx;
-			out_y -= roty;
-			out_x = (out_x * cosf(ang) - out_y * sinf(ang), out_y * cosf(ang) + out_x * sinf(ang));
-			out_x += rotx;
-			out_y += roty;
-
-			
-			img_vertexs[i].x = out_x;
-			img_vertexs[i].y = out_y;
-			img_vertexs[i].rot_x = rotx;
-			img_vertexs[i].rot_y = roty;
-
-		}*/
 	}
 
 
