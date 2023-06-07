@@ -252,30 +252,32 @@ void EngineNewGL::drawLines(float width) {
 //2d image drawing functions
 
 //mass draws an image based on buffer_2d
-void EngineNewGL::renderImgs(IMG img, bool blend) {
+void EngineNewGL::renderImgs(bool blend) {
 	if (blend) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	glUseProgram_g(shader_img);
-	glBindTextureUnit_g(img->pos, img->tex);
+	for (size_t i = 0; i < textures.size(); i++) {
+		glBindTextureUnit_g(textures[i], textures[i]);
+	}
+	//we now have weird artifacts in text images
+	glUniform1iv_g(texuniform_img, textures.size(), &textures[0]);
 
-	//GLuint texUniformLocation = glGetUniformLocation_g(shader_img, "image_tex");
-	glUniform1i_g(texuniform_img, img->pos);
 
 	glBindVertexArray_g(VAO_Img);
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, img_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, img_vertexs.size() * sizeof(img_vertex), &img_vertexs[0], GL_STATIC_DRAW);
 
-	//glBindBuffer_g(GL_ARRAY_BUFFER, uv_buffer);
-	//glBufferData_g(GL_ARRAY_BUFFER, buffer_uv.size() * sizeof(vec2), &buffer_uv[0], GL_STATIC_DRAW);
-
 	glDrawArrays_g(GL_TRIANGLES, 0, img_vertexs.size());
 
 
 	img_vertexs.clear();
+	textures.clear();
+	imgs.clear();
+	indexs.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindTextureUnit_g(0, 0);

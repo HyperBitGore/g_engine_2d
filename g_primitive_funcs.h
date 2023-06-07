@@ -3,6 +3,11 @@
 #include <vector>
 #include <functional>
 
+//add stack 
+//add queue
+//add sorting algorithms
+//add tree structures
+
 namespace Gore {
 
 	
@@ -420,7 +425,7 @@ namespace Gore {
 		}
 		~HashMap() {
 			//actually need to clean up news here tf
-			for (int i = 0; i < buckets.size(); i++) {
+			for (size_t i = 0; i < buckets.size(); i++) {
 				if (buckets[i] != nullptr) {
 					MapItem<T, G>* cur = buckets[i];
 					while (cur != nullptr) {
@@ -432,6 +437,20 @@ namespace Gore {
 			}
 			buckets.clear();
 		}
+		void clear() {
+			for (size_t i = 0; i < buckets.size(); i++) {
+				if (buckets[i] != nullptr) {
+					MapItem<T, G>* cur = buckets[i];
+					while (cur != nullptr) {
+						MapItem<T, G>* next = cur->next;
+						delete cur;
+						cur = next;
+					}
+				}
+			}
+			buckets.clear();
+		}
+
 		void insert(G f, T item) {
 			int n = hash_func(f);
 			if (n > int(buckets.size()) - 1) {
@@ -487,6 +506,30 @@ namespace Gore {
 			buckets[n] = next;
 			return false;
 		}
+		bool remove(G f, T* t) {
+			int n = hash_func(f);
+			if (n > int(buckets.size()) - 1 || buckets[n] == nullptr) {
+				return false;
+			}
+			if (&buckets[n]->item != t) {
+				MapItem<T, G>* ptr = buckets[n]->next;
+				MapItem<T, G>* last = buckets[n];
+				while (ptr != nullptr) {
+					if (&ptr->item == t) {
+						last->next = ptr->next;
+						delete ptr;
+						return true;
+					}
+					last = ptr;
+					ptr = ptr->next;
+				}
+			}
+			MapItem<T, G>* next = buckets[n]->next;
+			delete buckets[n];
+			buckets[n] = next;
+			return false;
+		}
+
 		void setHashFunction(std::function<int(G)> in) {
 			buckets.clear();
 			hash_func = in;

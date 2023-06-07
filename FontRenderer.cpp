@@ -981,11 +981,11 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
-			addImageCall(x1, y1, scale, scale);
-			renderImgs(font->r_glyphs[index].data, true);
+			addImageCall(font->r_glyphs[index].data, x1, y1, scale, scale);
 		}
 		x1 += scale + 2;
 	}
+	renderImgs(true);
 }
 void drawChar(Glyph* g, float x, float y, float scale) {
 

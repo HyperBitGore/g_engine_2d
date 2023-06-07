@@ -80,10 +80,10 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	//std::cout << r << "\n";
-	eng2.addImageCall(450.0f, 300.0f, 50.0f, 50.0f);
-	eng2.addImageCall(250.0f, 250.0f, 80.0f, 80.0f);
-	eng2.addImageCall(360.0f, 250.0f, 50.0f, 50.0f);
-	eng2.renderImgs(imgtest, false);
+	eng2.addImageCall(imgtest, 450.0f, 300.0f, 50.0f, 50.0f);
+	eng2.addImageCall(imgtest, 250.0f, 250.0f, 80.0f, 80.0f);
+	eng2.addImageCall(imgtest, 360.0f, 250.0f, 50.0f, 50.0f);
+	eng2.renderImgs(false);
 	//eng2.renderImg(imgtest, 100.0f, 100.0f, 40.0f, 40.0f);
 	eng2.addImageRotatedCall(150.0f, 80.0f, 50.0f, 50.0f, r);
 	eng2.addImageRotatedCall(325.0f, 160.0f, 50.0f, 50.0f, r);

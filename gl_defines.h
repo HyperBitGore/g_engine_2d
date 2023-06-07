@@ -59,4 +59,6 @@ extern PFNGLUNIFORM2FPROC glUniform2f_g;
 extern PFNGLUNIFORM1FPROC glUniform1f_g;
 extern PFNGLUNIFORM4FPROC glUniform4f_g;
 
+extern PFNGLUNIFORM1UIVPROC glUniform1uiv_g;
+extern PFNGLUNIFORM1IVPROC glUniform1iv_g;
 //extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;

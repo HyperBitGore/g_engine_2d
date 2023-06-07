@@ -55,6 +55,8 @@ PFNGLUNIFORM2FPROC glUniform2f_g;
 PFNGLUNIFORM1FPROC glUniform1f_g;
 PFNGLUNIFORM4FPROC glUniform4f_g;
 
+PFNGLUNIFORM1UIVPROC glUniform1uiv_g;
+PFNGLUNIFORM1IVPROC glUniform1iv_g;
 //PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
 
 
@@ -98,6 +100,8 @@ void EngineNewGL::loadFunctions() {
 	glUniform1f_g = (PFNGLUNIFORM1FPROC)GetGLFuncAddress("glUniform1f");
 	glUniform4f_g = (PFNGLUNIFORM4FPROC)GetGLFuncAddress("glUniform4f");
 
+	glUniform1uiv_g = (PFNGLUNIFORM1UIVPROC)GetGLFuncAddress("glUniform1uiv");
+	glUniform1iv_g = (PFNGLUNIFORM1IVPROC)GetGLFuncAddress("glUniform1iv");
 	//glDebugMessageCallback_g = (PFNGLDEBUGMESSAGECALLBACKPROC)GetGLFuncAddress("glDebugMessageCallback");
 
 }

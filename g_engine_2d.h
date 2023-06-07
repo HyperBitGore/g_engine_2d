@@ -115,16 +115,14 @@ private:
 	//fix color being off, ie read color table
 	static void readBMPPixels24(IMG f, std::string str, size_t offset, size_t raw_size);
 	static void parseBMPData(IMG f, std::stringstream& str, size_t offset, unsigned short bitsperpixel, size_t size);
-	int cur_tex = 0;
-	std::vector<GLuint> textures;
-	Gore::HashMap<GLuint, int> indexs; //gives you index into texture vector based on the texture you give it
+	int cur_tex = 1;
+	
 public:
 	//https://docs.fileformat.com/image/bmp/
 	//https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
 	//https://en.wikipedia.org/wiki/BMP_file_format
 	//https://www.fileformat.info/format/bmp/egff.htm
 	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
-	int lookupTexture(GLuint texture);
 	
 	IMG loadBMP(std::string file);
 	IMG loadPNG(std::string file, unsigned int w, unsigned int h);
@@ -180,7 +178,7 @@ struct img_vertex {
 	float rot_x; //point x to rotate around
 	float rot_y; //point y to rotate around
 	//maybe add texture index, so we would have a big texture array instead of binding them seperataly everytime
-	int tex_index;
+	float tex_index;
 };
 
 struct Line {
@@ -240,6 +238,11 @@ private:
 	vec4 draw_color;
 	vec4 clear_color;
 
+	//image rendering
+	std::vector<GLint> textures;
+	std::vector<IMG> imgs;
+	Gore::HashMap<int, GLint> indexs; //gives you index into texture vector based on the texture you give it
+	int lookupTexture(GLint texture);
 
 	//Vertex buffers
 	GLuint vertex_buffer;
@@ -336,7 +339,7 @@ public:
 
 	//image functions
 	//mass draws an image based on buffer_2d
-	void renderImgs(IMG img, bool blend);
+	void renderImgs(bool blend);
 	//rotates counter clockwise around top left point
 	//mass draws an image with rotations
 	void renderImgsRotated(IMG img, bool blend);
@@ -426,16 +429,23 @@ public:
 		buffer_2d.insert(buffer_2d.end(), points.begin(), points.end());
 	}
 	//image call functions
-	void addImageCall(float x, float y, float w, float h) {
+	void addImageCall(IMG img, float x, float y, float w, float h) {
+		int index = lookupTexture(img->tex);
+		if (index == -1) {
+			textures.push_back(img->tex);
+			imgs.push_back(img);
+			index = textures.size() - 1;
+			indexs.insert(img->tex, index);
+		}
 		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f });
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f });
+		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, 0, x, y, float(index) });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y, float(index) });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y, float(index) });
 
 		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y, float(index) });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, 0, x, y, float(index) });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y, float(index) });
 
 	}
 	float convertToRange(float n, float min, float max, float old_min, float old_max) {
