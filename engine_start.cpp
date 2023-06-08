@@ -224,19 +224,19 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glBindVertexArray_g(0);
 
 	const char* vertex_shader_img2 = "#version 430 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
-		"layout (location = 2) in float index;\nout float o_index;\n"
-		"\nout vec2 UV; \n"
+		"out vec2 UV; \n"
 		"uniform vec2 screen;\nvoid main() { \n"
 		"vec2 p = vec_pos;\np /= screen;\np = (p * 2.0) - 1;\n"
 		"gl_Position = vec4(p, 0.0, 1.0);\n"
 		"UV = tex_point;\n"
-		"o_index = int(index);\n"
 		"}\0";
-	std::string fragment_shader_img2 = "#version 430 core\nin vec2 UV;\nin float o_index;\nout vec4 color;\nuniform sampler2D image_tex[CHANGE];\nvoid main(){\n"
-		"int index = int(o_index);\n"
-		"color = texture(image_tex[index], UV);\n}\0";
-	size_t in = fragment_shader_img2.find("CHANGE");
-	fragment_shader_img2.replace(in, 6, std::to_string(texture_units));
+	std::string fragment_shader_img2 = "#version 430 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\n"
+		"void main() { \n"
+		//"int index = o_index;\n"
+		//"int r_index = data_ssbo[index];\n"
+		"color = texture(image_tex, UV);\n}\0";
+	//size_t in = fragment_shader_img2.find("CHANGE");
+	//fragment_shader_img2.replace(in, 6, std::to_string(texture_units));
 	
 
 	shader_img = compileShader(vertex_shader_img2, fragment_shader_img2.c_str());
@@ -248,8 +248,8 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)0);
 	glEnableVertexAttribArray_g(1);
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)12);
-	glEnableVertexAttribArray_g(2);
-	glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)32);
+	//glEnableVertexAttribArray_g(2);
+	//glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)32);
 
 	texuniform_img = glGetUniformLocation_g(shader_img, "image_tex");
 	screenuniform_tri = glGetUniformLocation_g(shader_img, "screen");

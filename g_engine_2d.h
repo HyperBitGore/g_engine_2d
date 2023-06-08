@@ -177,8 +177,6 @@ struct img_vertex {
 	float rotation; //rotation in radians
 	float rot_x; //point x to rotate around
 	float rot_y; //point y to rotate around
-	//maybe add texture index, so we would have a big texture array instead of binding them seperataly everytime
-	float tex_index;
 };
 
 struct Line {
@@ -339,7 +337,7 @@ public:
 
 	//image functions
 	//mass draws an image based on buffer_2d
-	void renderImgs(bool blend);
+	void renderImgs(IMG img, bool blend);
 	//rotates counter clockwise around top left point
 	//mass draws an image with rotations
 	void renderImgsRotated(IMG img, bool blend);
@@ -429,23 +427,23 @@ public:
 		buffer_2d.insert(buffer_2d.end(), points.begin(), points.end());
 	}
 	//image call functions
-	void addImageCall(IMG img, float x, float y, float w, float h) {
-		int index = lookupTexture(img->tex);
+	void addImageCall(float x, float y, float w, float h) {
+		/*int index = lookupTexture(img->tex);
 		if (index == -1) {
 			textures.push_back(img->tex);
 			imgs.push_back(img);
 			index = textures.size() - 1;
 			indexs.insert(img->tex, index);
-		}
+		}*/
 		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, 0, x, y, float(index) });
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y, float(index) });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y, float(index) });
+		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, 0, x, y });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y });
 
 		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y, float(index) });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, 0, x, y, float(index) });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y, float(index) });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, 0, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y });
 
 	}
 	float convertToRange(float n, float min, float max, float old_min, float old_max) {
@@ -455,13 +453,13 @@ public:
 	//angle in radians
 	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
 		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, ang, x, y, 0});
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y, 0 });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y, 0 });
+		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, ang, x, y});
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y });
 		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y, 0 });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, ang, x, y, 0 });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y, 0 });
+		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, ang, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y });
 	}
 
 
