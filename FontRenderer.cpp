@@ -222,8 +222,82 @@ void readFormat4(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	}
 	//std::cout << table->indexs[0].c << " : " << table->indexs[0].index << "\n";
 }
+//untested
+void readFormat0(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+	char* m = c + table->offset;
+	UINT16* f = (UINT16*)m;
+	f++;
+	UINT16 length = SwapTwoBytes(*f);
+	f++;
+	UINT16 language = SwapTwoBytes(*f);
+	f++;
+	UINT8* g = (UINT8*)f;
+	std::vector<UINT8> id_array;
+	for (int i = 0; i < length; i++) {
+		id_array.push_back(*(g + i));
+	}
+	UINT16 start1 = start;
+	for (start1; start1 <= end; start1++) {
+		if (start1 < id_array.size()) {
+			table->indexs.push_back({ id_array[start1], start1 });
+		}
+	}
+}
+//untested and unfinished
+void readFormat2(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+	char* m = c + table->offset;
+	UINT16* f = (UINT16*)m;
+	f++;
+	UINT16 length = SwapTwoBytes(*f);
+	f+=2; //skipping language 
+
+}
+//untested
+void readFormat6(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+	char* m = c + table->offset;
+	UINT16* f = (UINT16*)m;
+	UINT16 format = SwapTwoBytes(*f);
+	f++;
+	UINT16 length = SwapTwoBytes(*f);
+	f += 2;//skipping language
+	UINT16 firstcode = SwapTwoBytes(*f);
+	f++;
+	UINT16 entrycount = SwapTwoBytes(*f);
+	f++;
+	//now we read the glyphidarray
+	std::vector<UINT16> glyphidarray;
+	for (UINT16 i = 0; i < entrycount; i++) {
+		glyphidarray.push_back(*(f + i));
+	}
+
+	//outputting to the table
+	UINT16 start1 = start;
+	for (start1; start1 < end; start1++) {
+		int offset = start1 - firstcode;
+		if (offset > 0 && offset < entrycount) {
+			table->indexs.push_back({ glyphidarray[offset], start1 });
+		}
+		else {
+			table->indexs.push_back({ glyphidarray[0], start1 });
+		}
+	}
+}
+
+void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+	char* m = c + table->offset;
+	UINT16* f = (UINT16*)m;
+	f += 2;
+	//skipping the format and reserved
+	UINT32* t = (UINT32*)f;
+	UINT32 length = *t;
+	t += 2; //skipping language
+	UINT32 numGroups = *t; //number of groupings that follow
+	t++;
+
+}
 
 //https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
+//https://learn.microsoft.com/en-us/typography/opentype/spec/cmap
 cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
 	cmap map;
 	char* m = c + offset;
@@ -251,22 +325,29 @@ cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
 			readFormat4(m, &map.tables[i], start, end);
 			break;
 		case 0:
+			readFormat0(m, &map.tables[i], start, end);
 			break;
 		case 2:
+			readFormat2(m, &map.tables[i], start, end);
 			break;
 		case 6:
+			readFormat6(m, &map.tables[i], start, end);
 			break;
 		case 8:
+
 			break;
 		case 10:
+			
 			break;
 		case 12:
 			//most common
-			
+			readFormat12(m, &map.tables[i], start, end);
 			break;
 		case 13:
+			
 			break;
 		case 14:
+			
 			break;
 		}
 	}
@@ -298,19 +379,27 @@ UINT32 readLoca32(char* s, UINT16 index) {
 std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap* map) {
 	char* m = c + offset;
 	std::vector<loca> locas;
+	int index = 0;
+	for (size_t i = 0; i < map->tables.size(); i++) {
+		if (map->tables[i].platformSpecificID == 3) {
+			index = i;
+			break;
+		}
+	}
+
 	if (format == 0) {
-		for (size_t i = 0; i < map->tables[0].indexs.size(); i++) {
+		for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
 			loca l;
-			l.c = map->tables[0].indexs[i].c;
-			l.offset = readLoca16(m, map->tables[0].indexs[i].index);
+			l.c = map->tables[index].indexs[i].c;
+			l.offset = readLoca16(m, map->tables[index].indexs[i].index);
 			locas.push_back(l);
 		}
 	}
 	else {
-		for (size_t i = 0; i < map->tables[0].indexs.size(); i++) {
+		for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
 			loca l;
-			l.c = (map->tables[0].indexs[i].c);
-			l.offset = readLoca32(m, map->tables[0].indexs[i].index);
+			l.c = (map->tables[index].indexs[i].c);
+			l.offset = readLoca32(m, map->tables[index].indexs[i].index);
 			locas.push_back(l);
 		}
 	}
@@ -869,7 +958,7 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
-	r_g.data = ImageLoader::generateBlankIMG(w, h);
+	r_g.data = ImageLoader::generateBlankIMG(w, h, 4);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	struct sortContours {
 		bool operator() (Line l1, Line l2) { return l1.p1.y < l2.p1.y; }
@@ -987,9 +1076,6 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 		x1 += scale + 2;
 	}
 	
-}
-void drawChar(Glyph* g, float x, float y, float scale) {
-
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880

@@ -130,7 +130,7 @@ int main() {
 	//testing font rasterizing
 	eng2.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
-	blank_test = ImageLoader::generateBlankIMG(100, 100);
+	blank_test = ImageLoader::generateBlankIMG(100, 100, 4);
 	for (int i = 0; i < 100; i++) {
 		ImageLoader::setPixel(blank_test, i, 50, 4278190335, 4);
 	}

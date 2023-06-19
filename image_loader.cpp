@@ -1,11 +1,11 @@
 #include "g_engine_2d.h"
 
-IMG ImageLoader::generateBlankIMG(int w, int h) {
+IMG ImageLoader::generateBlankIMG(int w, int h, int bytes_per_pixel) {
 	IMG n_img = new g_img;
 	n_img->h = h;
 	n_img->w = w;
-	n_img->data = (unsigned char*)std::malloc((w * 4) * h); //pixel is four bytes so w*4 is the stride
-	std::memset(n_img->data, 0, (w * 4) * h);
+	n_img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
+	std::memset(n_img->data, 0, (w * bytes_per_pixel) * h);
 	return n_img;
 }
 
@@ -300,12 +300,40 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		cur_tex++;
 		return f;
 	}
+	int imageHash(IMG img) {
+		return img->data[0] % 256;
+	}
 
+	//need to create an image 
+	ImageAtlas::ImageAtlas() {
+		images.setHashFunction(imageHash);
+		img = new g_img;
+		img->h = 400;
+		img->w = 400;
+		img->data = (unsigned char*)std::malloc((img->w * 4) * img->h); //pixel is four bytes so w*4 is the stride
+		std::memset(img->data, 0, (img->w * 4) * img->h);
+	}
 
-	int EngineNewGL::lookupTexture(GLint texture) {
-		int* index = indexs.get(texture);
-		if (index != nullptr) {
-			return *index;
+	void ImageAtlas::addImage(IMG n_img, int x, int y) {
+		int c_x = cur_x;
+		int c_y = cur_y;
+		for (int y = 0; y < n_img->h; y++) {
+			for (int x = 0; x < n_img->w; x++) {
+				uint32_t col = (uint32_t)ImageLoader::getPixel(n_img, x, y, 4);
+				ImageLoader::setPixel(img, cur_x + x, cur_y + y, col, 4);
+			}
 		}
-		return -1;
+		if (cur_x + n_img->w >= img->w) {
+			cur_y += n_img->h;
+		}
+
+		images.insert(n_img, { c_x, c_y });
+	}
+
+	Point ImageAtlas::getImagePos(IMG img) {
+		return *images.get(img);
+	}
+
+	IMG ImageAtlas::getImg() {
+		return img;
 	}

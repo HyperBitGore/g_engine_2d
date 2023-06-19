@@ -142,7 +142,7 @@ public:
 
 
 	//generates an img struct with no texture assigned but with generated blank data
-	static IMG generateBlankIMG(int w, int h);
+	static IMG generateBlankIMG(int w, int h, int bytes_per_pixel);
 };
 
 struct Point {
@@ -210,16 +210,38 @@ struct Font {
 //adding an image stiches it into the image
 class ImageAtlas {
 private:
-	Gore::HashMap<IMG, Point> images;
+	Gore::HashMap<Point, IMG> images;
+	IMG img;
+	int cur_y = 0;
+	int cur_x = 0;
 public:
-	ImageAtlas() {
-
-	}
-	void addImage(int x, int y);
+	ImageAtlas();
+	void addImage(IMG img, int x, int y);
 	Point getImagePos(IMG img);
+	IMG getImg();
 };
 
 
+struct Sound {
+	std::string name;
+	int length; //in milliseconds
+	char* data;
+};
+typedef Sound* Audio;
+
+class AudioPlayer {
+private:
+
+public:
+	AudioPlayer() {
+
+	}
+	Audio loadAudioFile(std::string file);
+	
+	void playFile(Audio file);
+
+	Audio generateSound();
+};
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
@@ -235,12 +257,6 @@ private:
 	//color constants
 	vec4 draw_color;
 	vec4 clear_color;
-
-	//image rendering
-	std::vector<GLint> textures;
-	std::vector<IMG> imgs;
-	Gore::HashMap<int, GLint> indexs; //gives you index into texture vector based on the texture you give it
-	int lookupTexture(GLint texture);
 
 	//Vertex buffers
 	GLuint vertex_buffer;
@@ -428,13 +444,6 @@ public:
 	}
 	//image call functions
 	void addImageCall(float x, float y, float w, float h) {
-		/*int index = lookupTexture(img->tex);
-		if (index == -1) {
-			textures.push_back(img->tex);
-			imgs.push_back(img);
-			index = textures.size() - 1;
-			indexs.insert(img->tex, index);
-		}*/
 		//triangle 1
 		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, 0, x, y });
 		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y });
@@ -446,6 +455,23 @@ public:
 		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y });
 
 	}
+
+	void addImageCall(IMG img, float x, float y, float w, float h, float img_x, float img_y, float img_w, float img_h) {
+		float imgx = img_x / img->w;
+		float imgy = img_y / img->h;
+		float imgw = img_w / img->w;
+		float imgh = img_h / img->h;
+		//triangle 1
+		img_vertexs.push_back({ x, y, 0.0f, imgx, imgy, 0, x, y });
+		img_vertexs.push_back({ x + w, y, 0.0f, imgx+imgw, imgy, 0, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy+imgh, 0, x, y });
+
+		//triangle 2
+		img_vertexs.push_back({ x + w, y, 0.0f, imgx+imgw, imgy, 0, x, y });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, imgx+imgw, imgy+imgh, 0, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy+imgh, 0, x, y });
+	}
+
 	float convertToRange(float n, float min, float max, float old_min, float old_max) {
 		return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 	}
@@ -462,6 +488,21 @@ public:
 		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y });
 	}
 
+	void addImageRotatedCall(IMG img, float x, float y, float w, float h, float ang, float img_x, float img_y, float img_w, float img_h) {
+		float imgx = img_x / img->w;
+		float imgy = img_y / img->h;
+		float imgw = img_w / img->w;
+		float imgh = img_h / img->h;
+		//triangle 1
+		img_vertexs.push_back({ x, y, 0.0f, imgx, imgy, ang, x, y });
+		img_vertexs.push_back({ x + w, y, 0.0f, imgx + imgw, imgy, ang, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy + imgh, ang, x, y });
+
+		//triangle 2
+		img_vertexs.push_back({ x + w, y, 0.0f, imgx + imgw, imgy, ang, x, y });
+		img_vertexs.push_back({ x + w, y - h, 0.0f, imgx + imgw, imgy + imgh, ang, x, y });
+		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy + imgh, ang, x, y });
+	}
 
 	//3d drawing functions
 	//

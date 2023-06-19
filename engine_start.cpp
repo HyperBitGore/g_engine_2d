@@ -7,7 +7,7 @@ int indexs_hash(GLint n) {
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
 EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
-	indexs.setHashFunction(indexs_hash);
+	//indexs.setHashFunction(indexs_hash);
 
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
@@ -232,11 +232,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		"}\0";
 	std::string fragment_shader_img2 = "#version 430 core\nin vec2 UV;\nout vec4 color;\nuniform sampler2D image_tex;\n"
 		"void main() { \n"
-		//"int index = o_index;\n"
-		//"int r_index = data_ssbo[index];\n"
 		"color = texture(image_tex, UV);\n}\0";
-	//size_t in = fragment_shader_img2.find("CHANGE");
-	//fragment_shader_img2.replace(in, 6, std::to_string(texture_units));
 	
 
 	shader_img = compileShader(vertex_shader_img2, fragment_shader_img2.c_str());
@@ -248,8 +244,6 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)0);
 	glEnableVertexAttribArray_g(1);
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)12);
-	//glEnableVertexAttribArray_g(2);
-	//glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)32);
 
 	texuniform_img = glGetUniformLocation_g(shader_img, "image_tex");
 	screenuniform_tri = glGetUniformLocation_g(shader_img, "screen");
@@ -260,7 +254,6 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		"layout (location = 2) in float ang;\nlayout (location = 3) in vec2 rot_point;\nout vec2 UV;\n"
 		"uniform vec2 screen;\n"
 		"void main() { \n"
-		//"vec2 test = vec2(640, 480);\n"
 		"vec2 test = screen;\n"
 		"vec2 rot_p = rot_point;\nrot_p = rot_p / test;\nrot_p = (rot_p * 2.0) - 1;\n"
 		"vec2 p3 = vec_pos;\np3 = p3 / test;\np3 = (p3 * 2.0) - 1;\n"
