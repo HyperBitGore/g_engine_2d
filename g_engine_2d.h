@@ -103,6 +103,7 @@ struct g_img {
 	unsigned int w;
 	unsigned int h;
 	int pos;
+	uint8_t bytes_per_pixel;
 };
 
 typedef g_img* IMG;
@@ -215,8 +216,8 @@ private:
 	int cur_y = 0;
 	int cur_x = 0;
 public:
-	ImageAtlas();
-	void addImage(IMG img, int x, int y);
+	ImageAtlas(int w, int h, int bytes_per_pixel);
+	void addImage(IMG img);
 	Point getImagePos(IMG img);
 	IMG getImg();
 };

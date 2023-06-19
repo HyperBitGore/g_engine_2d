@@ -4,8 +4,10 @@
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2 = EngineNewGL(L"Test Window", 640, 480);
 IMG imgtest;
+IMG atlas_test;
 IMG bmptest;
 IMG blank_test;
+ImageAtlas atlas = ImageAtlas(400, 400, 4);
 Font f_test;
 
 int ang = 0;
@@ -90,6 +92,9 @@ void renderFunction() {
 	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
 	eng2.renderImgsRotated(imgtest, false);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
+	eng2.addImageCall(atlas.getImg(), 200.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(atlas_test).x, atlas.getImagePos(atlas_test).y, 30, 50);
+	eng2.addImageCall(atlas.getImg(), 300.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(imgtest).x, atlas.getImagePos(imgtest).y, 300, 241);
+	eng2.renderImgs(atlas.getImg(), false);
 
 	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
 	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
@@ -117,10 +122,14 @@ int main() {
 
 	bmptest = eng2.loadBMP("test1.bmp");
 	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
+	atlas_test = eng2.loadPNG("test.png", 30, 50);
+	eng2.createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
+	atlas.addImage(atlas_test);
+	atlas.addImage(imgtest);
+	eng2.updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
 		ImageLoader::setPixel(imgtest, x, 1, 4278190335, 4);
 	}
-
 	std::cout << ImageLoader::getPixel(imgtest, 0, 100, 4) << "\n";
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10, 4) << "\n";
 	eng2.updateIMG(imgtest);

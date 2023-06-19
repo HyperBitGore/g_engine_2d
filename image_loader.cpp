@@ -4,6 +4,7 @@ IMG ImageLoader::generateBlankIMG(int w, int h, int bytes_per_pixel) {
 	IMG n_img = new g_img;
 	n_img->h = h;
 	n_img->w = w;
+	n_img->bytes_per_pixel = bytes_per_pixel;
 	n_img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
 	std::memset(n_img->data, 0, (w * bytes_per_pixel) * h);
 	return n_img;
@@ -192,6 +193,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+			f->bytes_per_pixel = 3;
 			break;
 		case 32:
 			readBMPPixels32(f, str, offset, size);
@@ -202,6 +204,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+			f->bytes_per_pixel = 4;
 			break;
 		}
 	}
@@ -273,6 +276,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		}
 		f->w = w;
 		f->h = h;
+		f->bytes_per_pixel = 4;
 		f->pos = cur_tex;
 		
 		//glGenTextures(1, &f->tex);
@@ -305,27 +309,41 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 	}
 
 	//need to create an image 
-	ImageAtlas::ImageAtlas() {
+	ImageAtlas::ImageAtlas(int w, int h, int bytes_per_pixel) {
 		images.setHashFunction(imageHash);
 		img = new g_img;
-		img->h = 400;
-		img->w = 400;
-		img->data = (unsigned char*)std::malloc((img->w * 4) * img->h); //pixel is four bytes so w*4 is the stride
-		std::memset(img->data, 0, (img->w * 4) * img->h);
+		img->h = h;
+		img->w = w;
+		img->bytes_per_pixel = bytes_per_pixel;
+		img->data = (unsigned char*)std::malloc((img->w * img->bytes_per_pixel) * img->h); //pixel is four bytes so w*4 is the stride
+		std::memset(img->data, 0, (img->w * img->bytes_per_pixel) * img->h);
 	}
-
-	void ImageAtlas::addImage(IMG n_img, int x, int y) {
+	//have to make sure the n_img is the same format as the atlas
+	void ImageAtlas::addImage(IMG n_img) {
+		if (n_img->bytes_per_pixel != img->bytes_per_pixel) {
+			return;
+		}
 		int c_x = cur_x;
 		int c_y = cur_y;
+		if (cur_x + n_img->w + 1 >= img->w) {
+			cur_y += n_img->h;
+			cur_x = 0;
+		}
+		else {
+			cur_x += n_img->w + 1;
+		}
+		if (cur_y > img->h) {
+			img->data = (unsigned char*)std::realloc(img->data, (img->w * 4) * (img->h + 200));
+		}
+
+		
 		for (int y = 0; y < n_img->h; y++) {
 			for (int x = 0; x < n_img->w; x++) {
 				uint32_t col = (uint32_t)ImageLoader::getPixel(n_img, x, y, 4);
-				ImageLoader::setPixel(img, cur_x + x, cur_y + y, col, 4);
+				ImageLoader::setPixel(img, c_x + x, c_y + y, col, 4);
 			}
 		}
-		if (cur_x + n_img->w >= img->w) {
-			cur_y += n_img->h;
-		}
+		
 
 		images.insert(n_img, { c_x, c_y });
 	}
