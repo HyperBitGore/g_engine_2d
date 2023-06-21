@@ -282,7 +282,41 @@ void readFormat6(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 		}
 	}
 }
+void readFormat8(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+	char* m = c + table->offset;
+	UINT16* f16 = (UINT16*)m;
+	f16 += 2;//skipping format and reserved
+	UINT32* f32 = (UINT32*)f16;
+	UINT32 length = *f32;
+	f32 += 2;//skipping language
+	//now we read the packed array of bits
 
+}
+
+//untested and im unsure if this is proper way to read this format
+void readFormat10(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+	char* m = c + table->offset;
+	UINT16* f16 = (UINT16*)m;
+	f16 += 2; //skipping first two
+	UINT32* f32 = (UINT32*)f16;
+	UINT32 length = *f32;
+	f32+=2;//skipping language
+	UINT32 starcharcode = *f32;
+	f32++;
+	UINT32 numChars = *f32;
+	f32++;
+	f16 = (UINT16*)f32;
+	std::vector<UINT16> glyphindices;
+	for (size_t i = 0; i < numChars; i++) {
+		glyphindices.push_back(*(f16 + i));
+	}
+	UINT16 start1 = start;
+	for (start1; start1 < end; start1++) {
+		int offset = start1 - starcharcode;
+		table->indexs.push_back({ glyphindices[offset], start1 });
+	}
+}
+//untested and not done
 void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	char* m = c + table->offset;
 	UINT16* f = (UINT16*)m;
@@ -293,7 +327,33 @@ void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	t += 2; //skipping language
 	UINT32 numGroups = *t; //number of groupings that follow
 	t++;
-
+	std::vector<UINT32> char_codes;
+	std::vector<UINT32> indexs;
+	size_t seq = 0;
+	for (size_t i = 0; i < numGroups; i++) {
+		seq = 0;
+		UINT32 startcode = *t;
+		t++;
+		UINT32 endcode = *t;
+		t++;
+		UINT32 startglyphid = *t;
+		t++;
+		for (size_t j = startcode; j <= endcode; j++, seq++) {
+			char_codes.push_back(*t);
+			indexs.push_back(startglyphid + seq);
+			t++;
+		}
+	}
+	UINT16 start1 = start;
+	for (start1; start1 < end; start1++) {
+		for (int i = 0; i < char_codes.size(); i++) {
+			if (char_codes[i] == start1) {
+				table->indexs.push_back({ (UINT16)indexs[i], start1});
+				break;
+			}
+		}
+		
+	}
 }
 
 //https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
@@ -328,26 +388,30 @@ cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
 			readFormat0(m, &map.tables[i], start, end);
 			break;
 		case 2:
-			readFormat2(m, &map.tables[i], start, end);
+			std::cout << "Unsupported cmap format; Format 2;" << std::endl;
+			//readFormat2(m, &map.tables[i], start, end);
 			break;
 		case 6:
 			readFormat6(m, &map.tables[i], start, end);
 			break;
 		case 8:
-
+			std::cout << "Unsupported cmap format; Format 8;" << std::endl;
+			//readFormat8(m, &map.tables[i], start, end);
 			break;
 		case 10:
-			
+			readFormat10(m, &map.tables[i], start, end);
 			break;
 		case 12:
 			//most common
 			readFormat12(m, &map.tables[i], start, end);
 			break;
 		case 13:
-			
+			//not doing this cause it is not needed
+			std::cout << "Unsupported cmap format; Format 13;" << std::endl;
 			break;
 		case 14:
-			
+			//not doing this cause it is not needed
+			std::cout << "Unsupported cmap format; Format 14;" << std::endl;
 			break;
 		}
 	}
