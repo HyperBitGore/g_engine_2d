@@ -2,6 +2,9 @@
 
 #include "gl_defines.h"
 #include "g_primitive_funcs.h"
+#include <Audioclient.h>
+#include <mmdeviceapi.h>
+#include <endpointvolume.h>
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -14,6 +17,9 @@
 #define unpack_g(col) (uint8_t)((col>>16)&0xff)
 #define unpack_b(col) (uint8_t)((col >> 8)&0xff)
 #define unpack_a(col) (uint8_t)(col&0xff)
+#define SAFE_RELEASE(punk)  \
+              if ((punk) != NULL)  \
+                { (punk)->Release(); (punk) = NULL; }
 
 // replace this with your favorite Assert() implementation
 #include <intrin.h>
@@ -223,23 +229,78 @@ public:
 };
 
 
+//PCM data
 struct Sound {
 	std::string name;
-	int length; //in milliseconds
-	char* data;
+
+	int size; //in bytes
+	char* data; //actual wave form data
 };
 typedef Sound* Audio;
 
 class AudioPlayer {
 private:
-
+	char* stream;
+	WAVEFORMATEX* format = nullptr;
+	IAudioClient* client = nullptr;
+	IAudioRenderClient* render_client = nullptr;
+	ISimpleAudioVolume* volume = nullptr;
+	IMMDevice* pdevice = nullptr;
+	IMMDeviceEnumerator* penum = nullptr;
+	UINT32 buffer_size = 0;
 public:
 	AudioPlayer() {
+		stream = (char*)std::malloc(2048);
+		HRESULT hr = CoInitialize(NULL);
+		if (FAILED(hr)) {
 
+		}
+		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&penum);
+		if (FAILED(hr)) {
+
+		}
+		
+		hr = penum->GetDefaultAudioEndpoint(eRender, eConsole, &pdevice);
+		if (FAILED(hr)) {
+
+		}
+		hr = pdevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&client);
+		if (FAILED(hr)) {
+
+		}
+
+		hr = client->GetMixFormat(&format);
+		if (FAILED(hr)) {
+
+		}
+		hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY, 10000000, 0, format, NULL);
+		if (FAILED(hr)) {
+
+		}
+		hr = client->GetBufferSize(&buffer_size);
+		if (FAILED(hr)) {
+
+		}
+		hr = client->GetService(__uuidof(IAudioRenderClient), (void**)&render_client);
+		if (FAILED(hr)) {
+
+		}
+		
 	}
-	Audio loadAudioFile(std::string file);
-	
+	~AudioPlayer() {
+		CoTaskMemFree(format);
+		SAFE_RELEASE(penum);
+		SAFE_RELEASE(pdevice);
+		SAFE_RELEASE(client);
+		SAFE_RELEASE(render_client);
+	}
+	Audio loadWavFile(std::string file);
+	Audio loadOggFile(std::string file);
+
 	void playFile(Audio file);
+	void pause();
+	void start();
+	void clear();
 
 	Audio generateSound();
 };
@@ -252,6 +313,7 @@ private:
 	Window* wind;
 	Input* in;
 	ImageLoader img_l;
+	AudioPlayer audio_p;
 	HDC dc_w;
 	HGLRC context;
 	std::function<void()> renderFund;
@@ -457,11 +519,11 @@ public:
 
 	}
 
-	void addImageCall(IMG img, float x, float y, float w, float h, float img_x, float img_y, float img_w, float img_h) {
-		float imgx = img_x / img->w;
-		float imgy = img_y / img->h;
-		float imgw = img_w / img->w;
-		float imgh = img_h / img->h;
+	void addImageCall(float x, float y, float w, float h, float img_x, float img_y, float img_w, float img_h) {
+		float imgx = img_x / img_w;
+		float imgy = img_y / img_h;
+		float imgw = img_w / img_w;
+		float imgh = img_h / img_h;
 		//triangle 1
 		img_vertexs.push_back({ x, y, 0.0f, imgx, imgy, 0, x, y });
 		img_vertexs.push_back({ x + w, y, 0.0f, imgx+imgw, imgy, 0, x, y });
@@ -543,6 +605,7 @@ public:
 	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
 	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
 	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
+	//audio functions
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

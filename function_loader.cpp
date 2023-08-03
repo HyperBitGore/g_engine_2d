@@ -60,6 +60,8 @@ PFNGLUNIFORM1IVPROC glUniform1iv_g;
 PFNGLBINDBUFFERBASEPROC glBindBufferBase_g;
 //PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
 
+PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers_g;
+PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer_g;
 
 void EngineNewGL::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
@@ -106,4 +108,7 @@ void EngineNewGL::loadFunctions() {
 	glBindBufferBase_g = (PFNGLBINDBUFFERBASEPROC)GetGLFuncAddress("glBindBufferBase");
 	//glDebugMessageCallback_g = (PFNGLDEBUGMESSAGECALLBACKPROC)GetGLFuncAddress("glDebugMessageCallback");
 
+	
+	glGenFramebuffers_g = (PFNGLGENFRAMEBUFFERSPROC)GetGLFuncAddress("glGenFramebuffers");
+	glBindFramebuffer_g = (PFNGLBINDFRAMEBUFFERPROC)GetGLFuncAddress("glBindFramebuffer");
 }

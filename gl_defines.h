@@ -63,3 +63,6 @@ extern PFNGLUNIFORM1UIVPROC glUniform1uiv_g;
 extern PFNGLUNIFORM1IVPROC glUniform1iv_g;
 extern PFNGLBINDBUFFERBASEPROC glBindBufferBase_g;
 //extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
+
+extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer_g;
+extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers_g;

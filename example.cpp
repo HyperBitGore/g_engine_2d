@@ -92,8 +92,9 @@ void renderFunction() {
 	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
 	eng2.renderImgsRotated(imgtest, false);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
-	eng2.addImageCall(atlas.getImg(), 200.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(atlas_test).x, atlas.getImagePos(atlas_test).y, 30, 50);
-	eng2.addImageCall(atlas.getImg(), 300.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(imgtest).x, atlas.getImagePos(imgtest).y, 300, 241);
+	
+	eng2.addImageCall(200.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(atlas_test).x, atlas.getImagePos(atlas_test).y, 30, 50);
+	eng2.addImageCall(300.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(imgtest).x, atlas.getImagePos(imgtest).y, 300, 241);
 	eng2.renderImgs(atlas.getImg(), false);
 
 	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
@@ -119,6 +120,11 @@ int nthBit(int number, int n) {
 //4278190335
 int main() {
 	//ImageLoader img_ld;
+	AudioPlayer ap;
+	Audio aud = ap.loadWavFile("sound.wav");
+	ap.start();
+	ap.playFile(aud);
+
 
 	bmptest = eng2.loadBMP("test1.bmp");
 	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
