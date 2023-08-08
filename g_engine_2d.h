@@ -5,12 +5,16 @@
 #include <Audioclient.h>
 #include <mmdeviceapi.h>
 #include <endpointvolume.h>
+#include <thread>
+#include <mutex>
 #include <fstream>
 #include <string>
 #include <sstream>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "lodepng.h"
+
+
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
 #define pack_rgb(r,g,b) (uint32_t)(r<<24|g<<16|b<<8)
 #define unpack_r(col) (uint8_t)((col>>24)&0xff)
@@ -231,71 +235,163 @@ public:
 
 //PCM data
 struct Sound {
+private:
+	size_t pos = 0;
+	bool n_write = false;
+public:
 	std::string name;
-
-	int size; //in bytes
+	BYTE samplebits;
+	BYTE channels;
+	int framesize;
+	int blockalign;
+	size_t size; //in bytes
 	char* data; //actual wave form data
+	//memcpys data into a buffer at a set size
+	bool writeData(BYTE* dat, size_t n) {
+		if (n_write) {
+			return false;
+		}
+		else if (pos + n >= size) {
+			size_t nt = size - pos;
+			std::memcpy(dat, data + pos + nt, nt * (blockalign));
+			std::cout << "write data over reads the file data, writing the remainder of file\n";
+			n_write = true;
+			return false;
+		}
+		std::memcpy(dat, data + pos, n * (blockalign));
+		pos += (n * (blockalign));
+		return true;
+	}
 };
 typedef Sound* Audio;
 
+//https://habr.com/en/articles/663352/#windows-and-wasapi
+//https://www.sounddevices.com/32-bit-float-files-explained/
+//https://stackoverflow.com/questions/44759526/how-winapi-handle-iaudioclient-seteventhandle-works
+//https://gist.github.com/Liastre/ff201f37bc62f6dc0b7f5541923565ab
+//https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/audio/RenderExclusiveEventDriven/WASAPIRenderer.cpp
+//problem is the audio i am trying to play isnt the same format as device format so we get no output, need to be able to convert any format to the another format
 class AudioPlayer {
 private:
-	char* stream;
 	WAVEFORMATEX* format = nullptr;
 	IAudioClient* client = nullptr;
-	IAudioRenderClient* render_client = nullptr;
+	IAudioRenderClient* render = nullptr;
 	ISimpleAudioVolume* volume = nullptr;
 	IMMDevice* pdevice = nullptr;
 	IMMDeviceEnumerator* penum = nullptr;
 	UINT32 buffer_size = 0;
+	std::vector<Audio> sound_files;
+
+	std::thread rend_thread;
+	std::mutex mtx;
+	HANDLE bufReady;
+	HANDLE shutdown; //add later
+	HANDLE paused;
+	bool run = true;
+	void _RenderThread() {
+		BYTE* dat1;
+		render->GetBuffer(buffer_size, &dat1);
+
+		render->ReleaseBuffer(buffer_size, 0);
+		client->Start();
+		while (run) {
+			DWORD res = WaitForSingleObject(bufReady, INFINITE);
+			if (res == WAIT_OBJECT_0) {
+				UINT32 filled;
+				client->GetCurrentPadding(&filled);
+				UINT32 free = buffer_size - filled;
+				if (free > 0) {
+					BYTE* data;
+					render->GetBuffer(free, &data);
+					mtx.lock();
+					for (size_t i = 0; i < sound_files.size();) {
+						if (!sound_files[i]->writeData(data, free)) {
+							delete sound_files[i];
+							sound_files.erase(sound_files.begin() + i);
+						}
+						else {
+							i++;
+						}
+					}
+					
+					mtx.unlock();
+					render->ReleaseBuffer(free, 0);
+				}
+			}
+		}
+		client->Stop();
+		client->Reset();
+		
+	}
 public:
 	AudioPlayer() {
-		stream = (char*)std::malloc(2048);
-		HRESULT hr = CoInitialize(NULL);
+		HRESULT hr = CoInitializeEx(NULL, 0);
 		if (FAILED(hr)) {
-
+			return;
 		}
 		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&penum);
 		if (FAILED(hr)) {
-
+			return;
 		}
 		
 		hr = penum->GetDefaultAudioEndpoint(eRender, eConsole, &pdevice);
 		if (FAILED(hr)) {
-
+			return;
 		}
 		hr = pdevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&client);
 		if (FAILED(hr)) {
-
+			return;
 		}
+		
 
 		hr = client->GetMixFormat(&format);
 		if (FAILED(hr)) {
-
+			return;
 		}
-		hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY, 10000000, 0, format, NULL);
+		int buffer_length_msec = 500;
+		REFERENCE_TIME dur = buffer_length_msec * 1000 * 10;
+		hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, dur, dur, format, NULL);
 		if (FAILED(hr)) {
-
+			return;
 		}
 		hr = client->GetBufferSize(&buffer_size);
 		if (FAILED(hr)) {
-
+			return;
 		}
-		hr = client->GetService(__uuidof(IAudioRenderClient), (void**)&render_client);
+		hr = client->GetService(__uuidof(IAudioRenderClient), (void**)&render);
 		if (FAILED(hr)) {
-
+			return;
 		}
-		
+		bufReady = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+		hr = client->SetEventHandle(bufReady);
+		if (FAILED(hr)) {
+			return;
+		}
+		if (bufReady == NULL) {
+			return;
+		}
+		shutdown = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+		if (shutdown == NULL) {
+			return;
+		}
+		paused = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+		if (paused == NULL) {
+			return;
+		}
+		rend_thread = std::thread(&AudioPlayer::_RenderThread, this);
 	}
 	~AudioPlayer() {
+		mtx.lock();
+		run = false;
 		CoTaskMemFree(format);
 		SAFE_RELEASE(penum);
 		SAFE_RELEASE(pdevice);
 		SAFE_RELEASE(client);
-		SAFE_RELEASE(render_client);
+		SAFE_RELEASE(render);
+		mtx.unlock();
+		rend_thread.join();
 	}
 	Audio loadWavFile(std::string file);
-	Audio loadOggFile(std::string file);
 
 	void playFile(Audio file);
 	void pause();
@@ -369,6 +465,16 @@ private:
 
 public:
 	EngineNewGL(LPCWSTR window_name, int width, int height);
+
+	//move constructor
+	EngineNewGL(EngineNewGL&& o) {
+		
+	}
+	//copy constructor
+	EngineNewGL(const EngineNewGL& o) {
+
+	}
+
 	//sets renderfunction
 	void setRenderFunction(std::function<void()> func) {
 		renderFund = func;

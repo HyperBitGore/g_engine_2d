@@ -3,6 +3,9 @@
 
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2 = EngineNewGL(L"Test Window", 640, 480);
+AudioPlayer ap;
+Audio aud;
+
 IMG imgtest;
 IMG atlas_test;
 IMG bmptest;
@@ -48,6 +51,7 @@ void renderFunction() {
 	}
 	if (eng2.getKeyDown(VK_RIGHT)) {
 		bez_m.x += 0.01f;
+		ap.playFile(aud);
 	}
 	else if (eng2.getKeyDown(VK_LEFT)) {
 		bez_m.x -= 0.01f;
@@ -120,10 +124,11 @@ int nthBit(int number, int n) {
 //4278190335
 int main() {
 	//ImageLoader img_ld;
-	AudioPlayer ap;
-	Audio aud = ap.loadWavFile("sound.wav");
-	ap.start();
-	ap.playFile(aud);
+	Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
+	aud = ap.loadWavFile("sound.wav");
+	ap.playFile(ad2);
+	//ap.start();
+	
 
 
 	bmptest = eng2.loadBMP("test1.bmp");
@@ -175,5 +180,7 @@ int main() {
 			std::cout << "key tapped\n";
 		}
 	}
+	ap.pause();
+	ap.clear();
 	return 0;
 }
