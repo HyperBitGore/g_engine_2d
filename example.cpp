@@ -2,7 +2,7 @@
 #include <bitset>
 
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
-EngineNewGL eng2 = EngineNewGL(L"Test Window", 640, 480);
+EngineNewGL eng2(L"Test Window", 640, 480);
 AudioPlayer ap;
 Audio aud;
 
@@ -21,6 +21,7 @@ float posy = 0;
 bool dir = false;
 bool dir2 = false;
 double timer = 0;
+double s_cool = 0;
 
 //bezier testing
 vec2 bez_m = { 120.0f, 130.0f };
@@ -44,14 +45,19 @@ void renderFunction() {
 		(!dir) ? pos += 1.0f : pos -= 1.0f;
 		(!dir2) ? posy += 1.0f : posy -= 1.0f;
 		timer = 0;
+		
 	}
+	if (s_cool >= 0.8f) {
+		ap.playFile(aud);
+		s_cool = 0;
+	}
+
 	if (eng2.getMouseLeftDown()) {
 		mos = eng2.getMousePos();
 		std::cout << mos.x << " : " << mos.y << "\n";
 	}
 	if (eng2.getKeyDown(VK_RIGHT)) {
 		bez_m.x += 0.01f;
-		ap.playFile(aud);
 	}
 	else if (eng2.getKeyDown(VK_LEFT)) {
 		bez_m.x -= 0.01f;
@@ -126,7 +132,7 @@ int main() {
 	//ImageLoader img_ld;
 	Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	aud = ap.loadWavFile("sound.wav");
-	ap.playFile(ad2);
+	//ap.playFile(ad2);
 	//ap.start();
 	
 
@@ -167,6 +173,7 @@ int main() {
 		//std::cout << del << "\n";
 		d += del;
 		timer += del;
+		s_cool += del;
 		std::pair<double, double> frames = eng2.getFrames();
 		if(d >= 1.0){
 			std::cout << "1 second\n";
@@ -182,5 +189,6 @@ int main() {
 	}
 	ap.pause();
 	ap.clear();
+	ap.end();
 	return 0;
 }

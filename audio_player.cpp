@@ -79,7 +79,11 @@ Audio AudioPlayer::loadWavFile(std::string file) {
 //adds data to stream and checks if already playing, if already playing start again? if not playsound
 void AudioPlayer::playFile(Audio file) {
 	mtx.lock();
-	sound_files.push_back(file);
+    SoundP sp;
+    sp.blockalign = file->blockalign;
+    sp.data = file->data;
+    sp.size = file->size;
+	sound_files.push_back(sp);
 	mtx.unlock();
 	
 }
@@ -92,6 +96,12 @@ void AudioPlayer::clear() {
 }
 void AudioPlayer::pause() {
 	//client->Stop();
+}
+
+void AudioPlayer::end() {
+    mtx.lock();
+    run = false;
+    mtx.unlock();
 }
 
 //generates 1 second basic synth

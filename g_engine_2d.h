@@ -235,9 +235,6 @@ public:
 
 //PCM data
 struct Sound {
-private:
-	size_t pos = 0;
-	bool n_write = false;
 public:
 	std::string name;
 	BYTE samplebits;
@@ -246,14 +243,26 @@ public:
 	int blockalign;
 	size_t size; //in bytes
 	char* data; //actual wave form data
-	//memcpys data into a buffer at a set size
+};
+typedef Sound* Audio;
+
+struct SoundP {
+private:
+	size_t pos = 0;
+	bool n_write = false;
+public:
+	int blockalign;
+	size_t size; //in bytes
+	char* data; //actual wave form data
+
 	bool writeData(BYTE* dat, size_t n) {
 		if (n_write) {
 			return false;
 		}
-		else if (pos + n >= size) {
-			size_t nt = size - pos;
-			std::memcpy(dat, data + pos + nt, nt * (blockalign));
+		else if ((pos + (n * blockalign) >= size)) {
+			size_t nt = (size - pos);
+			//size_t nb = (nt * blockalign);
+			std::memcpy(dat, data + pos, nt - 1);
 			std::cout << "write data over reads the file data, writing the remainder of file\n";
 			n_write = true;
 			return false;
@@ -263,7 +272,7 @@ public:
 		return true;
 	}
 };
-typedef Sound* Audio;
+
 
 //https://habr.com/en/articles/663352/#windows-and-wasapi
 //https://www.sounddevices.com/32-bit-float-files-explained/
@@ -280,7 +289,7 @@ private:
 	IMMDevice* pdevice = nullptr;
 	IMMDeviceEnumerator* penum = nullptr;
 	UINT32 buffer_size = 0;
-	std::vector<Audio> sound_files;
+	std::vector<SoundP> sound_files;
 
 	std::thread rend_thread;
 	std::mutex mtx;
@@ -305,23 +314,19 @@ private:
 					render->GetBuffer(free, &data);
 					mtx.lock();
 					for (size_t i = 0; i < sound_files.size();) {
-						if (!sound_files[i]->writeData(data, free)) {
-							delete sound_files[i];
+						if (!sound_files[i].writeData(data, free)) {
 							sound_files.erase(sound_files.begin() + i);
 						}
 						else {
 							i++;
 						}
 					}
-					
 					mtx.unlock();
 					render->ReleaseBuffer(free, 0);
 				}
 			}
 		}
 		client->Stop();
-		client->Reset();
-		
 	}
 public:
 	AudioPlayer() {
@@ -381,15 +386,16 @@ public:
 		rend_thread = std::thread(&AudioPlayer::_RenderThread, this);
 	}
 	~AudioPlayer() {
-		mtx.lock();
+		rend_thread.join();
+		//mtx.lock();
 		run = false;
 		CoTaskMemFree(format);
 		SAFE_RELEASE(penum);
 		SAFE_RELEASE(pdevice);
 		SAFE_RELEASE(client);
 		SAFE_RELEASE(render);
-		mtx.unlock();
-		rend_thread.join();
+		//mtx.unlock();
+		
 	}
 	Audio loadWavFile(std::string file);
 
@@ -397,6 +403,7 @@ public:
 	void pause();
 	void start();
 	void clear();
+	void end();
 
 	Audio generateSound();
 };
