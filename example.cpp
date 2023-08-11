@@ -48,7 +48,7 @@ void renderFunction() {
 		
 	}
 	if (s_cool >= 0.8f) {
-		ap.playFile(aud);
+		ap.playFile(aud, 0);
 		s_cool = 0;
 	}
 
@@ -132,7 +132,7 @@ int main() {
 	//ImageLoader img_ld;
 	Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	aud = ap.loadWavFile("sound.wav");
-	//ap.playFile(ad2);
+	ap.playFile(ad2, 1);
 	//ap.start();
 	
 

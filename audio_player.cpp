@@ -77,16 +77,15 @@ Audio AudioPlayer::loadWavFile(std::string file) {
 //https://hero.handmade.network/forums/code-discussion/t/8433-correct_implementation_of_wasapi
 
 //adds data to stream and checks if already playing, if already playing start again? if not playsound
-void AudioPlayer::playFile(Audio file) {
-	mtx.lock();
-    SoundP sp;
-    sp.blockalign = file->blockalign;
-    sp.data = file->data;
-    sp.size = file->size;
-	sound_files.push_back(sp);
-	mtx.unlock();
-	
+void AudioPlayer::playFile(Audio file, size_t stream) {
+    if (stream < streams.size()) {
+        PAudio sp;
+        sp.aud = file;
+        sp.stream = stream;
+        sound_files.push_back(sp);
+    }
 }
+
 void AudioPlayer::start() {
 	//client->Start();
 }
