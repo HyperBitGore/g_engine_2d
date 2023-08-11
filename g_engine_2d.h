@@ -246,10 +246,6 @@ public:
 };
 typedef Sound* Audio;
 
-struct PAudio {
-	Audio aud;
-	size_t stream;
-};
 
 struct SoundP {
 private:
@@ -280,6 +276,12 @@ public:
 
 class AudioStream {
 private:
+	struct FileStream {
+		std::ifstream fi;
+		size_t pos;
+	};
+
+
 	WAVEFORMATEX* format = nullptr;
 	IAudioClient* client = nullptr;
 	IAudioRenderClient* render = nullptr;
@@ -292,6 +294,7 @@ private:
 	HANDLE bufReady;
 	HANDLE shutdown; //add later
 	HANDLE paused;
+	bool play = true;
 public:
 	~AudioStream() {
 		CoTaskMemFree(format);
@@ -301,96 +304,26 @@ public:
 		SAFE_RELEASE(render);
 	}
 
-	AudioStream() {
-		HRESULT hr = CoInitializeEx(NULL, 0);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&penum);
-		if (FAILED(hr)) {
-			return;
-		}
+	AudioStream();
 
-		hr = penum->GetDefaultAudioEndpoint(eRender, eConsole, &pdevice);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = pdevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&client);
-		if (FAILED(hr)) {
-			return;
-		}
-
-
-		hr = client->GetMixFormat(&format);
-		if (FAILED(hr)) {
-			return;
-		}
-		int buffer_length_msec = 500;
-		REFERENCE_TIME dur = buffer_length_msec * 1000 * 10;
-		hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, dur, dur, format, NULL);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = client->GetBufferSize(&buffer_size);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = client->GetService(__uuidof(IAudioRenderClient), (void**)&render);
-		if (FAILED(hr)) {
-			return;
-		}
-		bufReady = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-		hr = client->SetEventHandle(bufReady);
-		if (FAILED(hr)) {
-			return;
-		}
-		if (bufReady == NULL) {
-			return;
-		}
-		shutdown = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-		if (shutdown == NULL) {
-			return;
-		}
-		paused = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-		if (paused == NULL) {
-			return;
-		}
-
-
-		BYTE* dat1;
-		render->GetBuffer(buffer_size, &dat1);
-
-		render->ReleaseBuffer(buffer_size, 0);
-		client->Start();
-	}
-
-	void playStream() {
-		DWORD res = WaitForSingleObject(bufReady, 0);
-		if (res == WAIT_OBJECT_0) {
-			UINT32 filled;
-			client->GetCurrentPadding(&filled);
-			UINT32 free = buffer_size - filled;
-			if (free > 0) {
-				BYTE* data;
-				render->GetBuffer(free, &data);
-				for (size_t i = 0; i < sound_files.size();) {
-					if (!sound_files[i].writeData(data, free)) {
-						sound_files.erase(sound_files.begin() + i);
-					}
-					else {
-						i++;
-					}
-				}
-				render->ReleaseBuffer(free, 0);
-			}
-		}
-	}
+	void playStream();
 	void playFile(Audio file) {
 		SoundP sp;
 		sp.blockalign = file->blockalign;
 		sp.data = file->data;
 		sp.size = file->size;
 		sound_files.push_back(sp);
+	}
+	void pause() {
+		play = false;
+		client->Stop();
+	}
+	void start() {
+		play = true;
+		client->Start();
+	}
+	void reset() {
+		client->Reset();
 	}
 };
 
@@ -403,113 +336,41 @@ public:
 //problem is the audio i am trying to play isnt the same format as device format so we get no output, need to be able to convert any format to the another format
 class AudioPlayer {
 private:
-	WAVEFORMATEX* format = nullptr;
-	IAudioClient* client = nullptr;
-	IAudioRenderClient* render = nullptr;
-	ISimpleAudioVolume* volume = nullptr;
-	IMMDevice* pdevice = nullptr;
-	IMMDeviceEnumerator* penum = nullptr;
-	UINT32 buffer_size = 0;
-	std::vector<PAudio> sound_files;
+	struct PAudio {
+		Audio aud;
+		size_t stream;
+	};
 
+	struct AudioCommand {
+		size_t type;
+		size_t stream;
+	};
+
+	struct FileStream {
+		std::string file;
+		size_t stream;
+	};
+
+	std::vector<PAudio> sound_files;
 	std::vector<AudioStream*> streams;
+	std::vector<AudioCommand> commands;
 
 	std::thread rend_thread;
 	std::mutex mtx;
-	HANDLE bufReady;
-	HANDLE shutdown; //add later
-	HANDLE paused;
 	bool run = true;
-	void _RenderThread() {
-		BYTE* dat1;
-		render->GetBuffer(buffer_size, &dat1);
-
-		render->ReleaseBuffer(buffer_size, 0);
-		client->Start();
-		while (run) {
-			mtx.lock();
-			for (auto& i : sound_files) {
-				streams[i.stream]->playFile(i.aud);
-			}
-			sound_files.clear();
-			for (auto& i : streams) {
-				i->playStream();
-			}
-			mtx.unlock();
-		}
-		client->Stop();
-	}
+	void _RenderThread();
 public:
-	AudioPlayer() {
-		HRESULT hr = CoInitializeEx(NULL, 0);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&penum);
-		if (FAILED(hr)) {
-			return;
-		}
-		
-		hr = penum->GetDefaultAudioEndpoint(eRender, eConsole, &pdevice);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = pdevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&client);
-		if (FAILED(hr)) {
-			return;
-		}
-		
-
-		hr = client->GetMixFormat(&format);
-		if (FAILED(hr)) {
-			return;
-		}
-		int buffer_length_msec = 500;
-		REFERENCE_TIME dur = buffer_length_msec * 1000 * 10;
-		hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, dur, dur, format, NULL);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = client->GetBufferSize(&buffer_size);
-		if (FAILED(hr)) {
-			return;
-		}
-		hr = client->GetService(__uuidof(IAudioRenderClient), (void**)&render);
-		if (FAILED(hr)) {
-			return;
-		}
-		bufReady = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-		hr = client->SetEventHandle(bufReady);
-		if (FAILED(hr)) {
-			return;
-		}
-		if (bufReady == NULL) {
-			return;
-		}
-		shutdown = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-		if (shutdown == NULL) {
-			return;
-		}
-		paused = CreateEventEx(NULL, NULL, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-		if (paused == NULL) {
-			return;
-		}
-		for (int i = 0; i < 4; i++) {
+	AudioPlayer(size_t n_streams) {
+		for (int i = 0; i < n_streams; i++) {
 			AudioStream* as = new AudioStream;
 			streams.push_back(as);
 		}
-
 
 		rend_thread = std::thread(&AudioPlayer::_RenderThread, this);
 	}
 	~AudioPlayer() {
 		rend_thread.join();
 		run = false;
-		CoTaskMemFree(format);
-		SAFE_RELEASE(penum);
-		SAFE_RELEASE(pdevice);
-		SAFE_RELEASE(client);
-		SAFE_RELEASE(render);
 		for (int i = 0; i < streams.size();i++) {
 			AudioStream* as = streams[i];
 			streams.erase(streams.begin() + i);
@@ -519,10 +380,11 @@ public:
 	}
 	Audio loadWavFile(std::string file);
 
+	void playFile(std::string path, size_t stream);
 	void playFile(Audio file, size_t stream);
-	void pause();
-	void start();
-	void clear();
+	void pause(size_t stream);
+	void start(size_t stream);
+	void clear(size_t stream);
 	void end();
 
 	Audio generateSound();
@@ -536,7 +398,6 @@ private:
 	Window* wind;
 	Input* in;
 	ImageLoader img_l;
-	AudioPlayer audio_p;
 	HDC dc_w;
 	HGLRC context;
 	std::function<void()> renderFund;

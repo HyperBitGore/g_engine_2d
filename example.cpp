@@ -3,7 +3,7 @@
 
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2(L"Test Window", 640, 480);
-AudioPlayer ap;
+AudioPlayer ap(4);
 Audio aud;
 
 IMG imgtest;
@@ -22,6 +22,7 @@ bool dir = false;
 bool dir2 = false;
 double timer = 0;
 double s_cool = 0;
+bool play_it = true;
 
 //bezier testing
 vec2 bez_m = { 120.0f, 130.0f };
@@ -62,6 +63,18 @@ void renderFunction() {
 	else if (eng2.getKeyDown(VK_LEFT)) {
 		bez_m.x -= 0.01f;
 	}
+	else if (eng2.getKeyDown(VK_UP)) {
+		if (play_it) {
+			ap.pause(1);
+			play_it = false;
+		}
+		else {
+			ap.start(1);
+			play_it = true;
+			
+		}
+	}
+
 	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
 	eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
 	eng2.drawQuad(pos, 10.0f, 60.0f, 60.0f);
@@ -187,8 +200,6 @@ int main() {
 			std::cout << "key tapped\n";
 		}
 	}
-	ap.pause();
-	ap.clear();
 	ap.end();
 	return 0;
 }
