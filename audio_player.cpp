@@ -55,8 +55,8 @@ Audio AudioPlayer::loadWavFile(std::string file) {
     Audio ad = new Sound;
     ad->name = file;
     ad->size = datasize;
-    ad->channels = num_channels;
-    ad->samplebits = bitspps;
+    ad->channels = (BYTE)num_channels;
+    ad->samplebits = (BYTE)bitspps;
     ad->framesize = byterate;
     ad->blockalign = blockalign;
     ad->data = (char*)std::malloc(ad->size);
@@ -87,7 +87,12 @@ void AudioPlayer::playFile(Audio file, size_t stream) {
 }
 
 void AudioPlayer::playFile(std::string path, size_t stream) {
-
+    if (stream < streams.size()) {
+        FStream fp;
+        fp.file = path;
+        fp.stream = stream;
+        stream_files.push_back(fp);
+   }
 }
 
 void AudioPlayer::start(size_t stream) {
@@ -119,6 +124,10 @@ void AudioPlayer::_RenderThread() {
             streams[i.stream]->playFile(i.aud);
         }
         sound_files.clear();
+        for(auto& i : stream_files) {
+            streams[i.stream]->streamFile(i.file);
+        }
+        stream_files.clear();
 
         for (auto& i : commands) {
             switch (i.type) {
@@ -155,6 +164,15 @@ void AudioStream::playStream() {
             if (free > 0) {
                 BYTE* data;
                 render->GetBuffer(free, &data);
+                for (size_t i = 0; i < stream_files.size();) {
+                    if (!stream_files[i].writeData(data, free)) {
+                        stream_files[i].fi.close();
+                        stream_files.erase(stream_files.begin() + i);
+                    }
+                    else {
+                        i++;
+                    }
+                }
                 for (size_t i = 0; i < sound_files.size();) {
                     if (!sound_files[i].writeData(data, free)) {
                         sound_files.erase(sound_files.begin() + i);
@@ -193,7 +211,7 @@ AudioStream::AudioStream() {
     if (FAILED(hr)) {
         return;
     }
-    int buffer_length_msec = 500;
+    int buffer_length_msec = 10;
     REFERENCE_TIME dur = buffer_length_msec * 1000 * 10;
     hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, dur, dur, format, NULL);
     if (FAILED(hr)) {

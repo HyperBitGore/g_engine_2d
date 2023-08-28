@@ -346,7 +346,7 @@ void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	}
 	UINT16 start1 = start;
 	for (start1; start1 < end; start1++) {
-		for (int i = 0; i < char_codes.size(); i++) {
+		for (size_t i = 0; i < char_codes.size(); i++) {
 			if (char_codes[i] == start1) {
 				table->indexs.push_back({ (UINT16)indexs[i], start1});
 				break;
@@ -1068,8 +1068,8 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 		//hacky way to deal with fucked up L's
 		for (int y = 0; y < h - 1; y++) {
 			for (int x = 0, x1 = w - 1; x <= x1; x++, x1--) {
-				uint32_t c1 = ImageLoader::getPixel(r_g.data, x, y, 4);
-				uint32_t c2 = ImageLoader::getPixel(r_g.data, x1, y, 4);
+				uint32_t c1 = (uint32_t)ImageLoader::getPixel(r_g.data, x, y, 4);
+				uint32_t c2 = (uint32_t)ImageLoader::getPixel(r_g.data, x1, y, 4);
 				ImageLoader::setPixel(r_g.data, x, y, c2, 4);
 				ImageLoader::setPixel(r_g.data, x1, y, c1, 4);
 			}

@@ -274,12 +274,81 @@ public:
 	}
 };
 
+class FileStream {
+	bool n_write = false;
+public:
+	int blockalign = 0;
+	std::ifstream fi;
+	size_t pos = 0;
+	std::string file;
+	FileStream(const FileStream& n) {
+		fi.open(n.file);
+		char c;
+		for (size_t i = 0; i < n.pos && !fi.eof(); i++) {
+			fi.get(c);
+		}
+		file = n.file;
+		pos = n.pos;
+		blockalign = n.blockalign;
+	}
+	FileStream operator=(const FileStream& n) {
+		fi.open(n.file);
+		char c;
+		for (size_t i = 0; i < n.pos && !fi.eof(); i++) {
+			fi.get(c);
+		}
+		file = n.file;
+		pos = n.pos;
+		blockalign = n.blockalign;
+		return *this;
+	}
+
+
+	FileStream() {
+		
+	}
+	~FileStream() {
+		fi.close();
+	}
+	bool writeData(BYTE* dat, size_t n) {
+		if (n_write) {
+			return false;
+		}
+		char c;
+		std::string str;
+		for (size_t i = 0; i < (n * blockalign) && !fi.eof(); i++) {
+			fi.get(c);
+			str.push_back(c);
+		}
+		if (fi.eof()) {
+			n_write = true;
+		}
+		if (str.size() > 0) {
+			pos += (n * blockalign);
+			std::memcpy(dat, str.data(), n * (blockalign));
+		}
+		
+		return true;
+	}
+	bool strMatch(std::string str) {
+		char c[4];
+		while ((fi.read(c, 4))) {
+			pos += 4;
+			std::string cmp(c);
+			if (str.compare(cmp) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+
+
+
 class AudioStream {
 private:
-	struct FileStream {
-		std::ifstream fi;
-		size_t pos;
-	};
+	
 
 
 	WAVEFORMATEX* format = nullptr;
@@ -290,6 +359,7 @@ private:
 	IMMDeviceEnumerator* penum = nullptr;
 	UINT32 buffer_size = 0;
 	std::vector<SoundP> sound_files;
+	std::vector<FileStream> stream_files;
 
 	HANDLE bufReady;
 	HANDLE shutdown; //add later
@@ -313,6 +383,23 @@ public:
 		sp.data = file->data;
 		sp.size = file->size;
 		sound_files.push_back(sp);
+	}
+	void streamFile(std::string file) {
+		FileStream fs;
+		fs.fi.open(file, std::ios::binary);
+		fs.file = file;
+		char c[40];
+		fs.fi.read(c, 32);
+		fs.pos += 32;
+		short bl;
+		fs.fi.read((char*)&bl, 2);
+		fs.pos += 2;
+		//now find the data section
+		fs.strMatch("data");
+		//skip the four bytes of data size
+		fs.fi.read(c, 4);
+		fs.pos += 4;
+		stream_files.push_back(fs);
 	}
 	void pause() {
 		play = false;
@@ -340,18 +427,20 @@ private:
 		Audio aud;
 		size_t stream;
 	};
+	struct FStream {
+		std::string file;
+		size_t stream;
+	};
 
 	struct AudioCommand {
 		size_t type;
 		size_t stream;
 	};
 
-	struct FileStream {
-		std::string file;
-		size_t stream;
-	};
+	
 
 	std::vector<PAudio> sound_files;
+	std::vector<FStream> stream_files;
 	std::vector<AudioStream*> streams;
 	std::vector<AudioCommand> commands;
 
@@ -361,7 +450,7 @@ private:
 	void _RenderThread();
 public:
 	AudioPlayer(size_t n_streams) {
-		for (int i = 0; i < n_streams; i++) {
+		for (size_t i = 0; i < n_streams; i++) {
 			AudioStream* as = new AudioStream;
 			streams.push_back(as);
 		}
@@ -371,7 +460,7 @@ public:
 	~AudioPlayer() {
 		rend_thread.join();
 		run = false;
-		for (int i = 0; i < streams.size();i++) {
+		for (size_t i = 0; i < streams.size();i++) {
 			AudioStream* as = streams[i];
 			streams.erase(streams.begin() + i);
 			delete as;

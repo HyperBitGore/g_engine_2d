@@ -332,13 +332,13 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		else {
 			cur_x += n_img->w + 1;
 		}
-		if (cur_y > img->h) {
+		if ((size_t)cur_y > img->h) {
 			img->data = (unsigned char*)std::realloc(img->data, (img->w * 4) * (img->h + 200));
 		}
 
 		
-		for (int y = 0; y < n_img->h; y++) {
-			for (int x = 0; x < n_img->w; x++) {
+		for (size_t y = 0; y < n_img->h; y++) {
+			for (size_t x = 0; x < n_img->w; x++) {
 				uint32_t col = (uint32_t)ImageLoader::getPixel(n_img, x, y, 4);
 				ImageLoader::setPixel(img, c_x + x, c_y + y, col, 4);
 			}

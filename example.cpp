@@ -48,8 +48,10 @@ void renderFunction() {
 		timer = 0;
 		
 	}
-	if (s_cool >= 0.8f) {
-		ap.playFile(aud, 0);
+	if (s_cool >= 0.1f) {
+		if (eng2.getKeyDown(VK_DOWN)){
+			ap.playFile(aud, 0);
+		}
 		s_cool = 0;
 	}
 
@@ -143,9 +145,10 @@ int nthBit(int number, int n) {
 //4278190335
 int main() {
 	//ImageLoader img_ld;
-	Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
+	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	aud = ap.loadWavFile("sound.wav");
-	ap.playFile(ad2, 1);
+	ap.playFile("dungeonsynth5.wav", 1);
+	//ap.playFile(ad2, 1);
 	//ap.start();
 	
 
