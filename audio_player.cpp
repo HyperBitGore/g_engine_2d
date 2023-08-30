@@ -165,9 +165,11 @@ void AudioStream::playStream() {
                 BYTE* data;
                 render->GetBuffer(free, &data);
                 for (size_t i = 0; i < stream_files.size();) {
-                    if (!stream_files[i].writeData(data, free)) {
-                        stream_files[i].fi.close();
+                    if (!stream_files[i]->writeData(data, free)) {
+                        stream_files[i]->~FileStream();
+                        FileStream* fp = stream_files[i];
                         stream_files.erase(stream_files.begin() + i);
+                        delete fp;
                     }
                     else {
                         i++;
