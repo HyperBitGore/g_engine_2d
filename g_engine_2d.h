@@ -29,7 +29,27 @@
 #include <intrin.h>
 #define Assert(cond) do { if (!(cond)) __debugbreak(); } while (0)
 
-
+#pragma pack(push, 1)
+struct int24 {
+	unsigned int data : 24;
+	int24(short s) {
+		data = s;
+	}
+	int24(float s) {
+		data = (unsigned int)s;
+	}
+	operator float() const
+	{
+		return (float)data;
+	}
+	operator char() const {
+		return (char)data;
+	}
+	operator short() const {
+		return (short)data;
+	}
+};
+#pragma pack(pop)
 
 
 static void FatalError(const char* message)
@@ -246,11 +266,9 @@ public:
 };
 typedef Sound* Audio;
 
-
-
-
-
-
+enum class WavBytes {
+	BYTE8 = 1, BYTE16 = 2, BYTE24 = 3, BYTE32 = 4 
+};
 
 class AudioStream {
 private:
@@ -285,6 +303,7 @@ private:
 		bool n_write = false;
 		size_t pos = 0;
 		std::string file;
+		int bytesp = 1;
 		int blockalign = 0;
 		std::ifstream fi;
 	public:
@@ -299,6 +318,9 @@ private:
 				fi.read((char*)&bl, 2);
 				blockalign = (int)bl;
 				pos += 2;
+				fi.read((char*)&bl, 2);
+				bytesp = (bl) / 8;
+				pos += 2;
 				//now find the data section
 				strMatch("data");
 				//skip the four bytes of data size
@@ -309,20 +331,29 @@ private:
 		~FileStream() {
 			fi.close();
 		}
-		bool writeData(BYTE* dat, size_t n) {
+		bool writeData(BYTE* dat, size_t n, WavBytes bits) {
 			if (n_write) {
 				return false;
 			}
-			std::string str;
-			fi.read((char*)dat, n * blockalign);
+			void* d1 = std::malloc(n * blockalign);
+			if (d1 == nullptr) {
+				return false;
+			}
+			fi.read((char*)d1, n * blockalign);
+			size_t tt;
+			WavBytes w1 = (WavBytes)(bytesp);
+			void* da1 = Translator::translate(d1, n * blockalign, &tt, w1, bits);
+			if (da1 == nullptr) {
+				std::memcpy(dat, d1, n * blockalign);
+			}
+			else {
+				std::memcpy(dat, da1, n * blockalign);
+				std::free(da1);
+			}
+			std::free(d1);
 			if (!fi) {
 				n_write = true;
 			}
-			if (str.size() > 0) {
-				pos += (n * blockalign);
-				std::memcpy(dat, str.data(), n * (blockalign));
-			}
-
 			return true;
 		}
 		bool strMatch(std::string str) {
@@ -345,6 +376,169 @@ private:
 				}
 			}
 			return false;
+		}
+	};
+	//translates to whatever format u need from input data
+	class Translator {
+	private:
+		static void convertToFloat(char* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size;
+			float* f_mem = (float*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((float)*(mem + i)) / (float)255;
+			}
+		}
+		static void convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 2;
+			float* f_mem = (float*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((float)*(mem + i)) / (float)32767;
+			}
+		}
+		static void convertToFloat(int24* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 3;
+			float* f_mem = (float*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((float)*(mem + i)) / (float)8388607;
+			}
+		}
+
+		static void convertTo16bit(char* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size;
+			short* f_mem = (short*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((short)*(mem + i));
+			}
+		}
+		static void convertTo16bit(float* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 4;
+			short* f_mem = (short*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((short)*(mem + i));
+			}
+		}
+		static void convertTo16bit(int24* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 3;
+			short* f_mem = (short*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((short)*(mem + i));
+			}
+		}
+
+		static void convertTo8bit(short* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 2;
+			char* f_mem = (char*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((char)*(mem + i));
+			}
+		}
+		static void convertTo8bit(int24* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 3;
+			char* f_mem = (char*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((char)*(mem + i));
+			}
+		}
+		static void convertTo8bit(float* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size / 4;
+			char* f_mem = (char*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((char)*(mem + i));
+			}
+		}
+		static void convertTo24bit(char* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size;
+			int24* f_mem = (int24*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((int24)(short)*(mem + i));
+			}
+		}
+		static void convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size;
+			int24* f_mem = (int24*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((int24)*(mem + i));
+			}
+		}
+		static void convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size) {
+			size_t s = size;
+			int24* f_mem = (int24*)n_mem;
+			for (size_t i = 0, j = 0; i < s; i++, j++) {
+				*(f_mem + j) = ((int24)*(mem + i));
+			}
+		}
+
+	public:
+		//make sure to free the memory returned here
+		static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes) {
+			void* mem2;
+			if (org_bytes == new_bytes) {
+				return nullptr;
+			}
+			else if (org_bytes > new_bytes) {
+				*n_size = size / (size_t)new_bytes;
+				mem2 = std::malloc(*n_size);
+			}
+			else {
+				*n_size = (size / (size_t)org_bytes) * ((size_t)new_bytes);
+				mem2 = std::malloc(*n_size);
+			}
+			switch (new_bytes) {
+			case WavBytes::BYTE8:
+				switch (org_bytes) {
+				case WavBytes::BYTE16:
+					convertTo8bit((short*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE24:
+					convertTo8bit((int24*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE32:
+					convertTo8bit((float*)mem, size, mem2, *n_size);
+					break;
+				}
+				break;
+			case WavBytes::BYTE16:
+				switch (org_bytes) {
+				case WavBytes::BYTE8:
+					convertTo16bit((char*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE24:
+					convertTo16bit((int24*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE32:
+					convertTo16bit((float*)mem, size, mem2, *n_size);
+					break;
+				}
+				break;
+			case WavBytes::BYTE24:
+				switch (org_bytes) {
+				case WavBytes::BYTE8:
+					convertTo24bit((char*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE16:
+					convertTo24bit((short*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE32:
+					convertTo24bit((float*)mem, size, mem2, *n_size);
+					break;
+				}
+				break;
+			case WavBytes::BYTE32:
+				switch (org_bytes) {
+				case WavBytes::BYTE8:
+					convertToFloat((char*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE24:
+					convertToFloat((int24*)mem, size, mem2, *n_size);
+					break;
+				case WavBytes::BYTE16:
+					convertToFloat((short*)mem, size, mem2, *n_size);
+					break;
+				}
+				break;
+			}
+
+			return mem2;
 		}
 	};
 

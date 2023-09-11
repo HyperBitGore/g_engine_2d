@@ -76,6 +76,11 @@ Audio AudioPlayer::loadWavFile(std::string file) {
 //https://learn.microsoft.com/en-us/windows/win32/coreaudio/exclusive-mode-streams
 //https://hero.handmade.network/forums/code-discussion/t/8433-correct_implementation_of_wasapi
 
+//add class which will convert the data being played into the needed format to be output to the audio device
+//going down form 32->24->16 audio is just narrowing conversion clamp into those lower bands
+//going up from 16->24->32 is widening conversion just convert the data into 32 bit readable data so wasapi can actually play it, wave will still be the same
+
+
 //adds data to stream and checks if already playing, if already playing start again? if not playsound
 void AudioPlayer::playFile(Audio file, size_t stream) {
     if (stream < streams.size()) {
@@ -162,10 +167,11 @@ void AudioStream::playStream() {
             client->GetCurrentPadding(&filled);
             UINT32 free = buffer_size - filled;
             if (free > 0) {
+                WavBytes bits = (WavBytes)((this->format->wBitsPerSample)/8);
                 BYTE* data;
                 render->GetBuffer(free, &data);
                 for (size_t i = 0; i < stream_files.size();) {
-                    if (!stream_files[i]->writeData(data, free)) {
+                    if (!stream_files[i]->writeData(data, free, bits)) {
                         stream_files[i]->~FileStream();
                         FileStream* fp = stream_files[i];
                         stream_files.erase(stream_files.begin() + i);

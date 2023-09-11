@@ -146,8 +146,9 @@ int nthBit(int number, int n) {
 int main() {
 	//ImageLoader img_ld;
 	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
+	//ap.playFile(ad2, 1);
 	aud = ap.loadWavFile("sound.wav");
-	ap.playFile("dungeonsynth5.wav", 1);
+	ap.playFile("dungeonsynth5_16.wav", 1);
 	//ap.playFile(ad2, 1);
 	//ap.start();
 	
