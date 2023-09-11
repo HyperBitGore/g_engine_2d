@@ -7,5 +7,8 @@
   - 2D Image drawing
   - 2D Primitive drawing
   - PNG and BMP loading
-  - Wav file loading
-  - Audio playing
+  - Audio Support
+     - Audio playing
+     - WAV file loading
+     - Stream audio from files
+     - Play audio from seperate thread
