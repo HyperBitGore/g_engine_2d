@@ -29,27 +29,29 @@
 #include <intrin.h>
 #define Assert(cond) do { if (!(cond)) __debugbreak(); } while (0)
 
-#pragma pack(push, 1)
-struct int24 {
-	unsigned int data : 24;
-	int24(short s) {
-		data = s;
+/*struct int24 {
+	uint8_t data[3];
+	int24(int s) {
+		data[0] = s & 255;
+		data[1] = (s >> 8) & 255;
+		data[2] = (s >> 16) & 255;
 	}
-	int24(float s) {
-		data = (unsigned int)s;
+	int24(char c, char c2, char c3) {
+		data[0] = c;
+		data[1] = c2;
+		data[2] = c3;
 	}
 	operator float() const
 	{
-		return (float)data;
+		return (float)(data[0] | (data[1] << 8) | (data[2] << 16));
 	}
 	operator char() const {
-		return (char)data;
+		return (char)(data[0] | (data[1] << 8) | (data[2] << 16));
 	}
 	operator short() const {
-		return (short)data;
+		return (short)(data[0] | (data[1] << 8) | (data[2] << 16));
 	}
-};
-#pragma pack(pop)
+};*/
 
 
 static void FatalError(const char* message)
@@ -70,6 +72,16 @@ static void FatalError(const char* message)
 //voxel engine plug-in
 //isometric engine plug-in
 
+template<class T>
+T clamp(T p, T n1, T n2) {
+	if (p < n1) {
+		p = n1;
+	}
+	else if (p > n2) {
+		p = n2;
+	}
+	return p;
+}
 
 
 
@@ -378,99 +390,40 @@ private:
 			return false;
 		}
 	};
+	//https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
 	//translates to whatever format u need from input data
 	class Translator {
 	private:
-		static void convertToFloat(char* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size;
-			float* f_mem = (float*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((float)*(mem + i)) / (float)255;
-			}
-		}
-		static void convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 2;
-			float* f_mem = (float*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((float)*(mem + i)) / (float)32767;
-			}
-		}
-		static void convertToFloat(int24* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 3;
-			float* f_mem = (float*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((float)*(mem + i)) / (float)8388607;
-			}
-		}
-
-		static void convertTo16bit(char* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size;
-			short* f_mem = (short*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((short)*(mem + i));
-			}
-		}
-		static void convertTo16bit(float* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 4;
-			short* f_mem = (short*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((short)*(mem + i));
-			}
-		}
-		static void convertTo16bit(int24* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 3;
-			short* f_mem = (short*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((short)*(mem + i));
-			}
-		}
-
-		static void convertTo8bit(short* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 2;
-			char* f_mem = (char*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((char)*(mem + i));
-			}
-		}
-		static void convertTo8bit(int24* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 3;
-			char* f_mem = (char*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((char)*(mem + i));
-			}
-		}
-		static void convertTo8bit(float* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size / 4;
-			char* f_mem = (char*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((char)*(mem + i));
-			}
-		}
-		static void convertTo24bit(char* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size;
-			int24* f_mem = (int24*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((int24)(short)*(mem + i));
-			}
-		}
-		static void convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size;
-			int24* f_mem = (int24*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((int24)*(mem + i));
-			}
-		}
-		static void convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size) {
-			size_t s = size;
-			int24* f_mem = (int24*)n_mem;
-			for (size_t i = 0, j = 0; i < s; i++, j++) {
-				*(f_mem + j) = ((int24)*(mem + i));
-			}
-		}
+		static int convertRange(int n, int min, int max, int n_min, int n_max);
+		static float convertRange(float n, float min, float max, float n_min, float n_max);
+		static short convertRange(short n, short min, short max, short n_min, short n_max);
+		//redone
+		static void convertToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size);
+		//redone
+		static void convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size);
+		//redone
+		static void convert24ToFloat(char* mem, size_t size, void* n_mem, size_t n_size);
+		//redone
+		static void convertTo16bit(char* mem, size_t size, void* n_mem, size_t n_size);
+		//redone
+		static void convertTo16bit(float* mem, size_t size, void* n_mem, size_t n_size);
+		//redo 24 bit
+		static void convert24To16bit(char* mem, size_t size, void* n_mem, size_t n_size);
+		//redone
+		static void convertTo8bit(short* mem, size_t size, void* n_mem, size_t n_size);
+		//redo 24 bit
+		static void convert24To8bit(char* mem, size_t size, void* n_mem, size_t n_size);
+		//redone
+		static void convertTo8bit(float* mem, size_t size, void* n_mem, size_t n_size);
+		//redo this
+		static void convertTo24bit(uint8_t* mem, size_t size, void* n_mem, size_t n_size);
+		static void convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size);
+		static void convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size);
 
 	public:
 		//make sure to free the memory returned here
 		static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes) {
+			//return nullptr;
 			void* mem2;
 			if (org_bytes == new_bytes) {
 				return nullptr;
@@ -490,7 +443,7 @@ private:
 					convertTo8bit((short*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE24:
-					convertTo8bit((int24*)mem, size, mem2, *n_size);
+					convert24To8bit((char*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE32:
 					convertTo8bit((float*)mem, size, mem2, *n_size);
@@ -503,7 +456,7 @@ private:
 					convertTo16bit((char*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE24:
-					convertTo16bit((int24*)mem, size, mem2, *n_size);
+					convert24To16bit((char*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE32:
 					convertTo16bit((float*)mem, size, mem2, *n_size);
@@ -513,7 +466,7 @@ private:
 			case WavBytes::BYTE24:
 				switch (org_bytes) {
 				case WavBytes::BYTE8:
-					convertTo24bit((char*)mem, size, mem2, *n_size);
+					convertTo24bit((uint8_t*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE16:
 					convertTo24bit((short*)mem, size, mem2, *n_size);
@@ -526,10 +479,10 @@ private:
 			case WavBytes::BYTE32:
 				switch (org_bytes) {
 				case WavBytes::BYTE8:
-					convertToFloat((char*)mem, size, mem2, *n_size);
+					convertToFloat((uint8_t*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE24:
-					convertToFloat((int24*)mem, size, mem2, *n_size);
+					convert24ToFloat((char*)mem, size, mem2, *n_size);
 					break;
 				case WavBytes::BYTE16:
 					convertToFloat((short*)mem, size, mem2, *n_size);

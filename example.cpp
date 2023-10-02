@@ -148,11 +148,12 @@ int main() {
 	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	//ap.playFile(ad2, 1);
 	aud = ap.loadWavFile("sound.wav");
-	ap.playFile("dungeonsynth5_16.wav", 1);
+	ap.playFile("dungeonsynth5_24.wav", 1);
 	//ap.playFile(ad2, 1);
 	//ap.start();
 	
-
+	std::vector<uint16_t> foo = {32000, 4052, 4032};
+	std::vector<float> up(foo.begin(), foo.end());
 
 	bmptest = eng2.loadBMP("test1.bmp");
 	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);

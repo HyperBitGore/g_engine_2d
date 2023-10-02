@@ -1,7 +1,5 @@
 #include "g_engine_2d.h"
 
-
-
 Audio AudioPlayer::loadWavFile(std::string file) {
     std::ifstream f;
     f.open(file, std::ios::binary);
@@ -216,12 +214,13 @@ AudioStream::AudioStream() {
 
 
     hr = client->GetMixFormat(&format);
+
     if (FAILED(hr)) {
         return;
     }
     int buffer_length_msec = 10;
     REFERENCE_TIME dur = buffer_length_msec * 1000 * 10;
-    hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, dur, dur, format, NULL);
+    hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY, dur, dur, format, NULL);
     if (FAILED(hr)) {
         return;
     }
@@ -256,4 +255,139 @@ AudioStream::AudioStream() {
 
     render->ReleaseBuffer(buffer_size, 0);
     client->Start();
+}
+
+//Translator
+//https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
+//https://github.com/adamstark/AudioFile/blob/master/AudioFile.h
+//https://gist.github.com/endolith/e8597a58bcd11a6462f33fa8eb75c43d
+//https://ccrma.stanford.edu/courses/422-winter-2014/projects/WaveFormat/
+int AudioStream::Translator::convertRange(int n, int min, int max, int n_min, int n_max) {
+    int orange = (n - min);
+    int nrange = (n_max - n_min);
+    int val = (((n - min) * nrange) / orange) + n_min;
+    return val;
+}
+float AudioStream::Translator::convertRange(float n, float min, float max, float n_min, float n_max) {
+    float orange = (n - min);
+    float nrange = (n_max - n_min);
+    float val = (((n - min) * nrange) / orange) + n_min;
+    return val;
+}
+short AudioStream::Translator::convertRange(short n, short min, short max, short n_min, short n_max) {
+    short orange = (n - min);
+    short nrange = (n_max - n_min);
+    short val = (((n - min) * nrange) / orange) + n_min;
+    return val;
+}
+//redone
+void AudioStream::Translator::convertToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    float* f_mem = (float*)n_mem;
+    float div = powf(2, 7);
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        float p = (float)*(mem + i) - div;
+        p = p / (div - 1);
+        *(f_mem + j) = p;
+    }
+}
+//redone
+void AudioStream::Translator::convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size / 2;
+    float* f_mem = (float*)n_mem;
+    float div = powf(2, (15)) - 1;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = ((float)*(mem + i)) / (float)(div);
+    }
+}
+//redo
+//https://stackoverflow.com/questions/9896589/how-do-you-read-in-a-3-byte-size-value-as-an-integer-in-c
+void AudioStream::Translator::convert24ToFloat(char* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    float* f_mem = (float*)n_mem;
+    uint8_t* m = (uint8_t*)mem;
+    float div = powf(2, 23) - 1;
+    for (size_t i = 0, j = 0; i < s; i+=3, j++) {
+        int sam = m[i] << 16 | m[i + 1] << 8 | m[i + 2];
+        sam = clamp<int>(sam, -8388607, 8388607);
+        float o = ((float)sam) / div;
+        *(f_mem + j) = o;
+    }
+}
+//redone
+void AudioStream::Translator::convertTo16bit(char* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    short* f_mem = (short*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = convertRange((short)*(mem + i), (short)0, (short)255, (short)-32768, (short)32768);
+    }
+}
+//redone
+void AudioStream::Translator::convertTo16bit(float* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size / 4;
+    short* f_mem = (short*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = (short)convertRange(*(mem + i), -1.0f, 1.0f, -32768.0f, 32768.0f);
+    }
+}
+//redone
+void AudioStream::Translator::convert24To16bit(char* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    short* f_mem = (short*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i+=3, j++) {
+        int p = mem[i] << 16 | mem[i + 1] << 8 | mem[i + 2];
+        p = convertRange(p, -8388608, 8388607, -32768, 32767);
+        *(f_mem + j) = ((short)p);
+    }
+}
+//redone
+void AudioStream::Translator::convertTo8bit(short* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size / 2;
+    char* f_mem = (char*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = ((char)convertRange(*(mem + i), (short)-32768, (short)32768, (short)0, (short)255));
+    }
+}
+//redone
+void AudioStream::Translator::convert24To8bit(char* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    char* f_mem = (char*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i+=3, j++) {
+        int p = mem[i] << 16 | mem[i + 1] << 8 | mem[i + 2];
+        p = convertRange(p, -8388608, 8388607, 0, 255);
+        *(f_mem + j) = ((char)p);
+    }
+}
+//redone
+void AudioStream::Translator::convertTo8bit(float* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size / 4;
+    char* f_mem = (char*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = ((char)convertRange(*(mem + i), -1.0f, 1.0f, 0.0f, 255.0f));
+    }
+}
+//redo this
+void AudioStream::Translator::convertTo24bit(uint8_t* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    uint8_t* m = mem;
+    char* f_mem = (char*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j+=3) {
+        int p = convertRange(m[i], 0, 255, -8388608, 8388607);
+        //*(f_mem + j) = 
+        //*(f_mem + j) = ((int24)(short)*(mem + i));
+    }
+}
+void AudioStream::Translator::convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    char* f_mem = (char*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = ((char) * (mem + i));
+    }
+}
+void AudioStream::Translator::convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size) {
+    size_t s = size;
+    char* f_mem = (char*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j++) {
+        *(f_mem + j) = ((char)(int)*(mem + i));
+    }
 }
