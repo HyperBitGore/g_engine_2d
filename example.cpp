@@ -48,11 +48,18 @@ void renderFunction() {
 		timer = 0;
 		
 	}
-	if (s_cool >= 0.1f) {
+	if (s_cool >= 0.3f) {
+		if (eng2.getKeyDown(VK_DOWN)) {
+			//ap.playFile("dungeonsynth5_16.wav", 1);
+			s_cool = 0;
+		}
+	}
+	else if (s_cool >= 0.1f) {
 		if (eng2.getKeyDown(VK_DOWN)){
+			s_cool = 0;
 			ap.playFile(aud, 0);
 		}
-		s_cool = 0;
+		
 	}
 
 	if (eng2.getMouseLeftDown()) {
@@ -147,8 +154,8 @@ int main() {
 	//ImageLoader img_ld;
 	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	//ap.playFile(ad2, 1);
-	aud = ap.loadWavFile("sound.wav");
-	ap.playFile("test_24.wav", 1);
+	aud = ap.loadWavFile("sound_32.wav");
+	ap.playFile("dungeonsynth5_24.wav", 1);
 	//ap.playFile(ad2, 1);
 	//ap.start();
 	

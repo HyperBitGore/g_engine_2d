@@ -129,10 +129,12 @@ void AudioPlayer::_RenderThread() {
         mtx.lock();
         for (auto& i : sound_files) {
             streams[i.stream]->playFile(i.aud);
+            streams[i.stream]->start();
         }
         sound_files.clear();
         for(auto& i : stream_files) {
             streams[i.stream]->streamFile(i.file);
+            streams[i.stream]->start();
         }
         stream_files.clear();
 
@@ -174,17 +176,16 @@ void AudioStream::playStream() {
                 render->GetBuffer(free, &data);
                 for (size_t i = 0; i < stream_files.size();) {
                     if (!stream_files[i]->writeData(data, free, bits)) {
-                        stream_files[i]->~FileStream();
                         FileStream* fp = stream_files[i];
                         stream_files.erase(stream_files.begin() + i);
-                        delete fp;
+                        delete fp; //dont need to call destructor since delete does that for us
                     }
                     else {
                         i++;
                     }
                 }
                 for (size_t i = 0; i < sound_files.size();) {
-                    if (!sound_files[i].writeData(data, free)) {
+                    if (!sound_files[i].writeData(data, free, bits)) {
                         sound_files.erase(sound_files.begin() + i);
                     }
                     else {
@@ -192,6 +193,9 @@ void AudioStream::playStream() {
                     }
                 }
                 render->ReleaseBuffer(free, 0);
+                if (sound_files.size() <= 0 && stream_files.size() <= 0) {
+                    play = false;
+                }
             }
         }
     }
@@ -305,18 +309,15 @@ void AudioStream::Translator::convertToFloat(short* mem, size_t size, void* n_me
         f_mem[j] = o;
     }
 }
-//redone?
-//2880
+//fixed
 //https://stackoverflow.com/questions/9896589/how-do-you-read-in-a-3-byte-size-value-as-an-integer-in-c
 void AudioStream::Translator::convert24ToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     float* f_mem = (float*)n_mem;
-    float div = powf(2, 23) - 1;
     float pow = (1.0f / 8388607.0f);
     for (size_t i = 0, j = 0; i < s && j < n_size; i+=3, j++) {
-        int sam = (mem[i]) | (mem[i + 1] << 8) | (mem[i + 2] << 16);
+        int sam = mem[i] | (mem[i + 1] << 8) | ((int8_t)mem[i + 2] << 16);
         //sam = clamp<int>(sam, -8388607, 8388607);
-        //float o = convertRange((float)sam, -8388608.0f, 8388607.0f, -1.0f, 1.0f);
         float o = (float)sam * pow;
         *(f_mem + j) = o;
     }
@@ -373,29 +374,38 @@ void AudioStream::Translator::convertTo8bit(float* mem, size_t size, void* n_mem
         *(f_mem + j) = ((char)convertRange(*(mem + i), -1.0f, 1.0f, 0.0f, 255.0f));
     }
 }
-//redo this
+//redone
 void AudioStream::Translator::convertTo24bit(uint8_t* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     uint8_t* m = mem;
-    char* f_mem = (char*)n_mem;
+    uint8_t* f_mem = (uint8_t*)n_mem;
     for (size_t i = 0, j = 0; i < s; i++, j+=3) {
         int p = convertRange(m[i], 0, 255, -8388608, 8388607);
-        //*(f_mem + j) = 
-        //*(f_mem + j) = ((int24)(short)*(mem + i));
+        f_mem[j] = (p) & 0xff;
+        f_mem[j + 1] = (p >> 8) & 0xff;
+        f_mem[j + 2] = ((int8_t)p >> 16) & 0xff;
     }
 }
+//redone
 void AudioStream::Translator::convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size) {
-    size_t s = size;
-    char* f_mem = (char*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i++, j++) {
-        *(f_mem + j) = ((char) * (mem + i));
+    size_t s = size / 2;
+    uint8_t* f_mem = (uint8_t*)n_mem;
+    for (size_t i = 0, j = 0; i < s; i++, j+=3) {
+        int p = convertRange((int)mem[i], -32768, 32768, -8388608, 8388607);
+        f_mem[j] = (p) & 0xff;
+        f_mem[j + 1] = (p >> 8) & 0xff;
+        f_mem[j + 2] = ((int8_t)p >> 16) & 0xff;
     }
 }
+//redone
 void AudioStream::Translator::convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     char* f_mem = (char*)n_mem;
     for (size_t i = 0, j = 0; i < s; i++, j++) {
-        *(f_mem + j) = ((char)(int)*(mem + i));
+        int p = (int)convertRange((float)mem[i], -1.0f, 1.0f, -8388608.0f, 8388607.0f);
+        f_mem[j] = (p) & 0xff;
+        f_mem[j + 1] = (p >> 8) & 0xff;
+        f_mem[j + 2] = ((int8_t)p >> 16) & 0xff;
     }
 }
 
@@ -472,4 +482,111 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
     }
 
     return mem2;
+}
+
+
+
+
+AudioStream::FileStream::FileStream(std::string file) {
+    fi.open(file, std::ios::binary);
+    if (fi) {
+        this->file = file;
+        char c[40];
+        fi.read(c, 32);
+        pos += 32;
+        short bl;
+        fi.read((char*)&bl, 2);
+        blockalign = (int)bl;
+        pos += 2;
+        fi.read((char*)&bl, 2);
+        bytesp = (bl) / 8;
+        pos += 2;
+        //now find the data section
+        strMatch("data");
+        //skip the four bytes of data size
+        fi.read(c, 4);
+        pos += 4;
+    }
+}
+AudioStream::FileStream::~FileStream() {
+    fi.close();
+}
+bool AudioStream::FileStream::writeData(BYTE* dat, size_t n, WavBytes bits) {
+    if (n_write) {
+        return false;
+    }
+    void* d1 = std::malloc(n * blockalign);
+    if (d1 == nullptr) {
+        return false;
+    }
+    fi.read((char*)d1, n * blockalign);
+    size_t tt;
+    WavBytes w1 = (WavBytes)(bytesp);
+    void* da1 = Translator::translate(d1, n * blockalign, &tt, w1, bits);
+    if (da1 == nullptr) {
+        std::memcpy(dat, d1, n * blockalign);
+    }
+    else {
+        std::memcpy(dat, da1, tt);
+        std::free(da1);
+    }
+    std::free(d1);
+    if (!fi) {
+        n_write = true;
+    }
+    return true;
+}
+bool AudioStream::FileStream::strMatch(std::string str) {
+    size_t i = 0;
+    char c;
+    while (true) {
+        pos++;
+        c = fi.get();
+        if (c == str[i]) {
+            i++;
+            if (i >= str.size()) {
+                return true;
+            }
+        }
+        else {
+            i = 0;
+        }
+        if (!fi) {
+            break;
+        }
+    }
+    return false;
+}
+
+bool AudioStream::SoundP::writeData(BYTE* dat, size_t n, WavBytes bits) {
+    if (n_write) {
+        return false;
+    }
+    else if ((pos + (n * blockalign) >= size)) {
+        size_t nt = (size - pos);
+        size_t tt;
+        WavBytes w1 = (WavBytes)(bytesp);
+        void* da1 = Translator::translate(data + pos, n * blockalign, &tt, w1, bits);
+        if (da1 == nullptr) {
+            std::memcpy(dat, data + pos, nt - 1);
+        }
+        else {
+            std::memcpy(dat, da1, tt);
+            std::free(da1);
+        }
+        n_write = true;
+        return false;
+    }
+    size_t tt;
+    WavBytes w1 = (WavBytes)(bytesp);
+    void* da1 = Translator::translate(data + pos, n * blockalign, &tt, w1, bits);
+    if (da1 == nullptr) {
+        std::memcpy(dat, data + pos, n * blockalign);
+    }
+    else {
+        std::memcpy(dat, da1, tt);
+        std::free(da1);
+    }
+    pos += (n * (blockalign));
+    return true;
 }

@@ -292,23 +292,9 @@ private:
 		int blockalign;
 		size_t size; //in bytes
 		char* data; //actual wave form data
+		int bytesp = 1; //bytes per sample
 
-		bool writeData(BYTE* dat, size_t n) {
-			if (n_write) {
-				return false;
-			}
-			else if ((pos + (n * blockalign) >= size)) {
-				size_t nt = (size - pos);
-				//size_t nb = (nt * blockalign);
-				std::memcpy(dat, data + pos, nt - 1);
-				//std::cout << "write data over reads the file data, writing the remainder of file\n";
-				n_write = true;
-				return false;
-			}
-			std::memcpy(dat, data + pos, n * (blockalign));
-			pos += (n * (blockalign));
-			return true;
-		}
+		bool writeData(BYTE* dat, size_t n, WavBytes bits);
 	};
 
 	class FileStream {
@@ -319,76 +305,10 @@ private:
 		int blockalign = 0;
 		std::ifstream fi;
 	public:
-		FileStream(std::string file) {
-			fi.open(file, std::ios::binary);
-			if (fi) {
-				this->file = file;
-				char c[40];
-				fi.read(c, 32);
-				pos += 32;
-				short bl;
-				fi.read((char*)&bl, 2);
-				blockalign = (int)bl;
-				pos += 2;
-				fi.read((char*)&bl, 2);
-				bytesp = (bl) / 8;
-				pos += 2;
-				//now find the data section
-				strMatch("data");
-				//skip the four bytes of data size
-				fi.read(c, 4);
-				pos += 4;
-			}
-		}
-		~FileStream() {
-			fi.close();
-		}
-		bool writeData(BYTE* dat, size_t n, WavBytes bits) {
-			if (n_write) {
-				return false;
-			}
-			void* d1 = std::malloc(n * blockalign);
-			if (d1 == nullptr) {
-				return false;
-			}
-			fi.read((char*)d1, n * blockalign);
-			size_t tt;
-			WavBytes w1 = (WavBytes)(bytesp);
-			void* da1 = Translator::translate(d1, n * blockalign, &tt, w1, bits);
-			if (da1 == nullptr) {
-				std::memcpy(dat, d1, n * blockalign);
-			}
-			else {
-				std::memcpy(dat, da1, tt);
-				std::free(da1);
-			}
-			std::free(d1);
-			if (!fi) {
-				n_write = true;
-			}
-			return true;
-		}
-		bool strMatch(std::string str) {
-			size_t i = 0;
-			char c;
-			while (true) {
-				pos++;
-				c = fi.get();
-				if (c == str[i]) {
-					i++;
-					if (i >= str.size()) {
-						return true;
-					}
-				}
-				else {
-					i = 0;
-				}
-				if (!fi) {
-					break;
-				}
-			}
-			return false;
-		}
+		FileStream(std::string file);
+		~FileStream();
+		bool writeData(BYTE* dat, size_t n, WavBytes bits);
+		bool strMatch(std::string str);
 	};
 	//https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
 	//translates to whatever format u need from input data
@@ -458,6 +378,7 @@ public:
 		sp.blockalign = file->blockalign;
 		sp.data = file->data;
 		sp.size = file->size;
+		sp.bytesp = (file->samplebits / 8);
 		sound_files.push_back(sp);
 	}
 	void streamFile(std::string file) {
