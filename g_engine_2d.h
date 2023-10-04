@@ -268,11 +268,11 @@ public:
 //PCM data
 struct Sound {
 public:
-	std::string name;
-	BYTE samplebits;
-	BYTE channels;
-	int framesize;
-	int blockalign;
+	std::string name; //file name
+	BYTE samplebits; //number of bits per sample
+	BYTE channels; //number of channels
+	int framesize; //frame size
+	int blockalign; //block align for samples
 	size_t size; //in bytes
 	char* data; //actual wave form data
 };
@@ -359,7 +359,7 @@ private:
 				std::memcpy(dat, d1, n * blockalign);
 			}
 			else {
-				std::memcpy(dat, da1, n * blockalign);
+				std::memcpy(dat, da1, tt);
 				std::free(da1);
 			}
 			std::free(d1);
@@ -402,7 +402,7 @@ private:
 		//redone
 		static void convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size);
 		//redone
-		static void convert24ToFloat(char* mem, size_t size, void* n_mem, size_t n_size);
+		static void convert24ToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size);
 		//redone
 		static void convertTo16bit(char* mem, size_t size, void* n_mem, size_t n_size);
 		//redone
@@ -422,77 +422,7 @@ private:
 
 	public:
 		//make sure to free the memory returned here
-		static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes) {
-			//return nullptr;
-			void* mem2;
-			if (org_bytes == new_bytes) {
-				return nullptr;
-			}
-			else if (org_bytes > new_bytes) {
-				*n_size = size / (size_t)new_bytes;
-				mem2 = std::malloc(*n_size);
-			}
-			else {
-				*n_size = (size / (size_t)org_bytes) * ((size_t)new_bytes);
-				mem2 = std::malloc(*n_size);
-			}
-			switch (new_bytes) {
-			case WavBytes::BYTE8:
-				switch (org_bytes) {
-				case WavBytes::BYTE16:
-					convertTo8bit((short*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE24:
-					convert24To8bit((char*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE32:
-					convertTo8bit((float*)mem, size, mem2, *n_size);
-					break;
-				}
-				break;
-			case WavBytes::BYTE16:
-				switch (org_bytes) {
-				case WavBytes::BYTE8:
-					convertTo16bit((char*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE24:
-					convert24To16bit((char*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE32:
-					convertTo16bit((float*)mem, size, mem2, *n_size);
-					break;
-				}
-				break;
-			case WavBytes::BYTE24:
-				switch (org_bytes) {
-				case WavBytes::BYTE8:
-					convertTo24bit((uint8_t*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE16:
-					convertTo24bit((short*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE32:
-					convertTo24bit((float*)mem, size, mem2, *n_size);
-					break;
-				}
-				break;
-			case WavBytes::BYTE32:
-				switch (org_bytes) {
-				case WavBytes::BYTE8:
-					convertToFloat((uint8_t*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE24:
-					convert24ToFloat((char*)mem, size, mem2, *n_size);
-					break;
-				case WavBytes::BYTE16:
-					convertToFloat((short*)mem, size, mem2, *n_size);
-					break;
-				}
-				break;
-			}
-
-			return mem2;
-		}
+		static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes);
 	};
 
 

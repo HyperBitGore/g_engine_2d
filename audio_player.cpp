@@ -1,4 +1,8 @@
 #include "g_engine_2d.h"
+#define SwapFourBytes(data)   \
+( (((data) >> 24) & 0x000000FF) | (((data) >>  8) & 0x0000FF00) | \
+  (((data) <<  8) & 0x00FF0000) | (((data) << 24) & 0xFF000000) ) 
+
 
 Audio AudioPlayer::loadWavFile(std::string file) {
     std::ifstream f;
@@ -262,25 +266,25 @@ AudioStream::AudioStream() {
 //https://github.com/adamstark/AudioFile/blob/master/AudioFile.h
 //https://gist.github.com/endolith/e8597a58bcd11a6462f33fa8eb75c43d
 //https://ccrma.stanford.edu/courses/422-winter-2014/projects/WaveFormat/
-int AudioStream::Translator::convertRange(int n, int min, int max, int n_min, int n_max) {
-    int orange = (n - min);
-    int nrange = (n_max - n_min);
-    int val = (((n - min) * nrange) / orange) + n_min;
-    return val;
+int AudioStream::Translator::convertRange(int n, int OldMin, int OldMax, int NewMin, int NewMax) {
+    int OldRange = (OldMax - OldMin);
+    int NewRange = (NewMax - NewMin);
+    int NewValue = (((n - OldMin) * NewRange) / OldRange) + NewMin;
+    return NewValue;
 }
-float AudioStream::Translator::convertRange(float n, float min, float max, float n_min, float n_max) {
-    float orange = (n - min);
-    float nrange = (n_max - n_min);
-    float val = (((n - min) * nrange) / orange) + n_min;
-    return val;
+float AudioStream::Translator::convertRange(float n, float OldMin, float OldMax, float NewMin, float NewMax) {
+    float OldRange = (OldMax - OldMin);
+    float NewRange = (NewMax - NewMin);
+    float NewValue = (((n - OldMin) * NewRange) / OldRange) + NewMin;
+    return NewValue;
 }
-short AudioStream::Translator::convertRange(short n, short min, short max, short n_min, short n_max) {
-    short orange = (n - min);
-    short nrange = (n_max - n_min);
-    short val = (((n - min) * nrange) / orange) + n_min;
-    return val;
+short AudioStream::Translator::convertRange(short n, short OldMin, short OldMax, short NewMin, short NewMax) {
+    short OldRange = (OldMax - OldMin);
+    short NewRange = (NewMax - NewMin);
+    short NewValue = (((n - OldMin) * NewRange) / OldRange) + NewMin;
+    return NewValue;
 }
-//redone
+//fixed
 void AudioStream::Translator::convertToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     float* f_mem = (float*)n_mem;
@@ -291,26 +295,29 @@ void AudioStream::Translator::convertToFloat(uint8_t* mem, size_t size, void* n_
         *(f_mem + j) = p;
     }
 }
-//redone
+//fixed
 void AudioStream::Translator::convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size / 2;
     float* f_mem = (float*)n_mem;
-    float div = powf(2, (15)) - 1;
-    for (size_t i = 0, j = 0; i < s; i++, j++) {
-        *(f_mem + j) = ((float)*(mem + i)) / (float)(div);
+    float pow = (1.0f / 32768.0f);
+    for (size_t i = 0, j = 0; i < s && j < size; i++, j++) {
+        float o = (mem[i]) * pow;
+        f_mem[j] = o;
     }
 }
-//redo
+//redone?
+//2880
 //https://stackoverflow.com/questions/9896589/how-do-you-read-in-a-3-byte-size-value-as-an-integer-in-c
-void AudioStream::Translator::convert24ToFloat(char* mem, size_t size, void* n_mem, size_t n_size) {
+void AudioStream::Translator::convert24ToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     float* f_mem = (float*)n_mem;
-    uint8_t* m = (uint8_t*)mem;
     float div = powf(2, 23) - 1;
-    for (size_t i = 0, j = 0; i < s; i+=3, j++) {
-        int sam = m[i] << 16 | m[i + 1] << 8 | m[i + 2];
-        sam = clamp<int>(sam, -8388607, 8388607);
-        float o = ((float)sam) / div;
+    float pow = (1.0f / 8388607.0f);
+    for (size_t i = 0, j = 0; i < s && j < n_size; i+=3, j++) {
+        int sam = (mem[i]) | (mem[i + 1] << 8) | (mem[i + 2] << 16);
+        //sam = clamp<int>(sam, -8388607, 8388607);
+        //float o = convertRange((float)sam, -8388608.0f, 8388607.0f, -1.0f, 1.0f);
+        float o = (float)sam * pow;
         *(f_mem + j) = o;
     }
 }
@@ -390,4 +397,79 @@ void AudioStream::Translator::convertTo24bit(float* mem, size_t size, void* n_me
     for (size_t i = 0, j = 0; i < s; i++, j++) {
         *(f_mem + j) = ((char)(int)*(mem + i));
     }
+}
+
+void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes) {
+    //return nullptr;
+    void* mem2;
+    if (org_bytes == new_bytes) {
+        return nullptr;
+    }
+    else if (org_bytes > new_bytes) {
+        *n_size = size / (size_t)new_bytes;
+        mem2 = std::malloc(*n_size);
+    }
+    else {
+        *n_size = (size / (size_t)org_bytes) * ((size_t)new_bytes);
+        mem2 = std::malloc(*n_size);
+    }
+    if (!mem2) {
+        return nullptr;
+    }
+    switch (new_bytes) {
+    case WavBytes::BYTE8:
+        switch (org_bytes) {
+        case WavBytes::BYTE16:
+            convertTo8bit((short*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE24:
+            convert24To8bit((char*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE32:
+            convertTo8bit((float*)mem, size, mem2, *n_size);
+            break;
+        }
+        break;
+    case WavBytes::BYTE16:
+        switch (org_bytes) {
+        case WavBytes::BYTE8:
+            convertTo16bit((char*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE24:
+            convert24To16bit((char*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE32:
+            convertTo16bit((float*)mem, size, mem2, *n_size);
+            break;
+        }
+        break;
+    case WavBytes::BYTE24:
+        switch (org_bytes) {
+        case WavBytes::BYTE8:
+            convertTo24bit((uint8_t*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE16:
+            convertTo24bit((short*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE32:
+            convertTo24bit((float*)mem, size, mem2, *n_size);
+            break;
+        }
+        break;
+    case WavBytes::BYTE32:
+        switch (org_bytes) {
+        case WavBytes::BYTE8:
+            convertToFloat((uint8_t*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE24:
+            convert24ToFloat((uint8_t*)mem, size, mem2, *n_size);
+            break;
+        case WavBytes::BYTE16:
+            convertToFloat((short*)mem, size, mem2, *n_size);
+            break;
+        }
+        break;
+    }
+
+    return mem2;
 }

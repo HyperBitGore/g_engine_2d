@@ -148,7 +148,7 @@ int main() {
 	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	//ap.playFile(ad2, 1);
 	aud = ap.loadWavFile("sound.wav");
-	ap.playFile("dungeonsynth5_24.wav", 1);
+	ap.playFile("test_24.wav", 1);
 	//ap.playFile(ad2, 1);
 	//ap.start();
 	
