@@ -71,8 +71,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	//create window
 	wind = new Window(window_name, L"ENG1", width, height, 300, 300);
 	in = new Input();
-	dc_w = GetDC(wind->getHwnd());
-
+	HDC dc_w = GetDC(wind->getHwnd());
 	// set pixel format for OpenGL context
 	{
 		//https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
@@ -138,7 +137,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 	};
 	//https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
 	//
-	context = wglCreateContextAttribsARB(dc_w, NULL, attrib);
+	HGLRC context = wglCreateContextAttribsARB(dc_w, NULL, attrib);
 	//context = wglCreateContext(dc);
 	if (!wglMakeCurrent(dc_w, context)) {
 		std::cerr << "Failed to make context current\n";

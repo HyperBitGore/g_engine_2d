@@ -16,6 +16,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+Window::~Window() {
+	//has to be same class name
+	UnregisterClass(class_name, m_hinstance);
+}
+
 bool Window::ProcessMessage() {
 	MSG msg = {};
 
@@ -29,7 +34,14 @@ bool Window::ProcessMessage() {
 	return true;
 }
 
+bool Window::updateWindow() {
+	return UpdateWindow(getHwnd());
+}
 
+
+bool Window::swapBuffers() {
+	return SwapBuffers(GetDC(getHwnd()));
+}
 
 Window::Window(LPCWSTR title, LPCWSTR CLASS_NAME, int h, int w, int x, int y)
 	: m_hinstance(GetModuleHandle(nullptr))
@@ -73,4 +85,15 @@ Window::Window(LPCWSTR title, LPCWSTR CLASS_NAME, int h, int w, int x, int y)
 		m_hinstance,
 		NULL
 	);
+}
+
+
+int Window::getWidth() {
+	return width;
+}
+int Window::getHeight() {
+	return height;
+}
+HWND Window::getHwnd() {
+	return m_hwnd;
 }

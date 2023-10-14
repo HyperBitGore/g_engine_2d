@@ -119,9 +119,45 @@ void AudioPlayer::end() {
     mtx.unlock();
 }
 
-//generates 1 second basic synth
-Audio AudioPlayer::generateSound() {
-	return nullptr;
+float sgn(float x) {
+    if (x < 0.f) return -1.f;
+    if (x > 0.f) return 1.f;
+    return 0.f;
+}
+
+//generates sin wave, based on length given in milliseconds
+Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
+    Audio a = new Sound;
+    a->blockalign = 8;
+    a->channels = 2;
+    a->samplebits = 32;
+    a->framesize = (sample_rate * 32 * 2) / 8;
+    a->size = (length * (a->framesize / 1000));
+    a->data = (char*)std::malloc(a->size);
+    float* ff = (float*)a->data;
+    size_t sample_size = a->size / 4;
+    for (size_t i = 0; i < sample_size; i++) {
+        float f = sinf((2.0f * M_PI * freq) / sample_rate * i);
+        *(ff + i) = f;
+    }
+	return a;
+}
+//generates square wave, based on length given in milliseconds
+Audio AudioPlayer::generateSaw(size_t length, float freq, size_t sample_rate) {
+    Audio a = new Sound;
+    a->blockalign = 8;
+    a->channels = 2;
+    a->samplebits = 32;
+    a->framesize = (sample_rate * 32 * 2) / 8;
+    a->size = (length * (a->framesize / 1000));
+    a->data = (char*)std::malloc(a->size);
+    float* ff = (float*)a->data;
+    size_t sample_size = a->size / 4;
+    for (size_t i = 0; i < sample_size; i++) {
+        float f = sgn(sinf((2.0f * M_PI * freq) / sample_rate * i));
+        *(ff + i) = f;
+    }
+    return a;
 }
 
 void AudioPlayer::_RenderThread() {
@@ -159,6 +195,26 @@ void AudioPlayer::_RenderThread() {
         }
         mtx.unlock();
     }
+}
+
+AudioPlayer::AudioPlayer(size_t n_streams) {
+    for (size_t i = 0; i < n_streams; i++) {
+        AudioStream* as = new AudioStream;
+        streams.push_back(as);
+    }
+
+    rend_thread = std::thread(&AudioPlayer::_RenderThread, this);
+}
+
+AudioPlayer::~AudioPlayer() {
+    rend_thread.join();
+    run = false;
+    for (size_t i = 0; i < streams.size(); i++) {
+        AudioStream* as = streams[i];
+        streams.erase(streams.begin() + i);
+        delete as;
+    }
+
 }
 
 void AudioStream::playStream() {
@@ -264,6 +320,38 @@ AudioStream::AudioStream() {
     render->ReleaseBuffer(buffer_size, 0);
     client->Start();
 }
+AudioStream::~AudioStream() {
+    CoTaskMemFree(format);
+    SAFE_RELEASE(penum);
+    SAFE_RELEASE(pdevice);
+    SAFE_RELEASE(client);
+    SAFE_RELEASE(render);
+}
+
+void AudioStream::playFile(Audio file) {
+    SoundP sp;
+    sp.blockalign = file->blockalign;
+    sp.data = file->data;
+    sp.size = file->size;
+    sp.bytesp = (file->samplebits / 8);
+    sound_files.push_back(sp);
+}
+void AudioStream::streamFile(std::string file) {
+    FileStream* fs = new FileStream(file);
+    stream_files.push_back(fs);
+}
+void AudioStream::pause() {
+    play = false;
+    client->Stop();
+}
+void AudioStream::start() {
+    play = true;
+    client->Start();
+}
+void AudioStream::reset() {
+    client->Reset();
+}
+
 
 //Translator
 //https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
@@ -590,3 +678,5 @@ bool AudioStream::SoundP::writeData(BYTE* dat, size_t n, WavBytes bits) {
     pos += (n * (blockalign));
     return true;
 }
+
+

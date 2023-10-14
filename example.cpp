@@ -5,6 +5,7 @@
 EngineNewGL eng2(L"Test Window", 640, 480);
 AudioPlayer ap(4);
 Audio aud;
+Audio s_test;
 
 IMG imgtest;
 IMG atlas_test;
@@ -57,7 +58,7 @@ void renderFunction() {
 	else if (s_cool >= 0.1f) {
 		if (eng2.getKeyDown(VK_DOWN)){
 			s_cool = 0;
-			ap.playFile(aud, 0);
+			ap.playFile(s_test, 0);
 		}
 		
 	}
@@ -155,7 +156,9 @@ int main() {
 	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
 	//ap.playFile(ad2, 1);
 	aud = ap.loadWavFile("sound_32.wav");
+	s_test = ap.generateSaw(300, 200.0f, 44100);
 	ap.playFile("dungeonsynth5_24.wav", 1);
+	//ap.playFile("dungeonsynth5_24.wav", 1);
 	//ap.playFile(ad2, 1);
 	//ap.start();
 	

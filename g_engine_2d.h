@@ -29,30 +29,6 @@
 #include <intrin.h>
 #define Assert(cond) do { if (!(cond)) __debugbreak(); } while (0)
 
-/*struct int24 {
-	uint8_t data[3];
-	int24(int s) {
-		data[0] = s & 255;
-		data[1] = (s >> 8) & 255;
-		data[2] = (s >> 16) & 255;
-	}
-	int24(char c, char c2, char c3) {
-		data[0] = c;
-		data[1] = c2;
-		data[2] = c3;
-	}
-	operator float() const
-	{
-		return (float)(data[0] | (data[1] << 8) | (data[2] << 16));
-	}
-	operator char() const {
-		return (char)(data[0] | (data[1] << 8) | (data[2] << 16));
-	}
-	operator short() const {
-		return (short)(data[0] | (data[1] << 8) | (data[2] << 16));
-	}
-};*/
-
 
 static void FatalError(const char* message)
 {
@@ -83,8 +59,6 @@ T clamp(T p, T n1, T n2) {
 	return p;
 }
 
-
-
 //added customizability and clean up
 class Window {
 private:
@@ -97,20 +71,14 @@ public:
 	Window(LPCWSTR title, LPCWSTR CLASS_NAME, int h, int w, int x, int y);
 	Window(const Window&) = delete;
 	Window& operator =(const Window&) = delete;
-	~Window() {
-		//has to be same class name
-		UnregisterClass(class_name, m_hinstance);
-	}
+	~Window();
 	bool ProcessMessage();
-	int getWidth() {
-		return width;
-	}
-	int getHeight() {
-		return height;
-	}
-	HWND getHwnd() {
-		return m_hwnd;
-	}
+	int getWidth();
+	int getHeight();
+	HWND getHwnd();
+	bool updateWindow();
+	bool swapBuffers();
+
 };
 
 
@@ -362,40 +330,15 @@ private:
 	bool play = true;
 	bool fs = false;
 public:
-	~AudioStream() {
-		CoTaskMemFree(format);
-		SAFE_RELEASE(penum);
-		SAFE_RELEASE(pdevice);
-		SAFE_RELEASE(client);
-		SAFE_RELEASE(render);
-	}
-
+	~AudioStream();
 	AudioStream();
 
 	void playStream();
-	void playFile(Audio file) {
-		SoundP sp;
-		sp.blockalign = file->blockalign;
-		sp.data = file->data;
-		sp.size = file->size;
-		sp.bytesp = (file->samplebits / 8);
-		sound_files.push_back(sp);
-	}
-	void streamFile(std::string file) {
-		FileStream* fs = new FileStream(file);
-		stream_files.push_back(fs);		
-	}
-	void pause() {
-		play = false;
-		client->Stop();
-	}
-	void start() {
-		play = true;
-		client->Start();
-	}
-	void reset() {
-		client->Reset();
-	}
+	void playFile(Audio file);
+	void streamFile(std::string file);
+	void pause();
+	void start();
+	void reset();
 };
 
 
@@ -433,24 +376,8 @@ private:
 	bool run = true;
 	void _RenderThread();
 public:
-	AudioPlayer(size_t n_streams) {
-		for (size_t i = 0; i < n_streams; i++) {
-			AudioStream* as = new AudioStream;
-			streams.push_back(as);
-		}
-
-		rend_thread = std::thread(&AudioPlayer::_RenderThread, this);
-	}
-	~AudioPlayer() {
-		rend_thread.join();
-		run = false;
-		for (size_t i = 0; i < streams.size();i++) {
-			AudioStream* as = streams[i];
-			streams.erase(streams.begin() + i);
-			delete as;
-		}
-		
-	}
+	AudioPlayer(size_t n_streams);
+	~AudioPlayer();
 	Audio loadWavFile(std::string file);
 
 	void playFile(std::string path, size_t stream);
@@ -460,8 +387,25 @@ public:
 	void clear(size_t stream);
 	void end();
 
-	Audio generateSound();
+	//done
+	Audio generateSin(size_t length, float freq, size_t sample_rate);
+	//done
+	Audio generateSaw(size_t length, float freq, size_t sample_rate);
+	Audio generateTraingle(size_t length, float freq, size_t sample_rate);
+	Audio generateSawtooth(size_t length, float freq, size_t sample_rate);
 };
+
+class FrameBuffer {
+private:
+
+public:
+	FrameBuffer() {
+
+	}
+
+
+};
+
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
@@ -471,8 +415,6 @@ private:
 	Window* wind;
 	Input* in;
 	ImageLoader img_l;
-	HDC dc_w;
-	HGLRC context;
 	std::function<void()> renderFund;
 	//color constants
 	vec4 draw_color;
@@ -605,27 +547,10 @@ public:
 
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
-	bool getKeyDown(char key) {
-		return in->GetKeyDown(key);
-	}
-	bool getKeyReleased(char key) {
-		return in->GetKeyReleased(key);
-	}
+	bool getKeyDown(char key);
+	bool getKeyReleased(char key);
 
-	vec2 getMousePos() {
-		vec2 p;
-		LPPOINT po = new tagPOINT;
-		GetCursorPos(po);
-		ScreenToClient(wind->getHwnd(), po);
-		p.x = (float)po->x;
-		p.y = (float)po->y;
-		//gotta translate the y axis for my coord system
-		p.y = p.y - wind->getHeight();
-		p.y = std::abs(p.y);
-
-		delete po;
-		return p;
-	}
+	vec2 getMousePos();
 	//ease of use
 	bool getMouseLeftDown() { return in->GetKeyDown(VK_LBUTTON); }
 	bool getMouseRightDown() { return in->GetKeyDown(VK_RBUTTON); }
@@ -650,89 +575,24 @@ public:
 	}
 
 	//vertice functions
-	void addQuad(float x, float y, float w, float h) {
-		//triangle 1
-		buffer_2d.push_back({ x, y });
-		buffer_2d.push_back({ x + w, y });
-		buffer_2d.push_back({ x, y + h });
-		//triangle 2
-		buffer_2d.push_back({ x + w, y });
-		buffer_2d.push_back({ x + w, y + h });
-		buffer_2d.push_back({ x, y + h });
-	}
-	void addTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-		buffer_2d.push_back({ x1, y1 });
-		buffer_2d.push_back({ x2, y2 });
-		buffer_2d.push_back({ x3, y3 });
-	}
+	void addQuad(float x, float y, float w, float h);
+	void addTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 
-	void add2DPoint(float x, float y) {
-		buffer_2d.push_back({ x, y });
-	}
-	void add2DPoints(std::vector<vec2> points) {
-		buffer_2d.insert(buffer_2d.end(), points.begin(), points.end());
-	}
+	void add2DPoint(float x, float y);
+	void add2DPoints(std::vector<vec2> points);
 	//image call functions
-	void addImageCall(float x, float y, float w, float h) {
-		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, 0, x, y });
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y });
+	void addImageCall(float x, float y, float w, float h);
 
-		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, 0, x, y });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, 0, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, 0, x, y });
-
-	}
-
-	void addImageCall(float x, float y, float w, float h, float img_x, float img_y, float img_w, float img_h) {
-		float imgx = img_x / img_w;
-		float imgy = img_y / img_h;
-		float imgw = img_w / img_w;
-		float imgh = img_h / img_h;
-		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, imgx, imgy, 0, x, y });
-		img_vertexs.push_back({ x + w, y, 0.0f, imgx+imgw, imgy, 0, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy+imgh, 0, x, y });
-
-		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, imgx+imgw, imgy, 0, x, y });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, imgx+imgw, imgy+imgh, 0, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy+imgh, 0, x, y });
-	}
+	void addImageCall(float x, float y, float w, float h, float img_x, float img_y, float img_w, float img_h);
 
 	float convertToRange(float n, float min, float max, float old_min, float old_max) {
 		return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 	}
 
 	//angle in radians
-	void addImageRotatedCall(float x, float y, float w, float h, float ang) {
-		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, 0.0f, 0.0f, ang, x, y});
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y });
-		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, 1.0f, 0.0f, ang, x, y });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, 1.0f, 1.0f, ang, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  0.0f, 1.0f, ang, x, y });
-	}
+	void addImageRotatedCall(float x, float y, float w, float h, float ang);
 
-	void addImageRotatedCall(IMG img, float x, float y, float w, float h, float ang, float img_x, float img_y, float img_w, float img_h) {
-		float imgx = img_x / img->w;
-		float imgy = img_y / img->h;
-		float imgw = img_w / img->w;
-		float imgh = img_h / img->h;
-		//triangle 1
-		img_vertexs.push_back({ x, y, 0.0f, imgx, imgy, ang, x, y });
-		img_vertexs.push_back({ x + w, y, 0.0f, imgx + imgw, imgy, ang, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy + imgh, ang, x, y });
-
-		//triangle 2
-		img_vertexs.push_back({ x + w, y, 0.0f, imgx + imgw, imgy, ang, x, y });
-		img_vertexs.push_back({ x + w, y - h, 0.0f, imgx + imgw, imgy + imgh, ang, x, y });
-		img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy + imgh, ang, x, y });
-	}
+	void addImageRotatedCall(IMG img, float x, float y, float w, float h, float ang, float img_x, float img_y, float img_w, float img_h);
 
 	//3d drawing functions
 	//
@@ -748,31 +608,16 @@ public:
 	
 	//delta time
 	//returns the frame time in seconds
-	double getDelta() {
-		clock_t d = delta;
-		delta = 0;
-		return d / (double)CLOCKS_PER_SEC;
-	}
+	double getDelta();
 	//returns number of frames in a second and the average frame time in milliseconds, every second. 
-	std::pair<double, double> getFrames() {
-		if (clockToMilliseconds(delta_f) > 1000.0) { //every second
-			frameRate = (double)frames * 0.5 + frameRate * 0.5; //more stable
-			//std::cout << "Frames: " << frameRate << "\n";
-			frames = 0;
-			delta_f -= CLOCKS_PER_SEC;
-			averageFrameTimeMilliseconds = 1000.0 / (frameRate == 0 ? 0.001 : frameRate);
-			//std::cout << "CPU time was:" << averageFrameTimeMilliseconds << std::endl;
-			return { frameRate, averageFrameTimeMilliseconds };
-		}
-		return { frameRate, averageFrameTimeMilliseconds};
-	}
+	std::pair<double, double> getFrames();
+
 	//font functions
 	Font loadFont(std::string file, UINT16 start, UINT16 end);
 	void drawText(std::string text, Font* font, float x, float y, int ptsize);
 	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
 	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
 	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
-	//audio functions
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
