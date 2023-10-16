@@ -390,17 +390,35 @@ public:
 	//done
 	Audio generateSin(size_t length, float freq, size_t sample_rate);
 	//done
-	Audio generateSaw(size_t length, float freq, size_t sample_rate);
-	Audio generateTraingle(size_t length, float freq, size_t sample_rate);
+	Audio generateSquare(size_t length, float freq, size_t sample_rate);
+	Audio generateTriangle(size_t length, float freq, size_t sample_rate);
 	Audio generateSawtooth(size_t length, float freq, size_t sample_rate);
 };
 
 class FrameBuffer {
 private:
-
+	unsigned int fbo;
+	GLuint texture;
 public:
-	FrameBuffer() {
+	FrameBuffer(int width, int height, GLenum attachment) {
+		glGenFramebuffers_g(1, &fbo);
+		glBindFramebuffer_g(GL_FRAMEBUFFER, fbo);
+		if (glCheckFramebufferStatus_g(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+			glCreateTextures_g(GL_TEXTURE_2D ,1, &texture);
+			glBindTextureUnit_g(1, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+			glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture, 0);
+			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
+		}
+		else {
+			std::cout << "Framebuffer failed creation\n";
+		}
+	}
+	~FrameBuffer() {
+		glDeleteFramebuffers_g(1, &fbo);
 	}
 
 
@@ -523,12 +541,17 @@ public:
 	//draws lines from buffer_2d
 	void drawLines(float width);
 
+	//framebuffer functions
+
+
 	//image functions
+	// 
+	void bindImg(IMG img);
 	//mass draws an image based on buffer_2d
-	void renderImgs(IMG img, bool blend);
+	void renderImgs(bool blend);
 	//rotates counter clockwise around top left point
 	//mass draws an image with rotations
-	void renderImgsRotated(IMG img, bool blend);
+	void renderImgsRotated(bool blend);
 	//run after you've done all the editing of data you want to
 	void updateIMG(IMG img) {
 		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);

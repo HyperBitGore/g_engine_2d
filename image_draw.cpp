@@ -2,8 +2,19 @@
 
 //2d image drawing functions
 
+void EngineNewGL::bindImg(IMG img) {
+	glUseProgram_g(shader_img);
+	glBindTextureUnit_g(img->pos, img->tex);
+	glUniform1i_g(texuniform_img, img->tex);
+
+	glUseProgram_g(shader_imgr);
+	glBindTextureUnit_g(img->pos, img->tex);
+	glUniform1i_g(texuniform_imgr, img->pos);
+}
+
+
 //mass draws an image based on buffer_2d
-void EngineNewGL::renderImgs(IMG img, bool blend) {
+void EngineNewGL::renderImgs(bool blend) {
 	if (blend) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -16,8 +27,8 @@ void EngineNewGL::renderImgs(IMG img, bool blend) {
 	//we now have weird artifacts in text images
 	glUniform1iv_g(texuniform_img, textures.size(), &textures[0]);
 	*/
-	glBindTextureUnit_g(img->pos, img->tex);
-	glUniform1i_g(texuniform_img, img->tex);
+	//glBindTextureUnit_g(img->pos, img->tex);
+	//glUniform1i_g(texuniform_img, img->tex);
 
 	glBindVertexArray_g(VAO_Img);
 
@@ -40,16 +51,15 @@ void EngineNewGL::renderImgs(IMG img, bool blend) {
 
 //rotates counter clockwise around top left point, angle is in raidans
 //mass draws an image with rotations
-void EngineNewGL::renderImgsRotated(IMG img, bool blend) {
+void EngineNewGL::renderImgsRotated(bool blend) {
 	if (blend) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	glUseProgram_g(shader_imgr);
-	glBindTextureUnit_g(img->pos, img->tex);
 
 	//GLuint texUniformLocation = glGetUniformLocation_g(shader_imgr, "image_tex");
-	glUniform1i_g(texuniform_imgr, img->pos);
+	
 	GLuint screenu = glGetUniformLocation_g(shader_imgr, "screen"); //for some reason have to keep setting the screen data but it works so idc
 	glUniform2f_g(screenu, (float)wind->getWidth(), (float)wind->getHeight());
 	glBindVertexArray_g(VAO_Imgr);

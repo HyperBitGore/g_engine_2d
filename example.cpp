@@ -6,6 +6,9 @@ EngineNewGL eng2(L"Test Window", 640, 480);
 AudioPlayer ap(4);
 Audio aud;
 Audio s_test;
+Audio s_test2;
+Audio s_test3;
+Audio s_test4;
 
 IMG imgtest;
 IMG atlas_test;
@@ -49,16 +52,22 @@ void renderFunction() {
 		timer = 0;
 		
 	}
-	if (s_cool >= 0.3f) {
-		if (eng2.getKeyDown(VK_DOWN)) {
-			//ap.playFile("dungeonsynth5_16.wav", 1);
-			s_cool = 0;
-		}
-	}
-	else if (s_cool >= 0.1f) {
-		if (eng2.getKeyDown(VK_DOWN)){
+	if (s_cool >= 0.1f) {
+		if (eng2.getKeyDown('1')) {
 			s_cool = 0;
 			ap.playFile(s_test, 0);
+		}
+		else if (eng2.getKeyDown('2')) {
+			s_cool = 0;
+			ap.playFile(s_test2, 0);
+		}
+		else if (eng2.getKeyDown('3')) {
+			s_cool = 0;
+			ap.playFile(s_test3, 0);
+		}
+		else if (eng2.getKeyDown('4')) {
+			s_cool = 0;
+			ap.playFile(s_test4, 0);
 		}
 		
 	}
@@ -115,20 +124,22 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	//std::cout << r << "\n";
+	eng2.bindImg(imgtest);
 	eng2.addImageCall( 450.0f, 300.0f, 50.0f, 50.0f);
 	eng2.addImageCall( 250.0f, 250.0f, 80.0f, 80.0f);
 	eng2.addImageCall( 360.0f, 250.0f, 50.0f, 50.0f);
-	eng2.renderImgs(imgtest, false);
+	eng2.renderImgs(false);
 	//eng2.renderImg(imgtest, 100.0f, 100.0f, 40.0f, 40.0f);
 	eng2.addImageRotatedCall(150.0f, 80.0f, 50.0f, 50.0f, r);
 	eng2.addImageRotatedCall(325.0f, 160.0f, 50.0f, 50.0f, r);
 	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
-	eng2.renderImgsRotated(imgtest, false);
+	eng2.renderImgsRotated(false);
 	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
 	
+	eng2.bindImg(atlas.getImg());
 	eng2.addImageCall(200.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(atlas_test).x, atlas.getImagePos(atlas_test).y, 30, 50);
 	eng2.addImageCall(300.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(imgtest).x, atlas.getImagePos(imgtest).y, 300, 241);
-	eng2.renderImgs(atlas.getImg(), false);
+	eng2.renderImgs(false);
 
 	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
 	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
@@ -152,15 +163,12 @@ int nthBit(int number, int n) {
 
 //4278190335
 int main() {
-	//ImageLoader img_ld;
-	//Audio ad2 = ap.loadWavFile("dungeonsynth5.wav");
-	//ap.playFile(ad2, 1);
 	aud = ap.loadWavFile("sound_32.wav");
-	s_test = ap.generateSaw(300, 200.0f, 44100);
+	s_test = ap.generateSin(300, 200.0f, 44100);
+	s_test2 = ap.generateSquare(300, 200.0f, 44100);
+	s_test3 = ap.generateTriangle(300, 200.0f, 44100);
+	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
 	ap.playFile("dungeonsynth5_24.wav", 1);
-	//ap.playFile("dungeonsynth5_24.wav", 1);
-	//ap.playFile(ad2, 1);
-	//ap.start();
 	
 	std::vector<uint16_t> foo = {32000, 4052, 4032};
 	std::vector<float> up(foo.begin(), foo.end());

@@ -1135,7 +1135,8 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
 			addImageCall( x1, y1, scale, scale);
-			renderImgs(font->r_glyphs[index].data, true);
+			bindImg(font->r_glyphs[index].data);
+			renderImgs(true);
 		}
 		x1 += scale + 2;
 	}

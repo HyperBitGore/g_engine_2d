@@ -143,7 +143,7 @@ Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
 	return a;
 }
 //generates square wave, based on length given in milliseconds
-Audio AudioPlayer::generateSaw(size_t length, float freq, size_t sample_rate) {
+Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate) {
     Audio a = new Sound;
     a->blockalign = 8;
     a->channels = 2;
@@ -155,6 +155,44 @@ Audio AudioPlayer::generateSaw(size_t length, float freq, size_t sample_rate) {
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
         float f = sgn(sinf((2.0f * M_PI * freq) / sample_rate * i));
+        *(ff + i) = f;
+    }
+    return a;
+}
+//generates triangle wave, based on length given in milliseconds
+Audio AudioPlayer::generateTriangle(size_t length, float freq, size_t sample_rate) {
+    Audio a = new Sound;
+    a->blockalign = 8;
+    a->channels = 2;
+    a->samplebits = 32;
+    a->framesize = (sample_rate * 32 * 2) / 8;
+    a->size = (length * (a->framesize / 1000));
+    a->data = (char*)std::malloc(a->size);
+    float* ff = (float*)a->data;
+    size_t sample_size = a->size / 4;
+    for (size_t i = 0; i < sample_size; i++) {
+        float f = (2/M_PI) * asinf(sinf((2.0f * M_PI * freq) / sample_rate * i));
+        *(ff + i) = f;
+    }
+    return a;
+}
+
+float frac(float x) {
+    return (x - (long)x);
+}
+
+Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rate) {
+    Audio a = new Sound;
+    a->blockalign = 8;
+    a->channels = 2;
+    a->samplebits = 32;
+    a->framesize = (sample_rate * 32 * 2) / 8;
+    a->size = (length * (a->framesize / 1000));
+    a->data = (char*)std::malloc(a->size);
+    float* ff = (float*)a->data;
+    size_t sample_size = a->size / 4;
+    for (size_t i = 0; i < sample_size; i++) {
+        float f = frac(freq / sample_rate * i);
         *(ff + i) = f;
     }
     return a;
