@@ -3,6 +3,7 @@
 
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2(L"Test Window", 640, 480);
+//DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
 Audio s_test;
@@ -93,7 +94,7 @@ void renderFunction() {
 			
 		}
 	}
-
+	//dr.bind();
 	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
 	eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
 	eng2.drawQuad(pos, 10.0f, 60.0f, 60.0f);
@@ -154,6 +155,10 @@ void renderFunction() {
 	eng2.drawText("Hello World", &f_test, 100, 30, 24);
 	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
 	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
+	//dr.unbind();
+	//eng2.bindImg(dr.getTexture());
+	//eng2.addImageCall(0, 0, 640, 480);
+	//.renderImgs(false);
 }
 
 int nthBit(int number, int n) {
@@ -170,8 +175,8 @@ int main() {
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
 	ap.playFile("dungeonsynth5_24.wav", 1);
 	
-	std::vector<uint16_t> foo = {32000, 4052, 4032};
-	std::vector<float> up(foo.begin(), foo.end());
+	//std::vector<uint16_t> foo = {32000, 4052, 4032};
+	//std::vector<float> up(foo.begin(), foo.end());
 
 	bmptest = eng2.loadBMP("test1.bmp");
 	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
@@ -205,6 +210,7 @@ int main() {
 	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
 	while (eng2.updateWindow()) {
+		
 		double del = eng2.getDelta();
 		//std::cout << del << "\n";
 		d += del;

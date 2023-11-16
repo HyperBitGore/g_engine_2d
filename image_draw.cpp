@@ -4,14 +4,26 @@
 
 void EngineNewGL::bindImg(IMG img) {
 	glUseProgram_g(shader_img);
-	glBindTextureUnit_g(img->pos, img->tex);
+	//glBindTextureUnit_g(img->pos, img->tex);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
 	glUniform1i_g(texuniform_img, img->tex);
 
 	glUseProgram_g(shader_imgr);
-	glBindTextureUnit_g(img->pos, img->tex);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
 	glUniform1i_g(texuniform_imgr, img->pos);
 }
 
+
+void EngineNewGL::bindImg(GLuint img) {
+	glUseProgram_g(shader_img);
+	//glBindTextureUnit_g(img->pos, img->tex);
+	glBindTexture(GL_TEXTURE_2D, img);
+	glUniform1i_g(texuniform_img, img);
+
+	glUseProgram_g(shader_imgr);
+	glBindTexture(GL_TEXTURE_2D, img);
+	glUniform1i_g(texuniform_imgr, img);
+}
 
 //mass draws an image based on buffer_2d
 void EngineNewGL::renderImgs(bool blend) {

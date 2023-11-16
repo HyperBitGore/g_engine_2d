@@ -394,34 +394,56 @@ public:
 	Audio generateTriangle(size_t length, float freq, size_t sample_rate);
 	Audio generateSawtooth(size_t length, float freq, size_t sample_rate);
 };
-
-class FrameBuffer {
-private:
-	unsigned int fbo;
-	GLuint texture;
-public:
-	FrameBuffer(int width, int height, GLenum attachment) {
-		glGenFramebuffers_g(1, &fbo);
-		glBindFramebuffer_g(GL_FRAMEBUFFER, fbo);
-		if (glCheckFramebufferStatus_g(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
-			glCreateTextures_g(GL_TEXTURE_2D ,1, &texture);
-			glBindTextureUnit_g(1, texture);
+//https://open.gl/framebuffers
+//https://www.youtube.com/watch?v=QQ3jr-9Rc1o
+class DrawPass {
+	private:
+		GLuint color_buffer;
+		GLuint depth_buffer; //also stencil buffer
+		GLuint texture;
+		GLenum attach;
+	public:
+		DrawPass(GLuint width, GLuint height, GLenum attach) {
+			glGenFramebuffers_g(1, &color_buffer);
+			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
+			glCreateTextures_g(GL_TEXTURE_2D, 1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glFramebufferTexture2D_g(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 
-			glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture, 0);
+			
+			//creating render buffer
+			glGenRenderbuffers_g(1, &depth_buffer);
+			glBindRenderbuffer_g(GL_RENDERBUFFER, depth_buffer);
+			glRenderbufferStorage_g(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+			glFramebufferRenderbuffer_g(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+			GLuint ret = glCheckFramebufferStatus_g(GL_FRAMEBUFFER);
+			if (ret != GL_FRAMEBUFFER_COMPLETE) {
+				std::cout << "Framebuffer failed creation!\n";
+				std::cout << ret << "\n";
+			}
+			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
+
+			this->attach = attach;
+		}
+		~DrawPass() {
+			glDeleteFramebuffers_g(1, &color_buffer);
+			glDeleteRenderbuffers_g(1, &depth_buffer);
+			glDeleteTextures(1, &texture);
+		}
+		void bind() {
+			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
+		}
+		void unbind() {
 			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
 		}
-		else {
-			std::cout << "Framebuffer failed creation\n";
+		GLuint getTexture() {
+			return texture;
 		}
-	}
-	~FrameBuffer() {
-		glDeleteFramebuffers_g(1, &fbo);
-	}
-
-
 };
 
 
@@ -547,6 +569,8 @@ public:
 	//image functions
 	// 
 	void bindImg(IMG img);
+
+	void bindImg(GLuint img);
 	//mass draws an image based on buffer_2d
 	void renderImgs(bool blend);
 	//rotates counter clockwise around top left point

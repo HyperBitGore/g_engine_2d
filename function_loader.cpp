@@ -64,6 +64,13 @@ PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers_g;
 PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer_g;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus_g;
 PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers_g;
+PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D_g;
+PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer_g;
+PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers_g;
+PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers_g;
+PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage_g;
+PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer_g;
+
 
 void EngineNewGL::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
@@ -115,4 +122,11 @@ void EngineNewGL::loadFunctions() {
 	glBindFramebuffer_g = (PFNGLBINDFRAMEBUFFERPROC)GetGLFuncAddress("glBindFramebuffer");
 	glCheckFramebufferStatus_g = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)GetGLFuncAddress("glCheckFramebufferStatus");
 	glDeleteFramebuffers_g = (PFNGLDELETEFRAMEBUFFERSPROC)GetGLFuncAddress("glDeleteFramebuffers");
+	glFramebufferTexture2D_g = (PFNGLFRAMEBUFFERTEXTURE2DPROC)GetGLFuncAddress("glFramebufferTexture2D");
+	glBindRenderbuffer_g = (PFNGLBINDRENDERBUFFERPROC)GetGLFuncAddress("glBindRenderbuffer");
+	glDeleteRenderbuffers_g = (PFNGLDELETERENDERBUFFERSPROC)GetGLFuncAddress("glDeleteRenderbuffers");
+	glGenRenderbuffers_g = (PFNGLGENRENDERBUFFERSPROC)GetGLFuncAddress("glGenRenderbuffers");
+	glRenderbufferStorage_g = (PFNGLRENDERBUFFERSTORAGEPROC)GetGLFuncAddress("glRenderbufferStorage");
+	glFramebufferRenderbuffer_g = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)GetGLFuncAddress("glFramebufferRenderbuffer");
+
 }
