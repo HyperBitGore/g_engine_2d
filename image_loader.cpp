@@ -13,7 +13,8 @@ IMG ImageLoader::generateBlankIMG(int w, int h, int bytes_per_pixel) {
 void ImageLoader::createTexture(IMG img, GLenum internalformat, GLenum format) {
 	img->pos = cur_tex;
 	glCreateTextures_g(GL_TEXTURE_2D, 1, &img->tex);
-	glBindTextureUnit_g(GL_TEXTURE0, img->tex);
+	//glBindTextureUnit_g(GL_TEXTURE0, img->tex);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -22,7 +23,7 @@ void ImageLoader::createTexture(IMG img, GLenum internalformat, GLenum format) {
 	glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
 	glGenerateMipmap_g(GL_TEXTURE_2D);
 
-	glBindTextureUnit_g(GL_TEXTURE0, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	cur_tex++;
 }
 
@@ -187,7 +188,8 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		case 24:
 			readBMPPixels24(f, str.str(), offset, size);
 			glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
-			glBindTextureUnit_g(GL_TEXTURE0, f->tex);
+			glBindTexture(GL_TEXTURE_2D, f->tex);
+			//glBindTextureUnit_g(GL_TEXTURE0, f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, f->w, f->h, 0, GL_RGB, GL_UNSIGNED_BYTE, f->data);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -198,7 +200,8 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		case 32:
 			readBMPPixels32(f, str, offset, size);
 			glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
-			glBindTextureUnit_g(GL_TEXTURE0, f->tex);
+			glBindTexture(GL_TEXTURE_2D, f->tex);
+			//glBindTextureUnit_g(GL_TEXTURE0, f->tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, f->w, f->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -281,9 +284,9 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		
 		//glGenTextures(1, &f->tex);
 		glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
-		glBindTextureUnit_g(GL_TEXTURE0, f->tex);
+		//glBindTextureUnit_g(GL_TEXTURE0, f->tex);
 		//glActiveTexture_g(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, f->tex);
+		glBindTexture(GL_TEXTURE_2D, f->tex);
 		
 		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -299,8 +302,8 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
 		glTextureSubImage2D_g(f->tex, 0, 0, 0, f->w, f->h, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
 		glGenerateMipmap_g(GL_TEXTURE_2D);
 		
-		//glBindTexture(GL_TEXTURE_2D, 0);
-		glBindTextureUnit_g(GL_TEXTURE0, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		//glBindTextureUnit_g(GL_TEXTURE0, 0);
 		cur_tex++;
 		return f;
 	}

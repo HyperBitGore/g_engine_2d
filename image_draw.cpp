@@ -4,7 +4,7 @@
 
 void EngineNewGL::bindImg(IMG img) {
 	glUseProgram_g(shader_img);
-	//glBindTextureUnit_g(img->pos, img->tex);
+	//glBindTextureUnit_g(GL_TEXTURE0, img->tex);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
 	glUniform1i_g(texuniform_img, img->tex);
 
@@ -16,7 +16,7 @@ void EngineNewGL::bindImg(IMG img) {
 
 void EngineNewGL::bindImg(GLuint img) {
 	glUseProgram_g(shader_img);
-	//glBindTextureUnit_g(img->pos, img->tex);
+	//glBindTextureUnit_g(GL_TEXTURE0, img);
 	glBindTexture(GL_TEXTURE_2D, img);
 	glUniform1i_g(texuniform_img, img);
 
@@ -54,7 +54,6 @@ void EngineNewGL::renderImgs(bool blend) {
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindBuffer_g(GL_SHADER_STORAGE_BUFFER, 0);
-	glBindTextureUnit_g(GL_TEXTURE0, 0);
 	if (blend) {
 		glDisable(GL_BLEND);
 	}
@@ -86,7 +85,6 @@ void EngineNewGL::renderImgsRotated(bool blend) {
 	img_vertexs.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
-	glBindTextureUnit_g(0, 0);
 	if (blend) {
 		glDisable(GL_BLEND);
 	}

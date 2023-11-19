@@ -347,7 +347,6 @@ public:
 //https://stackoverflow.com/questions/44759526/how-winapi-handle-iaudioclient-seteventhandle-works
 //https://gist.github.com/Liastre/ff201f37bc62f6dc0b7f5541923565ab
 //https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/audio/RenderExclusiveEventDriven/WASAPIRenderer.cpp
-//problem is the audio i am trying to play isnt the same format as device format so we get no output, need to be able to convert any format to the another format
 class AudioPlayer {
 private:
 	struct PAudio {
@@ -407,6 +406,7 @@ class DrawPass {
 			glGenFramebuffers_g(1, &color_buffer);
 			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
 			glCreateTextures_g(GL_TEXTURE_2D, 1, &texture);
+			//glBindTextureUnit_g(GL_TEXTURE_2D, texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -445,6 +445,53 @@ class DrawPass {
 			return texture;
 		}
 };
+
+//throw hashmap in here for uniform lookup
+class Shader {
+private:
+	GLuint program;
+	Gore::HashMap<GLint, std::string> uniform_map;
+	static int hash(std::string str) {
+		size_t total = 0;
+		for (size_t i = 0; i < str.size(); i++) {
+			total += str[i];
+		}
+		return total % 30;
+	}
+public:
+	Shader() {
+		program = 0;
+		uniform_map.setHashFunction(hash);
+	}
+	//copy constructor
+	Shader(Shader& x) {
+		this->program = x.program;
+	}
+	void bind();
+	//need a bunch of these for every type
+	bool setuniform(std::string uni, GLint n);
+	void compile(const char* vertex, const char* frag);
+	void compile(const std::string vert_path, const std::string frag_path);
+};
+
+//switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
+class ImageRenderer {
+private:
+	std::vector<img_vertex> buffer;
+	Shader shader;
+public:
+	ImageRenderer() {
+		buffer.reserve(1000);
+	}
+	void addImageVertex(float x, float y, float w, float h);
+	void drawBuffer();
+	void drawImage(IMG img, float x, float y, float w, float h);
+};
+
+class PrimitiveRenderer {
+
+};
+
 
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
