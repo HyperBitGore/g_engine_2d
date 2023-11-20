@@ -168,6 +168,14 @@ int nthBit(int number, int n) {
 
 //4278190335
 int main() {
+	Matrix matrice(3, 3);
+	Matrix matrice2(3, 3);
+	matrice.setrow(0, 1.0f);
+	matrice2.setrow(1, 2.0f);
+	matrice2 += matrice;
+	matrice -= matrice2;
+	std::cout << matrice2.to_string() << "\n";
+	std::cout << matrice.to_string() << "\n";
 	aud = ap.loadWavFile("sound_32.wav");
 	s_test = ap.generateSin(300, 200.0f, 44100);
 	s_test2 = ap.generateSquare(300, 200.0f, 44100);

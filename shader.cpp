@@ -17,6 +17,7 @@ bool Shader::setuniform(std::string uni, GLint n) {
 		return false;
 	}
 	glUniform1i_g(*uf, n);
+	return true;
 }
 
 

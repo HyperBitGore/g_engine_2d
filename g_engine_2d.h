@@ -156,6 +156,110 @@ public:
 	static IMG generateBlankIMG(int w, int h, int bytes_per_pixel);
 };
 
+//https://en.wikipedia.org/wiki/Matrix_(mathematics)
+//https://en.wikipedia.org/wiki/Computational_complexity_of_matrix_multiplication
+class Matrix {
+private:
+	size_t columns;
+	size_t rows;
+	std::vector<std::vector<float>> matrice;
+public:
+	Matrix(size_t r, size_t c) {
+		columns = c;
+		rows = r;
+		for (size_t i = 0; i < rows; i++) {
+			matrice.push_back({});
+		}
+		for (size_t i = 0; i < rows; i++) {
+			for (size_t j = 0; j < columns; j++) {
+				matrice[i].push_back(0.0f);
+			}
+		}
+	}
+	//copy constructor
+	Matrix(const Matrix& m) {
+		columns = m.columns;
+		rows = m.rows;
+		std::copy(m.matrice.begin(), m.matrice.end(), std::back_inserter(matrice));
+	}
+	~Matrix() {
+
+	}
+	Matrix& operator+=(const Matrix& rhs) {
+		for (size_t i = 0; i < rhs.rows; i++) {
+			for (size_t j = 0; j < rhs.columns; j++) {
+				matrice[i][j] += rhs.matrice[i][j];
+			}
+		}
+		return *this;
+	}
+	Matrix& operator-=(const Matrix& rhs) {
+		for (size_t i = 0; i < rhs.rows; i++) {
+			for (size_t j = 0; j < rhs.columns; j++) {
+				matrice[i][j] -= rhs.matrice[i][j];
+			}
+		}
+		return *this;
+	}
+	Matrix& operator*=(const float& n) {
+		for (size_t i = 0; i < rows; i++) {
+			for (size_t j = 0; j < columns; j++) {
+				matrice[i][j] *= n;
+			}
+		}
+		return *this;
+	}
+
+	friend Matrix operator+(Matrix lhs, const Matrix& rhs) {
+		lhs += rhs;
+		return lhs;
+	}
+	friend Matrix operator-(Matrix lhs, const Matrix& rhs) {
+		lhs -= rhs;
+		return lhs;
+	}
+	friend Matrix operator*(Matrix lhs, const float& n) {
+		lhs *= n;
+		return lhs;
+	}
+	std::vector<float>& operator[](size_t row) {
+		return matrice[row];
+	}
+	const std::vector<float>& operator[](size_t row) const {
+		return matrice[row];
+	}
+	size_t numColumns() {
+		return columns;
+	}
+	size_t numRows() {
+		return rows;
+	}
+	bool setrow(size_t row, float val) {
+		if (row >= rows) {
+			return false;
+		}
+		for (size_t i = 0; i < columns; i++) {
+			matrice[row][i] = val;
+		}
+		return true;
+	}
+	std::string to_string() {
+		std::string ret = "";
+		for (size_t i = 0; i < rows; i++) {
+			ret += "row:" + std::to_string(i) + ":";
+			for (size_t j = 0; j < columns; j++) {
+				ret += std::to_string(matrice[i][j]) + ",";
+			}
+			ret += ";";
+		}
+		return ret;
+	}
+	std::vector<std::vector<float>>& data() {
+		return matrice;
+	}
+};
+
+
 struct Point {
 	int x;
 	int y;
@@ -468,8 +572,28 @@ public:
 		this->program = x.program;
 	}
 	void bind();
-	//need a bunch of these for every type
+	//need a bunch of these for every type, https://registry.khronos.org/OpenGL-Refpages/gl4/html/glUniform.xhtml
+	//int overloads
 	bool setuniform(std::string uni, GLint n);
+	bool setuniform(std::string uni, Point n);
+	bool setuniform(std::string uni, GLint x, GLint y, GLint z);
+	bool setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w);
+	//unsigned int overloads
+	bool setuniform(std::string uni, GLuint n);
+	bool setuniform(std::string uni, GLuint x, GLuint y);
+	bool setuniform(std::string uni, GLuint x, GLuint y, GLuint z);
+	bool setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w);
+	//float overloads
+	bool setuniform(std::string uni, GLfloat n);
+	bool setuniform(std::string uni, vec2 n);
+	bool setuniform(std::string uni, vec3 n);
+	bool setuniform(std::string uni, vec4 n);
+	//array overloads
+	bool setuniform(const std::string uni, const GLsizei stride,const GLsizei count, const GLfloat* value);
+	bool setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLint* value);
+	bool setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value);
+	//matrix overloads
+	
 	void compile(const char* vertex, const char* frag);
 	void compile(const std::string vert_path, const std::string frag_path);
 };
@@ -492,6 +616,13 @@ class PrimitiveRenderer {
 
 };
 
+class FontRenderer {
+
+};
+
+class Renderer3D {
+
+};
 
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
