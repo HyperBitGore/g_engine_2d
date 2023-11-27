@@ -170,8 +170,16 @@ int nthBit(int number, int n) {
 int main() {
 	Matrix matrice(3, 3);
 	Matrix matrice2(3, 3);
-	matrice.setrow(0, 1.0f);
+	Matrix matrice3(3, 3);
+	Matrix matrice4(3, 3);
+	matrice4.setrow(0, 2.0f);
+	matrice3.setrow(0, 2.0f);
+	matrice[1][0] = 1.0f;
+	matrice[1][2] = 1.0f;
+	matrice3 = matrice3 * matrice4;
+	std::cout << matrice3.to_string() << "\n";
 	matrice2.setrow(1, 2.0f);
+	matrice.setrow(0, 1.0f);
 	matrice2 += matrice;
 	matrice -= matrice2;
 	std::cout << matrice2.to_string() << "\n";

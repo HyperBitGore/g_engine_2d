@@ -2,6 +2,7 @@
 
 #include "gl_defines.h"
 #include "g_primitive_funcs.h"
+#include "matrix.h"
 #include <Audioclient.h>
 #include <mmdeviceapi.h>
 #include <endpointvolume.h>
@@ -156,108 +157,7 @@ public:
 	static IMG generateBlankIMG(int w, int h, int bytes_per_pixel);
 };
 
-//https://en.wikipedia.org/wiki/Matrix_(mathematics)
-//https://en.wikipedia.org/wiki/Computational_complexity_of_matrix_multiplication
-class Matrix {
-private:
-	size_t columns;
-	size_t rows;
-	std::vector<std::vector<float>> matrice;
-public:
-	Matrix(size_t r, size_t c) {
-		columns = c;
-		rows = r;
-		for (size_t i = 0; i < rows; i++) {
-			matrice.push_back({});
-		}
-		for (size_t i = 0; i < rows; i++) {
-			for (size_t j = 0; j < columns; j++) {
-				matrice[i].push_back(0.0f);
-			}
-		}
-	}
-	//copy constructor
-	Matrix(const Matrix& m) {
-		columns = m.columns;
-		rows = m.rows;
-		std::copy(m.matrice.begin(), m.matrice.end(), std::back_inserter(matrice));
-	}
-	~Matrix() {
 
-	}
-	Matrix& operator+=(const Matrix& rhs) {
-		for (size_t i = 0; i < rhs.rows; i++) {
-			for (size_t j = 0; j < rhs.columns; j++) {
-				matrice[i][j] += rhs.matrice[i][j];
-			}
-		}
-		return *this;
-	}
-	Matrix& operator-=(const Matrix& rhs) {
-		for (size_t i = 0; i < rhs.rows; i++) {
-			for (size_t j = 0; j < rhs.columns; j++) {
-				matrice[i][j] -= rhs.matrice[i][j];
-			}
-		}
-		return *this;
-	}
-	Matrix& operator*=(const float& n) {
-		for (size_t i = 0; i < rows; i++) {
-			for (size_t j = 0; j < columns; j++) {
-				matrice[i][j] *= n;
-			}
-		}
-		return *this;
-	}
-
-	friend Matrix operator+(Matrix lhs, const Matrix& rhs) {
-		lhs += rhs;
-		return lhs;
-	}
-	friend Matrix operator-(Matrix lhs, const Matrix& rhs) {
-		lhs -= rhs;
-		return lhs;
-	}
-	friend Matrix operator*(Matrix lhs, const float& n) {
-		lhs *= n;
-		return lhs;
-	}
-	std::vector<float>& operator[](size_t row) {
-		return matrice[row];
-	}
-	const std::vector<float>& operator[](size_t row) const {
-		return matrice[row];
-	}
-	size_t numColumns() {
-		return columns;
-	}
-	size_t numRows() {
-		return rows;
-	}
-	bool setrow(size_t row, float val) {
-		if (row >= rows) {
-			return false;
-		}
-		for (size_t i = 0; i < columns; i++) {
-			matrice[row][i] = val;
-		}
-		return true;
-	}
-	std::string to_string() {
-		std::string ret = "";
-		for (size_t i = 0; i < rows; i++) {
-			ret += "row:" + std::to_string(i) + ":";
-			for (size_t j = 0; j < columns; j++) {
-				ret += std::to_string(matrice[i][j]) + ",";
-			}
-			ret += ";";
-		}
-		return ret;
-	}
-	std::vector<std::vector<float>>& data() {
-		return matrice;
-	}
-};
 
 
 struct Point {
