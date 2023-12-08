@@ -43,7 +43,7 @@ bool Window::swapBuffers() {
 	return SwapBuffers(GetDC(getHwnd()));
 }
 
-Window::Window(LPCWSTR title, LPCWSTR CLASS_NAME, int h, int w, int x, int y)
+Window::Window(LPCSTR title, LPCSTR CLASS_NAME, int h, int w, int x, int y)
 	: m_hinstance(GetModuleHandle(nullptr))
 {
 	class_name = CLASS_NAME;

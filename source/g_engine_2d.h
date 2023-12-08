@@ -16,6 +16,8 @@
 #include "lodepng.h"
 
 
+
+
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
 #define pack_rgb(r,g,b) (uint32_t)(r<<24|g<<16|b<<8)
 #define unpack_r(col) (uint8_t)((col>>24)&0xff)
@@ -36,6 +38,8 @@ static void FatalError(const char* message)
 	MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
 	ExitProcess(0);
 }
+
+
 
 
 
@@ -65,11 +69,11 @@ class Window {
 private:
 	HINSTANCE m_hinstance;
 	HWND m_hwnd;
-	LPCWSTR class_name;
+	LPCSTR class_name;
 	int height;
 	int width;
 public:
-	Window(LPCWSTR title, LPCWSTR CLASS_NAME, int h, int w, int x, int y);
+	Window(LPCSTR title, LPCSTR CLASS_NAME, int h, int w, int x, int y);
 	Window(const Window&) = delete;
 	Window& operator =(const Window&) = delete;
 	~Window();
@@ -92,7 +96,7 @@ private:
 	char last_state[256];
 public:
 	Input() {
-		layout = LoadKeyboardLayout(L"00000409", KLF_ACTIVATE);
+		layout = LoadKeyboardLayoutA("00000409", KLF_ACTIVATE);
 	}
 	Input(const Input&) = delete;
 	Input& operator =(const Input&) = delete;
@@ -585,7 +589,7 @@ private:
 	int texture_units;
 
 public:
-	EngineNewGL(LPCWSTR window_name, int width, int height);
+	EngineNewGL(LPCSTR window_name, int width, int height);
 
 	//move constructor
 	EngineNewGL(EngineNewGL&& o) {

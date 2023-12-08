@@ -6,7 +6,7 @@ int indexs_hash(GLint n) {
 
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
+EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 	//indexs.setHashFunction(indexs_hash);
 
 	//function pointers
@@ -69,7 +69,7 @@ EngineNewGL::EngineNewGL(LPCWSTR window_name, int width, int height) {
 		DestroyWindow(dummy);
 	}
 	//create window
-	wind = new Window(window_name, L"ENG1", width, height, 300, 300);
+	wind = new Window(window_name, "ENG1", width, height, 300, 300);
 	in = new Input();
 	HDC dc_w = GetDC(wind->getHwnd());
 	// set pixel format for OpenGL context

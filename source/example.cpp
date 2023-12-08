@@ -184,19 +184,19 @@ int main() {
 	matrice -= matrice2;
 	std::cout << matrice2.to_string() << "\n";
 	std::cout << matrice.to_string() << "\n";
-	aud = ap.loadWavFile("sound_32.wav");
+	aud = ap.loadWavFile("resources/sound_32.wav");
 	s_test = ap.generateSin(300, 200.0f, 44100);
 	s_test2 = ap.generateSquare(300, 200.0f, 44100);
 	s_test3 = ap.generateTriangle(300, 200.0f, 44100);
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
-	ap.playFile("dungeonsynth5_24.wav", 1);
+	ap.playFile("resources/dungeonsynth5_24.wav", 1);
 	
 	//std::vector<uint16_t> foo = {32000, 4052, 4032};
 	//std::vector<float> up(foo.begin(), foo.end());
 
-	bmptest = eng2.loadBMP("test1.bmp");
-	imgtest = eng2.loadPNG("Bliss_(Windows_XP).png", 300, 241);
-	atlas_test = eng2.loadPNG("test.png", 30, 50);
+	bmptest = eng2.loadBMP("resources/test1.bmp");
+	imgtest = eng2.loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
+	atlas_test = eng2.loadPNG("resources/test.png", 30, 50);
 	eng2.createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
 	atlas.addImage(atlas_test);
 	atlas.addImage(imgtest);
@@ -208,7 +208,7 @@ int main() {
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10, 4) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = eng2.loadFont("EnvyCodeR.ttf", 32, 127);
+	f_test = eng2.loadFont("resources/EnvyCodeR.ttf", 32, 127);
 
 	//testing font rasterizing
 	eng2.rasterizeFont(&f_test, 64, 4278190335, {'l'});

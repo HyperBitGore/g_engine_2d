@@ -137,7 +137,7 @@ Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
-        float f = sinf((2.0f * M_PI * freq) / sample_rate * i);
+        float f = sinf((2.0f * (float)M_PI * freq) / sample_rate * i);
         *(ff + i) = f;
     }
 	return a;
@@ -154,7 +154,7 @@ Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate)
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
-        float f = sgn(sinf((2.0f * M_PI * freq) / sample_rate * i));
+        float f = sgn(sinf((2.0f * (float)M_PI * freq) / sample_rate * i));
         *(ff + i) = f;
     }
     return a;
@@ -171,7 +171,7 @@ Audio AudioPlayer::generateTriangle(size_t length, float freq, size_t sample_rat
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
-        float f = (2/M_PI) * asinf(sinf((2.0f * M_PI * freq) / sample_rate * i));
+        float f = (float)(2/M_PI) * asinf(sinf((2.0f * (float)M_PI * freq) / sample_rate * i));
         *(ff + i) = f;
     }
     return a;
