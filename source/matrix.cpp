@@ -47,20 +47,22 @@ Matrix& Matrix::operator*=(const float& n) {
 	return *this;
 }
 Matrix& Matrix::operator*=(const Matrix& rhs) {
-	//closer
-	//rows
+	//this is right
+	//looping all rows
+	Matrix t(*this);
+
 	for (size_t i = 0; i < matrice.size(); i++) {
-		//loop through current row
-		for (size_t k = 0; k < matrice[i].size(); k++) {
+		//outer loop setting the actual element value in rows
+		for (size_t p = 0; p < matrice[i].size(); p++) {
+			//adding up entire and row and opposite column
 			float out = 0;
-			//columns
-			for (size_t j = 0; j < matrice[i].size(); j++) {
-				out += matrice[i][k] * rhs.matrice[j][i];
+			for (size_t k = 0; k < matrice[i].size(); k++) {
+				out += matrice[i][k] * rhs.matrice[k][p];
 			}
-			std::cout << out << "\n";
-			matrice[i][k] = out;
+			t[i][p] = out;
 		}
 	}
+	this->matrice = t.matrice;
 	return *this;
 }
 

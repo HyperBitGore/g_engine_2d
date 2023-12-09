@@ -176,7 +176,21 @@ int main() {
 	matrice3.setrow(0, 2.0f);
 	matrice[1][0] = 1.0f;
 	matrice[1][2] = 1.0f;
+
+	matrice3[0][1] = 3.0f;
+	matrice3[1][0] = 6.0f;
+	matrice3[1][1] = 3.0f;
+	matrice3[1][2] = 8.0f;
 	matrice3[2][0] = 3.0f;
+	matrice3[2][1] = 12.0f;
+	matrice3[2][2] = 5.0f;
+
+	matrice4[1][0] = 2.0f;
+	matrice4[1][1] = 3.0f;
+	matrice4[1][2] = 9.0f;
+	matrice4[2][0] = 1.0f;
+	matrice4[2][1] = 7.0f;
+	matrice4[2][2] = 5.0f;
 	matrice3 = matrice3 * matrice4;
 	std::cout << matrice3.to_string() << "\n";
 	matrice2.setrow(1, 2.0f);
