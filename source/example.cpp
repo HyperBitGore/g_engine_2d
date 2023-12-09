@@ -176,6 +176,7 @@ int main() {
 	matrice3.setrow(0, 2.0f);
 	matrice[1][0] = 1.0f;
 	matrice[1][2] = 1.0f;
+	matrice3[2][0] = 3.0f;
 	matrice3 = matrice3 * matrice4;
 	std::cout << matrice3.to_string() << "\n";
 	matrice2.setrow(1, 2.0f);
