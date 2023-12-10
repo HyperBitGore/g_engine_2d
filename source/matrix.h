@@ -5,8 +5,7 @@
 
 //https://en.wikipedia.org/wiki/Matrix_(mathematics)
 //https://en.wikipedia.org/wiki/Computational_complexity_of_matrix_multiplication
-//fix matrix*matrix multiplication
-//add powers
+// convert to not using vectors
 //https://github.com/g-truc/glm
 // -implement perspective, translate, rotate, and scale
 //https://matrixcalc.org/
@@ -21,6 +20,8 @@ public:
 	//copy constructor
 	Matrix(const Matrix& m);
 	~Matrix();
+
+	Matrix& operator=(const Matrix& rhs);
 	Matrix& operator+=(const Matrix& rhs);
 	Matrix& operator-=(const Matrix& rhs);
 	Matrix& operator*=(const float& n);

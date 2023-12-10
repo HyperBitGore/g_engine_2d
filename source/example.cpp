@@ -199,6 +199,15 @@ int main() {
 	matrice -= matrice2;
 	std::cout << matrice2.to_string() << "\n";
 	std::cout << matrice.to_string() << "\n";
+	Matrix matrice5(3, 3);
+	matrice5.setrow(0, 2.0f);
+	matrice5.setrow(1, 3.0f);
+	matrice5[2][0] = 1.0f;
+	matrice5[2][1] = 4.0f;
+	matrice5[2][2] = 9.0f;
+	matrice5 ^= 0;
+	std::cout << matrice5.to_string() << "\n";
+
 	aud = ap.loadWavFile("resources/sound_32.wav");
 	s_test = ap.generateSin(300, 200.0f, 44100);
 	s_test2 = ap.generateSquare(300, 200.0f, 44100);

@@ -22,6 +22,14 @@ Matrix::Matrix(const Matrix& m) {
 Matrix::~Matrix() {
 
 }
+Matrix& Matrix::operator=(const Matrix& rhs) {
+	columns = rhs.columns;
+	rows = rhs.columns;
+	matrice.clear();
+	std::copy(rhs.matrice.begin(), rhs.matrice.end(), std::back_inserter(matrice));
+	return *this;
+}
+
 Matrix& Matrix::operator+=(const Matrix& rhs) {
 	for (size_t i = 0; i < rhs.rows; i++) {
 		for (size_t j = 0; j < rhs.columns; j++) {
@@ -49,8 +57,7 @@ Matrix& Matrix::operator*=(const float& n) {
 Matrix& Matrix::operator*=(const Matrix& rhs) {
 	//this is right
 	//looping all rows
-	Matrix t(*this);
-
+	Matrix t(rows, columns);
 	for (size_t i = 0; i < matrice.size(); i++) {
 		//outer loop setting the actual element value in rows
 		for (size_t p = 0; p < matrice[i].size(); p++) {
@@ -67,11 +74,18 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 }
 
 Matrix& Matrix::operator^=(const float& n) {
-	//this is wrong
-	for (size_t i = 0; i < rows; i++) {
-		for (size_t j = 0; j < columns; j++) {
-			matrice[i][j] = powf(matrice[i][j], n);
+	if (n <= 0) {
+		//might be right?
+		Matrix t(this->rows, this->columns);
+		for (size_t i = 0, k = 0; i < matrice.size(); i++, k++) {
+			t.matrice[i][k] = 1.0f;
 		}
+		*this = t;
+		return *this;
+	}
+	//this is right
+	for (size_t i = 2; i <= n; i++) {
+		*this = *this * *this;
 	}
 	return *this;
 }
