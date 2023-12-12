@@ -5,15 +5,15 @@
 
 //https://en.wikipedia.org/wiki/Matrix_(mathematics)
 //https://en.wikipedia.org/wiki/Computational_complexity_of_matrix_multiplication
-// convert to not using vectors
 //https://github.com/g-truc/glm
 // -implement perspective, translate, rotate, and scale
+//https://www.khanacademy.org/math/linear-algebra/matrix-transformations/lin-trans-examples/v/linear-transformation-examples-scaling-and-reflections
 //https://matrixcalc.org/
 class Matrix {
 private:
 	size_t columns;
 	size_t rows;
-	std::vector<std::vector<float>> matrice;
+	float* dat;
 public:
 	Matrix() = delete;
 	Matrix(size_t r, size_t c);
@@ -49,11 +49,11 @@ public:
 		return lhs;
 	}
 
-	std::vector<float>& operator[](size_t row);
-	const std::vector<float>& operator[](size_t row) const;
+	float* operator[](size_t row);
+	const float* operator[](size_t row) const;
 	size_t numColumns();
 	size_t numRows();
 	bool setrow(size_t row, float val);
 	std::string to_string();
-	std::vector<std::vector<float>>& data();
+	float* data();
 };

@@ -185,6 +185,12 @@ int main() {
 	matrice3[2][1] = 12.0f;
 	matrice3[2][2] = 5.0f;
 
+	for (size_t i = 0; i < matrice3.numRows(); i++) {
+		for (size_t j = 0; j < matrice3.numColumns(); j++) {
+			std::cout << matrice3[i][j] << " ";
+		}
+	}
+	std::cout << std::endl;
 	matrice4[1][0] = 2.0f;
 	matrice4[1][1] = 3.0f;
 	matrice4[1][2] = 9.0f;
@@ -205,7 +211,7 @@ int main() {
 	matrice5[2][0] = 1.0f;
 	matrice5[2][1] = 4.0f;
 	matrice5[2][2] = 9.0f;
-	matrice5 ^= 0;
+	matrice5 ^= 2;
 	std::cout << matrice5.to_string() << "\n";
 
 	aud = ap.loadWavFile("resources/sound_32.wav");
