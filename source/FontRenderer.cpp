@@ -340,7 +340,7 @@ void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 		t++;
 		for (size_t j = startcode; j <= endcode; j++, seq++) {
 			char_codes.push_back(*t);
-			indexs.push_back(startglyphid + seq);
+			indexs.push_back((GLuint)startglyphid + (GLuint)seq);
 			t++;
 		}
 	}
@@ -446,7 +446,7 @@ std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap*
 	int index = 0;
 	for (size_t i = 0; i < map->tables.size(); i++) {
 		if (map->tables[i].platformSpecificID == 3) {
-			index = i;
+			index = (int)i;
 			break;
 		}
 	}
@@ -824,7 +824,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 		std::vector<vec2> points;
 		std::vector<int> end_contours;
 		for (int j = 0; j < i.numberOfContours; j++) {
-			int generated_points_start_index = points.size() - 1;
+			int generated_points_start_index = (int)points.size() - 1;
 			if (generated_points_start_index < 0) {
 				generated_points_start_index = 0;
 			}
@@ -908,7 +908,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 
 				tesslateBezier(points, p1, p2, p3, 2);
 			}
-			end_contours.push_back(points.size());
+			end_contours.push_back((int)points.size());
 		}
 		g.contours = generate_edges(end_contours, points);
 		//cull duplicate lines
@@ -1100,6 +1100,7 @@ void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vec
 				break;
 			}
 		}
+		std::cout << font->glyphs[i].c << "\n";
 		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
 		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}

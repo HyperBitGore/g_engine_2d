@@ -232,7 +232,7 @@ int main() {
 	atlas.addImage(imgtest);
 	eng2.updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
-		ImageLoader::setPixel(imgtest, x, 1, 4278190335, 4);
+		//ImageLoader::setPixel(imgtest, x, 1, 4278190335, 4);
 	}
 	std::cout << ImageLoader::getPixel(imgtest, 0, 100, 4) << "\n";
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10, 4) << "\n";

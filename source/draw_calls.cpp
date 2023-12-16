@@ -16,7 +16,7 @@ void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3,
 
 
 
-	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)buffer_2d.size());
 	buffer_2d.clear();
 	//glDisableVertexAttribArray_g(0);
 	glBindVertexArray_g(0);
@@ -31,7 +31,7 @@ void EngineNewGL::drawTriangles() {
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)buffer_2d.size());
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
@@ -47,7 +47,7 @@ void EngineNewGL::drawPoint(float x1, float y1) {
 	glBindVertexArray_g(VAO_Points);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
-	glDrawArrays(GL_POINTS, 0, buffer_2d.size());
+	glDrawArrays(GL_POINTS, 0, (GLsizei)buffer_2d.size());
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
@@ -63,7 +63,7 @@ void EngineNewGL::drawPoints() {
 	glBindVertexArray_g(VAO_Points);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
-	glDrawArrays(GL_POINTS, 0, buffer_2d.size());
+	glDrawArrays(GL_POINTS, 0, (GLsizei)buffer_2d.size());
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
@@ -100,7 +100,7 @@ void EngineNewGL::drawQuad(float x, float y, float w, float h) {
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)buffer_2d.size());
 	//cleanup
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
@@ -115,7 +115,7 @@ void EngineNewGL::drawQuads() {
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, buffer_2d.size());
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)buffer_2d.size());
 	//cleanup
 	buffer_2d.clear();
 	glBindVertexArray_g(0);
