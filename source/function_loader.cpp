@@ -51,12 +51,7 @@ PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D_g;
 PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D_g;
 
 PFNGLDRAWARRAYSEXTPROC glDrawArrays_g;
-PFNGLUNIFORM2FPROC glUniform2f_g;
-PFNGLUNIFORM1FPROC glUniform1f_g;
-PFNGLUNIFORM4FPROC glUniform4f_g;
 
-PFNGLUNIFORM1UIVPROC glUniform1uiv_g;
-PFNGLUNIFORM1IVPROC glUniform1iv_g;
 PFNGLBINDBUFFERBASEPROC glBindBufferBase_g;
 //PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_g;
 
@@ -71,6 +66,44 @@ PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers_g;
 PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage_g;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer_g;
 
+PFNGLUNIFORM1FPROC glUniform1f_g;
+PFNGLUNIFORM2FPROC glUniform2f_g;
+PFNGLUNIFORM3FPROC glUniform3f_g;
+PFNGLUNIFORM4FPROC glUniform4f_g;
+
+PFNGLUNIFORM2IPROC glUniform2i_g;
+PFNGLUNIFORM3IPROC glUniform3i_g;
+PFNGLUNIFORM4IPROC glUniform4i_g;
+
+PFNGLUNIFORM1UIPROC glUniform1ui_g;
+PFNGLUNIFORM2UIPROC glUniform2ui_g;
+PFNGLUNIFORM3UIPROC glUniform3ui_g;
+PFNGLUNIFORM4UIPROC glUniform4ui_g;
+
+PFNGLUNIFORM1DPROC glUniform1d_g;
+PFNGLUNIFORM2DPROC glUniform2d_g;
+PFNGLUNIFORM3DPROC glUniform3d_g;
+PFNGLUNIFORM4DPROC glUniform4d_g;
+
+PFNGLUNIFORM1UIVPROC glUniform1uiv_g;
+PFNGLUNIFORM2UIVPROC glUniform2uiv_g;
+PFNGLUNIFORM3UIVPROC glUniform3uiv_g;
+PFNGLUNIFORM4UIVPROC glUniform4uiv_g;
+
+PFNGLUNIFORM1IVPROC glUniform1iv_g;
+PFNGLUNIFORM2IVPROC glUniform2iv_g;
+PFNGLUNIFORM3IVPROC glUniform3iv_g;
+PFNGLUNIFORM4IVPROC glUniform4iv_g;
+
+PFNGLUNIFORM1FVPROC glUniform1fv_g;
+PFNGLUNIFORM2FVPROC glUniform2fv_g;
+PFNGLUNIFORM3FVPROC glUniform3fv_g;
+PFNGLUNIFORM4FVPROC glUniform4fv_g;
+
+PFNGLUNIFORM1DVPROC glUniform1dv_g;
+PFNGLUNIFORM2DVPROC glUniform2dv_g;
+PFNGLUNIFORM3DVPROC glUniform3dv_g;
+PFNGLUNIFORM4DVPROC glUniform4dv_g;
 
 void EngineNewGL::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
@@ -93,7 +126,6 @@ void EngineNewGL::loadFunctions() {
 	glGetShaderiv_g = (PFNGLGETSHADERIVPROC)GetGLFuncAddress("glGetShaderiv");
 	glUseProgram_g = (PFNGLUSEPROGRAMPROC)GetGLFuncAddress("glUseProgram");
 	glVertexAttribPointer_g = (PFNGLVERTEXATTRIBPOINTERPROC)GetGLFuncAddress("glVertexAttribPointer");
-	glUniform1i_g = (PFNGLUNIFORM1IPROC)GetGLFuncAddress("glUniform1i");
 	glActiveTexture_g = (PFNGLACTIVETEXTUREPROC)GetGLFuncAddress("glActiveTexture");
 	glGetUniformLocation_g = (PFNGLGETUNIFORMLOCATIONPROC)GetGLFuncAddress("glGetUniformLocation");
 	glIsShader_g = (PFNGLISSHADERPROC)GetGLFuncAddress("glIsShader");
@@ -108,12 +140,47 @@ void EngineNewGL::loadFunctions() {
 	glTextureStorage2D_g = (PFNGLTEXTURESTORAGE2DPROC)GetGLFuncAddress("glTextureStorage2D");
 	glTextureSubImage2D_g = (PFNGLTEXTURESUBIMAGE2DPROC)GetGLFuncAddress("glTextureSubImage2D");
 	glDrawArrays_g = (PFNGLDRAWARRAYSEXTPROC)GetGLFuncAddress("glDrawArrays");
+
+	glUniform3f_g = (PFNGLUNIFORM3FPROC)GetGLFuncAddress("glUniform3f");
 	glUniform2f_g = (PFNGLUNIFORM2FPROC)GetGLFuncAddress("glUniform2f");
 	glUniform1f_g = (PFNGLUNIFORM1FPROC)GetGLFuncAddress("glUniform1f");
 	glUniform4f_g = (PFNGLUNIFORM4FPROC)GetGLFuncAddress("glUniform4f");
+	
+	glUniform1i_g = (PFNGLUNIFORM1IPROC)GetGLFuncAddress("glUniform1i");
+	glUniform2i_g = (PFNGLUNIFORM2IPROC)GetGLFuncAddress("glUniform2i");
+	glUniform3i_g = (PFNGLUNIFORM3IPROC)GetGLFuncAddress("glUniform3i");
+	glUniform4i_g = (PFNGLUNIFORM4IPROC)GetGLFuncAddress("glUniform4i");
+
+	glUniform1ui_g = (PFNGLUNIFORM1UIPROC)GetGLFuncAddress("glUniform1ui");
+	glUniform2ui_g = (PFNGLUNIFORM2UIPROC)GetGLFuncAddress("glUniform2ui");
+	glUniform3ui_g = (PFNGLUNIFORM3UIPROC)GetGLFuncAddress("glUniform3ui");
+	glUniform4ui_g = (PFNGLUNIFORM4UIPROC)GetGLFuncAddress("glUniform4ui");
+
+	glUniform1d_g = (PFNGLUNIFORM1DPROC)GetGLFuncAddress("glUniform1d");
+	glUniform2d_g = (PFNGLUNIFORM2DPROC)GetGLFuncAddress("glUniform2d");
+	glUniform3d_g = (PFNGLUNIFORM3DPROC)GetGLFuncAddress("glUniform3d");
+	glUniform4d_g = (PFNGLUNIFORM4DPROC)GetGLFuncAddress("glUniform4d");
 
 	glUniform1uiv_g = (PFNGLUNIFORM1UIVPROC)GetGLFuncAddress("glUniform1uiv");
+	glUniform2uiv_g = (PFNGLUNIFORM2UIVPROC)GetGLFuncAddress("glUniform2uiv");
+	glUniform3uiv_g = (PFNGLUNIFORM3UIVPROC)GetGLFuncAddress("glUniform3uiv");
+	glUniform4uiv_g = (PFNGLUNIFORM4UIVPROC)GetGLFuncAddress("glUniform4uiv");
+	
 	glUniform1iv_g = (PFNGLUNIFORM1IVPROC)GetGLFuncAddress("glUniform1iv");
+	glUniform2iv_g = (PFNGLUNIFORM2IVPROC)GetGLFuncAddress("glUniform2iv");
+	glUniform3iv_g = (PFNGLUNIFORM3IVPROC)GetGLFuncAddress("glUniform3iv");
+	glUniform4iv_g = (PFNGLUNIFORM4IVPROC)GetGLFuncAddress("glUniform4iv");
+
+	glUniform1fv_g = (PFNGLUNIFORM1FVPROC)GetGLFuncAddress("glUniform1fv");
+	glUniform2fv_g = (PFNGLUNIFORM2FVPROC)GetGLFuncAddress("glUniform2fv");
+	glUniform3fv_g = (PFNGLUNIFORM3FVPROC)GetGLFuncAddress("glUniform3fv");
+	glUniform4fv_g = (PFNGLUNIFORM4FVPROC)GetGLFuncAddress("glUniform4fv");
+
+	glUniform1dv_g = (PFNGLUNIFORM1DVPROC)GetGLFuncAddress("glUniform1dv_g");
+	glUniform2dv_g = (PFNGLUNIFORM2DVPROC)GetGLFuncAddress("glUniform2dv_g");
+	glUniform3dv_g = (PFNGLUNIFORM3DVPROC)GetGLFuncAddress("glUniform3dv_g");
+	glUniform4dv_g = (PFNGLUNIFORM4DVPROC)GetGLFuncAddress("glUniform4dv_g");
+
 	glBindBufferBase_g = (PFNGLBINDBUFFERBASEPROC)GetGLFuncAddress("glBindBufferBase");
 	//glDebugMessageCallback_g = (PFNGLDEBUGMESSAGECALLBACKPROC)GetGLFuncAddress("glDebugMessageCallback");
 
@@ -128,5 +195,7 @@ void EngineNewGL::loadFunctions() {
 	glGenRenderbuffers_g = (PFNGLGENRENDERBUFFERSPROC)GetGLFuncAddress("glGenRenderbuffers");
 	glRenderbufferStorage_g = (PFNGLRENDERBUFFERSTORAGEPROC)GetGLFuncAddress("glRenderbufferStorage");
 	glFramebufferRenderbuffer_g = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)GetGLFuncAddress("glFramebufferRenderbuffer");
+
+
 
 }

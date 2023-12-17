@@ -1,7 +1,8 @@
 #pragma once
 #include <iostream>
 
-
+//class vec3;
+//class vec4;
 
 
 template<size_t size>
@@ -147,14 +148,14 @@ public:
 		y *= r.y;
 		return *this;
 	}
-	vec2& operator*=(const vec3& r) {
+	/*vec2& operator*=(const vec3& r) {
 		x *= r.x;
 		y *= r.y;
 	}
 	vec2& operator*=(const vec4& r) {
 		x *= r.x;
 		y *= r.y;
-	}
+	}*/
 	vec2& operator*=(const float& n) {
 		x *= n;
 		y *= n;
@@ -183,14 +184,14 @@ public:
 		lhs *= rhs;
 		return lhs;
 	}
-	friend vec2 operator*(vec2 lhs, const vec3& rhs) {
+	/*friend vec2 operator*(vec2 lhs, const vec3& rhs) {
 		lhs *= rhs;
 		return lhs;
 	}
 	friend vec2 operator*(vec2 lhs, const vec4& rhs) {
 		lhs *= rhs;
 		return lhs;
-	}
+	}*/
 	friend vec2 operator^(vec2 lhs, const float& n) {
 		lhs ^= n;
 		return lhs;
@@ -253,12 +254,12 @@ public:
 		y *= r.y;
 		return *this;
 	}
-	vec3& operator*=(const vec4& r) {
+	/*vec3& operator*=(const vec4& r) {
 		x *= r.x;
 		y *= r.y;
 		z *= r.z;
 		return *this;
-	}
+	}*/
 	vec3& operator^=(const float& n) {
 		x = std::powf(x, n);
 		y = std::powf(y, n);
@@ -287,10 +288,14 @@ public:
 		lhs *= rhs;
 		return lhs;
 	}
-	friend vec3 operator*(vec3 lhs, const vec4& rhs) {
+	friend vec3 operator*(const vec2& lhs, vec3 rhs) {
+		rhs *= lhs;
+		return rhs;
+	}
+	/*friend vec3 operator*(vec3 lhs, const vec4& rhs) {
 		lhs *= rhs;
 		return lhs;
-	}
+	}*/
 	friend vec3 operator^(vec3 lhs, const float& n) {
 		lhs ^= n;
 		return lhs;
@@ -389,6 +394,22 @@ public:
 	friend vec4 operator*(vec4 lhs, const float& n) {
 		lhs *= n;
 		return lhs;
+	}
+	friend vec4 operator*(vec4 lhs, const vec3& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec4 operator*(vec4 lhs, const vec2& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec4 operator*(const vec3& lhs, vec4 rhs) {
+		rhs *= rhs;
+		return rhs;
+	}
+	friend vec4 operator*(const vec2& lhs, vec4 rhs) {
+		rhs *= rhs;
+		return rhs;
 	}
 	friend vec4 operator*(vec4 lhs, const vec4& rhs) {
 		lhs *= rhs;
