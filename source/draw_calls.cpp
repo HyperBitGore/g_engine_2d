@@ -2,6 +2,8 @@
 
 //2d drawing functions
 
+
+
 void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
 	buffer_2d.push_back({ x1, y1 });
 	buffer_2d.push_back({ x2, y2 });
@@ -10,7 +12,7 @@ void EngineNewGL::drawTriangle(float x1, float y1, float x2, float y2, float x3,
 	glUniform4f_g(coloruniform_tri, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Triangle);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
+	glBufferData_g(GL_ARRAY_BUFFER,buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
 	//glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
 	//glEnableVertexAttribArray_g(0);
 

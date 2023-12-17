@@ -768,7 +768,7 @@ std::vector<Line> generate_edges(std::vector<int>& end_contours, std::vector<vec
 			lines.push_back(l);
 		}
 		//have to add endpoint of contour and last point of contour as a line, so we can fix any possible gaps in glyphs
-		lines.push_back({ { points[first].x, points[first].y}, {points[j].x, points[j].y} }); 
+		lines.push_back({ { points[first].x, points[first].y}, {points[j].x, points[j].y}});
 		j++;
 	}
 	return lines;
@@ -1010,12 +1010,12 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 	std::vector<Line> lines;
 	for (size_t i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
-		l.p1.x = convertToRange(l.p1.x, 0.0f, (float)w-1, g->xMin, g->xMax);
-		l.p1.y = convertToRange(l.p1.y, 0.0f, (float)h-1, g->yMin, g->yMax);
+		l.p1.x = convertToRange(l.p1.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
+		l.p1.y = convertToRange(l.p1.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
 		
 
-		l.p2.x = convertToRange(l.p2.x, 0.0f, (float)w-1, g->xMin, g->xMax);
-		l.p2.y = convertToRange(l.p2.y, 0.0f, (float)h-1, g->yMin, g->yMax);
+		l.p2.x = convertToRange(l.p2.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
+		l.p2.y = convertToRange(l.p2.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
 
 		lines.push_back(l);
 	}
@@ -1043,14 +1043,13 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 			vec2 l = getIntersection(test_line, lines[i]);
 			if (l.x >= 0 && l.x <= w) {
 				adds.push_back(lines[i]);
-				inters.push_back({ (float)x, (float)l.y });
+				inters.push_back({ (float)x, (float)l.y});
 			}
 		}
 		std::sort(inters.begin(), inters.end(), sortVec2);
 		for (size_t i = 1; i < inters.size() && i < adds.size();) {
 			float y1 = inters[i - 1].y;
 			float y2 = inters[i].y;
-
 			for (int y = (int)y1; y <= y2; y++) {
 				ImageLoader::setPixel(r_g.data, x, y, color, 4);
 			}
@@ -1100,7 +1099,6 @@ void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vec
 				break;
 			}
 		}
-		std::cout << font->glyphs[i].c << "\n";
 		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
 		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}

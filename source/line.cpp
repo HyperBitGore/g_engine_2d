@@ -90,7 +90,7 @@ void EngineNewGL::drawLines(float width) {
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//write seperate shader
 	glUseProgram_g(shader_line);
-	glUniform4f_g(coloruniform_line, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
+	glUniform4f_g(coloruniform_line,draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	glBindVertexArray_g(VAO_Line);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData_g(GL_ARRAY_BUFFER, buffer_2d.size() * sizeof(vec2), &buffer_2d[0], GL_STATIC_DRAW);
@@ -111,7 +111,7 @@ void EngineNewGL::drawLine(float x1, float y1, float x2, float y2, float width) 
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//write seperate shader
 	glUseProgram_g(shader_line);
-	glUniform4f_g(coloruniform_line, draw_color.x, draw_color.y, draw_color.z, draw_color.w);
+	glUniform4f_g(coloruniform_line,draw_color.x, draw_color.y, draw_color.z, draw_color.w);
 	buffer_2d.push_back({ x1, y1 });
 	buffer_2d.push_back({ x2, y2 });
 

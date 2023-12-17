@@ -95,13 +95,13 @@ void renderFunction() {
 		}
 	}
 	//dr.bind();
-	eng2.setDrawColor({ 0.2f, 0.5f, 1.0f, 0.0f });
+	eng2.setDrawColor({ 0.8f, 0.2f, 1.0f, 0.0f });
 	eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
 	eng2.drawQuad(pos, 10.0f, 60.0f, 60.0f);
 	eng2.drawQuad(0.0f, posy, 50.0f, 50.0f);
 	eng2.drawQuad(600.0f, 300.0f, 50.0f, 50.0f);
 	eng2.drawQuad(640.0f, 400.0f, 50.0f, 50.0f);
-	eng2.setDrawColor({ 1.0f, 0.3f, 0.1f, 0.0f });
+	eng2.setDrawColor({1.0f, 0.3f, 0.1f, 0.0f});
 	for (float y = 100.0f; y <= 300.0f; y += 1.00f) {
 		//eng2.addLinePoints({ 1.0f, y }, { 0.5f, y + 1.0f });
 		eng2.add2DPoint(50.0f, y);
@@ -125,7 +125,7 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	//std::cout << r << "\n";
-	eng2.bindImg(imgtest);
+	/*eng2.bindImg(imgtest);
 	eng2.addImageCall( 450.0f, 300.0f, 50.0f, 50.0f);
 	eng2.addImageCall( 250.0f, 250.0f, 80.0f, 80.0f);
 	eng2.addImageCall( 360.0f, 250.0f, 50.0f, 50.0f);
@@ -144,14 +144,14 @@ void renderFunction() {
 
 	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
 	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
-
+	*/
 	//testing beziers
 	//eng2.quadraticBezier({ 300.0f, 100.0f }, { 350.0f, 150.0f }, { 400.0f, 100.0f }, 20);
 	//eng2.cubicBezier({ 300.0f, 400.0f }, { 325.0f, 425.0f }, { 350.0f, 425.0f }, { 375.0f, 400.0f }, 20);
 	eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
 
 	//testing font rendering
-	eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
+	//eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
 	eng2.drawText("Hello World", &f_test, 100, 30, 24);
 	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
 	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
@@ -168,6 +168,9 @@ int nthBit(int number, int n) {
 
 //4278190335
 int main() {
+	Line l11({0.0f, 1.0f}, {10.0f, 8.0f});
+	l11.p1.x = 1.0f;
+	l11.p2.x = 11.0f;
 	Matrix matrice(3, 3);
 	Matrix matrice2(3, 3);
 	Matrix matrice3(3, 3);
