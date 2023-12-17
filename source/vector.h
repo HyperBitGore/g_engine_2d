@@ -131,6 +131,70 @@ public:
 		this->y = r.y;
 		return *this;
 	}
+	vec2& operator+=(const vec2& r) {
+		x += r.x;
+		y += r.y;
+		return *this;
+	}
+	vec2& operator-=(const vec2& r) {
+		x -= r.x;
+		y -= r.y;
+		return *this;
+	}
+	//multiplication functions
+	vec2& operator*=(const vec2& r) {
+		x *= r.x;
+		y *= r.y;
+		return *this;
+	}
+	vec2& operator*=(const vec3& r) {
+		x *= r.x;
+		y *= r.y;
+	}
+	vec2& operator*=(const vec4& r) {
+		x *= r.x;
+		y *= r.y;
+	}
+	vec2& operator*=(const float& n) {
+		x *= n;
+		y *= n;
+		return *this;
+	}
+	vec2& operator^=(const float& n) {
+		x = std::powf(x, n);
+		y = std::powf(y, n);
+		return *this;
+	}
+
+
+	friend vec2 operator+(vec2 lhs, const vec2& rhs) {
+		lhs += rhs;
+		return lhs;
+	}
+	friend vec2 operator-(vec2 lhs, const vec2& rhs) {
+		lhs -= rhs;
+		return lhs;
+	}
+	friend vec2 operator*(vec2 lhs, const float& n) {
+		lhs *= n;
+		return lhs;
+	}
+	friend vec2 operator*(vec2 lhs, const vec2& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec2 operator*(vec2 lhs, const vec3& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec2 operator*(vec2 lhs, const vec4& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec2 operator^(vec2 lhs, const float& n) {
+		lhs ^= n;
+		return lhs;
+	}
 };
 class vec3 {
 public:
@@ -157,6 +221,79 @@ public:
 		this->y = r.y;
 		this->z = r.z;
 		return *this;
+	}
+
+	vec3& operator+=(const vec3& r) {
+		x += r.x;
+		y += r.y;
+		z += r.z;
+		return *this;
+	}
+	vec3& operator-=(const vec3& r) {
+		x -= r.x;
+		y -= r.y;
+		z -= r.z;
+		return *this;
+	}
+	//multiplication functions
+	vec3& operator*=(const vec3& r) {
+		x *= r.x;
+		y *= r.y;
+		z *= r.z;
+		return *this;
+	}
+	vec3& operator*=(const float& n) {
+		x *= n;
+		y *= n;
+		z *= n;
+		return *this;
+	}
+	vec3& operator*=(const vec2& r) {
+		x *= r.x;
+		y *= r.y;
+		return *this;
+	}
+	vec3& operator*=(const vec4& r) {
+		x *= r.x;
+		y *= r.y;
+		z *= r.z;
+		return *this;
+	}
+	vec3& operator^=(const float& n) {
+		x = std::powf(x, n);
+		y = std::powf(y, n);
+		z = std::powf(z, n);
+		return *this;
+	}
+
+
+	friend vec3 operator+(vec3 lhs, const vec3& rhs) {
+		lhs += rhs;
+		return lhs;
+	}
+	friend vec3 operator-(vec3 lhs, const vec3& rhs) {
+		lhs -= rhs;
+		return lhs;
+	}
+	friend vec3 operator*(vec3 lhs, const float& n) {
+		lhs *= n;
+		return lhs;
+	}
+	friend vec3 operator*(vec3 lhs, const vec3& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec3 operator*(vec3 lhs, const vec2& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec3 operator*(vec3 lhs, const vec4& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec3 operator^(vec3 lhs, const float& n) {
+		lhs ^= n;
+		return lhs;
 	}
 };
 class vec4 {
@@ -189,5 +326,76 @@ public:
 		this->z = r.z;
 		this->w = r.w;
 		return *this;
+	}
+
+	vec4& operator+=(const vec4& r) {
+		x += r.x;
+		y += r.y;
+		z += r.z;
+		w += r.w;
+		return *this;
+	}
+	vec4& operator-=(const vec4& r) {
+		x -= r.x;
+		y -= r.y;
+		z -= r.z;
+		w -= r.w;
+		return *this;
+	}
+	//multiplication functions
+	vec4& operator*=(const vec4& r) {
+		x *= r.x;
+		y *= r.y;
+		z *= r.z;
+		w *= r.w;
+		return *this;
+	}
+	vec4& operator*=(const float& n) {
+		x *= n;
+		y *= n;
+		z *= n;
+		w *= n;
+		return *this;
+	}
+	vec4& operator*=(const vec3& r) {
+		x *= r.x;
+		y *= r.y;
+		z *= r.z;
+		return *this;
+	}
+	vec4& operator*=(const vec2& r) {
+		x *= r.x;
+		y *= r.y;
+		return *this;
+	}
+
+	vec4& operator^=(const float& n) {
+		x = std::powf(x, n);
+		y = std::powf(y, n);
+		z = std::powf(z, n);
+		w = std::powf(w, n);
+		return *this;
+	}
+
+
+	friend vec4 operator+(vec4 lhs, const vec4& rhs) {
+		lhs += rhs;
+		return lhs;
+	}
+	friend vec4 operator-(vec4 lhs, const vec4& rhs) {
+		lhs -= rhs;
+		return lhs;
+	}
+	friend vec4 operator*(vec4 lhs, const float& n) {
+		lhs *= n;
+		return lhs;
+	}
+	friend vec4 operator*(vec4 lhs, const vec4& rhs) {
+		lhs *= rhs;
+		return lhs;
+	}
+	friend vec4 operator^(vec4 lhs, const float& n) {
+		lhs ^= n;
+		return lhs;
 	}
 };
