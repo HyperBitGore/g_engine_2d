@@ -312,24 +312,34 @@ public:
 
 class PrimitiveRenderer {
 private:
+	std::vector<vec2> vertexs;
+	GLuint vertex_buffer;
+	GLuint allocated;
 	Shader triangle_shader;
+	GLuint triangle_vao;
 	Shader point_shader;
 	Shader line_shader;
 public:
 	//use to initialize shaders
-	PrimitiveRenderer() {
-
-	}
+	PrimitiveRenderer(GLuint sw, GLuint sh);
+	//sets color for drawing
+	void setColor(vec4 color);
 	//triangles
 	void addTriangle(vec2 v1, vec2 v2, vec2 v3);
 	void drawTriangle(vec2 v1, vec2 v2, vec2 v3);
 	void drawBufferTriangle();
 	//quads
-	
+	void addQuad(vec2 pos, float w, float h);
+	void drawQuad(vec2 pos, float w, float h);
+	void drawBufferQuad();
 	//points
-
+	void addPoint(vec2 p);
+	void drawPoint(vec2 p);
+	void drawBufferPoint();
 	//lines
-
+	void addLine(vec2 p1, vec2 p2);
+	void drawLine(vec2 p1, vec2 p2);
+	void drawBufferLine();
 };
 
 class FontRenderer {

@@ -23,6 +23,7 @@ extern PFNGLBINDBUFFERPROC glBindBuffer_g;
 extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays_g;
 extern PFNGLGENBUFFERSPROC glGenBuffers_g;
 extern PFNGLBUFFERDATAPROC glBufferData_g;
+extern PFNGLBUFFERSUBDATAPROC glBufferSubData_g;
 extern PFNGLATTACHSHADERPROC glAttachShader_g;
 extern PFNGLCOMPILESHADERPROC glCompileShader_g;
 extern PFNGLCREATEPROGRAMPROC glCreateProgram_g;

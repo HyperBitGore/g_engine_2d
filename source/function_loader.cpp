@@ -19,11 +19,14 @@ PFNGLBINDBUFFERPROC glBindBuffer_g;
 PFNGLGENVERTEXARRAYSPROC glGenVertexArrays_g;
 PFNGLGENBUFFERSPROC glGenBuffers_g;
 PFNGLBUFFERDATAPROC glBufferData_g;
+PFNGLBUFFERSUBDATAPROC glBufferSubData_g;
+
 PFNGLATTACHSHADERPROC glAttachShader_g;
 PFNGLCOMPILESHADERPROC glCompileShader_g;
 PFNGLCREATEPROGRAMPROC glCreateProgram_g;
 PFNGLCREATESHADERPROC glCreateShader_g;
 PFNGLDELETESHADERPROC glDeleteShader_g;
+
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray_g;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray_g;
 PFNGLGETPROGRAMIVPROC glGetProgramiv_g;
@@ -110,6 +113,8 @@ void EngineNewGL::loadFunctions() {
 	glGenVertexArrays_g = (PFNGLGENVERTEXARRAYSPROC)GetGLFuncAddress("glGenVertexArrays");
 	glGenBuffers_g = (PFNGLGENBUFFERSPROC)GetGLFuncAddress("glGenBuffers");
 	glBufferData_g = (PFNGLBUFFERDATAPROC)GetGLFuncAddress("glBufferData");
+	glBufferSubData_g = (PFNGLBUFFERSUBDATAPROC)GetGLFuncAddress("glBufferSubData");
+
 	glAttachShader_g = (PFNGLATTACHSHADERPROC)GetGLFuncAddress("glAttachShader");
 	glCompileShader_g = (PFNGLCOMPILESHADERPROC)GetGLFuncAddress("glCompileShader");
 	glCreateProgram_g = (PFNGLCREATEPROGRAMPROC)GetGLFuncAddress("glCreateProgram");

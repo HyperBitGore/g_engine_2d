@@ -3,6 +3,7 @@
 
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2("Test Window", 640, 480);
+PrimitiveRenderer prim_r(640, 480);
 //DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
@@ -95,8 +96,10 @@ void renderFunction() {
 		}
 	}
 	//dr.bind();
-	eng2.setDrawColor({ 0.8f, 0.2f, 1.0f, 0.0f });
-	eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
+	prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
+	prim_r.drawTriangle({0.2f, 0.5f}, {0.4f, 0.7f}, {0.5f, 0.5f});
+	/*eng2.setDrawColor({ 0.8f, 0.2f, 1.0f, 0.0f });
+	//eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
 	eng2.drawQuad(pos, 10.0f, 60.0f, 60.0f);
 	eng2.drawQuad(0.0f, posy, 50.0f, 50.0f);
 	eng2.drawQuad(600.0f, 300.0f, 50.0f, 50.0f);
@@ -110,7 +113,7 @@ void renderFunction() {
 	//eng2.drawLines(0.2f);
 	eng2.drawPoints();
 	eng2.setDrawColor({ 0.0f, 1.0f, 0.4f, 0.0f });
-	eng2.drawLine(350.0f, 200.0f, 450.0f, 420.0f, 2.0f);
+	eng2.drawLine(350.0f, 200.0f, 450.0f, 420.0f, 2.0f);*/
 	//eng2.drawCircle(400.0f, 250.0f, 50.0f);
 	c++;
 	if (c >= 50) {
@@ -148,13 +151,13 @@ void renderFunction() {
 	//testing beziers
 	//eng2.quadraticBezier({ 300.0f, 100.0f }, { 350.0f, 150.0f }, { 400.0f, 100.0f }, 20);
 	//eng2.cubicBezier({ 300.0f, 400.0f }, { 325.0f, 425.0f }, { 350.0f, 425.0f }, { 375.0f, 400.0f }, 20);
-	eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
+	//eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
 
 	//testing font rendering
 	//eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
-	eng2.drawText("Hello World", &f_test, 100, 30, 24);
-	eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
-	eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
+	//eng2.drawText("Hello World", &f_test, 100, 30, 24);
+	//eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
+	//eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
 	//dr.unbind();
 	//eng2.bindImg(dr.getTexture());
 	//eng2.addImageCall(0, 0, 640, 480);
