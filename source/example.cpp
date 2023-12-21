@@ -98,13 +98,20 @@ void renderFunction() {
 	//dr.bind();
 	prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
 	prim_r.drawTriangle({0.2f, 0.5f}, {0.4f, 0.7f}, {0.5f, 0.5f});
-	/*eng2.setDrawColor({ 0.8f, 0.2f, 1.0f, 0.0f });
+	prim_r.drawTriangle({-0.2f, 0.5f}, {-0.4f, 0.7f}, {-0.5f, 0.5f});
+	prim_r.addTriangle({0.1f, 0.2f}, {0.15f, 0.3f}, {0.2f, 0.2f});
+	prim_r.addTriangle({0.1f, 0.1f}, {0.15f, 0.2f}, {0.2f, 0.1f});
+	prim_r.addTriangle({0.1f, 0.0f}, {0.15f, 0.1f}, {0.2f, 0.0f});
+	prim_r.addTriangle({0.1f, -0.1f}, {0.15f, 0.0f}, {0.2f, -0.1f});
+	prim_r.drawBufferTriangle();
+	
+	eng2.setDrawColor({ 0.8f, 0.2f, 1.0f, 0.0f });
 	//eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
 	eng2.drawQuad(pos, 10.0f, 60.0f, 60.0f);
 	eng2.drawQuad(0.0f, posy, 50.0f, 50.0f);
 	eng2.drawQuad(600.0f, 300.0f, 50.0f, 50.0f);
 	eng2.drawQuad(640.0f, 400.0f, 50.0f, 50.0f);
-	eng2.setDrawColor({1.0f, 0.3f, 0.1f, 0.0f});
+	/*eng2.setDrawColor({1.0f, 0.3f, 0.1f, 0.0f});
 	for (float y = 100.0f; y <= 300.0f; y += 1.00f) {
 		//eng2.addLinePoints({ 1.0f, y }, { 0.5f, y + 1.0f });
 		eng2.add2DPoint(50.0f, y);
