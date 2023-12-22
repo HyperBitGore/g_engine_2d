@@ -1,7 +1,8 @@
 #include "g_engine_2d.h"
 
 void PrimitiveRenderer::setColor(vec4 color){
-    triangle_shader.setuniform("set_color", vec4(255, 0, 0, 0));
+    triangle_shader.setuniform("set_color", color);
+    point_shader.setuniform("set_color", color);
 }
 
 //triangles
@@ -43,20 +44,67 @@ void PrimitiveRenderer::drawBufferTriangle(){
 }
 //quads
 void PrimitiveRenderer::addQuad(vec2 pos, float w, float h){
+    vertexs.push_back({pos.x, pos.y}); //first triangle top left vertex
+    vertexs.push_back({pos.x + w, pos.y}); //first triangel top right
+    vertexs.push_back({pos.x, pos.y + h}); //first triangle tip vertex
 
+    vertexs.push_back({pos.x + w, pos.y + h});
+    vertexs.push_back({pos.x, pos.y + h});
+    vertexs.push_back({pos.x + w, pos.y});  
 }
 void PrimitiveRenderer::drawQuad(vec2 pos, float w, float h){
+    vertexs.push_back({pos.x, pos.y}); //first triangle top left vertex
+    vertexs.push_back({pos.x + w, pos.y}); //first triangel top right
+    vertexs.push_back({pos.x, pos.y + h}); //first triangle tip vertex
 
+    vertexs.push_back({pos.x + w, pos.y + h});
+    vertexs.push_back({pos.x, pos.y + h});
+    vertexs.push_back({pos.x + w, pos.y});  
+    triangle_shader.bind();
+    glBindVertexArray_g(triangle_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+    }else{
+        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
+    vertexs.clear();
+    glBindVertexArray_g(0);
 }
 void PrimitiveRenderer::drawBufferQuad(){
-
+    triangle_shader.bind();
+    glBindVertexArray_g(triangle_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+    }else{
+        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
+    vertexs.clear();
+    glBindVertexArray_g(0);
 }
 //points
 void PrimitiveRenderer::addPoint(vec2 p){
-
+    vertexs.push_back(p);
 }
 void PrimitiveRenderer::drawPoint(vec2 p){
-
+    point_shader.bind();
+    vertexs.push_back(p);
+    glBindVertexArray_g(triangle_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+    }else{
+        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_POINTS, 0, (GLsizei)vertexs.size());
+    vertexs.clear();
+    glBindVertexArray_g(0);
 }
 void PrimitiveRenderer::drawBufferPoint(){
 
@@ -85,5 +133,9 @@ PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray_g(0);
     glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-    //glBufferData_g(GL_ARRAY_BUFFER, 1000 * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW); //only call this again when we go over the allocated data else we will use glBufferSubData instead
+    
+    point_shader.compile(std::string("point.vs"), std::string("point.fs"));
+    point_shader.bind();
+    point_shader.setuniform("point_size", 1.0f);
+    point_shader.setuniform("screen", {(float)sw, (float)sh});
 }
