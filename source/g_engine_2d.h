@@ -318,7 +318,9 @@ private:
 	Shader triangle_shader;
 	GLuint triangle_vao;
 	Shader point_shader;
+	GLuint point_vao;
 	Shader line_shader;
+	GLuint line_vao;
 public:
 	//use to initialize shaders
 	PrimitiveRenderer(GLuint sw, GLuint sh);
@@ -340,10 +342,30 @@ public:
 	void addLine(vec2 p1, vec2 p2);
 	void drawLine(vec2 p1, vec2 p2);
 	void drawBufferLine();
+	void setLineWidth(float l);
+	//this add points to buffer, they are used for lines so make sure to call drawBufferLine when these are used
+	void linearBezier(vec2 p1, vec2 p2);
+	void quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
+	void cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
+	void circle(vec2 p, float r);
 };
 
 class FontRenderer {
-
+	private:
+	PrimitiveRenderer* pr;
+	float convertToRange(float n, float min, float max, float old_min, float old_max) {
+		return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
+	}
+	public:
+	FontRenderer(PrimitiveRenderer* pr){
+		this->pr = pr;
+	}
+	//font functions
+	Font loadFont(std::string file, UINT16 start, UINT16 end);
+	void drawText(std::string text, Font* font, float x, float y, int ptsize);
+	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
+	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
+	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
 };
 
 class Renderer3D {
@@ -365,21 +387,14 @@ private:
 	vec4 clear_color;
 
 	//Vertex buffers
-	GLuint vertex_buffer;
 	GLuint img_buffer;
 	GLuint texture_buffer; //it's an ssbo! haha nice
 
 	//vertex arrays
-	GLuint VAO_Triangle;
-	GLuint VAO_Points;
-	GLuint VAO_Line;
 	GLuint VAO_Img;
 	GLuint VAO_Imgr;
 
 	//gl Shader programs
-	GLuint shader_triangle2d;
-	GLuint shader_point;
-	GLuint shader_line;
 	GLuint shader_img;
 	GLuint shader_imgr;
 
@@ -387,12 +402,8 @@ private:
 	GLuint texuniform_imgr;
 	GLuint texuniform_img;
 
-	GLuint coloruniform_tri;
-	GLuint coloruniform_point;
-	GLuint coloruniform_line;
 
 	//vertex vectors
-	std::vector<vec2> buffer_2d;
 	std::vector<GLuint> imgs_drawn; //bind these textures because the user added them to be drawn
 	std::vector<img_vertex> img_vertexs;
 
@@ -432,40 +443,6 @@ public:
 	//compiles shader from source
 	GLuint compileShader(const char* vertex, const char* fragment);
 
-	//2d drawing functions
-	//draws a basic triangle
-	void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
-	//draws triangles from buffer_2d
-	void drawTriangles();
-
-	//draws a point
-	void drawPoint(float x1, float y1);
-	//draws points from the buffer_2d
-	void drawPoints();
-
-	//adds quadratic bezier points but doesnt do a draw call
-	void addquadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
-	//draws a quadratic bezier curve
-	void quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
-	//draws a cubic bezier curve
-	void cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
-	//draws a circle
-	void drawCircle(float x, float y, float r);
-	//draws a quad
-	void drawQuad(float x, float y, float w, float h);
-	//draws quads from buffer_2d
-	void drawQuads();
-
-	//draw line of points
-	void drawLinePoints(vec2 p1, vec2 p2);
-	//adds line points to buffer but doesn't draw them
-	void addLinePoints(vec2 p1, vec2 p2);
-
-	//draws a line
-	void drawLine(float x1, float y1, float x2, float y2, float width);
-
-	//draws lines from buffer_2d
-	void drawLines(float width);
 
 	//framebuffer functions
 
@@ -524,13 +501,6 @@ public:
 	vec4 getClearColor() {
 		return clear_color;
 	}
-
-	//vertice functions
-	void addQuad(float x, float y, float w, float h);
-	void addTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
-
-	void add2DPoint(float x, float y);
-	void add2DPoints(std::vector<vec2> points);
 	//image call functions
 	void addImageCall(float x, float y, float w, float h);
 
@@ -563,12 +533,7 @@ public:
 	//returns number of frames in a second and the average frame time in milliseconds, every second. 
 	std::pair<double, double> getFrames();
 
-	//font functions
-	Font loadFont(std::string file, UINT16 start, UINT16 end);
-	void drawText(std::string text, Font* font, float x, float y, int ptsize);
-	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
-	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
-	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
+	
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();

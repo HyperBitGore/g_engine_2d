@@ -931,7 +931,7 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 // https://fontdrop.info/
 //big endian so characters will be reversed to me
 //start and end variables are the start of characters you want to load and end is the last character to load
-Font EngineNewGL::loadFont(std::string file, UINT16 start, UINT16 end) {
+Font FontRenderer::loadFont(std::string file, UINT16 start, UINT16 end) {
 	std::ifstream f;
 	f.open(file.c_str(), std::ios::binary);
 	//read the file into memory
@@ -1005,7 +1005,7 @@ vec2 getIntersection(Line l1, Line l2) {
 	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 }*/
 
-RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
+RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	for (size_t i = 0; i < g->contours.size(); i++) {
@@ -1089,7 +1089,7 @@ RasterGlyph EngineNewGL::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, 
 	return r_g;
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
-void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx) {
+void FontRenderer::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx) {
 	font->ptsize = ptsize;
 	for (size_t i = 0; i < font->glyphs.size(); i++) {
 		bool flip = false;
@@ -1100,7 +1100,7 @@ void EngineNewGL::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vec
 			}
 		}
 		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
-		createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
+		//createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}
 }
 
@@ -1121,7 +1121,7 @@ int findFontChar(Font* f, UINT16 c) {
 	return 0;
 }
 
-void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y, int ptsize) {
+void FontRenderer::drawRasterText(Font* font, std::string text, float x, float y, int ptsize) {
 	if (font->r_glyphs.size() <= 0) {
 		std::cout << "Trying to draw an empty raster font " << std::endl;
 		return;
@@ -1133,9 +1133,9 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
-			addImageCall( x1, y1, scale, scale);
-			bindImg(font->r_glyphs[index].data);
-			renderImgs(true);
+			//addImageCall( x1, y1, scale, scale);
+			//bindImg(font->r_glyphs[index].data);
+			//renderImgs(true);
 		}
 		x1 += scale + 2;
 	}
@@ -1145,7 +1145,7 @@ void EngineNewGL::drawRasterText(Font* font, std::string text, float x, float y,
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
 //cutout memory inefficient parts of glyph like points
-void EngineNewGL::drawText(std::string text, Font* font, float x, float y, int ptsize) {
+void FontRenderer::drawText(std::string text, Font* font, float x, float y, int ptsize) {
 	float x1 = x;
 	float y1 = y;
 	for (size_t i = 0; i < text.size(); i++) {
@@ -1160,12 +1160,11 @@ void EngineNewGL::drawText(std::string text, Font* font, float x, float y, int p
 
 				l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize - 1, font->glyphs[index].xMin, font->glyphs[index].xMax);
 				l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize - 1, font->glyphs[index].yMin, font->glyphs[index].yMax);
-				buffer_2d.push_back({ l.p1.x, l.p1.y});
-				buffer_2d.push_back({ l.p2.x, l.p2.y});
+				pr->addLine(l.p1, l.p2);
 			}
 		}
 		//increase the pos by ptsize and a small gap
 		x1 += ptsize + 2;
 	}
-	drawLines(0.1f);
+	pr->drawBufferLine();
 }

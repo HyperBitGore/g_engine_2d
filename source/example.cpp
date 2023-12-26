@@ -4,6 +4,7 @@
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
+FontRenderer font_r(&prim_r);
 //DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
@@ -106,25 +107,20 @@ void renderFunction() {
 	prim_r.addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
 	prim_r.drawBufferTriangle();
 	
-	eng2.setDrawColor({ 0.8f, 0.2f, 1.0f, 0.0f });
-	//eng2.drawTriangle(100.0f, 120.0f, 130.0f, 100.0f, 150.0f, 120.0f);
+	prim_r.setColor({0.5f, 0.3f, 0.1f, 0.0f});
 	prim_r.drawQuad({pos, 10.0f}, 60.0f, 60.0f);
 	prim_r.setColor({0.0f, 1.0f, 0.5f, 0.0f});
-	prim_r.drawPoint({30.0f, 580.0f});
-	//eng2.drawQuad(0.0f, posy, 50.0f, 50.0f);
-	//eng2.drawQuad(600.0f, 300.0f, 50.0f, 50.0f);
-	//eng2.drawQuad(640.0f, 400.0f, 50.0f, 50.0f);
-	/*eng2.setDrawColor({1.0f, 0.3f, 0.1f, 0.0f});
-	for (float y = 100.0f; y <= 300.0f; y += 1.00f) {
-		//eng2.addLinePoints({ 1.0f, y }, { 0.5f, y + 1.0f });
-		eng2.add2DPoint(50.0f, y);
-		//eng2.drawPoint(50.0f, y);
+	prim_r.drawPoint({50.0f, 300.0f});
+	for (float y = 0.0f; y <= 300.0f; y += 0.01f) {
+		prim_r.addPoint({70.0f, y});
 	}
-	//eng2.drawLines(0.2f);
-	eng2.drawPoints();
-	eng2.setDrawColor({ 0.0f, 1.0f, 0.4f, 0.0f });
-	eng2.drawLine(350.0f, 200.0f, 450.0f, 420.0f, 2.0f);*/
-	//eng2.drawCircle(400.0f, 250.0f, 50.0f);
+	prim_r.drawBufferPoint();
+	prim_r.setColor({0.0f, 0.2f, 1.0f, 0.0f});
+	prim_r.drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
+	prim_r.setColor({1.0f, 0.2f, 0.5f, 0.0f});
+	prim_r.circle({500.0f, 50.0f}, 50.0f);
+	prim_r.quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
+	prim_r.drawBufferLine();
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -165,7 +161,7 @@ void renderFunction() {
 
 	//testing font rendering
 	//eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
-	//eng2.drawText("Hello World", &f_test, 100, 30, 24);
+	font_r.drawText("Hello World", &f_test, 100, 30, 24);
 	//eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
 	//eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
 	//dr.unbind();
@@ -254,10 +250,10 @@ int main() {
 	std::cout << ImageLoader::getPixel(imgtest, 0, 10, 4) << "\n";
 	eng2.updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = eng2.loadFont("resources/EnvyCodeR.ttf", 32, 127);
+	f_test = font_r.loadFont("resources/EnvyCodeR.ttf", 32, 127);
 
 	//testing font rasterizing
-	eng2.rasterizeFont(&f_test, 64, 4278190335, {'l'});
+	font_r.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
 	blank_test = ImageLoader::generateBlankIMG(100, 100, 4);
 	for (int i = 0; i < 100; i++) {

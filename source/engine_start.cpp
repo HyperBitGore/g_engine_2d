@@ -156,69 +156,12 @@ EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 	//start modern opengl needed stuff like shaders and vertex buffers
 	glGenBuffers_g(1, &img_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, img_buffer);
-	glGenBuffers_g(1, &vertex_buffer);
-	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 	//making ssbo
 	glGenBuffers_g(1, &texture_buffer);
 	glBindBuffer_g(GL_SHADER_STORAGE_BUFFER, texture_buffer);
 	
 
 	//shader compiles
-	//2d triangle shader and vertex array
-	const char* vertex_shader_triangle2d = "#version 330 core\nlayout(location = 0) in vec2 aPos;\nuniform vec2 screen;\n"
-		"void main(){\nvec2 p = aPos;\np /= screen;\np = (p * 2.0) - 1;\ngl_Position = vec4(p.x, -p.y, 0.0, 1.0);}\0";
-	const char* fragment_shader_triangle2d = "#version 330 core\n"
-		"out vec4 color;\n"
-		"uniform vec4 set_color;\n"
-		"void main(){\n"
-		"color = set_color;\n"
-		"}\0";
-	shader_triangle2d = compileShader(vertex_shader_triangle2d, fragment_shader_triangle2d);
-	glUseProgram_g(shader_triangle2d);
-	glGenVertexArrays_g(1, &VAO_Triangle);
-	glBindVertexArray_g(VAO_Triangle);
-	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray_g(0);
-	coloruniform_tri = glGetUniformLocation_g(shader_triangle2d, "set_color");
-	GLuint screenuniform_tri = glGetUniformLocation_g(shader_triangle2d, "screen");
-	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
-
-	//2d point shader and vertex array
-	const char* vertex_shader_point = "#version 330 core\nlayout(location = 0) in vec2 pos;\nuniform vec2 screen;\nvoid main(){\n"
-		"vec2 p = pos;\np /= screen;\np = (p * 2.0) - 1;\n"
-		"gl_Position = vec4(p.x, p.y, 1.0, 1.0);\ngl_PointSize=1.0;}\0";
-	const char* fragment_shader_point = "#version 330 core\nout vec4 color;\n"
-		"uniform vec4 set_color;\n"
-		"void main() {\n"
-		"color = set_color;\n}\0";
-
-	shader_point = compileShader(vertex_shader_point, fragment_shader_point);
-	glUseProgram_g(shader_point);
-	glGenVertexArrays_g(1, &VAO_Points);
-	glBindVertexArray_g(VAO_Points);
-	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray_g(0);
-	coloruniform_point = glGetUniformLocation_g(shader_point, "set_color");
-	screenuniform_tri = glGetUniformLocation_g(shader_point, "screen");
-	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
-
-	const char* vertex_shader_line = "#version 330 core\nlayout(location = 0) in vec2 pos;\nuniform vec2 screen;\nvoid main(){\n"
-		"vec2 p = pos;\np /= screen;\np = (p * 2.0) - 1;\n"
-		"gl_Position = vec4(p.x, p.y, 1.0, 1.0);\n}\0";
-	const char* fragment_shader_line = "#version 330 core\nout vec4 color;\n"
-		"uniform vec4 set_color;\n"
-		"void main(){\n"
-		"color = set_color;\n}\0";
-
-	shader_line = compileShader(vertex_shader_line, fragment_shader_line);
-	glUseProgram_g(shader_line);
-	glGenVertexArrays_g(1, &VAO_Line);
-	glBindVertexArray_g(VAO_Line);
-	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray_g(0);
-	coloruniform_line = glGetUniformLocation_g(shader_line, "set_color");
-	screenuniform_tri = glGetUniformLocation_g(shader_line, "screen");
-	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
 
 	glBindVertexArray_g(0);
 
@@ -245,8 +188,6 @@ EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)12);
 
 	texuniform_img = glGetUniformLocation_g(shader_img, "image_tex");
-	screenuniform_tri = glGetUniformLocation_g(shader_img, "screen");
-	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
 
 	//conver this to screen space
 	const char* vertex_shader_img_r = "#version 430 core\nlayout (location = 0) in vec2 vec_pos;\nlayout (location = 1) in vec2 tex_point;\n"
@@ -287,15 +228,12 @@ EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 	glEnableVertexAttribArray_g(3);
 	glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(img_vertex), (void*)24);
 	
-	screenuniform_tri = glGetUniformLocation_g(shader_imgr, "screen");
 	texuniform_imgr = glGetUniformLocation_g(shader_imgr, "image_tex");
-	glUniform2f_g(screenuniform_tri, (float)width, (float)height);
 
 
 	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray_g(0);
 	//speed up push_backs
-	buffer_2d.reserve(1000);
 	img_vertexs.reserve(1000);
 
 
