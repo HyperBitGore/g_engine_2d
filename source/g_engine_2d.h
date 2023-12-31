@@ -297,14 +297,22 @@ class DrawPass {
 
 
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
+//https://www.khronos.org/opengl/wiki/Texture
+	//-read the glsl binding section
 class ImageRenderer {
 private:
-	std::vector<img_vertex> buffer;
+	struct ivertex{
+		float x;
+		float y;
+		float uvx;
+		float uvy;
+	};
+	std::vector<ivertex> vertexs;
 	Shader shader;
+	GLuint vao;
+	GLuint vertex_buffer;
 public:
-	ImageRenderer() {
-		buffer.reserve(1000);
-	}
+	ImageRenderer(size_t w, size_t h);
 	void addImageVertex(float x, float y, float w, float h);
 	void drawBuffer();
 	void drawImage(IMG img, float x, float y, float w, float h);

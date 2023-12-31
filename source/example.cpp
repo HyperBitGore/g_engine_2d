@@ -4,6 +4,7 @@
 //Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
+ImageRenderer img_r(640, 480);
 FontRenderer font_r(&prim_r);
 //DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
@@ -133,6 +134,7 @@ void renderFunction() {
 	}
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
+	img_r.drawImage(imgtest, 300.0f, 200.0f, 100.0f, 100.0f);
 	//std::cout << r << "\n";
 	/*eng2.bindImg(imgtest);
 	eng2.addImageCall( 450.0f, 300.0f, 50.0f, 50.0f);
