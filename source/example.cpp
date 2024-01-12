@@ -98,7 +98,7 @@ void renderFunction() {
 		}
 	}
 	//dr.bind();
-	prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
+	/*prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
 	prim_r.drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
 	prim_r.drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
 	prim_r.addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
@@ -112,7 +112,7 @@ void renderFunction() {
 	prim_r.drawQuad({pos, 10.0f}, 60.0f, 60.0f);
 	prim_r.setColor({0.0f, 1.0f, 0.5f, 0.0f});
 	prim_r.drawPoint({50.0f, 300.0f});
-	for (float y = 0.0f; y <= 300.0f; y += 0.01f) {
+	for (float y = 0.0f; y <= 300.0f; y += 0.1f) {
 		prim_r.addPoint({70.0f, y});
 	}
 	prim_r.drawBufferPoint();
@@ -121,7 +121,7 @@ void renderFunction() {
 	prim_r.setColor({1.0f, 0.2f, 0.5f, 0.0f});
 	prim_r.circle({500.0f, 50.0f}, 50.0f);
 	prim_r.quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
-	prim_r.drawBufferLine();
+	prim_r.drawBufferLine();*/
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -135,41 +135,10 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	img_r.drawImage(imgtest, 300.0f, 200.0f, 100.0f, 100.0f);
-	//std::cout << r << "\n";
-	/*eng2.bindImg(imgtest);
-	eng2.addImageCall( 450.0f, 300.0f, 50.0f, 50.0f);
-	eng2.addImageCall( 250.0f, 250.0f, 80.0f, 80.0f);
-	eng2.addImageCall( 360.0f, 250.0f, 50.0f, 50.0f);
-	eng2.renderImgs(false);
-	//eng2.renderImg(imgtest, 100.0f, 100.0f, 40.0f, 40.0f);
-	eng2.addImageRotatedCall(150.0f, 80.0f, 50.0f, 50.0f, r);
-	eng2.addImageRotatedCall(325.0f, 160.0f, 50.0f, 50.0f, r);
-	eng2.addImageRotatedCall(350.0f, 350.0f, 50.0f, 50.0f, r_r);
-	eng2.renderImgsRotated(false);
-	//eng2.renderImgRotated(imgtest, -0.2f, -0.1f, 0.2f, 0.2f, r);
-	
-	eng2.bindImg(atlas.getImg());
-	eng2.addImageCall(200.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(atlas_test).x, atlas.getImagePos(atlas_test).y, 30, 50);
-	eng2.addImageCall(300.0f, 300.0f, 50.0f, 50.0f, atlas.getImagePos(imgtest).x, atlas.getImagePos(imgtest).y, 300, 241);
-	eng2.renderImgs(false);
-
-	//eng2.renderImg(f_test.glyphs[17].data, 100.0f, 100.0f, 64, 64);
-	//eng2.renderImg(blank_test, 100.0f, 100.0f, 64, 64);
-	*/
-	//testing beziers
-	//eng2.quadraticBezier({ 300.0f, 100.0f }, { 350.0f, 150.0f }, { 400.0f, 100.0f }, 20);
-	//eng2.cubicBezier({ 300.0f, 400.0f }, { 325.0f, 425.0f }, { 350.0f, 425.0f }, { 375.0f, 400.0f }, 20);
-	//eng2.quadraticBezier({ 50.0f, 80.0f }, bez_m, { 220.0f, 250.0f }, 20);
 
 	//testing font rendering
 	//eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
-	font_r.drawText("Hello World", &f_test, 100, 30, 24);
-	//eng2.setDrawColor({ 1.0f, 0.1f, 0.5f, 1.0f });
-	//eng2.drawLinePoints({ 100.0f, 200.0f }, mos);
-	//dr.unbind();
-	//eng2.bindImg(dr.getTexture());
-	//eng2.addImageCall(0, 0, 640, 480);
-	//.renderImgs(false);
+	//font_r.drawText("Hello World", &f_test, 100, 30, 24);
 }
 
 int nthBit(int number, int n) {
