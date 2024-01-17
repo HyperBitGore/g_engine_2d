@@ -1,5 +1,5 @@
 #include "g_engine_2d.h"
-
+/*
 //this doesn't work
 void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, size_t raw_size) {
     //return;
@@ -13,7 +13,7 @@ void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, 
     for (off; off < offset; off += 4) {
         color_table.push_back(*tpo);
         tpo++;
-    }*/
+    }
     //
     //std::string top = str.str();
     //const char* t = top.c_str();
@@ -188,3 +188,4 @@ IMG ImageLoader::loadBMP(std::string file) {
     cur_tex++;
     return out;
 }
+*/

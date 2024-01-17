@@ -64,49 +64,10 @@ struct g_img {
 	GLuint tex;
 	unsigned int w;
 	unsigned int h;
-	int pos;
 	uint8_t bytes_per_pixel;
 };
 
 typedef g_img* IMG;
-
-
-class ImageLoader {
-private:
-	//this doesn't work
-	static void readBMPPixels32(IMG f, std::stringstream& str, size_t offset, size_t raw_size);
-	//fix color being off, ie read color table
-	static void readBMPPixels24(IMG f, std::string str, size_t offset, size_t raw_size);
-	static void parseBMPData(IMG f, std::stringstream& str, size_t offset, unsigned short bitsperpixel, size_t size);
-	int cur_tex = 1;
-	
-public:
-	//https://docs.fileformat.com/image/bmp/
-	//https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
-	//https://en.wikipedia.org/wiki/BMP_file_format
-	//https://www.fileformat.info/format/bmp/egff.htm
-	//https://medium.com/sysf/bits-to-bitmaps-a-simple-walkthrough-of-bmp-image-format-765dc6857393
-	
-	IMG loadBMP(std::string file);
-	IMG loadPNG(std::string file, unsigned int w, unsigned int h);
-	//for when you create img data yourself and need to actually bind a texture easily
-	void createTexture(IMG img, GLenum internalformat, GLenum format);
-	//all of these assume the color componenets are 8 bits each
-	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
-	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);
-	static void setPixel(IMG img, int x, int y, uint8_t r);
-	//assumed the color components are 8 bits each
-	static void setPixel(IMG img, int x, int y, uint32_t color, int bytes);
-
-
-
-	static uint64_t getPixel(IMG img, int x, int y, int bytes);
-
-
-	//generates an img struct with no texture assigned but with generated blank data
-	static IMG generateBlankIMG(int w, int h, int bytes_per_pixel);
-};
 
 
 
@@ -295,10 +256,27 @@ class DrawPass {
 };
 
 //rewrite image loader to be manageable
-class ImageLoaderToo{
+class imageloader{
 	public:
-	IMG loadPNG(std::string path);
-	IMG loadBMP(std::string path);
+	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel, GLenum internalformat, GLenum format);
+	static void createTexture(IMG img, GLenum internalformat, GLenum format);
+	static IMG loadPNG(std::string path, unsigned int w, unsigned int h);
+	static IMG loadBMP(std::string path,  unsigned int w, unsigned int h);
+	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
+	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);
+	static void setPixel(IMG img, int x, int y, uint8_t r);
+	//assumed the color components are 8 bits each
+	static void setPixel(IMG img, int x, int y, uint32_t color, int bytes);
+
+	//run after you've done all the editing of data you want to
+	static void updateIMG(IMG img) {
+		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	static uint64_t getPixel(IMG img, int x, int y, int bytes);
 };
 
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
@@ -378,7 +356,7 @@ class FontRenderer {
 	void drawText(std::string text, Font* font, float x, float y, int ptsize);
 	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
 	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
-	void drawRasterText(Font* font, std::string text, float x, float y, int ptsize);
+	void drawRasterText(Font* font, ImageRenderer* img_r, std::string text, float x, float y, int ptsize);
 };
 
 class Renderer3D {
@@ -393,7 +371,6 @@ class EngineNewGL {
 private:
 	Window* wind;
 	Input* in;
-	ImageLoader img_l;
 	std::function<void()> renderFund;
 	//color constants
 	vec4 draw_color;
@@ -470,21 +447,7 @@ public:
 	//rotates counter clockwise around top left point
 	//mass draws an image with rotations
 	void renderImgsRotated(bool blend);
-	//run after you've done all the editing of data you want to
-	void updateIMG(IMG img) {
-		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-	void createTexture(IMG img, GLenum internalformat, GLenum format) {
-		img_l.createTexture(img, internalformat, format);
-	}
-	IMG loadPNG(std::string file, unsigned int w, unsigned int h) {
-		return img_l.loadPNG(file, w, h);
-	}
-	IMG loadBMP(std::string file) {
-		return img_l.loadBMP(file);
-	}
+	
 
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters

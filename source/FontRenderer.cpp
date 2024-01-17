@@ -1022,7 +1022,7 @@ RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color,
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
-	r_g.data = ImageLoader::generateBlankIMG(w, h, 4);
+	r_g.data = imageloader::createBlank(w, h, 4, GL_RGBA8, GL_RGBA);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	struct sortContours {
 		bool operator() (Line l1, Line l2) { return l1.p1.y < l2.p1.y; }
@@ -1051,7 +1051,7 @@ RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color,
 			float y1 = inters[i - 1].y;
 			float y2 = inters[i].y;
 			for (int y = (int)y1; y <= y2; y++) {
-				ImageLoader::setPixel(r_g.data, x, y, color, 4);
+				imageloader::setPixel(r_g.data, x, y, color, 4);
 			}
 			if (inters.size() % 2 == 0) {
 				i += 2;
@@ -1067,10 +1067,10 @@ RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color,
 		//hacky way to deal with fucked up L's
 		for (int y = 0; y < h - 1; y++) {
 			for (int x = 0, x1 = w - 1; x <= x1; x++, x1--) {
-				uint32_t c1 = (uint32_t)ImageLoader::getPixel(r_g.data, x, y, 4);
-				uint32_t c2 = (uint32_t)ImageLoader::getPixel(r_g.data, x1, y, 4);
-				ImageLoader::setPixel(r_g.data, x, y, c2, 4);
-				ImageLoader::setPixel(r_g.data, x1, y, c1, 4);
+				uint32_t c1 = (uint32_t)imageloader::getPixel(r_g.data, x, y, 4);
+				uint32_t c2 = (uint32_t)imageloader::getPixel(r_g.data, x1, y, 4);
+				imageloader::setPixel(r_g.data, x, y, c2, 4);
+				imageloader::setPixel(r_g.data, x1, y, c1, 4);
 			}
 		}
 	}
@@ -1100,6 +1100,7 @@ void FontRenderer::rasterizeFont(Font* font, int ptsize, uint32_t color, std::ve
 			}
 		}
 		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
+		//imageloader::createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 		//createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}
 }
@@ -1121,7 +1122,7 @@ int findFontChar(Font* f, UINT16 c) {
 	return 0;
 }
 
-void FontRenderer::drawRasterText(Font* font, std::string text, float x, float y, int ptsize) {
+void FontRenderer::drawRasterText(Font* font, ImageRenderer* img_r, std::string text, float x, float y, int ptsize) {
 	if (font->r_glyphs.size() <= 0) {
 		std::cout << "Trying to draw an empty raster font " << std::endl;
 		return;
@@ -1133,6 +1134,7 @@ void FontRenderer::drawRasterText(Font* font, std::string text, float x, float y
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
+			img_r->drawImage(font->r_glyphs[index].data, x1, y1, scale, scale);
 			//addImageCall( x1, y1, scale, scale);
 			//bindImg(font->r_glyphs[index].data);
 			//renderImgs(true);

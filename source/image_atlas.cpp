@@ -35,8 +35,8 @@ void ImageAtlas::addImage(IMG n_img) {
     
     for (size_t y = 0; y < n_img->h; y++) {
         for (size_t x = 0; x < n_img->w; x++) {
-            uint32_t col = (uint32_t)ImageLoader::getPixel(n_img, x, y, 4);
-            ImageLoader::setPixel(img, c_x + x, c_y + y, col, 4);
+            uint32_t col = (uint32_t)imageloader::getPixel(n_img, x, y, 4);
+            imageloader::setPixel(img, c_x + x, c_y + y, col, 4);
         }
     }
     

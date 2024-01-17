@@ -98,7 +98,7 @@ void renderFunction() {
 		}
 	}
 	//dr.bind();
-	/*prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
+	prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
 	prim_r.drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
 	prim_r.drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
 	prim_r.addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
@@ -121,7 +121,7 @@ void renderFunction() {
 	prim_r.setColor({1.0f, 0.2f, 0.5f, 0.0f});
 	prim_r.circle({500.0f, 50.0f}, 50.0f);
 	prim_r.quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
-	prim_r.drawBufferLine();*/
+	prim_r.drawBufferLine();
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -137,8 +137,8 @@ void renderFunction() {
 	img_r.drawImage(imgtest, 300.0f, 200.0f, 100.0f, 100.0f);
 
 	//testing font rendering
-	//eng2.drawRasterText(&f_test, "Hello world LOL", 100.0f, 100.0f, 32);
-	//font_r.drawText("Hello World", &f_test, 100, 30, 24);
+	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
+	font_r.drawText("Hello World", &f_test, 100, 30, 24);
 }
 
 int nthBit(int number, int n) {
@@ -207,30 +207,30 @@ int main() {
 	//std::vector<uint16_t> foo = {32000, 4052, 4032};
 	//std::vector<float> up(foo.begin(), foo.end());
 
-	bmptest = eng2.loadBMP("resources/test1.bmp");
-	imgtest = eng2.loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
-	atlas_test = eng2.loadPNG("resources/test.png", 30, 50);
-	eng2.createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
+	//bmptest = imageloader::loadBMP("resources/test1.bmp");
+	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
+	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
+	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
 	atlas.addImage(atlas_test);
 	atlas.addImage(imgtest);
-	eng2.updateIMG(atlas.getImg());
+	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
 		//ImageLoader::setPixel(imgtest, x, 1, 4278190335, 4);
 	}
-	std::cout << ImageLoader::getPixel(imgtest, 0, 100, 4) << "\n";
-	std::cout << ImageLoader::getPixel(imgtest, 0, 10, 4) << "\n";
-	eng2.updateIMG(imgtest);
+	std::cout << imageloader::getPixel(imgtest, 0, 100, 4) << "\n";
+	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
+	imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
 	f_test = font_r.loadFont("resources/EnvyCodeR.ttf", 32, 127);
 
 	//testing font rasterizing
 	font_r.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
-	blank_test = ImageLoader::generateBlankIMG(100, 100, 4);
+	blank_test = imageloader::createBlank(100, 100, 4, GL_RGBA8, GL_RGBA);
 	for (int i = 0; i < 100; i++) {
-		ImageLoader::setPixel(blank_test, i, 50, 4278190335, 4);
+		imageloader::setPixel(blank_test, i, 50, 4278190335, 4);
 	}
-	eng2.createTexture(blank_test, GL_RGBA8, GL_RGBA);
+	imageloader::updateIMG(blank_test);
 
 
 	std::bitset<32> x(10);

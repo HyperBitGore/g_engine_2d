@@ -1,33 +1,62 @@
 #include "g_engine_2d.h"
 
-IMG ImageLoader::generateBlankIMG(int w, int h, int bytes_per_pixel) {
-	IMG n_img = new g_img;
-	n_img->h = h;
-	n_img->w = w;
-	n_img->bytes_per_pixel = bytes_per_pixel;
-	n_img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
-	std::memset(n_img->data, 0, (w * bytes_per_pixel) * h);
-	return n_img;
+IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
+	IMG img = new g_img;
+	unsigned error = lodepng_decode32_file((&(img->data)), &w, &h, path.c_str());
+	img->w = w;
+	img->h = h;
+	img->bytes_per_pixel = 4;
+	glGenTextures(1, &img->tex);
+	glActiveTexture_g(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+	glGenerateMipmap_g(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return img;
 }
 
-void ImageLoader::createTexture(IMG img, GLenum internalformat, GLenum format) {
-	img->pos = cur_tex;
-	glCreateTextures_g(GL_TEXTURE_2D, 1, &img->tex);
-	//glBindTextureUnit_g(GL_TEXTURE0, img->tex);
+IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel, GLenum internalformat, GLenum format){
+	IMG img = new g_img;
+	img->h = h;
+	img->w = w;
+	img->bytes_per_pixel = bytes_per_pixel;
+	img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
+	std::memset(img->data, 0, (w * bytes_per_pixel) * h);
+	glGenTextures(1, &img->tex);
+	glActiveTexture_g(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureStorage2D_g(img->tex, 1, internalformat, img->w, img->h);
-	glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
+	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
 	glGenerateMipmap_g(GL_TEXTURE_2D);
-
 	glBindTexture(GL_TEXTURE_2D, 0);
-	cur_tex++;
+
+	return img;
 }
 
-void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+void imageloader::createTexture(IMG img, GLenum internalformat, GLenum format){
+	glGenTextures(1, &img->tex);
+	glActiveTexture_g(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D_g(img->tex, 1, internalformat, img->w, img->h);
+	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
+	glGenerateMipmap_g(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
+void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	size_t row = y * (img->w * 4);
 	size_t col = x * 4;
 	img->data[row + col] = r;
@@ -35,7 +64,7 @@ void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t 
 	img->data[row + col + 2] = b;
 	img->data[row + col + 3] = a;
 }
-void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 	size_t row = y * (img->w * 3);
 	size_t col = x * 3;
 	img->data[row + col] = r;
@@ -43,20 +72,20 @@ void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t 
 	img->data[row + col + 2] = b;
 }
 
-void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g) {
+void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g) {
 	size_t row = y * (img->w * 2);
 	size_t col = x * 2;
 	img->data[row + col] = r;
 	img->data[row + col + 1] = g;
 }
-void ImageLoader::setPixel(IMG img, int x, int y, uint8_t r) {
+void imageloader::setPixel(IMG img, int x, int y, uint8_t r) {
 	size_t row = y * (img->w);
 	size_t col = x;
 	img->data[row + col] = r;
 }
 
 
-void ImageLoader::setPixel(IMG img, int x, int y, uint32_t color, int bytes) {
+void imageloader::setPixel(IMG img, int x, int y, uint32_t color, int bytes) {
 	size_t row = y * (img->w * bytes);
 	size_t col = x * bytes;
 	int shift = (bytes * 8) - 8;
@@ -66,7 +95,7 @@ void ImageLoader::setPixel(IMG img, int x, int y, uint32_t color, int bytes) {
 	}
 }
 
-uint64_t ImageLoader::getPixel(IMG img, int x, int y, int bytes) {
+uint64_t imageloader::getPixel(IMG img, int x, int y, int bytes) {
 	if (bytes <= 0) {
 		return 0;
 	}
@@ -79,36 +108,4 @@ uint64_t ImageLoader::getPixel(IMG img, int x, int y, int bytes) {
 		shift -= 8;
 	}
 	return out;
-}
-
-IMG ImageLoader::loadPNG(std::string file, unsigned int w, unsigned int h) {
-	IMG f = new g_img;
-	unsigned error = lodepng_decode32_file((&(f->data)), &w, &h, file.c_str());
-	if (error) {
-		std::cout << lodepng_error_text(error) << std::endl;
-	}
-	f->w = w;
-	f->h = h;
-	f->bytes_per_pixel = 4;
-	f->pos = cur_tex;
-	
-	glGenTextures(1, &f->tex);
-	//glCreateTextures_g(GL_TEXTURE_2D, 1, &f->tex);
-	//glBindTextureUnit_g(GL_TEXTURE0, f->tex);
-	glActiveTexture_g(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, f->tex);
-	
-	
-	glTextureParameteri_g(f->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(f->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(f->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri_g(f->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureStorage2D_g(f->tex, 1, GL_RGBA8, f->w, f->h);
-	//glTextureSubImage2D_g(f->tex, 0, 0, 0, f->w, f->h, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, f->data);
-	glGenerateMipmap_g(GL_TEXTURE_2D);
-	
-	glBindTexture(GL_TEXTURE_2D, 0);
-	cur_tex++;
-	return f;
 }

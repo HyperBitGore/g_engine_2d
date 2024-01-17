@@ -2,7 +2,7 @@
 
 //2d image drawing functions
 
-void EngineNewGL::bindImg(IMG img) {
+/*void EngineNewGL::bindImg(IMG img) {
 	glUseProgram_g(shader_img);
 	//glBindTextureUnit_g(GL_TEXTURE0, img->tex);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
@@ -38,7 +38,7 @@ void EngineNewGL::renderImgs(bool blend) {
 	}
 	//we now have weird artifacts in text images
 	glUniform1iv_g(texuniform_img, textures.size(), &textures[0]);
-	*/
+	
 	//glBindTextureUnit_g(img->pos, img->tex);
 	//glUniform1i_g(texuniform_img, img->tex);
 
@@ -147,4 +147,4 @@ void EngineNewGL::addImageRotatedCall(IMG img, float x, float y, float w, float 
 	img_vertexs.push_back({ x + w, y, 0.0f, imgx + imgw, imgy, ang, x, y });
 	img_vertexs.push_back({ x + w, y - h, 0.0f, imgx + imgw, imgy + imgh, ang, x, y });
 	img_vertexs.push_back({ x, y - h, 0.0f,  imgx, imgy + imgh, ang, x, y });
-}
+}*/

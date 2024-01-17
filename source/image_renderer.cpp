@@ -19,6 +19,7 @@ void ImageRenderer::drawImage(IMG img, float x, float y, float w, float h){
     glActiveTexture_g(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, img->tex);
     shader.bind();
+    //shader.setuniform("mtexture", img->tex);
     glBindVertexArray_g(vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
@@ -38,5 +39,7 @@ ImageRenderer::ImageRenderer(size_t w, size_t h) {
     glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0);
     glEnableVertexAttribArray_g(1);
     glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2));
+    shader.bind();
     shader.setuniform("screen", {(float)w, (float)h});
+    shader.setuniform("mtexture", (GLuint)0);
 }
