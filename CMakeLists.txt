@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 add_executable(g_engine source/g_engine_2d.h source/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/FontRenderer.cpp 
-source/function_loader.cpp source/g_primitive_funcs.h source/gl_defines.h source/image_draw.cpp source/image_loader.cpp source/input.cpp source/lodepng.cpp
+source/function_loader.cpp source/g_primitive_funcs.h source/gl_defines.h source/image_loader.cpp source/input.cpp source/lodepng.cpp
 source/lodepng.h source/matrix.cpp source/matrix.h source/shader.cpp source/window.cpp source/example.cpp source/audio.h source/backend.h source/vector.cpp 
 source/vector.h source/primitive_renderer.cpp source/image_renderer.cpp source/image_atlas.cpp source/bmp_loader.cpp)
 

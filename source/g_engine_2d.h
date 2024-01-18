@@ -258,7 +258,7 @@ class DrawPass {
 //rewrite image loader to be manageable
 class imageloader{
 	public:
-	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel, GLenum internalformat, GLenum format);
+	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel);
 	static void createTexture(IMG img, GLenum internalformat, GLenum format);
 	static IMG loadPNG(std::string path, unsigned int w, unsigned int h);
 	static IMG loadBMP(std::string path,  unsigned int w, unsigned int h);

@@ -1022,7 +1022,8 @@ RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color,
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
-	r_g.data = imageloader::createBlank(w, h, 4, GL_RGBA8, GL_RGBA);
+	r_g.data = imageloader::createBlank(w, h, 4);
+	imageloader::createTexture(r_g.data, GL_RGBA8, GL_RGBA);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	struct sortContours {
 		bool operator() (Line l1, Line l2) { return l1.p1.y < l2.p1.y; }
@@ -1085,7 +1086,6 @@ RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color,
 			std::free(c1);
 		}
 	}
-
 	return r_g;
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
@@ -1100,6 +1100,7 @@ void FontRenderer::rasterizeFont(Font* font, int ptsize, uint32_t color, std::ve
 			}
 		}
 		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
+		imageloader::updateIMG(font->r_glyphs[font->r_glyphs.size() - 1].data);
 		//imageloader::createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 		//createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}

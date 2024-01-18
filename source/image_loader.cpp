@@ -19,31 +19,20 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
 	return img;
 }
 
-IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel, GLenum internalformat, GLenum format){
+IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	IMG img = new g_img;
 	img->h = h;
 	img->w = w;
 	img->bytes_per_pixel = bytes_per_pixel;
 	img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
 	std::memset(img->data, 0, (w * bytes_per_pixel) * h);
-	glGenTextures(1, &img->tex);
-	glActiveTexture_g(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, img->tex);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureStorage2D_g(img->tex, 1, internalformat, img->w, img->h);
-	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
-	glGenerateMipmap_g(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return img;
 }
 
 void imageloader::createTexture(IMG img, GLenum internalformat, GLenum format){
 	glGenTextures(1, &img->tex);
-	glActiveTexture_g(GL_TEXTURE0);
+	//glActiveTexture_g(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

@@ -135,6 +135,8 @@ void renderFunction() {
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
 	img_r.drawImage(imgtest, 300.0f, 200.0f, 100.0f, 100.0f);
+	img_r.drawImage(atlas_test, 400.0f, 250.0f, 100.0f, 100.0f);
+	img_r.drawImage(blank_test, 300.0f, 330.0f, 50.0f, 50.0f);
 
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
@@ -215,7 +217,7 @@ int main() {
 	atlas.addImage(imgtest);
 	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
-		//ImageLoader::setPixel(imgtest, x, 1, 4278190335, 4);
+		imageloader::setPixel(imgtest, x, 1, 4278190335, 4);
 	}
 	std::cout << imageloader::getPixel(imgtest, 0, 100, 4) << "\n";
 	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
@@ -226,9 +228,12 @@ int main() {
 	//testing font rasterizing
 	font_r.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
-	blank_test = imageloader::createBlank(100, 100, 4, GL_RGBA8, GL_RGBA);
+	blank_test = imageloader::createBlank(100, 100, 4);
+	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA);
 	for (int i = 0; i < 100; i++) {
-		imageloader::setPixel(blank_test, i, 50, 4278190335, 4);
+		for(int j = 0; j < 100; j++){
+			imageloader::setPixel(blank_test, j, i, 4278190335, 4);
+		}
 	}
 	imageloader::updateIMG(blank_test);
 
