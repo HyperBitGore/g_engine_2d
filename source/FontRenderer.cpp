@@ -1135,7 +1135,7 @@ void FontRenderer::drawRasterText(Font* font, ImageRenderer* img_r, std::string 
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(font, text[i]);
-			img_r->drawImage(font->r_glyphs[index].data, x1, y1, scale, scale);
+			img_r->drawImage(font->r_glyphs[index].data, {x1, y1}, {scale, scale});
 			//addImageCall( x1, y1, scale, scale);
 			//bindImg(font->r_glyphs[index].data);
 			//renderImgs(true);

@@ -36,10 +36,6 @@ static void FatalError(const char* message)
 
 
 
-//optimize drawing
-//	-remove uniform calls in draw calls, so move color setting to a different function
-//  -reduce shader changes
-//	-maybe switch to a seperate queue for all the calls and call of them at once
 //add 3d support
 //add 3d line rendering
 //add 3d primitives
@@ -142,7 +138,7 @@ private:
 public:
 	ImageAtlas(int w, int h, int bytes_per_pixel);
 	void addImage(IMG img);
-	Point getImagePos(IMG img);
+	Point getImagePos(IMG img, bool normalize = false);
 	IMG getImg();
 };
 
@@ -282,6 +278,7 @@ class imageloader{
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
 //https://www.khronos.org/opengl/wiki/Texture
 	//-read the glsl binding section
+//https://learnopengl.com/Getting-started/Transformations
 class ImageRenderer {
 private:
 	struct ivertex{
@@ -289,16 +286,23 @@ private:
 		float y;
 		float uvx;
 		float uvy;
+		float rot;
+		float rotx;
+		float roty;
 	};
 	std::vector<ivertex> vertexs;
 	Shader shader;
 	GLuint vao;
 	GLuint vertex_buffer;
+	GLuint allocated;
 public:
 	ImageRenderer(size_t w, size_t h);
-	void addImageVertex(float x, float y, float w, float h);
-	void drawBuffer();
-	void drawImage(IMG img, float x, float y, float w, float h);
+	void addImageVertex(vec2 pos, vec2 dimensions);
+	void addImageVertex(vec2 pos, vec2 dimensions, float rot);
+	void addImageVertex(vec2 pos, vec2 dimensions, vec4 uvs, float rot);
+	void drawBuffer(IMG img);
+	void drawImage(IMG img, vec2 pos, vec2 dimensions);
+	void drawImageRotated(IMG img,vec2 pos, vec2 dimensions, float rot);
 };
 
 class PrimitiveRenderer {
@@ -376,27 +380,6 @@ private:
 	vec4 draw_color;
 	vec4 clear_color;
 
-	//Vertex buffers
-	GLuint img_buffer;
-	GLuint texture_buffer; //it's an ssbo! haha nice
-
-	//vertex arrays
-	GLuint VAO_Img;
-	GLuint VAO_Imgr;
-
-	//gl Shader programs
-	GLuint shader_img;
-	GLuint shader_imgr;
-
-	//gl uniforms
-	GLuint texuniform_imgr;
-	GLuint texuniform_img;
-
-
-	//vertex vectors
-	std::vector<GLuint> imgs_drawn; //bind these textures because the user added them to be drawn
-	std::vector<img_vertex> img_vertexs;
-
 	//delta time
 	clock_t delta = 0;
 	clock_t delta_f = 0;
@@ -429,24 +412,6 @@ public:
 	}
 	//updates the window
 	bool updateWindow();
-
-	//compiles shader from source
-	GLuint compileShader(const char* vertex, const char* fragment);
-
-
-	//framebuffer functions
-
-
-	//image functions
-	// 
-	void bindImg(IMG img);
-
-	void bindImg(GLuint img);
-	//mass draws an image based on buffer_2d
-	void renderImgs(bool blend);
-	//rotates counter clockwise around top left point
-	//mass draws an image with rotations
-	void renderImgsRotated(bool blend);
 	
 
 	//input functions
@@ -477,19 +442,10 @@ public:
 	vec4 getClearColor() {
 		return clear_color;
 	}
-	//image call functions
-	void addImageCall(float x, float y, float w, float h);
-
-	void addImageCall(float x, float y, float w, float h, float img_x, float img_y, float img_w, float img_h);
 
 	float convertToRange(float n, float min, float max, float old_min, float old_max) {
 		return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 	}
-
-	//angle in radians
-	void addImageRotatedCall(float x, float y, float w, float h, float ang);
-
-	void addImageRotatedCall(IMG img, float x, float y, float w, float h, float ang, float img_x, float img_y, float img_w, float img_h);
 
 	//3d drawing functions
 	//

@@ -44,7 +44,11 @@ void ImageAtlas::addImage(IMG n_img) {
     images.insert(n_img, { c_x, c_y });
 }
 
-Point ImageAtlas::getImagePos(IMG img) {
+Point ImageAtlas::getImagePos(IMG img, bool normalize) {
+    if(normalize){
+        Point p = *images.get(img);
+        return {(p.x / (int)img->w), (p.y / (int)img->h)};
+    }
     return *images.get(img);
 }
 
