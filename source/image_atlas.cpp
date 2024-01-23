@@ -1,4 +1,4 @@
-#include "g_engine_2d.h"
+#include "image_loader.h"
 
 int imageHash(IMG img) {
 		return img->data[0] % 256;

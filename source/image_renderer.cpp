@@ -1,4 +1,4 @@
-#include "g_engine_2d.h"
+#include "image_renderer.h"
 
 void ImageRenderer::addImageVertex(vec2 pos, vec2 dim){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex
@@ -100,8 +100,43 @@ void ImageRenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
 }
 
 ImageRenderer::ImageRenderer(size_t w, size_t h) {
+    const char* vertex_shader = "#version 450 core\n"
+        "\n"
+        "layout(location = 0) in vec2 pos;\n"
+        "layout(location = 1) in vec2 uv;\n"
+        "layout(location = 2) in float ang;\n"
+        "layout(location = 3) in vec2 rot_p;\n"
+        "uniform vec2 screen;\n"
+        "out vec2 tex_coord;\n"
+        "void main(){\n"
+        "    //vec2 pre = vec2(pos.x - rot_p.x, pos.y - rot_p.y); //moving origin to rotation point\n"
+        "    //pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
+        "    //vec2 p = vec2(pre.x + rot_p.x, pre.y + rot_p.y);\n"
+        "    //doing the rotation before conversion causes warpage\n"
+        "    vec2 p = pos;\n"
+        "    vec2 rot = rot_p;\n"
+        "    rot /= screen;\n"
+        "    rot = (rot * 2.0) - 1;\n"
+        "    p /= screen;\n"
+        "    p = (p * 2.0) - 1;\n"
+        "    vec2 pre = p - rot;\n"
+        "    pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
+        "    pre = pre + rot;\n"
+        "    p = pre;\n"
+        "    tex_coord = uv;\n"
+        "    gl_Position = vec4(p.x, -p.y, 0.0, 1.0);\n"
+        "}\n"
+        "";
+    const char* fragment_shader = "#version 450 core\n"
+        "out vec4 color;\n"
+        "in vec2 tex_coord;\n"
+        "uniform sampler2D mtexture;\n"
+        "void main(){\n"
+        "    color = texture(mtexture, tex_coord);\n"
+        "}";
     allocated = 0;
-    shader.compile(std::string("img.vs"), std::string("img.fs"));
+    //shader.compile(std::string("img.vs"), std::string("img.fs"));
+    shader.compile(vertex_shader, fragment_shader);
     glGenVertexArrays_g(1, &vao);
     glGenBuffers_g(1, &vertex_buffer);
     glBindVertexArray_g(vao);
