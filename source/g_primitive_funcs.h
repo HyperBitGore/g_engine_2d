@@ -12,7 +12,7 @@ namespace Gore {
 
 
 
-
+	
 	template<class T>
 	class Vector {
 	public:
@@ -241,7 +241,7 @@ namespace Gore {
 				index++;
 				size++;
 			}
-			elements.insert(elements.begin() + n, { off, insize, type });
+			elements.insert(elements.begin() + n, {off, insize, type});
 			size += insize;
 			index += insize;
 		}
@@ -264,14 +264,14 @@ namespace Gore {
 		}
 
 	};
-
+	
 	template<class F>
 	struct FObj {
 		F* current;
 		FObj<F>* next;
 		std::string name;
 	};
-	template<class W>
+	template<class W> 
 	class ForwardList {
 	private:
 		FObj<W>* object = nullptr;
@@ -543,53 +543,56 @@ namespace Gore {
 		void reserve(size_t n) {
 			buckets.reserve(n);
 		}
+		std::vector<MapItem<T, G>*>& getBuckets(){
+			return buckets;
+		}
 
 	};
 
 	//throw whatever class you want in there
 	template<class T>
 	class GStack {
-	public:
+		public:
 		using iterator = T*;
 		iterator begin() { return stack; }
 		iterator end() { return stack + offset; }
-	private:
-		T* stack;
-		size_t allocd;
-		size_t offset;
-	public:
-		GStack() {
-			stack = (T*)std::malloc(256);
-			allocd = 256;
-			offset = 0;
-		}
-		~GStack() {
-			std::free(stack);
-		}
-
-		void push(T in) {
-			if ((offset * sizeof(T)) + sizeof(T) > allocd) {
-				stack = (T*)std::realloc(stack, allocd * 2);
-				allocd *= 2;
+		private:
+			T* stack;
+			size_t allocd;
+			size_t offset;
+		public:
+			GStack() {
+				stack = (T*)std::malloc(256);
+				allocd = 256;
+				offset = 0;
 			}
-			std::memcpy(stack + 1, stack, (sizeof(T) * offset));
-			*stack = in;
-			offset++;
-		}
+			~GStack() {
+				std::free(stack);
+			}
 
-		T pop() {
-			T out = *stack;
-			std::memcpy(stack, stack + 1, (sizeof(T) * offset));
-			offset--;
-			return out;
-		}
-		size_t size() {
-			return offset;
-		}
-		void clear() {
-			std::memset(stack, 0, allocd);
-			offset = 0;
-		}
+			void push(T in) {
+				if ((offset * sizeof(T)) + sizeof(T) > allocd) {
+					stack = (T*)std::realloc(stack, allocd * 2);
+					allocd *= 2;
+				}
+				std::memcpy(stack + 1, stack, (sizeof(T) * offset));
+				*stack = in;
+				offset++;
+			}
+
+			T pop() {
+				T out = *stack;
+				std::memcpy(stack, stack + 1, (sizeof(T) * offset));
+				offset--;
+				return out;
+			}
+			size_t size() {
+				return offset;
+			}
+			void clear() {
+				std::memset(stack, 0, allocd);
+				offset = 0;
+			}
 
 	};
 	template<class T>
@@ -663,9 +666,8 @@ namespace Gore {
 		}
 
 		static std::vector<T> partition(std::vector<T>& arr) {
-			if (arr.size() < 2) {
-				return arr;
-			}
+			if (arr.size() < 2) { 
+				return arr; }
 			std::vector<T> left;
 			std::vector<T> right;
 			size_t pivot = arr.size() - 1;
@@ -683,7 +685,7 @@ namespace Gore {
 			for (int i = 0; i < orl.size(); i++) {
 				ol.push_back(orl[i]);
 			}
-
+			
 			return ol;
 		}
 		static std::vector<T> merge(std::vector<T>& arr) {
@@ -712,7 +714,7 @@ namespace Gore {
 					}
 					small++;
 				}
-				else if (right[smallr] < left[small]) {
+				else if(right[smallr] < left[small]) {
 					int i;
 					for (i = 0; i < out.size() && out[i] < right[smallr]; i++);
 					if (i == out.size()) {

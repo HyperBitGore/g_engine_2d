@@ -18,14 +18,61 @@ struct Point {
 //adding an image stiches it into the image
 class ImageAtlas {
 private:
-	Gore::HashMap<Point, IMG> images;
+	struct Member{
+		Point point;
+		Point dimensions;
+		std::string name;
+		Member* next;
+	};
+	typedef Member* Memb;
+	Memb* buckets;
+	int imageHash(std::string name) {
+        int tot = 0;
+        for(size_t i = 0; i < name.size(); i++){
+            tot += name[i];
+        }
+		return tot % 256;
+	}
+	void insert(std::string name, IMG img, Point point){
+		int hash = imageHash(name);
+		Memb m = new Member;
+		m->point = point;
+		m->name = name;
+		m->dimensions = {(int)img->w, (int)img->h};
+		m->next = nullptr;
+		 if(buckets[hash] != nullptr){
+			Memb cur = buckets[hash];
+			while(cur->next != nullptr){
+				cur = cur->next;
+			}
+			cur->next = m;
+		 }else{
+			buckets[hash] = m;
+		 }
+
+	}
+	bool checkCollision(Point p1, Point dim1, Point p2, Point dim2);
+	bool spotEmpty(Point p, Point dim);
+	Point findEmpty(Point start, Point dim);
+
+	Memb get(std::string name){
+		int hash = imageHash(name);
+		Memb cur = buckets[hash];
+		while(cur != nullptr && cur->name.compare(name) != 0){
+			cur = cur->next;
+		}
+		return cur;
+	}
+	//Gore::HashMap<Member, std::string> images;
 	IMG img;
-	int cur_y = 0;
-	int cur_x = 0;
+	unsigned int max_images;
+
 public:
 	ImageAtlas(int w, int h, int bytes_per_pixel);
-	void addImage(IMG img);
-	Point getImagePos(IMG img, bool normalize = false);
+	~ImageAtlas();
+	void addImage(IMG img, std::string name);
+	void addImage(std::string path, unsigned int w, unsigned int h, std::string name);
+	Point getImagePos(std::string name, bool normalize = false);
 	IMG getImg();
 };
 

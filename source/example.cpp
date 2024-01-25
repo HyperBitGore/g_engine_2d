@@ -138,6 +138,7 @@ void renderFunction() {
 	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
+	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
 
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
@@ -214,8 +215,8 @@ int main() {
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
-	atlas.addImage(atlas_test);
-	atlas.addImage(imgtest);
+	atlas.addImage(atlas_test, "atlas_test");
+	atlas.addImage(imgtest, "img_test");
 	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
 		imageloader::setPixel(imgtest, x, 1, 4278190335, 4);
