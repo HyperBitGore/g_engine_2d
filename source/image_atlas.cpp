@@ -58,7 +58,7 @@ bool ImageAtlas::spotEmpty(Point p, Point dim){
     for(int i = 0; i < max_images; i++){
         Memb cur = buckets[i];
         while(cur != nullptr){
-            if(checkCollision(p, dim, cur->point, cur->dimensions)){
+            if(checkCollision(p, dim, {(int)cur->p_and_d.x, (int)cur->p_and_d.y}, {(int)cur->p_and_d.z, (int)cur->p_and_d.w})){
                 return false;
             }
             cur = cur->next;
@@ -110,7 +110,7 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
         }
     }
     
-    insert(name, n_img, {c.x, c.y});
+    insert(name, n_img, {(float)c.x, (float)c.y});
 }
 
 void ImageAtlas::addImage(std::string path, unsigned int w, unsigned int h, std::string name){
@@ -118,14 +118,14 @@ void ImageAtlas::addImage(std::string path, unsigned int w, unsigned int h, std:
     addImage(img, name);
 }
 
-Point ImageAtlas::getImagePos(std::string name, bool normalize) {
+vec4 ImageAtlas::getImagePos(std::string name, bool normalize) {
     Memb memb = get(name);
     if(memb == nullptr){
-        return {-1, -1};
+        return {-1.0f, -1.0f, -1.0f, -1.0f};
     }
-    Point p = memb->point;
+    vec4 p = memb->p_and_d;
     if(normalize){
-        return {(p.x / (int)img->w), (p.y / (int)img->h)};
+        return {(p.x / (float)img->w), (p.y / (float)img->h), p.z / (float)img->w, p.w / (float)img->h};
     }
     return p;
 }

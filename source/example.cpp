@@ -6,7 +6,7 @@ EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
 ImageRenderer img_r(640, 480);
 FontRenderer font_r(&prim_r);
-//DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
+DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
 Audio s_test;
@@ -38,6 +38,7 @@ vec2 bez_m = { 120.0f, 130.0f };
 vec2 mos = { 200.0f, 300.0f };
 
 void renderFunction() {
+	dr.clear();
 	if (timer >= 0.01f) {
 		if (pos <= 0.0f) {
 			dir = false;
@@ -138,8 +139,13 @@ void renderFunction() {
 	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
+	vec4 pos = atlas.getImagePos("atlas_test", true);
+	img_r.addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
+	img_r.drawBuffer(atlas.getImg());
 	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
-
+	//dr.unbind();
+	//img_r.addImageVertex({0.0f, 0.0f}, {640.0f, 480.0f}, {}, 0.0f);
+	//img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
 	font_r.drawText("Hello World", &f_test, 100, 30, 24);

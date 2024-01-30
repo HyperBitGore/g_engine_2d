@@ -19,8 +19,8 @@ struct Point {
 class ImageAtlas {
 private:
 	struct Member{
-		Point point;
-		Point dimensions;
+		//point and dimensions
+		vec4 p_and_d;
 		std::string name;
 		Member* next;
 	};
@@ -33,12 +33,11 @@ private:
         }
 		return tot % 256;
 	}
-	void insert(std::string name, IMG img, Point point){
+	void insert(std::string name, IMG img, vec2 point){
 		int hash = imageHash(name);
 		Memb m = new Member;
-		m->point = point;
+		m->p_and_d = {point.x, point.y, (float)img->w, (float)img->h};
 		m->name = name;
-		m->dimensions = {(int)img->w, (int)img->h};
 		m->next = nullptr;
 		 if(buckets[hash] != nullptr){
 			Memb cur = buckets[hash];
@@ -72,7 +71,7 @@ public:
 	~ImageAtlas();
 	void addImage(IMG img, std::string name);
 	void addImage(std::string path, unsigned int w, unsigned int h, std::string name);
-	Point getImagePos(std::string name, bool normalize = false);
+	vec4 getImagePos(std::string name, bool normalize = false);
 	IMG getImg();
 };
 

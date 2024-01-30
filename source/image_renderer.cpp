@@ -25,9 +25,9 @@ void ImageRenderer::addImageVertex(vec2 pos, vec2 dim, vec4 uvs, float rot){
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,rot, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y}); //first triangle tip vertex
 
-    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, rot, pos.x, pos.y});
-    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w,rot, pos.x, pos.y});
-    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y, rot, pos.x, pos.y});
+    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y, rot, pos.x, pos.y});
+    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, rot, pos.x, pos.y});
+    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y});
 }
 
 void ImageRenderer::drawBuffer(IMG img){
@@ -35,6 +35,30 @@ void ImageRenderer::drawBuffer(IMG img){
     glBindTexture(GL_TEXTURE_2D, img->tex);
     shader.bind();
     //shader.setuniform("mtexture", img->tex);
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+    }else{
+         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    vertexs.clear();
+}
+
+void ImageRenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim){
+    vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex
+    vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangel top right
+    vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, 0.0f, pos.x, pos.y}); //first triangle tip vertex
+
+    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, 1.0f, 1.0f, 0.0f, pos.x, pos.y});
+    vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, 0.0f, pos.x, pos.y});
+    vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y});
+    glActiveTexture_g(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    shader.bind();
     glBindVertexArray_g(vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
@@ -58,6 +82,30 @@ void ImageRenderer::drawImage(IMG img, vec2 pos, vec2 dim){
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y});
     glActiveTexture_g(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, img->tex);
+    shader.bind();
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+    }else{
+         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    vertexs.clear();
+}
+
+void ImageRenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim, float rot){
+      vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y}); //first triangle top left vertex
+    vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y}); //first triangel top right
+    vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, rot, pos.x, pos.y}); //first triangle tip vertex
+
+    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, 1.0f, 1.0f, rot, pos.x, pos.y});
+    vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f,rot, pos.x, pos.y});
+    vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y});
+    glActiveTexture_g(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
     shader.bind();
     //shader.setuniform("mtexture", img->tex);
     glBindVertexArray_g(vao);

@@ -1,6 +1,38 @@
 #pragma once
 #include "image_loader.h"
 
+//switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
+//https://www.khronos.org/opengl/wiki/Texture
+	//-read the glsl binding section
+//https://learnopengl.com/Getting-started/Transformations
+class ImageRenderer {
+private:
+	struct ivertex{
+		float x;
+		float y;
+		float uvx;
+		float uvy;
+		float rot;
+		float rotx;
+		float roty;
+	};
+	std::vector<ivertex> vertexs;
+	Shader shader;
+	GLuint vao;
+	GLuint vertex_buffer;
+	GLuint allocated;
+public:
+	ImageRenderer(size_t w, size_t h);
+	void addImageVertex(vec2 pos, vec2 dimensions);
+	void addImageVertex(vec2 pos, vec2 dimensions, float rot);
+	void addImageVertex(vec2 pos, vec2 dimensions, vec4 uvs, float rot);
+	void drawBuffer(IMG img);
+	void drawImage(IMG img, vec2 pos, vec2 dimensions);
+	void drawImageRotated(IMG img,vec2 pos, vec2 dimensions, float rot);
+	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions);
+	void drawTextureRotated(GLuint texture, vec2 pos, vec2 dimensions, float rot);
+};
+
 //https://open.gl/framebuffers
 //https://www.youtube.com/watch?v=QQ3jr-9Rc1o
 class DrawPass {
@@ -49,39 +81,13 @@ class DrawPass {
 		void unbind() {
 			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
 		}
+		//doesn't assume the framebuffer is binded
+		void clear(){
+			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
+		}
 		GLuint getTexture() {
 			return texture;
 		}
-};
-
-
-
-//switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
-//https://www.khronos.org/opengl/wiki/Texture
-	//-read the glsl binding section
-//https://learnopengl.com/Getting-started/Transformations
-class ImageRenderer {
-private:
-	struct ivertex{
-		float x;
-		float y;
-		float uvx;
-		float uvy;
-		float rot;
-		float rotx;
-		float roty;
-	};
-	std::vector<ivertex> vertexs;
-	Shader shader;
-	GLuint vao;
-	GLuint vertex_buffer;
-	GLuint allocated;
-public:
-	ImageRenderer(size_t w, size_t h);
-	void addImageVertex(vec2 pos, vec2 dimensions);
-	void addImageVertex(vec2 pos, vec2 dimensions, float rot);
-	void addImageVertex(vec2 pos, vec2 dimensions, vec4 uvs, float rot);
-	void drawBuffer(IMG img);
-	void drawImage(IMG img, vec2 pos, vec2 dimensions);
-	void drawImageRotated(IMG img,vec2 pos, vec2 dimensions, float rot);
 };
