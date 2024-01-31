@@ -36,12 +36,56 @@ vec2 bez_m = { 120.0f, 130.0f };
 
 vec2 mos = { 200.0f, 300.0f };
 
-class Invert : Shader{
+class Invert {
 	private:
-
+	struct vertex{
+		float x;
+		float y;
+		float w;
+		float h;
+	};
+	Shader shader;
+	std::vector<vertex> vertexs;
+	GLuint vertex_buffer;
+	GLuint vao;
 	public:
-	
+	Invert(GLsizei width, GLsizei height){
+		shader.compile(std::string("invert.vs"), std::string("invert.fs"));
+		shader.bind();
+		glGenVertexArrays_g(1, &vao);
+		glGenBuffers_g(1, &vertex_buffer);
+		glBindVertexArray_g(vao);
+		glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+		glEnableVertexAttribArray_g(0);
+		glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0); //position
+		glEnableVertexAttribArray_g(1);
+		glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(float) * 2)); //uv
+		shader.setuniform("screen", width, height);
+		shader.setuniform("mtexture", (GLuint)0);
+	}
+	void drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
+		vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y}); //first triangle top left vertex
+		vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y}); //first triangel top right
+		vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w}); //first triangle tip vertex
+
+
+		vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w}); //bottom right
+		vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w}); //bottom left
+		vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y}); //top righjt
+		glActiveTexture_g(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		shader.bind();
+		glBindVertexArray_g(vao);
+		glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+		glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(vertex), vertexs.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+		glBindVertexArray_g(0);
+		glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+		vertexs.clear();
+	}
 };
+
+Invert invert(640, 480);
 
 void renderFunction() {
 	dr.clear();
@@ -259,9 +303,11 @@ int main() {
 	std::cout << nthBit(10, 2) << "\n";
 	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
-	invert.compile(std::string("invert.vs"), std::string("invert.fs"));
+	delta delt;
+	Sleep(100);
+	std::cout << delt.getDelta() << "\n";
 	while (eng2.updateWindow()) {
-		
+		double del1 = delt.getDelta();
 		double del = eng2.getDelta();
 		//std::cout << del << "\n";
 		d += del;
