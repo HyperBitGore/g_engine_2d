@@ -1,4 +1,4 @@
-#include "g_engine_2d.h"
+#include "g_engine_2d.hpp"
 
 int indexs_hash(GLint n) {
 	return n % 48;

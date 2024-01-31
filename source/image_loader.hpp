@@ -1,5 +1,5 @@
 #pragma once
-#include "shader.h"
+#include "shader.hpp"
 
 struct g_img {
 	unsigned char* data;

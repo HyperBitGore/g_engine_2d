@@ -1,5 +1,5 @@
 #pragma once
-#include "image_renderer.h"
+#include "image_renderer.hpp"
 
 class Line {
 private:

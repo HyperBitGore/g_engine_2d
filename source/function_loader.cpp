@@ -1,4 +1,4 @@
-#include "g_engine_2d.h"
+#include "g_engine_2d.hpp"
 
 //to load new gl functions
 void* GetGLFuncAddress(const char* name) {

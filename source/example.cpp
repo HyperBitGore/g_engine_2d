@@ -1,4 +1,4 @@
-#include "g_engine_2d.h"
+#include "g_engine_2d.hpp"
 #include <bitset>
 
 EngineNewGL eng2("Test Window", 640, 480);
@@ -196,7 +196,8 @@ void renderFunction() {
 	img_r.drawBuffer(atlas.getImg());
 	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
 	dr.unbind();
-	img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+	invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+	//img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
 	font_r.drawText("Hello World", &f_test, 100, 30, 24);
@@ -303,13 +304,8 @@ int main() {
 	std::cout << nthBit(10, 2) << "\n";
 	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
-	delta delt;
-	Sleep(100);
-	std::cout << delt.getDelta() << "\n";
 	while (eng2.updateWindow()) {
-		double del1 = delt.getDelta();
 		double del = eng2.getDelta();
-		//std::cout << del << "\n";
 		d += del;
 		timer += del;
 		s_cool += del;

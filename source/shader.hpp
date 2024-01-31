@@ -1,9 +1,9 @@
 #pragma once
 #include "g_primitive_funcs.h"
-#include "backend.h"
-#include "matrix.h"
-#include "vector.h"
-#include "audio.h"
+#include "backend.hpp"
+#include "matrix.hpp"
+#include "vector.hpp"
+#include "audio.hpp"
 #include <thread>
 #include <mutex>
 #include <fstream>

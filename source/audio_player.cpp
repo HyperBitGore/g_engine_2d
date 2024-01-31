@@ -1,4 +1,4 @@
-#include "audio.h"
+#include "audio.hpp"
 #define SwapFourBytes(data)   \
 ( (((data) >> 24) & 0x000000FF) | (((data) >>  8) & 0x0000FF00) | \
   (((data) <<  8) & 0x00FF0000) | (((data) << 24) & 0xFF000000) ) 

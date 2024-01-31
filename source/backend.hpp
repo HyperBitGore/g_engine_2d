@@ -1,4 +1,4 @@
-#include "gl_defines.h"
+#include "gl_defines.hpp"
 
 
 //added customizability and clean up

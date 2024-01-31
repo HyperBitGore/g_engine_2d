@@ -1,4 +1,4 @@
-#include "image_renderer.h"
+#include "image_renderer.hpp"
 
 void ImageRenderer::addImageVertex(vec2 pos, vec2 dim){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex

@@ -1,5 +1,5 @@
 #pragma once
-#include "image_loader.h"
+#include "image_loader.hpp"
 
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
 //https://www.khronos.org/opengl/wiki/Texture

@@ -1,4 +1,4 @@
-#include "g_engine_2d.h"
+#include "g_engine_2d.hpp"
 /*
 //this doesn't work
 void ImageLoader::readBMPPixels32(IMG f, std::stringstream& str, size_t offset, size_t raw_size) {

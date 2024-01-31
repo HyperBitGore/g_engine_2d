@@ -1,4 +1,4 @@
-#include "primitive_renderer.h"
+#include "primitive_renderer.hpp"
 
 void PrimitiveRenderer::setColor(vec4 color){
     triangle_shader.setuniform("set_color", color);

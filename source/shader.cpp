@@ -1,4 +1,4 @@
-#include "shader.h"
+#include "shader.hpp"
 
 
 void Shader::bind() {
@@ -468,7 +468,7 @@ void Shader::compile(const std::string vert_path, const std::string frag_path) {
 	int InfoLogLength;
 
 	// Compile Vertex Shader
-	std::cout << "Compiling vertex shader" << std::endl;
+	std::cout << "Compiling vertex shader " << vert_path << std::endl;
 	char const* VertexSourcePointer = vertex_file;
 	glShaderSource_g(VertexShaderID, 1, &VertexSourcePointer, NULL);
 	glCompileShader_g(VertexShaderID);
@@ -484,7 +484,7 @@ void Shader::compile(const std::string vert_path, const std::string frag_path) {
 
 
 	// Compile Fragment Shader
-	std::cout << "Compiling fragment shader" << std::endl;;
+	std::cout << "Compiling fragment shader " << frag_path << std::endl;;
 	char const* FragmentSourcePointer = fragment_file;
 	glShaderSource_g(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
 	glCompileShader_g(FragmentShaderID);

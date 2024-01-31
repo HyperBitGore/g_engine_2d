@@ -1,5 +1,5 @@
 #pragma once
-#include "primitive_renderer.h"
+#include "primitive_renderer.hpp"
 
 template<class T>
 T clamp(T p, T n1, T n2) {

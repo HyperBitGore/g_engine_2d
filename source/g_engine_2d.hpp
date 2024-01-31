@@ -1,5 +1,5 @@
 #pragma once
-#include "font_renderer.h"
+#include "font_renderer.hpp"
 
 //add 3d support
 //add 3d line rendering
@@ -8,31 +8,6 @@
 //isometric engine plug-in
 
 
-class delta{
-	private:
-	int64_t last;
-	double freq;
-	public:
-	//call this every frame to update and get delta
-	double getDelta(){
-		LARGE_INTEGER ticks;
-		if(!QueryPerformanceCounter(&ticks)){
-			std::cout << "Failed to query performance counter!\n";
-			return -1.0f;
-		}
-		return (double(ticks.QuadPart) - last)/freq;
-	}
-	delta(){
-		LARGE_INTEGER li;
-		if(!QueryPerformanceCounter(&li)){
-			std::cout << "Failed to query performance counter!\n";
-			return;
-		}
-		freq = double(li.QuadPart) / 1000.0;
-		QueryPerformanceCounter(&li);
-		last = double(li.QuadPart);
-	}
-};
 
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp

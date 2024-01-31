@@ -1,4 +1,4 @@
-#include "matrix.h"
+#include "matrix.hpp"
 
 
 Matrix::Matrix(size_t r, size_t c) {

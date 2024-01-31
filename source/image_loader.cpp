@@ -1,4 +1,4 @@
-#include "image_loader.h"
+#include "image_loader.hpp"
 
 IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
 	IMG img = new g_img;
