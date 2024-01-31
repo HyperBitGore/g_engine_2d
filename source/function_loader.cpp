@@ -202,5 +202,4 @@ void EngineNewGL::loadFunctions() {
 	glFramebufferRenderbuffer_g = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)GetGLFuncAddress("glFramebufferRenderbuffer");
 
 
-
 }

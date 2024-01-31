@@ -25,9 +25,10 @@ void ImageRenderer::addImageVertex(vec2 pos, vec2 dim, vec4 uvs, float rot){
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,rot, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y}); //first triangle tip vertex
 
-    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y, rot, pos.x, pos.y});
-    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, rot, pos.x, pos.y});
-    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y});
+
+    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, rot, pos.x, pos.y}); //bottom right
+    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y}); //bottom left
+    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y, rot, pos.x, pos.y}); //top righjt
 }
 
 void ImageRenderer::drawBuffer(IMG img){
@@ -38,6 +39,26 @@ void ImageRenderer::drawBuffer(IMG img){
     glBindVertexArray_g(vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+    }else{
+         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    vertexs.clear();
+}
+
+void ImageRenderer::drawBuffer(GLuint texture){
+    glActiveTexture_g(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    shader.bind();
+    //shader.setuniform("mtexture", img->tex);
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+        allocated = vertexs.size();
          glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
     }else{
          glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
@@ -62,6 +83,32 @@ void ImageRenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim){
     glBindVertexArray_g(vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+    }else{
+         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    vertexs.clear();
+}
+void ImageRenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
+    vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y}); //first triangle top left vertex
+    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y}); //first triangel top right
+    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //first triangle tip vertex
+
+
+    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //bottom right
+    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //bottom left
+    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y, 0.0f, pos.x, pos.y}); //top righjt
+    glActiveTexture_g(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    shader.bind();
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+         allocated = vertexs.size();
          glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
     }else{
          glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
@@ -86,6 +133,33 @@ void ImageRenderer::drawImage(IMG img, vec2 pos, vec2 dim){
     glBindVertexArray_g(vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+    }else{
+         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray_g(0);
+	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    vertexs.clear();
+}
+
+void ImageRenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
+    vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y}); //first triangle top left vertex
+    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y}); //first triangel top right
+    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //first triangle tip vertex
+
+
+    vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //bottom right
+    vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //bottom left
+    vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y, 0.0f, pos.x, pos.y}); //top righjt
+    glActiveTexture_g(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, img->tex);
+    shader.bind();
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+        allocated = vertexs.size();
          glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
     }else{
          glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
@@ -111,6 +185,7 @@ void ImageRenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim, float
     glBindVertexArray_g(vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
+        allocated = vertexs.size();
          glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
     }else{
          glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);

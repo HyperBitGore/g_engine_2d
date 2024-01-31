@@ -69,7 +69,7 @@ EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 		DestroyWindow(dummy);
 	}
 	//create window
-	wind = new Window(window_name, "ENG1", width, height, 300, 300);
+	wind = new Window(window_name, "ENG1", height, width, 300, 300);
 	in = new Input();
 	HDC dc_w = GetDC(wind->getHwnd());
 	// set pixel format for OpenGL context
@@ -148,6 +148,10 @@ EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 	//glEnable(GL_BLEND);
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	int test[4];
+	glGetIntegerv(GL_VIEWPORT, test);
+	std::cout << test[0] << " : " << test[1] << "\n";
+	//glViewport(0, 0, width, height);
 
 	loadFunctions();
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine

@@ -1,7 +1,6 @@
 #include "g_engine_2d.h"
 #include <bitset>
 
-//Engine eng = Engine(L"Test Window", 640, 480, 300, 300);
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
 ImageRenderer img_r(640, 480);
@@ -36,6 +35,13 @@ bool play_it = true;
 vec2 bez_m = { 120.0f, 130.0f };
 
 vec2 mos = { 200.0f, 300.0f };
+
+class Invert : Shader{
+	private:
+
+	public:
+	
+};
 
 void renderFunction() {
 	dr.clear();
@@ -98,7 +104,7 @@ void renderFunction() {
 			
 		}
 	}
-	//dr.bind();
+	dr.bind();
 	prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
 	prim_r.drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
 	prim_r.drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
@@ -141,11 +147,12 @@ void renderFunction() {
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
 	vec4 pos = atlas.getImagePos("atlas_test", true);
 	img_r.addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
+	pos = atlas.getImagePos("enem2", true);
+	img_r.addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
 	img_r.drawBuffer(atlas.getImg());
 	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
-	//dr.unbind();
-	//img_r.addImageVertex({0.0f, 0.0f}, {640.0f, 480.0f}, {}, 0.0f);
-	//img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f});
+	dr.unbind();
+	img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
 	font_r.drawText("Hello World", &f_test, 100, 30, 24);
@@ -223,6 +230,7 @@ int main() {
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
 	atlas.addImage(atlas_test, "atlas_test");
 	atlas.addImage(imgtest, "img_test");
+	atlas.addImage("resources/enem2_1.png", 50, 60, "enem2");
 	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
 		imageloader::setPixel(imgtest, x, 1, 4278190335, 4);
@@ -251,6 +259,7 @@ int main() {
 	std::cout << nthBit(10, 2) << "\n";
 	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
+	invert.compile(std::string("invert.vs"), std::string("invert.fs"));
 	while (eng2.updateWindow()) {
 		
 		double del = eng2.getDelta();
