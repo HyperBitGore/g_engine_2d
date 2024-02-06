@@ -4,11 +4,6 @@
 #include "matrix.hpp"
 #include "vector.hpp"
 #include "audio.hpp"
-#include <thread>
-#include <mutex>
-#include <fstream>
-#include <string>
-#include <sstream>
 #include "lodepng.h"
 
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
@@ -33,6 +28,15 @@ static void FatalError(const char* message)
 class Shader {
 private:
 	GLuint program;
+
+	GLuint vao;
+	
+	GLenum buffer_target;
+	GLuint vertex_buffer;
+	
+	GLuint attrib;
+	void* data; //user set pointer
+	
 	Gore::HashMap<GLint, std::string> uniform_map;
 	static int hash(std::string str) {
 		size_t total = 0;
@@ -44,11 +48,18 @@ private:
 public:
 	Shader() {
 		program = 0;
+		vao = 0;
+		vertex_buffer = 0;
+		attrib = 0;
 		uniform_map.setHashFunction(hash);
 	}
 	//copy constructor
 	Shader(Shader& x) {
+		this->uniform_map = x.uniform_map;
 		this->program = x.program;
+		this->vao = x.vao;
+		this->vertex_buffer = x.vertex_buffer;
+		this->buffer_target = x.buffer_target;
 	}
 	void bind();
 	//need a bunch of these for every type, https://registry.khronos.org/OpenGL-Refpages/gl4/html/glUniform.xhtml
@@ -81,4 +92,10 @@ public:
 
 	void compile(const char* vertex, const char* frag);
 	void compile(const std::string vert_path, const std::string frag_path);
+
+	//vao
+	void genbuffer(GLenum target, GLsizei size);
+	void addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset);
+	void updatebufferdata(GLsizei size);
+	void setbufferdata(void* data, GLsizei size, GLenum use);
 };

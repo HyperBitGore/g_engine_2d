@@ -521,3 +521,37 @@ void Shader::compile(const std::string vert_path, const std::string frag_path) {
 	glDeleteShader_g(FragmentShaderID);
 	program = ProgramID;
 }
+
+//bind shader before calling this
+void Shader::genbuffer(GLenum target, GLsizei size){
+	/*glGenVertexArrays_g(1, &vao);
+	glGenBuffers_g(1, &buffer);
+	glBindVertexArray_g(vao);
+	glBindBuffer_g(target, buffer);
+	buffer_target = target;*/
+	glGenVertexArrays_g(1, &vao);
+	glGenBuffers_g(1, &vertex_buffer);
+	glBindVertexArray_g(vao);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glEnableVertexAttribArray_g(0);
+	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, size, (void*)0); //position
+	glEnableVertexAttribArray_g(1);
+	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, size, (void*)(sizeof(float) * 2)); //uv*/
+}
+//bind shader before calling this
+void Shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
+	glEnableVertexAttribArray_g(attrib);
+	glVertexAttribPointer_g(attrib, size, type, normalized, stride, reinterpret_cast<void*>(elementoffset));
+	attrib++;
+}
+//assuming last data pointer is set
+void Shader::updatebufferdata(GLsizei size){
+	glBufferSubData_g(buffer_target, 0, size, this->data);
+}
+//setting the data pointer
+void Shader::setbufferdata(void* data, GLsizei size, GLenum use){
+	this->data = data;
+	glBindVertexArray_g(vao);
+	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData_g(buffer_target, size, this->data, use);
+}

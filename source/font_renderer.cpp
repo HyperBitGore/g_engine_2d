@@ -1123,7 +1123,7 @@ int findFontChar(Font* f, UINT16 c) {
 	return 0;
 }
 
-void FontRenderer::drawRasterText(Font* font, ImageRenderer* img_r, std::string text, float x, float y, int ptsize) {
+void FontRenderer::drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize) {
 	if (font->r_glyphs.size() <= 0) {
 		std::cout << "Trying to draw an empty raster font " << std::endl;
 		return;

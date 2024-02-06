@@ -3,7 +3,7 @@
 
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
-ImageRenderer img_r(640, 480);
+imagerenderer img_r(640, 480);
 FontRenderer font_r(&prim_r);
 DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
@@ -50,16 +50,19 @@ class Invert {
 	GLuint vao;
 	public:
 	Invert(GLsizei width, GLsizei height){
-		shader.compile(std::string("invert.vs"), std::string("invert.fs"));
+		shader.compile(std::string("resources/invert.vs"), std::string("resources/invert.fs"));
 		shader.bind();
-		glGenVertexArrays_g(1, &vao);
+		shader.genbuffer(GL_ARRAY_BUFFER, sizeof(vertex));
+		//shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
+		//shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), (sizeof(float) * 2));
+		/*glGenVertexArrays_g(1, &vao);
 		glGenBuffers_g(1, &vertex_buffer);
 		glBindVertexArray_g(vao);
 		glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray_g(0);
 		glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0); //position
 		glEnableVertexAttribArray_g(1);
-		glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(float) * 2)); //uv
+		glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(float) * 2)); //uv*/
 		shader.setuniform("screen", width, height);
 		shader.setuniform("mtexture", (GLuint)0);
 	}
@@ -75,12 +78,13 @@ class Invert {
 		glActiveTexture_g(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		shader.bind();
-		glBindVertexArray_g(vao);
-		glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-		glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(vertex), vertexs.data(), GL_DYNAMIC_DRAW);
+		shader.setbufferdata((void*)vertexs.data(), vertexs.size() * sizeof(vertex), GL_DYNAMIC_DRAW);
+		//glBindVertexArray_g(vao);
+		//glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+		//glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(vertex), vertexs.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
-		glBindVertexArray_g(0);
-		glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+		//glBindVertexArray_g(0);
+		//glBindBuffer_g(GL_ARRAY_BUFFER, 0);
 		vertexs.clear();
 	}
 };
@@ -199,8 +203,8 @@ void renderFunction() {
 	invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	//img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	//testing font rendering
-	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
-	font_r.drawText("Hello World", &f_test, 100, 30, 24);
+	//font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
+	//font_r.drawText("Hello World", &f_test, 100, 30, 24);
 }
 
 int nthBit(int number, int n) {

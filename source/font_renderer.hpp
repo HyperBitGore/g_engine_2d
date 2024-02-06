@@ -65,5 +65,5 @@ class FontRenderer {
 	void drawText(std::string text, Font* font, float x, float y, int ptsize);
 	RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
 	void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx);
-	void drawRasterText(Font* font, ImageRenderer* img_r, std::string text, float x, float y, int ptsize);
+	void drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize);
 };

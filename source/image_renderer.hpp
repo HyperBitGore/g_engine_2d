@@ -5,7 +5,7 @@
 //https://www.khronos.org/opengl/wiki/Texture
 	//-read the glsl binding section
 //https://learnopengl.com/Getting-started/Transformations
-class ImageRenderer {
+class imagerenderer {
 private:
 	struct ivertex{
 		float x;
@@ -22,7 +22,7 @@ private:
 	GLuint vertex_buffer;
 	GLuint allocated;
 public:
-	ImageRenderer(size_t w, size_t h);
+	imagerenderer(size_t w, size_t h);
 	void addImageVertex(vec2 pos, vec2 dimensions);
 	void addImageVertex(vec2 pos, vec2 dimensions, float rot);
 	void addImageVertex(vec2 pos, vec2 dimensions, vec4 uvs, float rot);
@@ -55,7 +55,7 @@ class DrawPass {
 			//glCreateTextures_g(GL_TEXTURE_2D, 1, &texture);
 			glGenTextures(1, &texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
