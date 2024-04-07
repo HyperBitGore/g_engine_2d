@@ -523,25 +523,20 @@ void Shader::compile(const std::string vert_path, const std::string frag_path) {
 }
 
 //bind shader before calling this
-void Shader::genbuffer(GLenum target, GLsizei size){
-	/*glGenVertexArrays_g(1, &vao);
-	glGenBuffers_g(1, &buffer);
-	glBindVertexArray_g(vao);
-	glBindBuffer_g(target, buffer);
-	buffer_target = target;*/
+void Shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
 	glGenVertexArrays_g(1, &vao);
 	glGenBuffers_g(1, &vertex_buffer);
 	glBindVertexArray_g(vao);
+	glBindBuffer_g(target, vertex_buffer);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	glEnableVertexAttribArray_g(0);
-	glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, size, (void*)0); //position
-	glEnableVertexAttribArray_g(1);
-	glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, size, (void*)(sizeof(float) * 2)); //uv*/
+	this->data = data;
+	glBufferData_g(GL_ARRAY_BUFFER, size, data, use);
+	buffer_target = target;
 }
 //bind shader before calling this
 void Shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
 	glEnableVertexAttribArray_g(attrib);
-	glVertexAttribPointer_g(attrib, size, type, normalized, stride, reinterpret_cast<void*>(elementoffset));
+	glVertexAttribPointer_g(attrib, size, type, normalized, stride, (void*)elementoffset);
 	attrib++;
 }
 //assuming last data pointer is set

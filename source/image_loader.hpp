@@ -1,6 +1,8 @@
 #pragma once
 #include "shader.hpp"
 
+
+//convert all data allocation to new so we can delete it in destructor
 struct g_img {
 	unsigned char* data;
 	GLuint tex;
@@ -81,7 +83,7 @@ class imageloader{
 	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel);
 	static void createTexture(IMG img, GLenum internalformat, GLenum format);
 	static IMG loadPNG(std::string path, unsigned int w, unsigned int h);
-	static IMG loadBMP(std::string path,  unsigned int w, unsigned int h);
+	static IMG loadBMP(std::string path);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);

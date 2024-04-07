@@ -52,17 +52,10 @@ class Invert {
 	Invert(GLsizei width, GLsizei height){
 		shader.compile(std::string("resources/invert.vs"), std::string("resources/invert.fs"));
 		shader.bind();
-		shader.genbuffer(GL_ARRAY_BUFFER, sizeof(vertex));
-		//shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
-		//shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), (sizeof(float) * 2));
-		/*glGenVertexArrays_g(1, &vao);
-		glGenBuffers_g(1, &vertex_buffer);
-		glBindVertexArray_g(vao);
-		glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-		glEnableVertexAttribArray_g(0);
-		glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0); //position
-		glEnableVertexAttribArray_g(1);
-		glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(float) * 2)); //uv*/
+		shader.genbuffer(GL_ARRAY_BUFFER, sizeof(vertex), vertexs.data(), GL_DYNAMIC_DRAW);
+		//these have to be set in sequential order they appear
+		shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
+		shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), (sizeof(float) * 2));
 		shader.setuniform("screen", width, height);
 		shader.setuniform("mtexture", (GLuint)0);
 	}
@@ -75,22 +68,22 @@ class Invert {
 		vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w}); //bottom right
 		vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w}); //bottom left
 		vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y}); //top righjt
+
 		glActiveTexture_g(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
+		
 		shader.bind();
 		shader.setbufferdata((void*)vertexs.data(), vertexs.size() * sizeof(vertex), GL_DYNAMIC_DRAW);
-		//glBindVertexArray_g(vao);
-		//glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-		//glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(vertex), vertexs.data(), GL_DYNAMIC_DRAW);
+
 		glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
-		//glBindVertexArray_g(0);
-		//glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+		
 		vertexs.clear();
 	}
 };
 
 Invert invert(640, 480);
-
+double draw_timer = 0;
+bool draw_mode = false;
 void renderFunction() {
 	dr.clear();
 	if (timer >= 0.01f) {
@@ -200,11 +193,19 @@ void renderFunction() {
 	img_r.drawBuffer(atlas.getImg());
 	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
 	dr.unbind();
-	invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
-	//img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+	if(draw_timer > 1.0f){
+		draw_mode = !draw_mode;
+		draw_timer = 0.0f;
+	}
+	if(draw_mode){
+		invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+	}else{
+		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+	}
+	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
-	//font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
-	//font_r.drawText("Hello World", &f_test, 100, 30, 24);
+	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
+	font_r.drawText("Hello World", &f_test, 100, 30, 24);
 }
 
 int nthBit(int number, int n) {
@@ -268,12 +269,12 @@ int main() {
 	s_test2 = ap.generateSquare(300, 200.0f, 44100);
 	s_test3 = ap.generateTriangle(300, 200.0f, 44100);
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
-	ap.playFile("resources/dungeonsynth5_24.wav", 1);
+	// ap.playFile("resources/dungeonsynth5_24.wav", 1);
 	
 	//std::vector<uint16_t> foo = {32000, 4052, 4032};
 	//std::vector<float> up(foo.begin(), foo.end());
 
-	//bmptest = imageloader::loadBMP("resources/test1.bmp");
+	bmptest = imageloader::loadBMP("resources/test6.bmp");
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
@@ -313,6 +314,7 @@ int main() {
 		d += del;
 		timer += del;
 		s_cool += del;
+		draw_timer += del;
 		std::pair<double, double> frames = eng2.getFrames();
 		if(d >= 1.0){
 			std::cout << "1 second\n";

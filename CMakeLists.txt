@@ -13,7 +13,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 add_executable(g_engine source/g_engine_2d.hpp source/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/font_renderer.cpp 
 source/function_loader.cpp source/g_primitive_funcs.h source/gl_defines.hpp source/image_loader.cpp source/input.cpp source/lodepng.cpp
 source/lodepng.h source/matrix.cpp source/matrix.hpp source/shader.cpp source/window.cpp source/example.cpp source/audio.hpp source/backend.hpp source/vector.cpp 
-source/vector.hpp source/primitive_renderer.cpp source/image_renderer.cpp source/image_atlas.cpp source/bmp_loader.cpp source/shader.hpp source/image_loader.hpp source/image_renderer.hpp
+source/vector.hpp source/primitive_renderer.cpp source/image_renderer.cpp source/image_atlas.cpp source/img_loading/bmp_loader.cpp source/shader.hpp source/image_loader.hpp source/image_renderer.hpp
 source/primitive_renderer.hpp source/font_renderer.hpp)
 
 target_compile_options(g_engine PRIVATE /utf-8)
