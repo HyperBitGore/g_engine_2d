@@ -105,18 +105,6 @@ struct BITMAPINFOHEADERV5{
 
 #pragma pack(pop)
 //supports bitmapinfoheader
-//24 bit uncompressed with no color pallete
-
-//mask applied to rgba files
-void mask32Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
-    uint32_t* ut = reinterpret_cast<uint32_t*>(data);
-    size_t rs = size/4;
-    for(size_t i = 0; i < rs; i++){
-        uint32_t n = *ut;
-        n = (*ut) & (dib_header.alpha_mask | dib_header.red_mask | dib_header.green_mask | dib_header.blue_mask);
-        *ut = n;
-    }
-}
 
 uint8_t loopUntilOnBit(uint32_t value){
     uint8_t pos = 0;
@@ -130,29 +118,46 @@ uint8_t loopUntilOnBit(uint32_t value){
     }
     return last_pos;
 }
+uint8_t countbits(uint32_t value){
+    uint8_t count = 0;
+    for(uint8_t i = 0; i < 32; i++){
+        uint8_t v = (value >> i) & 1;
+        if(v == 1){
+            count++;
+        }
+    }
+    return count;
+}
 
-uint8_t convertRange(uint8_t val){
-    uint8_t old_range = (31);
+
+uint8_t convertRange(uint8_t val, uint8_t old_range){
     uint8_t new_range = (255);
     uint8_t new_val = (((val) * new_range) / old_range);
     return new_val;
 }
-
-        /*uint32_t full_color = (red << (24 - red_bit)) | (green << (16 - green_bit)) | (blue << (8 - blue_bit)) | (alpha >> alpha_bit)
-        | (alpha >> (alpha_bit - 1)) | (alpha >> (alpha_bit - 2)) | (alpha >> (alpha_bit - 3)) | (alpha >> (alpha_bit - 4)) | (alpha >> (alpha_bit - 5))
-        | (alpha >> (alpha_bit - 6)) | (alpha >> (alpha_bit - 7));*/
-//am pulling the right values out
 //figure out how to combine them right
     //loop each mask until we hit first on bit and then use that position to determine how far to shift value over?
     //extract indiviual bits with << till bit and then &1
     //change range of colors to match new 8bit color version
     //it's reading rgba from right to left in the binary
+
+//fix alpha mask being empty causing all colors not to render
 uint8_t* mask16Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
     uint8_t alpha_bit = loopUntilOnBit(dib_header.alpha_mask);
     uint8_t red_bit = loopUntilOnBit(dib_header.red_mask);
     uint8_t green_bit = loopUntilOnBit(dib_header.green_mask);
     uint8_t blue_bit = loopUntilOnBit(dib_header.blue_mask);
-    uint32_t nu_alpha_mask = 255; //use later to make more beautiful
+
+    uint8_t alpha_bit_count = countbits(dib_header.alpha_mask);
+    uint8_t red_bit_count = countbits(dib_header.red_mask);
+    uint8_t blue_bit_count = countbits(dib_header.blue_mask);
+    uint8_t green_bit_count = countbits(dib_header.green_mask);
+
+    uint8_t alpha_range = (uint8_t)std::pow(2, alpha_bit_count) - 1;
+    uint8_t red_range = (uint8_t)std::pow(2, red_bit_count) - 1;
+    uint8_t green_range = (uint8_t)std::pow(2, green_bit_count) - 1;
+    uint8_t blue_range = (uint8_t)std::pow(2, blue_bit_count) - 1;
+
     uint16_t* ut = reinterpret_cast<uint16_t*>(data);
     uint8_t* new_data = new uint8_t[size * 2];
     size_t rs = size/2;
@@ -164,12 +169,11 @@ uint8_t* mask16Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
         uint8_t red_8 = (red >> red_bit);
         uint8_t green_8 = (green >> green_bit);
         uint8_t blue_8 = (blue >> blue_bit);
-        red_8 = convertRange(red_8);
-        green_8 = convertRange(green_8);
-        blue_8 = convertRange(blue_8);
-        uint8_t alpha_8 = (alpha >> alpha_bit)
-        | (alpha >> (alpha_bit - 1)) | (alpha >> (alpha_bit - 2)) | (alpha >> (alpha_bit - 3)) | (alpha >> (alpha_bit - 4)) | (alpha >> (alpha_bit - 5))
-        | (alpha >> (alpha_bit - 6)) | (alpha >> (alpha_bit - 7));
+        uint8_t alpha_8 = (alpha >> alpha_bit);
+        red_8 = convertRange(red_8, red_range);
+        green_8 = convertRange(green_8, green_range);
+        blue_8 = convertRange(blue_8, blue_range);
+        (dib_header.alpha_mask == 0) ? alpha_8 = 255 : alpha_8 = convertRange(alpha_8, alpha_range);
         uint32_t full_color = (((uint32_t)red_8)) | (((uint32_t)green_8) << (8)) | (((uint32_t)blue_8) << (16)) | ((uint32_t)(alpha_8) << 24);
 
         uint32_t* t = (uint32_t*)new_data;
@@ -178,6 +182,21 @@ uint8_t* mask16Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
     delete data;
     return new_data;
 }
+
+//mask applied to rgba files
+//cant edit const char array
+uint8_t* mask32Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
+    uint32_t* ut = reinterpret_cast<uint32_t*>(data);
+    uint8_t* new_data = new uint8_t[size]; 
+    size_t rs = size/4;
+    for(size_t i = 0; i < rs; i++){
+        uint32_t n = *ut;
+        n = (*ut) & (dib_header.alpha_mask | dib_header.red_mask | dib_header.green_mask | dib_header.blue_mask);
+        *ut = n;
+    }
+    return new_data;
+}
+
 
 //compression
 //0 - none
@@ -190,13 +209,12 @@ uint8_t* mask16Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
 //support RLE algorithms
 //support color masks
 
-//figured out why test4 and test1 are broekn, seems like the whole file isn't getting read into memory
-//fix 16 bit color being fucked up
-
 IMG imageloader::loadBMP(std::string path){
     std::ifstream f_stream;
     f_stream.open(path, std::ios::binary);
     std::stringstream ss;
+
+    //do it this way since some images aren't fully dumped into memory with old method
     if(f_stream){
         std::string line;
         while(getline(f_stream, line)){
@@ -229,14 +247,21 @@ IMG imageloader::loadBMP(std::string path){
     }
     img->h = dib_header.height;
     img->w = dib_header.width;
-    img->data = new uint8_t[dib_header.image_size];
+    int32_t real_size = img->h * img->w * img->bytes_per_pixel;
+    img->data = new uint8_t[real_size];
     //dumping the pixel array into image
     if(img->data){
         uint8_t* um = (uint8_t*)m + bitheader.offset;
-        for(int32_t i = 0; i < dib_header.image_size; i++){
-            img->data[i] = um[i];
+
+        //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
+        int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
+        for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
+            img->data[j] = um[i + dif];
+            if(w == (img->w * img->bytes_per_pixel) - 1){
+                w = 0;
+                dif += left_over;
+            }
         }
-        // std::memcpy(img->data, (uint8_t*)m + bitheader.offset, dib_header.image_size);
     }
 
     switch(dib_header.header_size){
@@ -273,16 +298,16 @@ IMG imageloader::loadBMP(std::string path){
         case 16:
         //need to mask data
             if(dib_header.compression == 3){
-                img->data = mask16Bit(img->data, dib_header.image_size, dib_header);
+                img->data = mask16Bit(img->data, real_size, dib_header);
             }
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //not done
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 24:
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 32:
             if(dib_header.compression == 3){
-                mask32Bit(img->data, dib_header.image_size, dib_header);
+                mask32Bit(img->data, real_size, dib_header);
             }
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w, img->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, img->data); //not done??
         break;
