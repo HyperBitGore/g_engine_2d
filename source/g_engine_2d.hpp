@@ -35,7 +35,9 @@ private:
 		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
 	}
 	int texture_units;
-
+	//function loading
+	//only run this after gl initilized
+	void loadFunctions();
 public:
 	EngineNewGL(LPCSTR window_name, int width, int height);
 
@@ -107,8 +109,7 @@ public:
 	//returns number of frames in a second and the average frame time in milliseconds, every second. 
 	std::pair<double, double> getFrames();
 
-	
-	//function loading
-	//only run this after gl initilized
-	void loadFunctions();
+	//enable/disable glthings
+	void enable(GLenum en);
+	void disable(GLenum en);
 };

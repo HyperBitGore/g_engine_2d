@@ -71,3 +71,9 @@ bool EngineNewGL::updateWindow() {
 }
 
 
+void EngineNewGL::enable(GLenum en){
+	glEnable(en);
+}
+void EngineNewGL::disable(GLenum en){
+	glDisable(en);
+}

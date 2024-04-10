@@ -146,7 +146,7 @@ void renderFunction() {
 		}
 	}
 	dr.bind();
-	prim_r.setColor({1.0f, 0.5f, 0.0f, 0.0f});
+	prim_r.setColor({1.0f, 0.5f, 0.0f, 1.0f});
 	prim_r.drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
 	prim_r.drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
 	prim_r.addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
@@ -156,7 +156,7 @@ void renderFunction() {
 	prim_r.addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
 	prim_r.drawBufferTriangle();
 	
-	prim_r.setColor({0.5f, 0.3f, 0.1f, 0.0f});
+	prim_r.setColor({0.5f, 0.3f, 0.1f, 1.0f});
 	prim_r.drawQuad({pos, 10.0f}, 60.0f, 60.0f);
 	prim_r.setColor({0.0f, 1.0f, 0.5f, 0.0f});
 	prim_r.drawPoint({50.0f, 300.0f});
@@ -164,9 +164,9 @@ void renderFunction() {
 		prim_r.addPoint({70.0f, y});
 	}
 	prim_r.drawBufferPoint();
-	prim_r.setColor({0.0f, 0.2f, 1.0f, 0.0f});
+	prim_r.setColor({0.0f, 0.2f, 1.0f, 1.0f});
 	prim_r.drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
-	prim_r.setColor({1.0f, 0.2f, 0.5f, 0.0f});
+	prim_r.setColor({1.0f, 0.2f, 0.5f, 1.0f});
 	prim_r.circle({500.0f, 50.0f}, 50.0f);
 	prim_r.quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
 	prim_r.drawBufferLine();
@@ -182,6 +182,7 @@ void renderFunction() {
 	}
 	float r = float(ang) * M_PI / 180.0;
 	float r_r = float(r_ang) * M_PI / 180.0;
+	eng2.enable(GL_BLEND);
 	img_r.drawImage(imgtest, {300.0f, 200.0f}, {100.0f, 100.0f});
 	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
@@ -191,6 +192,7 @@ void renderFunction() {
 	pos = atlas.getImagePos("enem2", true);
 	img_r.addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
 	img_r.drawBuffer(atlas.getImg());
+	eng2.disable(GL_BLEND);
 	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
 	dr.unbind();
 	if(draw_timer > 1.0f){
@@ -202,9 +204,11 @@ void renderFunction() {
 	}else{
 		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}
+	eng2.enable(GL_BLEND);
 	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
+	eng2.disable(GL_BLEND);
 	font_r.drawText("Hello World", &f_test, 100, 30, 24);
 }
 
@@ -274,7 +278,7 @@ int main() {
 	//std::vector<uint16_t> foo = {32000, 4052, 4032};
 	//std::vector<float> up(foo.begin(), foo.end());
 
-	bmptest = imageloader::loadBMP("resources/test6.bmp");
+	bmptest = imageloader::loadBMP("resources/test7.bmp");
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
