@@ -187,13 +187,43 @@ uint8_t* mask16Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
 //cant edit const char array
 uint8_t* mask32Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
     uint32_t* ut = reinterpret_cast<uint32_t*>(data);
-    uint8_t* new_data = new uint8_t[size]; 
+    uint8_t* new_data = new uint8_t[size];
     size_t rs = size/4;
+    uint8_t alpha_bit = loopUntilOnBit(dib_header.alpha_mask);
+    uint8_t red_bit = loopUntilOnBit(dib_header.red_mask);
+    uint8_t green_bit = loopUntilOnBit(dib_header.green_mask);
+    uint8_t blue_bit = loopUntilOnBit(dib_header.blue_mask);
+
+    uint8_t alpha_bit_count = countbits(dib_header.alpha_mask);
+    uint8_t red_bit_count = countbits(dib_header.red_mask);
+    uint8_t blue_bit_count = countbits(dib_header.blue_mask);
+    uint8_t green_bit_count = countbits(dib_header.green_mask);
+
+    uint8_t alpha_range = (uint8_t)std::pow(2, alpha_bit_count) - 1;
+    uint8_t red_range = (uint8_t)std::pow(2, red_bit_count) - 1;
+    uint8_t green_range = (uint8_t)std::pow(2, green_bit_count) - 1;
+    uint8_t blue_range = (uint8_t)std::pow(2, blue_bit_count) - 1;
+
+
     for(size_t i = 0; i < rs; i++){
-        uint32_t n = *ut;
-        n = (*ut) & (dib_header.alpha_mask | dib_header.red_mask | dib_header.green_mask | dib_header.blue_mask);
-        *ut = n;
+        uint32_t full_color = *ut;
+        uint32_t red = ut[i] & dib_header.red_mask;
+        uint32_t green = ut[i] & dib_header.green_mask;
+        uint32_t blue = ut[i] & dib_header.blue_mask;
+        uint32_t alpha = ut[i] & dib_header.alpha_mask;
+        uint8_t red_8 = (red >> red_bit);
+        uint8_t green_8 = (green >> green_bit);
+        uint8_t blue_8 = (blue >> blue_bit);
+        uint8_t alpha_8 = (alpha >> alpha_bit);
+        red_8 = convertRange(red_8, red_range);
+        green_8 = convertRange(green_8, green_range);
+        blue_8 = convertRange(blue_8, blue_range);
+        (dib_header.alpha_mask == 0) ? alpha_8 = 255 : alpha_8 = convertRange(alpha_8, alpha_range);
+        full_color = (((uint32_t)red_8)) | (((uint32_t)green_8) << (8)) | (((uint32_t)blue_8) << (16)) | ((uint32_t)(alpha_8) << 24);
+        uint32_t* t = (uint32_t*)new_data;
+        t[i] = full_color;
     }
+    delete data;
     return new_data;
 }
 
@@ -207,25 +237,33 @@ uint8_t* mask32Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
 
 //support color palletes for 1,4,8 bit
 //support RLE algorithms
-//support color masks
+//combine two mask functions into one
+//fix test2.bmp being broken, maybe it's just cause it's 24 bit??
 
+//only supports 8 bit color masks currently
 IMG imageloader::loadBMP(std::string path){
-    std::ifstream f_stream;
-    f_stream.open(path, std::ios::binary);
-    std::stringstream ss;
-
+    std::ifstream file;
+    file.open(path, std::ios::binary | std::ios::ate);
+    std::vector<char> buffer;
+    std::string str;
     //do it this way since some images aren't fully dumped into memory with old method
-    if(f_stream){
-        std::string line;
+    if(file){
+        /*std::string line;
         while(getline(f_stream, line)){
             ss << line + '\n';
+        }*/
+        std::streamsize size = file.tellg();
+        buffer = std::vector<char>(size);
+        file.seekg(0, std::ios::beg);
+        if(file.read(buffer.data(), size)){
+            for(auto& i : buffer){
+                str.push_back(i);
+            }
         }
     }else{
         return nullptr; //failed to open
     }
-    f_stream.close();
-    std::string str(ss.str());
-    str.pop_back(); //drop last newline which is unneeded
+    file.close();
     if(str.size() < 14){
         return nullptr; //not even sized large enough to have a header
     }
@@ -303,13 +341,13 @@ IMG imageloader::loadBMP(std::string path){
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 24:
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //not done
         break;
         case 32:
             if(dib_header.compression == 3){
-                mask32Bit(img->data, real_size, dib_header);
+                img->data = mask32Bit(img->data, real_size, dib_header);
             }
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w, img->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, img->data); //not done??
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //done
         break;
     }
 	glGenerateMipmap_g(GL_TEXTURE_2D);
