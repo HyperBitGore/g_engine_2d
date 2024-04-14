@@ -278,7 +278,7 @@ int main() {
 	//std::vector<uint16_t> foo = {32000, 4052, 4032};
 	//std::vector<float> up(foo.begin(), foo.end());
 
-	bmptest = imageloader::loadBMP("resources/test2.bmp");
+	bmptest = imageloader::loadBMP("resources/test9.bmp");
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);

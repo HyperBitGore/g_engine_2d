@@ -103,6 +103,13 @@ struct BITMAPINFOHEADERV5{
     uint32_t reserved;
 };
 
+struct FourBytePallete{
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t reserved;
+};
+
 #pragma pack(pop)
 //supports bitmapinfoheader
 
@@ -227,6 +234,31 @@ uint8_t* mask32Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
     return new_data;
 }
 
+uint8_t* parse8BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header, uint8_t* pallete) {
+    uint32_t new_size = dib_header.width * dib_header.height * 3;
+    uint8_t* new_data = new uint8_t[new_size];
+    std::vector<uint32_t> color_pallete;
+    //now read pallete
+    uint32_t* pal = (uint32_t*)pallete;
+    for(int32_t i = 0; i < dib_header.color_pallete; i++){
+        color_pallete.push_back(pal[i]); 
+    }
+    //upscale to 8bit bgr
+    for (uint32_t i = 0, j = 0; i < size && j < new_size; i++, j += 3) {
+        uint8_t in = data[i];
+        uint32_t full_color = color_pallete[in];
+        uint32_t blue = full_color & (0xff);
+        uint32_t green = full_color & (0xff << 8);
+        uint32_t red = full_color & (0xff << 16);
+        green = green >> 8;
+        red = red >> 16;
+        new_data[j] = (uint8_t)blue;
+        new_data[j + 1] = (uint8_t)green;
+        new_data[j + 2] = (uint8_t)red;
+    }
+    delete data;
+    return new_data;
+}
 
 //compression
 //0 - none
@@ -237,8 +269,6 @@ uint8_t* mask32Bit(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
 
 //support color palletes for 1,4,8 bit
 //support RLE algorithms
-//combine two mask functions into one
-//fix test2.bmp being broken, maybe it's just cause it's 24 bit??
 
 //only supports 8 bit color masks currently
 IMG imageloader::loadBMP(std::string path){
@@ -286,31 +316,35 @@ IMG imageloader::loadBMP(std::string path){
     img->h = dib_header.height;
     img->w = dib_header.width;
     int32_t real_size = img->h * img->w * img->bytes_per_pixel;
-    img->data = new uint8_t[real_size];
-    //dumping the pixel array into image
-    if(img->data){
-        uint8_t* um = (uint8_t*)m + bitheader.offset;
-
-        //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
-        int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
-        for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
-            img->data[j] = um[i + dif];
-            if(w == (img->w * img->bytes_per_pixel) - 1){
-                w = 0;
-                dif += left_over;
-            }
-        }
-    }
-
     switch(dib_header.header_size){
         case 40://v1
+            img->data = new uint8_t[real_size]; //img->w for this version includes padding
+            if(img->data){
+                uint8_t* um = (uint8_t*)m + bitheader.offset;
+                for(int32_t i = 0; i < real_size; i++){
+                    img->data[i] = um[i];
+                }
+            }else{
+                return nullptr;
+            }
+        break;
+        default: //every other version has same design for padding unless we are below first dib header, but then it doesn't matter cause I can't load those anyway
+            img->data = new uint8_t[real_size];
+            if(img->data){
+                uint8_t* um = (uint8_t*)m + bitheader.offset;
 
-        break;
-        case 108: //v4
-        
-        break;
-        case 124: //v5
-        
+                //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
+                int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
+                for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
+                        img->data[j] = um[i + dif];
+                        if(w == (img->w * img->bytes_per_pixel) - 1){
+                            w = 0;
+                            dif += left_over;
+                        }
+                }
+            }else{
+                return nullptr;
+            }
         break;
     }
 
@@ -331,17 +365,17 @@ IMG imageloader::loadBMP(std::string path){
 
         break;
         case 8:
-
+            img->data = parse8BitColor(img->data, real_size, dib_header, ((uint8_t*)m + dib_header.header_size));
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 16:
-        //need to mask data
             if(dib_header.compression == 3){
                 img->data = mask16Bit(img->data, real_size, dib_header);
             }
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 24:
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //not done
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 32:
             if(dib_header.compression == 3){
