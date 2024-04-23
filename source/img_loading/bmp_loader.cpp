@@ -241,7 +241,7 @@ uint8_t* parse8BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
     //now read pallete
     uint32_t* pal = (uint32_t*)pallete;
     for(int32_t i = 0; i < dib_header.color_pallete; i++){
-        color_pallete.push_back(pal[i]); 
+        color_pallete.push_back(*(pal + i)); 
     }
     //upscale to 8bit bgr
     for (uint32_t i = 0, j = 0; i < size && j < new_size; i++, j += 3) {
@@ -255,6 +255,38 @@ uint8_t* parse8BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
         new_data[j] = (uint8_t)blue;
         new_data[j + 1] = (uint8_t)green;
         new_data[j + 2] = (uint8_t)red;
+
+    }
+    delete data;
+    return new_data;
+}
+
+uint8_t* parse4BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header, uint8_t* pallete) {
+    uint32_t new_size = dib_header.width * dib_header.height * 3;
+    uint8_t* new_data = new uint8_t[new_size];
+    std::vector<uint32_t> color_pallete;
+    //now read pallete
+    uint32_t* pal = (uint32_t*)pallete;
+    for(int32_t i = 0; i < dib_header.color_pallete; i++){
+        color_pallete.push_back(*(pal + i)); 
+    }
+    //upscale to 8bit bgr
+    for (uint32_t i = 0, j = 0; i < size && j < new_size; i++) {
+        uint8_t t = data[i];
+        uint8_t in = (((data[i]) & 128) >> 4) | (((data[i]) & 64) >> 4) | (((data[i]) & 32) >> 4) | (((data[i]) & 16) >> 4);
+        uint8_t in2 = ((data[i]) & 8)  | ((data[i]) & 4) | ((data[i]) & 2) | ((data[i]) & 1);
+        for(int k = 0; k < 2; k++, j += 3){
+            uint32_t full_color = (k == 0) ? color_pallete[in] : color_pallete[in2];
+            uint32_t blue = full_color & (0xff);
+            uint32_t green = full_color & (0xff << 8);
+            uint32_t red = full_color & (0xff << 16);
+            green = green >> 8;
+            red = red >> 16;
+            new_data[j] = (uint8_t)blue;
+            new_data[j + 1] = (uint8_t)green;
+            new_data[j + 2] = (uint8_t)red;
+        }
+
     }
     delete data;
     return new_data;
@@ -304,50 +336,50 @@ IMG imageloader::loadBMP(std::string path){
     //dib header
     BITMAPINFOHEADERV5* bdp = (BITMAPINFOHEADERV5*)bit;
     BITMAPINFOHEADERV5 dib_header = *bdp;
-
+    uint8_t* pallete = ((uint8_t*)bdp) + dib_header.header_size;
 
     //creaing the image data
     IMG img = new g_img;
     img->bytes_per_pixel = dib_header.bitspp/8;
+
         //acount for negative height numbers
     if(dib_header.height < 0){
         dib_header.height = dib_header.height - (dib_header.height * 2);
     }
     img->h = dib_header.height;
     img->w = dib_header.width;
-    int32_t real_size = img->h * img->w * img->bytes_per_pixel;
-    switch(dib_header.header_size){
-        case 40://v1
-            img->data = new uint8_t[real_size]; //img->w for this version includes padding
-            if(img->data){
-                uint8_t* um = (uint8_t*)m + bitheader.offset;
-                for(int32_t i = 0; i < real_size; i++){
-                    img->data[i] = um[i];
-                }
-            }else{
-                return nullptr;
+    int32_t real_size = (img->bytes_per_pixel > 0) ? img->h * img->w * img->bytes_per_pixel : dib_header.image_size;
+    if(dib_header.header_size <= 40 || dib_header.bitspp <= 8){
+         img->data = new uint8_t[dib_header.image_size]; //img->w for this version includes padding
+        if(img->data){
+            uint8_t* um = (uint8_t*)m + bitheader.offset;
+            for(int32_t i = 0; i < dib_header.image_size; i++){
+                img->data[i] = um[i];
             }
-        break;
-        default: //every other version has same design for padding unless we are below first dib header, but then it doesn't matter cause I can't load those anyway
-            img->data = new uint8_t[real_size];
-            if(img->data){
-                uint8_t* um = (uint8_t*)m + bitheader.offset;
+        }else{
+            return nullptr;
+        }
+    }else{
+        img->data = new uint8_t[real_size];
+        if(img->data){
+            uint8_t* um = (uint8_t*)m + bitheader.offset;
 
-                //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
-                int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
-                for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
-                        img->data[j] = um[i + dif];
-                        if(w == (img->w * img->bytes_per_pixel) - 1){
-                            w = 0;
-                            dif += left_over;
-                        }
-                }
-            }else{
-                return nullptr;
+            //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
+            int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
+            for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
+                    img->data[j] = um[i + dif];
+                    if(w == (img->w * img->bytes_per_pixel) - 1){
+                        w = 0;
+                        dif += left_over;
+                    }
             }
-        break;
+        }else{
+            return nullptr;
+        }
     }
-
+    if(img->bytes_per_pixel <= 1){
+        img->bytes_per_pixel = 3; //since we are going to upscale to bgr
+    }
     //creating the gl texture
     glGenTextures(1, &img->tex);
 	glActiveTexture_g(GL_TEXTURE0);
@@ -362,11 +394,12 @@ IMG imageloader::loadBMP(std::string path){
 
         break;
         case 4:
-
+            img->data = parse4BitColor(img->data, dib_header.image_size, dib_header, pallete);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //not done
         break;
         case 8:
-            img->data = parse8BitColor(img->data, real_size, dib_header, ((uint8_t*)m + dib_header.header_size));
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
+            img->data = parse8BitColor(img->data, real_size, dib_header, pallete);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //actually done
         break;
         case 16:
             if(dib_header.compression == 3){
