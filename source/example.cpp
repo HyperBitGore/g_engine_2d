@@ -180,8 +180,8 @@ void renderFunction() {
 			ang = 0;
 		}
 	}
-	float r = float(ang) * M_PI / 180.0;
-	float r_r = float(r_ang) * M_PI / 180.0;
+	float r = float(ang) * (float)M_PI / (float)180.0;
+	float r_r = float(r_ang) * (float)M_PI / (float)180.0;
 	eng2.enable(GL_BLEND);
 	img_r.drawImage(imgtest, {300.0f, 200.0f}, {100.0f, 100.0f});
 	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
@@ -274,11 +274,9 @@ int main() {
 	s_test3 = ap.generateTriangle(300, 200.0f, 44100);
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
 	// ap.playFile("resources/dungeonsynth5_24.wav", 1);
-	
-	//std::vector<uint16_t> foo = {32000, 4052, 4032};
-	//std::vector<float> up(foo.begin(), foo.end());
 
 	bmptest = imageloader::loadBMP("resources/test9.bmp");
+	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);

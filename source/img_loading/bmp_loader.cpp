@@ -261,32 +261,47 @@ uint8_t* parse8BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
     return new_data;
 }
 
+uint8_t extract4Bits(uint8_t t, bool front){
+    return (front) ? (((t) & 128) >> 4) | (((t) & 64) >> 4) | (((t) & 32) >> 4) | (((t) & 16) >> 4) : ((t) & 8)  | ((t) & 4) | ((t) & 2) | ((t) & 1);
+}
+
+
+//reading the padding?, have to fix in here because can't drop half of bytes
 uint8_t* parse4BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header, uint8_t* pallete) {
-    uint32_t new_size = dib_header.width * dib_header.height * 3;
+    uint32_t new_size = dib_header.width * dib_header.height * 3; //sized for bgr
+    uint8_t new_padding = (dib_header.width * 3) % 4; //padding that opengl expects in bgr texture apparentely
+    new_size += ((dib_header.height - 1) * new_padding); //padding per line
     uint8_t* new_data = new uint8_t[new_size];
+
+    std::memset(new_data, 0, new_size); //init data to zeros
+
     std::vector<uint32_t> color_pallete;
     //now read pallete
     uint32_t* pal = (uint32_t*)pallete;
     for(int32_t i = 0; i < dib_header.color_pallete; i++){
         color_pallete.push_back(*(pal + i)); 
     }
-    //upscale to 8bit bgr
-    for (uint32_t i = 0, j = 0; i < size && j < new_size; i++) {
-        uint8_t t = data[i];
-        uint8_t in = (((data[i]) & 128) >> 4) | (((data[i]) & 64) >> 4) | (((data[i]) & 32) >> 4) | (((data[i]) & 16) >> 4);
-        uint8_t in2 = ((data[i]) & 8)  | ((data[i]) & 4) | ((data[i]) & 2) | ((data[i]) & 1);
-        for(int k = 0; k < 2; k++, j += 3){
-            uint32_t full_color = (k == 0) ? color_pallete[in] : color_pallete[in2];
-            uint32_t blue = full_color & (0xff);
-            uint32_t green = full_color & (0xff << 8);
-            uint32_t red = full_color & (0xff << 16);
-            green = green >> 8;
-            red = red >> 16;
-            new_data[j] = (uint8_t)blue;
-            new_data[j + 1] = (uint8_t)green;
-            new_data[j + 2] = (uint8_t)red;
-        }
 
+    uint32_t byte_width  = dib_header.width / 2;
+    uint32_t half_width = dib_header.width;
+    int8_t padding = 4 - (byte_width % 4);
+
+    //this took forever to figure out
+    for(uint32_t i = 0, j = 0; i < size; i += byte_width + padding){ //add the width of the row in bytes + the padding in the file
+        for(uint32_t w = 0; w < half_width; w++){
+            uint8_t index = i + (w / 2);
+            uint8_t t = data[index];
+            t = extract4Bits(t, ((w) % 2 == 0)); //switch part of byte to extract based on location in row
+            uint32_t full_color = color_pallete[t];
+            uint32_t blue = full_color & (0xff);
+            uint32_t green = (full_color >> 8) & (0xff);
+            uint32_t red = (full_color >> 16) & (0xff);
+
+            new_data[j++] = (uint8_t)blue;
+            new_data[j++] = (uint8_t)green;
+            new_data[j++] = (uint8_t)red;
+        }
+        j += new_padding; // the remaining padding byte opengl is expecting
     }
     delete data;
     return new_data;
@@ -297,7 +312,6 @@ uint8_t* parse4BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
 //1 - 8-bit RLE algorithm
 //2 - 4-bit RLE algorithm
 //3 - bitfields encoding (16 and 32 only allow this one outside of 0)
-//if 3 mask follows after header
 
 //support color palletes for 1,4,8 bit
 //support RLE algorithms
@@ -310,10 +324,6 @@ IMG imageloader::loadBMP(std::string path){
     std::string str;
     //do it this way since some images aren't fully dumped into memory with old method
     if(file){
-        /*std::string line;
-        while(getline(f_stream, line)){
-            ss << line + '\n';
-        }*/
         std::streamsize size = file.tellg();
         buffer = std::vector<char>(size);
         file.seekg(0, std::ios::beg);
@@ -342,39 +352,38 @@ IMG imageloader::loadBMP(std::string path){
     IMG img = new g_img;
     img->bytes_per_pixel = dib_header.bitspp/8;
 
-        //acount for negative height numbers
+    //account for negative height numbers
     if(dib_header.height < 0){
         dib_header.height = dib_header.height - (dib_header.height * 2);
     }
     img->h = dib_header.height;
     img->w = dib_header.width;
-    int32_t real_size = (img->bytes_per_pixel > 0) ? img->h * img->w * img->bytes_per_pixel : dib_header.image_size;
-    if(dib_header.header_size <= 40 || dib_header.bitspp <= 8){
-         img->data = new uint8_t[dib_header.image_size]; //img->w for this version includes padding
-        if(img->data){
-            uint8_t* um = (uint8_t*)m + bitheader.offset;
-            for(int32_t i = 0; i < dib_header.image_size; i++){
-                img->data[i] = um[i];
-            }
-        }else{
+    int32_t real_size = (dib_header.bitspp > 4) ? img->h * img->w * img->bytes_per_pixel : (img->h * img->w) / (8 / dib_header.bitspp);
+    if(dib_header.header_size <= 40 || (dib_header.bitspp <= 8)){
+        img->data = new uint8_t[dib_header.image_size]; //img->w for this version includes padding
+        if(!img->data){
             return nullptr;
         }
-    }else{
+        uint8_t* um = (uint8_t*)m + bitheader.offset;
+        for(int32_t i = 0; i < dib_header.image_size; i++){
+            img->data[i] = um[i];
+        }
+    }
+    else{
         img->data = new uint8_t[real_size];
-        if(img->data){
-            uint8_t* um = (uint8_t*)m + bitheader.offset;
-
-            //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
-            int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
-            for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
-                    img->data[j] = um[i + dif];
-                    if(w == (img->w * img->bytes_per_pixel) - 1){
-                        w = 0;
-                        dif += left_over;
-                    }
-            }
-        }else{
+        if(!img->data){
             return nullptr;
+        }
+        uint8_t* um = (uint8_t*)m + bitheader.offset;
+
+        //Each scan line must end on a 4-byte boundary, so one, two, or three bytes of padding may follow each scan line.
+        int32_t left_over = (img->w * img->bytes_per_pixel) % 4;
+        for(int32_t i = 0, j = 0, w = 0, dif = 0; i < dib_header.image_size && j < real_size; j++, w++, i++) {
+                img->data[j] = um[i + dif];
+                if(w == (img->w * img->bytes_per_pixel) - 1){
+                    w = 0;
+                    dif += left_over;
+                }
         }
     }
     if(img->bytes_per_pixel <= 1){
