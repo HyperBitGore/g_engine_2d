@@ -275,7 +275,7 @@ int main() {
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
 	// ap.playFile("resources/dungeonsynth5_24.wav", 1);
 
-	bmptest = imageloader::loadBMP("resources/test9.bmp");
+	bmptest = imageloader::loadBMP("resources/test12.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);

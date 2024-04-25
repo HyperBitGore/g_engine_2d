@@ -307,6 +307,53 @@ uint8_t* parse4BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
     return new_data;
 }
 
+
+uint8_t extract1Bit(uint8_t t, uint8_t n){
+    uint8_t f = (t << n) & 128;
+    return f >> 7;
+}
+
+uint8_t* parse1BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header, uint8_t* pallete){
+    uint32_t new_size = dib_header.width * dib_header.height * 3; //sized for bgr
+    uint8_t new_padding = (dib_header.width * 3) % 4; //padding that opengl expects in bgr texture apparentely
+    new_size += ((dib_header.height - 1) * new_padding); //padding per line
+    uint8_t* new_data = new uint8_t[new_size];
+
+    std::memset(new_data, 0, new_size); //init data to zeros
+
+    std::vector<uint32_t> color_pallete;
+    //now read pallete
+    uint32_t* pal = (uint32_t*)pallete;
+    for(int32_t i = 0; i < dib_header.color_pallete; i++){
+        color_pallete.push_back(*(pal + i)); 
+    }
+
+    uint32_t byte_width  = dib_header.width / 4;
+    uint32_t bit_width = dib_header.width;
+    uint32_t bit_size = dib_header.width * dib_header.height;
+    int8_t padding = 4 - (byte_width % 4);
+
+    for(uint32_t i = 0, j = 0; i < size && j < new_size; i++) { //add the width of the row in bytes + the padding in the file
+        //parse 1 byte
+        for(uint32_t w = 0; w < bit_width; w++){
+            uint8_t index = (i + (w / 8));
+            uint8_t t = data[index];
+            uint8_t f = (w % 8);
+            t = extract1Bit(t, f);
+            uint32_t full_color = color_pallete[t];
+            uint32_t blue = full_color & (0xff);
+            uint32_t green = (full_color >> 8) & (0xff);
+            uint32_t red = (full_color >> 16) & (0xff);
+            new_data[j++] = (uint8_t)blue;
+            new_data[j++] = (uint8_t)green;
+            new_data[j++] = (uint8_t)red;
+        }
+        j += new_padding;
+    }
+    delete data;
+    return new_data;
+}
+
 //compression
 //0 - none
 //1 - 8-bit RLE algorithm
@@ -400,11 +447,12 @@ IMG imageloader::loadBMP(std::string path){
     //need switch here to determine the type of pixel to load
     switch(dib_header.bitspp){
         case 1:
-
+            img->data = parse1BitColor(img->data, dib_header.image_size, dib_header, pallete);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 4:
             img->data = parse4BitColor(img->data, dib_header.image_size, dib_header, pallete);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //not done
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 8:
             img->data = parse8BitColor(img->data, real_size, dib_header, pallete);
