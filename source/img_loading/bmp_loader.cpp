@@ -331,13 +331,18 @@ uint8_t* parse1BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
     uint32_t byte_width  = dib_header.width / 4;
     uint32_t bit_width = dib_header.width;
     uint32_t bit_size = dib_header.width * dib_header.height;
+    uint32_t bit_count = 0;
     int8_t padding = 4 - (byte_width % 4);
 
-    for(uint32_t i = 0, j = 0; i < size && j < new_size; i++) { //add the width of the row in bytes + the padding in the file
+    for(uint32_t i = 0, j = 0; i < size && j < new_size; i+=padding) { //add the padding
         //parse 1 byte
-        for(uint32_t w = 0; w < bit_width; w++){
-            uint8_t index = (i + (w / 8));
-            uint8_t t = data[index];
+        for(uint32_t w = 0; w < bit_width; w++, bit_count++){
+            if(bit_count == 8) {
+                i++;
+                bit_count = 0;
+            }
+            uint8_t index = (i + (bit_count / 8));
+            uint8_t t = data[i];
             uint8_t f = (w % 8);
             t = extract1Bit(t, f);
             uint32_t full_color = color_pallete[t];
@@ -348,6 +353,9 @@ uint8_t* parse1BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
             new_data[j++] = (uint8_t)green;
             new_data[j++] = (uint8_t)red;
         }
+        //skip remainder of this byte
+        i++;
+        bit_count = 0;
         j += new_padding;
     }
     delete data;
@@ -360,8 +368,8 @@ uint8_t* parse1BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
 //2 - 4-bit RLE algorithm
 //3 - bitfields encoding (16 and 32 only allow this one outside of 0)
 
-//support color palletes for 1,4,8 bit
 //support RLE algorithms
+
 
 //only supports 8 bit color masks currently
 IMG imageloader::loadBMP(std::string path){
@@ -456,7 +464,7 @@ IMG imageloader::loadBMP(std::string path){
         break;
         case 8:
             img->data = parse8BitColor(img->data, real_size, dib_header, pallete);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //actually done
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 16:
             if(dib_header.compression == 3){
