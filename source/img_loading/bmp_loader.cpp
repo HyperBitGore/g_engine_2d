@@ -287,8 +287,8 @@ uint8_t* parse4BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
     int8_t padding = 4 - (byte_width % 4);
 
     //this took forever to figure out
-    for(uint32_t i = 0, j = 0; i < size; i += byte_width + padding){ //add the width of the row in bytes + the padding in the file
-        for(uint32_t w = 0; w < half_width; w++){
+    for(uint32_t i = 0, j = 0; i < size && j < new_size; i += byte_width + padding){ //add the width of the row in bytes + the padding in the file
+        for(uint32_t w = 0; w < half_width && j < new_size; w++){
             uint8_t index = i + (w / 2);
             uint8_t t = data[index];
             t = extract4Bits(t, ((w) % 2 == 0)); //switch part of byte to extract based on location in row
@@ -370,6 +370,145 @@ uint8_t* parse1BitColor(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_heade
 
 //support RLE algorithms
 
+/*
+The Windows BMP format supports a simple run-length encoded (RLE) compression scheme for compressing 4-bit and 8-bit bitmap data.
+ Since this is a byte-wise RLE scheme, 1-, 16-, 24-, and 32-bit bitmaps cannot be compressed using it, 
+ due to the typical lack of long runs of bytes with identical values in these types of data. 
+*/
+
+/*
+00 00 end of scan line
+00 01 end of bitmap data
+00 02 xx yy run offset marker
+*/
+
+
+uint8_t* decode8RLE(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
+    uint32_t n_size = dib_header.width * dib_header.height;
+    uint8_t* new_data = new uint8_t[dib_header.width * dib_header.height]; //since this is the size in bytes
+    std::memset(new_data, 0, n_size);
+
+    uint32_t byte_width  = dib_header.width;
+    uint8_t padding = 4 - (byte_width % 4);
+
+    uint32_t n = 0;
+    int32_t w = 0;
+    uint32_t i = 0;
+    for(i = 0; i < size && n < n_size;){
+        uint8_t count = data[i++];
+        uint8_t values = data[i++];
+        if(count == 0){
+            switch(values){
+                case 0:
+                    if(w > 0){
+                        n += (dib_header.width - w);
+                    }
+                    w = 0;
+                break;
+                case 1:
+                    i = size;
+                break;
+                case 2:
+                    //run offset marker
+                    w = (data[i]);
+                    n += (data[i++]); //move forward in row
+                    n += (data[i++] * byte_width); //move forward in height
+                break;
+                default:
+                    for(uint8_t j = 0; j < values && n < n_size && i < size; j++, n++, i++){
+                        new_data[n] = data[i];
+                    }
+                    uint8_t p = 4 - ((values) % 4);
+                    i += p;
+                break;
+            }
+        }else{
+            for(uint8_t j = 0; j < count && n < n_size; j++, n++, w++){
+                new_data[n] = values;
+            }
+        }
+        if(w >= dib_header.width){
+            w = 0;
+            n += padding;
+        }
+    }
+
+    delete data;
+    return new_data;
+}
+
+
+//For example, an RLE4-encoded data stream of 07 48 would decode to seven pixels, alternating in value as 04 08 04 08 04 08 04. 
+uint8_t* decode4RLE(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
+    uint32_t n_size = (dib_header.width) * dib_header.height;
+    uint8_t* new_data = new uint8_t[dib_header.width * dib_header.height]; //since this is the size in bytes
+    std::memset(new_data, 0, n_size);
+    uint32_t n = 0; //current index in new_data
+    uint32_t byte_width  = dib_header.width / 2;
+    uint8_t padding = 4 - (byte_width % 4);
+
+    int32_t w = 0;
+    uint32_t i = 0;
+
+    for(i = 0; i < size && n < n_size;){
+        uint8_t count = data[i++];
+        uint8_t values = data[i++];
+        if (count == 0) {
+            switch(values){
+                case 0:
+                    //end of scan line
+                    if(w != 0){
+                        n += (dib_header.width - w) / 2; //I don't know if this works properly
+                    }
+                    w = 0;
+                break;
+                case 1:
+                    //end of bitmap data
+                    i = size;
+                break;
+                case 2:
+                    //run offset marker
+                    w = (data[i]);
+                    n += (data[i++] / 2); //move forward in row
+                    n += (data[i++] * byte_width); //move forward in height
+                    
+                break;
+                default:
+                    //read raw data
+                    uint8_t mode = 1;
+                    for (uint8_t j = 0; j < values && n < n_size; j++, mode++, w++) {
+                        uint8_t value = extract4Bits(data[i], !(mode % 2 == 0));
+                        value = !(mode % 2 == 0) ? (value << 4) : value;
+                        new_data[n] |= value;
+                        uint8_t t = new_data[n];
+                        n += (mode % 2 == 0) ? 1 : 0;
+                        i += (mode % 2 == 0) ? 1 : 0;
+                    }
+                    n += (mode % 2 == 0) ? 1 : 0; //move over if one 4 bit unit left
+                    i += (mode % 2 == 0) ? 1 : 0; //move over if one 4 bit unit left
+                    //move over padding
+                    uint8_t p = 4 - ((values / 2) % 4);
+                    i += p;
+                break;
+            }
+        } else {
+            uint8_t mode = 1;
+            for (uint8_t j = 0; j < count && n < n_size; j++, w++, mode++) {
+                uint8_t value = extract4Bits(values, !(mode % 2 == 0));
+                value = !(mode % 2 == 0) ? (value << 4) : value;
+                new_data[n] |= value;
+                uint8_t t = new_data[n];
+                n += (mode % 2 == 0) ? 1 : 0;
+           }
+        }
+        if(w >= dib_header.width){
+            n += padding;
+            w = 0;
+        }
+    }
+    delete data;
+    return new_data;
+}
 
 //only supports 8 bit color masks currently
 IMG imageloader::loadBMP(std::string path){
@@ -452,6 +591,13 @@ IMG imageloader::loadBMP(std::string path){
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    if(dib_header.compression == 2){
+        img->data = decode4RLE(img->data, dib_header.image_size, dib_header);
+        dib_header.image_size = dib_header.width * dib_header.height;
+    }else if(dib_header.compression == 1){
+        img->data = decode8RLE(img->data, dib_header.image_size, dib_header);
+        dib_header.image_size = dib_header.width * dib_header.height;
+    }
     //need switch here to determine the type of pixel to load
     switch(dib_header.bitspp){
         case 1:
@@ -459,6 +605,7 @@ IMG imageloader::loadBMP(std::string path){
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 4:
+
             img->data = parse4BitColor(img->data, dib_header.image_size, dib_header, pallete);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
