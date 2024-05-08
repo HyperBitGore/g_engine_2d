@@ -113,8 +113,16 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
     insert(name, n_img, {(float)c.x, (float)c.y});
 }
 
-void ImageAtlas::addImage(std::string path, unsigned int w, unsigned int h, std::string name){
-    IMG img = imageloader::loadPNG(path, w, h);
+void ImageAtlas::addImage(std::string path, IMG_TYPE type, unsigned int w, unsigned int h, std::string name){
+    IMG img;
+    switch(type){
+        case IMG_TYPE::BMP:
+            img = imageloader::loadBMP(path);
+        break;
+        case IMG_TYPE::PNG:
+            img = imageloader::loadPNG(path, w, h);
+        break;
+    }
     addImage(img, name);
 }
 

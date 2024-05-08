@@ -275,14 +275,18 @@ int main() {
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
 	// ap.playFile("resources/dungeonsynth5_24.wav", 1);
 
-	bmptest = imageloader::loadBMP("resources/test14.bmp");
+	bmptest = imageloader::loadBMP("resources/test1.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
 	atlas.addImage(atlas_test, "atlas_test");
 	atlas.addImage(imgtest, "img_test");
-	atlas.addImage("resources/enem2_1.png", 50, 60, "enem2");
+	atlas.addImage("resources/enem2_1.png", IMG_TYPE::PNG, 50, 60, "enem2");
+
+	//adding bmp to atlas, don't need width and height
+	//atlas.addImage("resources/test1.bmp", IMG_TYPE::BMP, 0, 0, "test1");
+
 	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
 		imageloader::setPixel(imgtest, x, 1, 4278190335, 4);

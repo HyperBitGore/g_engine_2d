@@ -16,6 +16,8 @@ struct Point {
 	int y;
 };
 
+enum class IMG_TYPE {BMP, PNG};
+
 //store a bunch of images which you can stich together
 //adding an image stiches it into the image
 class ImageAtlas {
@@ -72,7 +74,7 @@ public:
 	ImageAtlas(int w, int h, int bytes_per_pixel);
 	~ImageAtlas();
 	void addImage(IMG img, std::string name);
-	void addImage(std::string path, unsigned int w, unsigned int h, std::string name);
+	void addImage(std::string path, IMG_TYPE type, unsigned int w, unsigned int h, std::string name);
 	vec4 getImagePos(std::string name, bool normalize = false);
 	IMG getImg();
 };

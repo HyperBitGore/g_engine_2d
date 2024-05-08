@@ -382,6 +382,7 @@ The Windows BMP format supports a simple run-length encoded (RLE) compression sc
 00 02 xx yy run offset marker
 */
 
+//27
 
 uint8_t* decode8RLE(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
     uint32_t n_size = dib_header.width * dib_header.height;
@@ -390,6 +391,11 @@ uint8_t* decode8RLE(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
 
     uint32_t byte_width  = dib_header.width;
     uint8_t padding = 4 - (byte_width % 4);
+
+    for(int i = 0; i < size; i++){
+        uint8_t t = data[i];
+        t += 1;
+    }
 
     uint32_t n = 0;
     int32_t w = 0;
@@ -415,10 +421,10 @@ uint8_t* decode8RLE(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
                     n += (data[i++] * byte_width); //move forward in height
                 break;
                 default:
-                    for(uint8_t j = 0; j < values && n < n_size && i < size; j++, n++, i++){
+                    for(uint8_t j = 0; j < values && n < n_size && i < size; j++, n++, i++, w++){
                         new_data[n] = data[i];
                     }
-                    uint8_t p = 4 - ((values) % 4);
+                    uint8_t p = (values % 2);
                     i += p;
                 break;
             }
@@ -592,9 +598,11 @@ IMG imageloader::loadBMP(std::string path){
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     if(dib_header.compression == 2){
+        //only used for 4bit indexed color
         img->data = decode4RLE(img->data, dib_header.image_size, dib_header);
         dib_header.image_size = dib_header.width * dib_header.height;
     }else if(dib_header.compression == 1){
+        //only used for 8bit indexed color
         img->data = decode8RLE(img->data, dib_header.image_size, dib_header);
         dib_header.image_size = dib_header.width * dib_header.height;
     }
