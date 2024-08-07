@@ -20,3 +20,10 @@ to your build for windows, Linux version not started yet.
      - WAV file loading
      - Stream audio from files
      - Play audio from seperate thread
+ 
+Planned Features
+- PNG loader from scratch
+- Rely on no external headers
+- Linux support
+- Improved font rendering/loading
+  
