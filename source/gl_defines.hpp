@@ -1,14 +1,23 @@
 #pragma once
 #define GL_GLEXT_PROTOTYPES
+
+#if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
-
 #include <Windows.h>
+
 #include <gl/GL.h>
 #include <gl/GLU.h>
 //#include <glcorearb.h>
 #include <wglext.h>
 #include <glext.h>
+#endif
+
+#if defined(__unix__)
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <GL/glx.h>  // For Linux (X11)
+#endif
 
 
 //#pragma comment (lib, "gdi32.lib")

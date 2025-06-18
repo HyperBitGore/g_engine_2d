@@ -1,4 +1,5 @@
 #include "g_engine_2d.hpp"
+#include "shader.hpp"
 
 int indexs_hash(GLint n) {
 	return n % 48;
@@ -6,7 +7,7 @@ int indexs_hash(GLint n) {
 
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
+EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	//indexs.setHashFunction(indexs_hash);
 
 	//function pointers
@@ -69,7 +70,7 @@ EngineNewGL::EngineNewGL(LPCSTR window_name, int width, int height) {
 		DestroyWindow(dummy);
 	}
 	//create window
-	wind = new Window(window_name, "ENG1", height, width, 300, 300);
+	wind = new g_window(window_name, "ENG1", height, width, 300, 300);
 	in = new Input();
 	HDC dc_w = GetDC(wind->getHwnd());
 	// set pixel format for OpenGL context

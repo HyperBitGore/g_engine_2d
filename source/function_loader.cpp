@@ -2,11 +2,16 @@
 
 //to load new gl functions
 void* GetGLFuncAddress(const char* name) {
+	#if defined(__unix__)
+	void* p = (void*)glXGetProcAddress((GLubyte*)name);
+	#endif
+	#if defined(_WIN32)
 	void* p = (void*)wglGetProcAddress(name);
 	if (p == 0x0 || p == (void*)0x01 || p == (void*)0x02 || p == (void*)0x03 || p == (void*)-0x1) {
 		HMODULE module = LoadLibraryA("opengl32.dll");
 		p = (void*)GetProcAddress(module, name);
 	}
+	#endif
 	//std::cout << p << "\n";
 	return p;
 }

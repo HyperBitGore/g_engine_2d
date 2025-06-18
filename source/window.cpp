@@ -16,12 +16,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-Window::~Window() {
+g_window::~g_window() {
 	//has to be same class name
 	UnregisterClass(class_name, m_hinstance);
 }
 
-bool Window::ProcessMessage() {
+bool g_window::ProcessMessage() {
 	MSG msg = {};
 
 	while (PeekMessage(&msg, nullptr, 0u, 0u, PM_REMOVE)) {
@@ -34,16 +34,16 @@ bool Window::ProcessMessage() {
 	return true;
 }
 
-bool Window::updateWindow() {
-	return UpdateWindow(getHwnd());
+bool g_window::updateWindow() {
+	return UpdateWindow(getRawWindow());
 }
 
 
-bool Window::swapBuffers() {
-	return SwapBuffers(GetDC(getHwnd()));
+bool g_window::swapBuffers() {
+	return SwapBuffers(GetDC(getRawWindow()));
 }
 
-Window::Window(LPCSTR title, LPCSTR CLASS_NAME, int h, int w, int x, int y)
+g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int x, int y)
 	: m_hinstance(GetModuleHandle(nullptr))
 {
 	class_name = CLASS_NAME;
@@ -88,12 +88,12 @@ Window::Window(LPCSTR title, LPCSTR CLASS_NAME, int h, int w, int x, int y)
 }
 
 
-int Window::getWidth() {
+int g_window::getWidth() {
 	return width;
 }
-int Window::getHeight() {
+int g_window::getHeight() {
 	return height;
 }
-HWND Window::getHwnd() {
+RAW_WINDOW g_window::getRawWindow() {
 	return m_hwnd;
 }

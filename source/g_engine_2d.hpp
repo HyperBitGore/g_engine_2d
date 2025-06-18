@@ -15,7 +15,7 @@
 
 class EngineNewGL {
 private:
-	Window* wind;
+	g_window* wind;
 	Input* in;
 	std::function<void()> renderFund;
 	//color constants
@@ -39,7 +39,7 @@ private:
 	//only run this after gl initilized
 	void loadFunctions();
 public:
-	EngineNewGL(LPCSTR window_name, int width, int height);
+	EngineNewGL(const char* window_name, int width, int height);
 
 	//move constructor
 	EngineNewGL(EngineNewGL&& o) {

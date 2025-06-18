@@ -1,23 +1,31 @@
 #include "gl_defines.hpp"
 
+#if defined(_WIN32)
+#define RAW_WINDOW HWND
+#endif
+#if defined(__unix__)
+#define RAW_WINDOW Window
+#endif
 
 //added customizability and clean up
-class Window {
+class g_window {
 private:
+	#if defined(_WIN32)
 	HINSTANCE m_hinstance;
-	HWND m_hwnd;
-	LPCSTR class_name;
+	#endif
+	RAW_WINDOW m_hwnd;
+	const char* class_name;
 	int height;
 	int width;
 public:
-	Window(LPCSTR title, LPCSTR CLASS_NAME, int h, int w, int x, int y);
-	Window(const Window&) = delete;
-	Window& operator =(const Window&) = delete;
-	~Window();
+	g_window(const char* title, const char* CLASS_NAME, int h, int w, int x, int y);
+	g_window(const Window&) = delete;
+	g_window& operator =(const Window&) = delete;
+	~g_window();
 	bool ProcessMessage();
 	int getWidth();
 	int getHeight();
-	HWND getHwnd();
+	RAW_WINDOW getRawWindow();
 	bool updateWindow();
 	bool swapBuffers();
 

@@ -20,8 +20,10 @@
 
 static void FatalError(const char* message)
 {
+	#if defined(_WIN32)
 	MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
 	ExitProcess(0);
+	#endif
 }
 
 //throw hashmap in here for uniform lookup
