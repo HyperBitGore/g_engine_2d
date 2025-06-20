@@ -71,7 +71,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	}
 	//create window
 	wind = new g_window(window_name, "ENG1", height, width, 300, 300);
-	in = new Input();
+	in = new Input(wind->getRawDisplay());
 	HDC dc_w = GetDC(wind->getHwnd());
 	// set pixel format for OpenGL context
 	{

@@ -11,11 +11,16 @@ void Input::setLastState() {
 //probably switch to GetKeyboardState, so easier to use getKeyReleased
 void Input::getState() {
 	setLastState();
+	#if defined(_WIN32)
 	bool fail = GetKeyboardState((PBYTE)keys);
+	#endif
+	#if defined(__unix)
+	bool fail = XkbGetState(display, XkbUseCoreKbd, &state);
+	#endif
 }
 
 
-bool Input::GetKeyDown(char key) {
+bool Input::GetKeyDown(uint32_t key) {
 	getState();
 	short t = key;
 	if (key >= 97 && key <= 122) {
@@ -26,7 +31,7 @@ bool Input::GetKeyDown(char key) {
 	}
 	return false;
 }
-bool Input::GetKeyReleased(char key) {
+bool Input::GetKeyReleased(uint32_t key) {
 	short t = key;
 	if (key >= 97 && key <= 122) {
 		t = VkKeyScanEx(key, layout);
