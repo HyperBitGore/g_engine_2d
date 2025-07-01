@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <fstream>
+#if defined (_WIN32)
 #include <Windows.h>
 #include <Audioclient.h>
 #include <mmdeviceapi.h>
@@ -12,13 +13,14 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <endpointvolume.h>
+#endif
 
 //PCM data
 struct Sound {
 public:
 	std::string name; //file name
-	BYTE samplebits; //number of bits per sample
-	BYTE channels; //number of channels
+	uint8_t samplebits; //number of bits per sample
+	uint8_t channels; //number of channels
 	int framesize; //frame size
 	int blockalign; //block align for samples
 	size_t size; //in bytes
@@ -42,7 +44,7 @@ private:
 		char* data; //actual wave form data
 		int bytesp = 1; //bytes per sample
 
-		bool writeData(BYTE* dat, size_t n, WavBytes bits);
+		bool writeData(uint8_t* dat, size_t n, WavBytes bits);
 	};
 
 	class FileStream {
@@ -55,7 +57,7 @@ private:
 	public:
 		FileStream(std::string file);
 		~FileStream();
-		bool writeData(BYTE* dat, size_t n, WavBytes bits);
+		bool writeData(uint8_t* dat, size_t n, WavBytes bits);
 		bool strMatch(std::string str);
 	};
 	//https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
@@ -93,20 +95,21 @@ private:
 		static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes);
 	};
 
-
+	#if defined(_WIN32)
 	WAVEFORMATEX* format = nullptr;
 	IAudioClient* client = nullptr;
 	IAudioRenderClient* render = nullptr;
 	ISimpleAudioVolume* volume = nullptr;
 	IMMDevice* pdevice = nullptr;
 	IMMDeviceEnumerator* penum = nullptr;
-	UINT32 buffer_size = 0;
-	std::vector<SoundP> sound_files;
-	std::vector<FileStream*> stream_files;
-
 	HANDLE bufReady;
 	HANDLE shutdown; //add later
 	HANDLE paused;
+	#endif
+	uint32_t buffer_size = 0;
+	std::vector<SoundP> sound_files;
+	std::vector<FileStream*> stream_files;
+
 	bool play = true;
 	bool fs = false;
 public:

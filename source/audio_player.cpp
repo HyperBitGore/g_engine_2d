@@ -260,16 +260,16 @@ AudioPlayer::~AudioPlayer() {
 
 void AudioStream::playStream() {
     if (play) {
-        DWORD res = WaitForSingleObject(bufReady, 0);
+        int32_t res = WaitForSingleObject(bufReady, 0);
 
         if (res == WAIT_OBJECT_0) {
 
-            UINT32 filled;
+            uint32_t filled;
             client->GetCurrentPadding(&filled);
-            UINT32 free = buffer_size - filled;
+            uint32_t free = buffer_size - filled;
             if (free > 0) {
                 WavBytes bits = (WavBytes)((this->format->wBitsPerSample)/8);
-                BYTE* data;
+                uint8_t* data;
                 render->GetBuffer(free, &data);
                 for (size_t i = 0; i < stream_files.size();) {
                     if (!stream_files[i]->writeData(data, free, bits)) {

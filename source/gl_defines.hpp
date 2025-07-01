@@ -20,11 +20,6 @@
 #endif
 
 
-//#pragma comment (lib, "gdi32.lib")
-//#pragma comment (lib, "user32.lib")
-//#pragma comment (lib, "opengl32.lib")
-
-
 
 
 

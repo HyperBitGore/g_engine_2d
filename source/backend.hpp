@@ -1,4 +1,7 @@
 #include "gl_defines.hpp"
+#include <cstdint>
+#include <iostream>
+#include <cstring>
 
 #if defined(_WIN32)
 #define RAW_WINDOW HWND
@@ -142,6 +145,7 @@
 #include <X11/X.h>
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/XKBstr.h>
 #define RAW_WINDOW Window
 #define RAW_DISPLAY Display*
 #define g_A XK_A
@@ -307,30 +311,43 @@ class Input {
 private:
 	#if defined(_WIN32)
 	HKL layout;
+	char keys[256];
+	char last_state[256];
+	const uint32_t keys_size = 256;
 	#endif
 	#if defined(__unix__)
-	XkbStateRec state;
+	XkbStateRec mod_state;
     XkbDescPtr xkb;
+	XkbDescRec kb_state;
+	char raw_keys[32];
+	char keys[65535];
+	char last_state[65535];
+	const uint32_t keys_size = 65535;
 	#endif
 	RAW_DISPLAY display;
-	uint32_t keys[256];
-	uint32_t last_state[256];
 public:
 	Input(RAW_DISPLAY display) {
 		#if defined(_WIN32)
 		layout = LoadKeyboardLayoutA("00000409", KLF_ACTIVATE);
 		#endif
 		#if defined(__unix__)
-		
+		xkb = XkbAllocKeyboard();
+		if (!xkb) {
+			std::cerr << "Failed to allocate keyboard\n";
+		}
 		#endif
+		memset(keys, 0, keys_size);
 		this->display = display;
 	}
 	Input(const Input&) = delete;
 	Input& operator =(const Input&) = delete;
+	~Input () {
+
+	}
 	//input functions
 	void setLastState();
 	//probably switch to GetKeyboardState, so easier to use getKeyReleased
-	void getState();
+	bool getState();
 
 
 	bool GetKeyDown(uint32_t key);

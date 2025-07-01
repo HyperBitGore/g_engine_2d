@@ -1,4 +1,5 @@
 #include "matrix.hpp"
+#include <cstring>
 
 
 Matrix::Matrix(size_t r, size_t c) {
@@ -16,7 +17,7 @@ Matrix::Matrix(const Matrix& m) {
 	columns = m.columns;
 	rows = m.rows;
 	dat = new float[rows * columns];
-	std::memcpy(dat, m.dat, rows * columns * sizeof(float));
+	memcpy(dat, m.dat, rows * columns * sizeof(float));
 }
 Matrix::~Matrix() {
 	if (dat) {
@@ -30,7 +31,7 @@ Matrix& Matrix::operator=(const Matrix& rhs) {
 		delete[] dat;
 	}
 	dat = new float[rows * columns];
-	std::memcpy(dat, rhs.dat, rows * columns * sizeof(float));
+	memcpy(dat, rhs.dat, rows * columns * sizeof(float));
 	return *this;
 }
 
