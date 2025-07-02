@@ -304,6 +304,20 @@ void AudioStream::playStream() {
             }
         }
         #endif
+        snd_pcm_state_t state = snd_pcm_state(pcm_handle);
+        if (state == SND_PCM_STATE_XRUN) {
+            //std::cerr << "Buffer underrun/overrun occurred, recovering...\n";
+            int err = snd_pcm_prepare(pcm_handle);
+            if (err < 0) {
+                //std::cerr << "Failed to prepare device: " << snd_strerror(err) << "\n";
+                // handle error (maybe abort playback)
+            }
+            err = snd_pcm_start(pcm_handle);
+            if (err < 0) {
+                //std::cerr << "Failed to start device: " << snd_strerror(err) << "\n";
+                // handle error
+            }
+        }
         snd_pcm_sframes_t avail = snd_pcm_avail_update(pcm_handle);
         if (avail > 0) {
             // clamp to frame capacity
@@ -314,37 +328,34 @@ void AudioStream::playStream() {
             if (avail <= 0 || (size_t)avail > buffer_size / (2 * sizeof(int16_t))) {
                 return;
             }
-            uint32_t free = buffer_size - avail;
-            if (free > 0) {
-                for (size_t i = 0; i < stream_files.size();) {
-                    if (!stream_files[i]->writeData((uint8_t*)buffer, free, format)) {
-                        FileStream* fp = stream_files[i];
-                        stream_files.erase(stream_files.begin() + i);
-                        delete fp; //dont need to call destructor since delete does that for us
-                    }
-                    else {
-                        i++;
-                    }
+            for (size_t i = 0; i < stream_files.size();) {
+                if (!stream_files[i]->writeData((uint8_t*)buffer, avail, format)) {
+                    FileStream* fp = stream_files[i];
+                    stream_files.erase(stream_files.begin() + i);
+                    delete fp; //dont need to call destructor since delete does that for us
                 }
-                for (size_t i = 0; i < sound_files.size();) {
-                    if (!sound_files[i].writeData((uint8_t*)buffer, free, format)) {
-                        sound_files.erase(sound_files.begin() + i);
-                    }
-                    else {
-                        i++;
-                    }
+                else {
+                    i++;
                 }
-                snd_pcm_sframes_t written = snd_pcm_writei(pcm_handle, buffer, avail);
-                if (written < 0) {
-                    if (written == -EPIPE) {
-                        snd_pcm_prepare(pcm_handle); // buffer underrun
-                    } else {
-                       std::cerr << "ALSA write error: " << snd_strerror(written) << "\n";
-                    }
+            }
+            for (size_t i = 0; i < sound_files.size();) {
+                if (!sound_files[i].writeData((uint8_t*)buffer, avail, format)) {
+                    sound_files.erase(sound_files.begin() + i);
                 }
-                if (sound_files.size() <= 0 && stream_files.size() <= 0) {
-                    play = false;
+                else {
+                    i++;
                 }
+            }
+            snd_pcm_sframes_t written = snd_pcm_writei(pcm_handle, buffer, avail);
+            if (written < 0) {
+                if (written == -EPIPE) {
+                    snd_pcm_prepare(pcm_handle); // buffer underrun
+                } else {
+                    std::cerr << "ALSA write error: " << snd_strerror(written) << "\n";
+                }
+            }
+            if (sound_files.size() <= 0 && stream_files.size() <= 0) {
+                play = false;
             }
         }
     }
@@ -448,6 +459,7 @@ AudioStream::AudioStream() {
         std::cerr << "Audio stream memory allocate error\n";
         return;
     }
+    play = false;
     #endif
 }
 AudioStream::~AudioStream() {

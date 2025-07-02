@@ -330,10 +330,17 @@ private:
 	char keys[65535];
 	char last_state[65535];
 	const uint32_t keys_size = 65535;
+	char cur_lstate = 0;
+	char cur_rstate = 0;
+	char cur_mstate = 0;
+	char last_lstate = 0;
+	char last_rstate = 0;
+	char last_mstate = 0;
 	#endif
 	RAW_DISPLAY display;
+	RAW_WINDOW wind;
 public:
-	Input(RAW_DISPLAY display) {
+	Input(RAW_DISPLAY display, RAW_WINDOW wind) {
 		#if defined(_WIN32)
 		layout = LoadKeyboardLayoutA("00000409", KLF_ACTIVATE);
 		#endif
@@ -345,6 +352,7 @@ public:
 		#endif
 		memset(keys, 0, keys_size);
 		this->display = display;
+		this->wind = wind;
 	}
 	Input(const Input&) = delete;
 	Input& operator =(const Input&) = delete;

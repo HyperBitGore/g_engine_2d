@@ -1,6 +1,14 @@
 #include "g_engine_2d.hpp"
 #include "shader.hpp"
 
+#if defined (__unix__)
+int myXIOErrorHandler(Display *dpy) {
+    fprintf(stderr, "X server connection lost. Cleaning up.\n");
+    // You could save state, attempt recovery, etc.
+    exit(1); // Avoid calling exit(), which may trigger undefined behavior in some cases
+}
+#endif
+
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
 EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	#if defined(_WIN32)
@@ -169,7 +177,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	GLXFBConfig fbconfig = fbc[0];
 
 	wind = new g_window(window_name, display, height, width, 300, 300);
-	in = new Input(wind->getRawDisplay());
+	in = new Input(wind->getRawDisplay(), wind->getRawWindow());
 
     if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");
 	// Load context creation function
@@ -209,9 +217,10 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	//glViewport(0, 0, width, height);
 
 	loadFunctions();
+	glViewport(0, 0, width, height);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
 	std::cout << "Texture Units on this machine: " << texture_units << "\n";
-
+	XSetIOErrorHandler(myXIOErrorHandler);
 	//start modern opengl needed stuff like shaders and vertex buffers
 
 	#if defined(_WIN32)
