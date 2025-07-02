@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <iostream>
 #include <vector>
 #include <thread>
 #include <mutex>
@@ -13,6 +12,10 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <endpointvolume.h>
+#endif
+#if defined(__unix__)
+#include <alsa/asoundlib.h>
+#include <alloca.h>
 #endif
 
 //PCM data
@@ -106,6 +109,14 @@ private:
 	HANDLE shutdown; //add later
 	HANDLE paused;
 	#endif
+	#if defined(__unix__)
+	snd_pcm_t *pcm_handle;
+    snd_pcm_hw_params_t *hw_params;
+	snd_pcm_sw_params_t *sw_params;
+    snd_pcm_uframes_t frames;
+	uint16_t* buffer = nullptr;
+	WavBytes format = WavBytes::BYTE16;
+	#endif
 	uint32_t buffer_size = 0;
 	std::vector<SoundP> sound_files;
 	std::vector<FileStream*> stream_files;
@@ -171,7 +182,6 @@ public:
 
 	//done
 	Audio generateSin(size_t length, float freq, size_t sample_rate);
-	//done
 	Audio generateSquare(size_t length, float freq, size_t sample_rate);
 	Audio generateTriangle(size_t length, float freq, size_t sample_rate);
 	Audio generateSawtooth(size_t length, float freq, size_t sample_rate);

@@ -1,5 +1,6 @@
 #include "shader.hpp"
-
+#include <fstream>
+#include <sstream>
 
 void Shader::bind() {
 	glUseProgram_g(program);

@@ -25,6 +25,7 @@ g_window::~g_window() {
 	UnregisterClass(class_name, m_hinstance);
 	#endif
 	#if defined(__unix__)
+    XDestroyWindow(display, m_hwnd);
     XCloseDisplay(display);
 	#endif
 }
@@ -126,22 +127,41 @@ g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int 
         exit(1);
     }
     Window root = DefaultRootWindow(display);
-    XVisualInfo *vi = glXChooseVisual(display, 0, NULL);
-    if (!vi) {
-        std::cout << "No appropriate visual found\n";
-        exit(1);
+	// Choose framebuffer config
+	static int visual_attribs[] = {
+	GLX_X_RENDERABLE    , True,
+	GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+	GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+	GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+	GLX_RED_SIZE        , 8,
+	GLX_GREEN_SIZE      , 8,
+	GLX_BLUE_SIZE       , 8,
+	GLX_ALPHA_SIZE      , 8,
+	GLX_DEPTH_SIZE      , 24,
+	GLX_DOUBLEBUFFER    , True,
+	None
+	};
+	int fbcount;
+    GLXFBConfig* fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
+    if (!fbc) {
+        fprintf(stderr, "Failed to get framebuffer config\n");
+        return;
     }
 
-    Colormap cmap = XCreateColormap(display, root, vi->visual, AllocNone);
-	XSetWindowAttributes swa;
-    swa.colormap = cmap;
+    GLXFBConfig fbconfig = fbc[0];
+    XVisualInfo* vi = glXGetVisualFromFBConfig(display, fbconfig);
+
+    // Create window
+    XSetWindowAttributes swa;
+    swa.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
     swa.event_mask = ExposureMask | KeyPressMask;
 
     m_hwnd = XCreateWindow(display, root, 0, 0, 800, 600, 0, vi->depth,
                         InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
 	XMapWindow(display, m_hwnd);
 	XStoreName(display, m_hwnd, title);
-					
+	XFree(vi);
+	XFree(fbc);
 
 }
 #endif

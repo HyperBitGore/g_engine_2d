@@ -1,10 +1,12 @@
 #include "../source/g_engine_2d.hpp"
+#include "../source/audio.hpp"
+#include "../source/matrix.hpp"
 #include <bitset>
 
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
 imagerenderer img_r(640, 480);
-FontRenderer font_r(&prim_r);
+gore::FontRenderer font_r(&prim_r);
 DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
@@ -18,7 +20,7 @@ IMG atlas_test;
 IMG bmptest;
 IMG blank_test;
 ImageAtlas atlas = ImageAtlas(400, 400, 4);
-Font f_test;
+gore::Font f_test;
 
 int ang = 0;
 int r_ang = 360;
@@ -128,13 +130,13 @@ void renderFunction() {
 		mos = eng2.getMousePos();
 		std::cout << mos.x << " : " << mos.y << "\n";
 	}
-	if (eng2.getKeyDown(VK_RIGHT)) {
+	if (eng2.getKeyDown(g_RightArrow)) {
 		bez_m.x += 0.01f;
 	}
-	else if (eng2.getKeyDown(VK_LEFT)) {
+	else if (eng2.getKeyDown(g_LeftArrow)) {
 		bez_m.x -= 0.01f;
 	}
-	else if (eng2.getKeyDown(VK_UP)) {
+	else if (eng2.getKeyDown(g_UpArrow)) {
 		if (play_it) {
 			ap.pause(1);
 			play_it = false;
@@ -327,7 +329,7 @@ int main() {
 			std::cout << "Frames: " << frames.first << ", average time: " << frames.second << "\n";
 			d = 0;
 		}
-		if (eng2.getKeyDown(VK_RETURN)) {
+		if (eng2.getKeyDown(g_Return)) {
 			std::cout << "key down\n";
 		}
 		else if (eng2.getKeyReleased('w')) {

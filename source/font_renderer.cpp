@@ -1,7 +1,8 @@
 #include "font_renderer.hpp"
-#include <array>
 #include <algorithm>
-#include <bitset>
+#include <cstdint>
+#include <fstream>
+#include <sstream>
 
 
 
@@ -22,13 +23,13 @@
 int getnthBit(short number, int n) {
 	return (number >> n) & 1;
 }
-int getnthBit(UINT8 number, int n) {
+int getnthBit(uint8_t number, int n) {
 	return (number >> n) & 1;
 }
 
 
-UINT8 swap1Byte(UINT8 n) {
-	UINT8 n2 = 0;
+uint8_t swap1Byte(uint8_t n) {
+	uint8_t n2 = 0;
 	for (int i = 0, j = 7; i < 8; i++, j--) {
 		int s = getnthBit(n, j);
 		if (s == 1) {
@@ -43,54 +44,54 @@ UINT8 swap1Byte(UINT8 n) {
 //ttf file structs
 
 struct off_subtable {
-	UINT32 scaler_type; //tag to indicate scaler to be used to razterize font
-	UINT16 numTables; //number of tables
-	UINT16 searchRange; //(maximum power of 2 <= numTables)*16
-	UINT16 entrySelector; //log2(maximum power of 2 <= numTables)
-	UINT16 rangeShift; //numTables*16-searchRange
+	uint32_t scaler_type; //tag to indicate scaler to be used to razterize gore::Font
+	uint16_t numTables; //number of tables
+	uint16_t searchRange; //(maximum power of 2 <= numTables)*16
+	uint16_t entrySelector; //log2(maximum power of 2 <= numTables)
+	uint16_t rangeShift; //numTables*16-searchRange
 };
 
 struct table_dir {
 	std::string t; //human readable tag
-	UINT32 tag; //4-byte identifier
-	UINT32 checksum; //checksum for the table
-	UINT32 offset; //offset from bneging of 'sfnt' (begining of file)
-	UINT32 length; //length of table in bytes
+	uint32_t tag; //4-byte identifier
+	uint32_t checksum; //checksum for the table
+	uint32_t offset; //offset from bneging of 'sfnt' (begining of file)
+	uint32_t length; //length of table in bytes
 };
 
 
-struct font_dir {
+struct Font_dir {
 	off_subtable off_sub;
 	std::vector<table_dir> table;
 };
 
 struct glyph_index {
 	int index;
-	UINT16 c;
+	uint16_t c;
 };
 
 struct cmap_table {
-	UINT16 platformID;
-	UINT16 platformSpecificID;
-	UINT32 offset;
+	uint16_t platformID;
+	uint16_t platformSpecificID;
+	uint32_t offset;
 	std::vector<glyph_index> indexs;
 };
 
 
 
 struct cmap {
-	UINT16 version;
-	UINT16 numTables;
+	uint16_t version;
+	uint16_t numTables;
 	std::vector<cmap_table> tables;
 };
 
 
 //have to convert these to little endian( I don't know how these macros work but they do so fuck it)
 void read_offset_subtable(char* c, off_subtable* table){
-	UINT32* t = (UINT32*)c;
+	uint32_t* t = (uint32_t*)c;
 	table->scaler_type = SwapFourBytes(*t);
 	t++;
-	UINT16* te = (UINT16*)t;
+	uint16_t* te = (uint16_t*)t;
 	table->numTables = SwapTwoBytes(*te);
 	te++;
 	table->searchRange = SwapTwoBytes(*te);
@@ -103,7 +104,7 @@ void read_offset_subtable(char* c, off_subtable* table){
 }
 
 void read_table_directory(char* c, std::vector<table_dir>& table, int tbl_size) {
-	UINT32* t = (UINT32*)c;
+	uint32_t* t = (uint32_t*)c;
 	for (int i = 0; i < tbl_size; i++) {
 		table_dir dir;
 		dir.t = "";
@@ -125,21 +126,21 @@ void read_table_directory(char* c, std::vector<table_dir>& table, int tbl_size) 
 }
 
 struct format4 {
-	UINT16 format;
-	UINT16 length;
-	UINT16 language;
-	UINT16 segCountX2;
-	UINT16 searchRange;
-	UINT16 entrySelector;
-	UINT16 rangeShift;
-	std::vector<UINT16> endcode;
-	UINT16 reservedPad; //left for padding
-	std::vector<UINT16> startCode;
-	std::vector<UINT16> idDelta;
-	std::vector<UINT16> idRangeOffset;
-	std::vector<UINT16> glyphIndexArray;
+	uint16_t format;
+	uint16_t length;
+	uint16_t language;
+	uint16_t segCountX2;
+	uint16_t searchRange;
+	uint16_t entrySelector;
+	uint16_t rangeShift;
+	std::vector<uint16_t> endcode;
+	uint16_t reservedPad; //left for padding
+	std::vector<uint16_t> startCode;
+	std::vector<uint16_t> idDelta;
+	std::vector<uint16_t> idRangeOffset;
+	std::vector<uint16_t> glyphIndexArray;
 };
-int get_glyph_index_format4(UINT16 c, format4* f, UINT16* idRangeStart) {
+int get_glyph_index_format4(uint16_t c, format4* f, uint16_t* idRangeStart) {
 	int index = -1;
 	for (int i = 0; i < f->segCountX2 / 2; i++) {
 		if (f->endcode[i] > c) {
@@ -151,7 +152,7 @@ int get_glyph_index_format4(UINT16 c, format4* f, UINT16* idRangeStart) {
 		return 0;
 	}
 	if (f->startCode[index] < c) {
-		UINT16* ptr = nullptr;
+		uint16_t* ptr = nullptr;
 		if (f->idRangeOffset[index] != 0) {
 			ptr = idRangeStart + index + f->idRangeOffset[index] / 2;
 			ptr += c - f->startCode[index];
@@ -167,10 +168,10 @@ int get_glyph_index_format4(UINT16 c, format4* f, UINT16* idRangeStart) {
 }
 
 //c should be at the start of the cmap table so the table.offset works
-void readFormat4(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat4(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	//now we get to reading, probably make cmap_table have array of glyph indexs so easier to store
 	char* m = c + table->offset;
-	UINT16* t = (UINT16*)m;
+	uint16_t* t = (uint16_t*)m;
 	format4 form;
 	form.format = SwapTwoBytes(*t);
 	t++;
@@ -203,7 +204,7 @@ void readFormat4(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 
 	}
 	t += form.segCountX2 / 2;
-	UINT16* idRangeStart = t;
+	uint16_t* idRangeStart = t;
 	for (int i = 0; i < form.segCountX2 / 2; i++) {
 		form.idRangeOffset.push_back(SwapTwoBytes(*(t + i)));
 
@@ -216,27 +217,27 @@ void readFormat4(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 		form.glyphIndexArray.push_back(SwapTwoBytes(*(t + i)));
 	}
 	//now we read all of the character codes, change back to 32
-	UINT16 start1 = start;
+	uint16_t start1 = start;
 	for (start1; start1 <= end; start1++) {
 		table->indexs.push_back({ get_glyph_index_format4(start1, &form, idRangeStart), start1 });
 	}
 	//std::cout << table->indexs[0].c << " : " << table->indexs[0].index << "\n";
 }
 //untested
-void readFormat0(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat0(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	char* m = c + table->offset;
-	UINT16* f = (UINT16*)m;
+	uint16_t* f = (uint16_t*)m;
 	f++;
-	UINT16 length = SwapTwoBytes(*f);
+	uint16_t length = SwapTwoBytes(*f);
 	f++;
-	UINT16 language = SwapTwoBytes(*f);
+	uint16_t language = SwapTwoBytes(*f);
 	f++;
-	UINT8* g = (UINT8*)f;
-	std::vector<UINT8> id_array;
+	uint8_t* g = (uint8_t*)f;
+	std::vector<uint8_t> id_array;
 	for (int i = 0; i < length; i++) {
 		id_array.push_back(*(g + i));
 	}
-	UINT16 start1 = start;
+	uint16_t start1 = start;
 	for (start1; start1 <= end; start1++) {
 		if (start1 < id_array.size()) {
 			table->indexs.push_back({ id_array[start1], start1 });
@@ -244,34 +245,34 @@ void readFormat0(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	}
 }
 //untested and unfinished
-void readFormat2(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat2(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	char* m = c + table->offset;
-	UINT16* f = (UINT16*)m;
+	uint16_t* f = (uint16_t*)m;
 	f++;
-	UINT16 length = SwapTwoBytes(*f);
+	uint16_t length = SwapTwoBytes(*f);
 	f+=2; //skipping language 
 
 }
 //untested
-void readFormat6(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat6(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	char* m = c + table->offset;
-	UINT16* f = (UINT16*)m;
-	UINT16 format = SwapTwoBytes(*f);
+	uint16_t* f = (uint16_t*)m;
+	uint16_t format = SwapTwoBytes(*f);
 	f++;
-	UINT16 length = SwapTwoBytes(*f);
+	uint16_t length = SwapTwoBytes(*f);
 	f += 2;//skipping language
-	UINT16 firstcode = SwapTwoBytes(*f);
+	uint16_t firstcode = SwapTwoBytes(*f);
 	f++;
-	UINT16 entrycount = SwapTwoBytes(*f);
+	uint16_t entrycount = SwapTwoBytes(*f);
 	f++;
 	//now we read the glyphidarray
-	std::vector<UINT16> glyphidarray;
-	for (UINT16 i = 0; i < entrycount; i++) {
+	std::vector<uint16_t> glyphidarray;
+	for (uint16_t i = 0; i < entrycount; i++) {
 		glyphidarray.push_back(*(f + i));
 	}
 
 	//outputting to the table
-	UINT16 start1 = start;
+	uint16_t start1 = start;
 	for (start1; start1 < end; start1++) {
 		int offset = start1 - firstcode;
 		if (offset > 0 && offset < entrycount) {
@@ -282,61 +283,61 @@ void readFormat6(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 		}
 	}
 }
-void readFormat8(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat8(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	char* m = c + table->offset;
-	UINT16* f16 = (UINT16*)m;
+	uint16_t* f16 = (uint16_t*)m;
 	f16 += 2;//skipping format and reserved
-	UINT32* f32 = (UINT32*)f16;
-	UINT32 length = *f32;
+	uint32_t* f32 = (uint32_t*)f16;
+	uint32_t length = *f32;
 	f32 += 2;//skipping language
 	//now we read the packed array of bits
 
 }
 
 //untested and im unsure if this is proper way to read this format
-void readFormat10(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat10(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	char* m = c + table->offset;
-	UINT16* f16 = (UINT16*)m;
+	uint16_t* f16 = (uint16_t*)m;
 	f16 += 2; //skipping first two
-	UINT32* f32 = (UINT32*)f16;
-	UINT32 length = *f32;
+	uint32_t* f32 = (uint32_t*)f16;
+	uint32_t length = *f32;
 	f32+=2;//skipping language
-	UINT32 starcharcode = *f32;
+	uint32_t starcharcode = *f32;
 	f32++;
-	UINT32 numChars = *f32;
+	uint32_t numChars = *f32;
 	f32++;
-	f16 = (UINT16*)f32;
-	std::vector<UINT16> glyphindices;
+	f16 = (uint16_t*)f32;
+	std::vector<uint16_t> glyphindices;
 	for (size_t i = 0; i < numChars; i++) {
 		glyphindices.push_back(*(f16 + i));
 	}
-	UINT16 start1 = start;
+	uint16_t start1 = start;
 	for (start1; start1 < end; start1++) {
 		int offset = start1 - starcharcode;
 		table->indexs.push_back({ glyphindices[offset], start1 });
 	}
 }
 //untested and not done
-void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
+void readFormat12(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	char* m = c + table->offset;
-	UINT16* f = (UINT16*)m;
+	uint16_t* f = (uint16_t*)m;
 	f += 2;
 	//skipping the format and reserved
-	UINT32* t = (UINT32*)f;
-	UINT32 length = *t;
+	uint32_t* t = (uint32_t*)f;
+	uint32_t length = *t;
 	t += 2; //skipping language
-	UINT32 numGroups = *t; //number of groupings that follow
+	uint32_t numGroups = *t; //number of groupings that follow
 	t++;
-	std::vector<UINT32> char_codes;
-	std::vector<UINT32> indexs;
+	std::vector<uint32_t> char_codes;
+	std::vector<uint32_t> indexs;
 	size_t seq = 0;
 	for (size_t i = 0; i < numGroups; i++) {
 		seq = 0;
-		UINT32 startcode = *t;
+		uint32_t startcode = *t;
 		t++;
-		UINT32 endcode = *t;
+		uint32_t endcode = *t;
 		t++;
-		UINT32 startglyphid = *t;
+		uint32_t startglyphid = *t;
 		t++;
 		for (size_t j = startcode; j <= endcode; j++, seq++) {
 			char_codes.push_back(*t);
@@ -344,11 +345,11 @@ void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 			t++;
 		}
 	}
-	UINT16 start1 = start;
+	uint16_t start1 = start;
 	for (start1; start1 < end; start1++) {
 		for (size_t i = 0; i < char_codes.size(); i++) {
 			if (char_codes[i] == start1) {
-				table->indexs.push_back({ (UINT16)indexs[i], start1});
+				table->indexs.push_back({ (uint16_t)indexs[i], start1});
 				break;
 			}
 		}
@@ -356,12 +357,12 @@ void readFormat12(char* c, cmap_table* table, UINT16 start, UINT16 end) {
 	}
 }
 
-//https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
+//https://developer.apple.com/gore::Fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
 //https://learn.microsoft.com/en-us/typography/opentype/spec/cmap
-cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
+cmap readCmap(char* c, int offset, int length, uint16_t start, uint16_t end) {
 	cmap map;
 	char* m = c + offset;
-	UINT16* t = (UINT16*)m;
+	uint16_t* t = (uint16_t*)m;
 	map.version = SwapTwoBytes(*t);
 	t++; //skipping version cause I don't care
 	map.numTables = SwapTwoBytes(*t);
@@ -373,10 +374,10 @@ cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
 		t++;
 		table.platformSpecificID = SwapTwoBytes(*t);
 		t++;
-		UINT32* te = (UINT32*)t;
+		uint32_t* te = (uint32_t*)t;
 		table.offset = SwapFourBytes(*te);
 		te++;
-		t = (UINT16*)te;
+		t = (uint16_t*)te;
 		map.tables.push_back(table); //offset is from start of cmap
 		int format = (m + map.tables[i].offset)[0] << 8 | (m + map.tables[i].offset)[1];
 		switch (format) {
@@ -423,24 +424,24 @@ cmap readCmap(char* c, int offset, int length, UINT16 start, UINT16 end) {
 
 //stores character code and offset
 struct loca {
-	UINT16 c;
-	UINT32 offset;
+	uint16_t c;
+	uint32_t offset;
 };
 
 
 
 //read the table when it is the 16 bit version
-UINT32 readLoca16(char* s, UINT16 index) {
-	UINT16* d = ((UINT16*)s + index);
+uint32_t readLoca16(char* s, uint16_t index) {
+	uint16_t* d = ((uint16_t*)s + index);
 	return SwapTwoBytes(*d) * 2;
 }
 //reading the table when it is the 32 bit version
-UINT32 readLoca32(char* s, UINT16 index) {
-	UINT32* d = (UINT32*)s + index;
+uint32_t readLoca32(char* s, uint16_t index) {
+	uint32_t* d = (uint32_t*)s + index;
 	return SwapFourBytes(*d);
 }
 
-std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap* map) {
+std::vector<loca> readLoca(char* c, int offset, int length, uint16_t format, cmap* map) {
 	char* m = c + offset;
 	std::vector<loca> locas;
 	int index = 0;
@@ -472,14 +473,14 @@ std::vector<loca> readLoca(char* c, int offset, int length, UINT16 format, cmap*
 
 //most of data in here doesn't matter for my uses
 struct TTFHeader {
-	UINT32 version; //supposed to be fixed but idrc
-	UINT32 fontRevision; //set by manufacturer
+	uint32_t version; //supposed to be fixed but idrc
+	uint32_t FontRevision; //set by manufacturer
 
-	UINT32 checkSumAdjustment; //checksum for file; Have to sum entire file as an uint32 and then do 0xB1B0AFBA - sum; 
-	UINT32 magicNumber; //idek what this is for supposed to be 0x5F0F3CF5
+	uint32_t checkSumAdjustment; //checksum for file; Have to sum entire file as an uint32_t and then do 0xB1B0AFBA - sum; 
+	uint32_t magicNumber; //idek what this is for supposed to be 0x5F0F3CF5
 
-	UINT16 flags; //every bit gives u flag; These flags can be complex as shit
-	UINT16 uintsPerEm; //how may FUnits are in 1 em
+	uint16_t flags; //every bit gives u flag; These flags can be complex as shit
+	uint16_t uintsPerEm; //how may FUnits are in 1 em
 
 	time_t  created; //self explanatory
 	time_t modified; //also self explanatory
@@ -489,9 +490,9 @@ struct TTFHeader {
 	short xMax;
 	short yMax;
 
-	UINT16 macStyle; //each bit has parameters
-	UINT16 lowestRecPPEM; //smallest readable size in pixels
-	short fontDirectionHint; //give you hint for directions of glyphs
+	uint16_t macStyle; //each bit has parameters
+	uint16_t lowestRecPPEM; //smallest readable size in pixels
+	short FontDirectionHint; //give you hint for directions of glyphs
 	short indexToLocFormat; //tells you format of loca table
 	short glyphDataFormat; //0 is current format; All i know
 };
@@ -501,16 +502,16 @@ struct TTFHeader {
 TTFHeader readHead(char* c, int offset, int length) {
 	TTFHeader head;
 	char* m = c + offset;
-	UINT32* u = (UINT32*)m;
+	uint32_t* u = (uint32_t*)m;
 	head.version = SwapFourBytes(*u); //can't swap the bytes on a double for some reason
 	u++;
-	head.fontRevision = SwapFourBytes(*u); //values will be wrong for the top two since supposed to be fixed
+	head.FontRevision = SwapFourBytes(*u); //values will be wrong for the top two since supposed to be fixed
 	u++;
 	head.checkSumAdjustment = SwapFourBytes(*u);
 	u++;
 	head.magicNumber = SwapFourBytes(*u);
 	u++;
-	UINT16* t = (UINT16*)u;
+	uint16_t* t = (uint16_t*)u;
 	head.flags = *t; //don't swap this since the bits need to be the same
 	t++;
 	head.uintsPerEm = SwapTwoBytes(*t);
@@ -529,13 +530,13 @@ TTFHeader readHead(char* c, int offset, int length) {
 	s++;
 	head.yMax = SwapTwoBytes(*s);
 	s++;
-	t = (UINT16*)s;
+	t = (uint16_t*)s;
 	head.macStyle = *t; //don't swap cause need same bits for flags
 	t++;
 	head.lowestRecPPEM = SwapTwoBytes(*t);
 	t++;
 	s = (short*)t;
-	head.fontDirectionHint = SwapTwoBytes(*s); 
+	head.FontDirectionHint = SwapTwoBytes(*s); 
 	s++;
 	head.indexToLocFormat = SwapTwoBytes(*s);
 	s++;
@@ -547,7 +548,7 @@ TTFHeader readHead(char* c, int offset, int length) {
 
 
 struct glyf {
-	UINT16 c;
+	uint16_t c;
 	short numberOfContours;
 
 	//supposed to be FWords but fuck em
@@ -560,12 +561,12 @@ struct glyf {
 
 
 struct simp_glyf : glyf {
-	UINT16 instructionLength;
-	std::vector<UINT8> instructions; 
-	std::vector<UINT8> flags;
-	std::vector<short> xCoords; //apparently this can also be a uint8 but we'll see
+	uint16_t instructionLength;
+	std::vector<uint8_t> instructions; 
+	std::vector<uint8_t> flags;
+	std::vector<short> xCoords; //apparently this can also be a uint8_t but we'll see
 	std::vector<short> yCoords;
-	std::vector<UINT16> endPtsOfCountours;
+	std::vector<uint16_t> endPtsOfCountours;
 };
 //for later use
 struct comp_glyf : glyf {
@@ -610,7 +611,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			sg.yMax = g.yMax;
 			sg.c = g.c;
 			//now we read endpts of countours
-			UINT16* t = (UINT16*)s;
+			uint16_t* t = (uint16_t*)s;
 			for (int j = 0; j < sg.numberOfContours; j++) {
 				sg.endPtsOfCountours.push_back(SwapTwoBytes(*t));
 				t++;
@@ -618,7 +619,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			//instructions now, can't believe I forgot to swap this smh, like an hour wasted 
 			sg.instructionLength = SwapTwoBytes(*t);
 			t++;
-			UINT8* d = (UINT8*)t;
+			uint8_t* d = (uint8_t*)t;
 			//don't have to swap 
 			for (int j = 0; j < sg.instructionLength; j++) {
 				sg.instructions.push_back(*d);
@@ -630,7 +631,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				sg.flags.push_back(*d);
 				d++;
 				if (((sg.flags[j] >> 3) & 1) == 1) {
-					UINT8 repeat_count = *d;
+					uint8_t repeat_count = *d;
 					while (repeat_count-- > 0) {
 						j++;
 						sg.flags.push_back(sg.flags[j - 1]);
@@ -650,7 +651,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				bool dor = false;
 				if (getnthBit(sg.flags[j], 1) == 1) {
 					//one byte
-					UINT8 temp = *d;
+					uint8_t temp = *d;
 					d++;
 					short out = temp;
 					if (getnthBit(sg.flags[j], 4) != 1) {
@@ -687,7 +688,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				bool dor = false;
 				if (getnthBit(sg.flags[j], 2) == 1) {
 					//one byte
-					UINT8 temp = *d;
+					uint8_t temp = *d;
 					d++;
 					short out = temp;
 					if (getnthBit(sg.flags[j], 5) != 1) {
@@ -727,7 +728,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 }
 
 
-table_dir* findTable(std::string table, font_dir* directory) {
+table_dir* findTable(std::string table, Font_dir* directory) {
 	for (size_t i = 0; i < directory->table.size(); i++) {
 		if (directory->table[i].t.compare(table) == 0) {
 			return &directory->table[i];
@@ -778,7 +779,7 @@ bool compareLine(Line l1, Line l2) {
 	return (l1.p1.x == l2.p1.x && l1.p1.y == l2.p1.y && l1.p2.x == l2.p2.x && l1.p2.y == l2.p2.y);
 }
 
-void cullEdges(Glyph* g) {
+void cullEdges(gore::Glyph* g) {
 	for (size_t i = 0; i < g->contours.size();) {
 		bool cull = false;
 		for (size_t j = 0; j < g->contours.size(); j++) {
@@ -796,7 +797,7 @@ void cullEdges(Glyph* g) {
 	}
 }
 
-void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 end) {
+void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start, uint16_t end) {
 	//getting directorys in order we need them
 	cmap c_map;
 	TTFHeader header;
@@ -811,10 +812,10 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 	locas = readLoca(c, tab->offset, tab->length, header.indexToLocFormat, &c_map);
 	tab = findTable("glyf", directory);
 	g_table = readGlyfs(c, tab->offset, tab->length, locas);
-	//don't want to store pointers to anything in font file
+	//don't want to store pointers to anything in gore::Font file
 	//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization, 2.2
 	for (auto& i : g_table.simple_glyphs) {
-		Glyph g;
+		gore::Glyph g;
 		g.c = i.c;
 		g.xMax = i.xMax;
 		g.yMax = i.yMax;
@@ -919,19 +920,19 @@ void readDirectorys(font_dir* directory, Font* f, char* c, UINT16 start, UINT16 
 }
 
 
-//https://docs.fileformat.com/font/ttf/
-//https://handmade.network/forums/articles/t/7330-implementing_a_font_reader_and_rasterizer_from_scratch%252C_part_1__ttf_font_reader. part 12
+//https://docs.fileformat.com/gore::Font/ttf/
+//https://handmade.network/forums/articles/t/7330-implementing_a_gore::Font_reader_and_rasterizer_from_scratch%252C_part_1__ttf_gore::Font_reader. part 12
 //https://tchayen.github.io/posts/ttf-file-parsing
 // https://github.com/RazrFalcon/ttf-parser
 //https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01
 // http://stevehanov.ca/blog/?id=143
-//https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
+//https://developer.apple.com/gore::Fonts/TrueType-Reference-Manual/RM06/Chap6.html
 // https://learn.microsoft.com/en-us/typography/opentype/spec/
 // https://tchayen.github.io/posts/ttf-file-parsing
-// https://fontdrop.info/
+// https://gore::Fontdrop.info/
 //big endian so characters will be reversed to me
 //start and end variables are the start of characters you want to load and end is the last character to load
-Font FontRenderer::loadFont(std::string file, UINT16 start, UINT16 end) {
+gore::Font gore::FontRenderer::loadFont(std::string file, uint16_t start, uint16_t end) {
 	std::ifstream f;
 	f.open(file.c_str(), std::ios::binary);
 	//read the file into memory
@@ -940,18 +941,18 @@ Font FontRenderer::loadFont(std::string file, UINT16 start, UINT16 end) {
 	std::string st = stream.str();
 	char* c = (char*)st.c_str();
 	f.close();
-	//read the font directory
-	font_dir directory;
+	//read the gore::Font directory
+	Font_dir directory;
 	read_offset_subtable(c, &directory.off_sub);
 	c += 12;
 	read_table_directory(c,  directory.table, directory.off_sub.numTables);
 	c = (char*)st.c_str(); //reset to begining to get offset easier
 	//now we read all of the directorys we need to
-	Font font;
-	font.name = file;
-	readDirectorys(&directory, &font, c, start, end);
+	gore::Font Font;
+	Font.name = file;
+	readDirectorys(&directory, &Font, c, start, end);
 
-	return font;
+	return Font;
 }
 
 bool range(float n, float brange, float trange) {
@@ -1005,7 +1006,7 @@ vec2 getIntersection(Line l1, Line l2) {
 	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 }*/
 
-RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx) {
+gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int h, uint32_t color, bool flipx) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	for (size_t i = 0; i < g->contours.size(); i++) {
@@ -1089,24 +1090,24 @@ RasterGlyph FontRenderer::rasterizeGlyph(Glyph* g, int w, int h, uint32_t color,
 	return r_g;
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
-void FontRenderer::rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<UINT16> flipx) {
-	font->ptsize = ptsize;
-	for (size_t i = 0; i < font->glyphs.size(); i++) {
+void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t color, std::vector<uint16_t> flipx) {
+	Font->ptsize = ptsize;
+	for (size_t i = 0; i < Font->glyphs.size(); i++) {
 		bool flip = false;
 		for (auto& j : flipx) {
-			if (font->glyphs[i].c == j) {
+			if (Font->glyphs[i].c == j) {
 				flip = true;
 				break;
 			}
 		}
-		font->r_glyphs.push_back(rasterizeGlyph(&font->glyphs[i], ptsize, ptsize, color, flip));
-		imageloader::updateIMG(font->r_glyphs[font->r_glyphs.size() - 1].data);
-		//imageloader::createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
-		//createTexture(font->r_glyphs[font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
+		Font->r_glyphs.push_back(rasterizeGlyph(&Font->glyphs[i], ptsize, ptsize, color, flip));
+		imageloader::updateIMG(Font->r_glyphs[Font->r_glyphs.size() - 1].data);
+		//imageloader::createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
+		//createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 	}
 }
 
-int findFontCharRaster(Font* f, UINT16 c) {
+int findFontCharRaster(gore::Font* f, uint16_t c) {
 	for (size_t i = 0; i < f->r_glyphs.size(); i++) {
 		if (f->r_glyphs[i].c == c) {
 			return i;
@@ -1114,7 +1115,7 @@ int findFontCharRaster(Font* f, UINT16 c) {
 	}
 	return 0;
 }
-int findFontChar(Font* f, UINT16 c) {
+int findFontChar(gore::Font* f, uint16_t c) {
 	for (size_t i = 0; i < f->glyphs.size(); i++) {
 		if (f->glyphs[i].c == c) {
 			return i;
@@ -1123,21 +1124,21 @@ int findFontChar(Font* f, UINT16 c) {
 	return 0;
 }
 
-void FontRenderer::drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize) {
-	if (font->r_glyphs.size() <= 0) {
-		std::cout << "Trying to draw an empty raster font " << std::endl;
+void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::string text, float x, float y, int ptsize) {
+	if (Font->r_glyphs.size() <= 0) {
+		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
 	}
 	float x1 = x;
 	float y1 = y;
 	//have to scale images based on ptsize
-	float scale = (float)font->ptsize / (float)(font->ptsize / ptsize);
+	float scale = (float)Font->ptsize / (float)(Font->ptsize / ptsize);
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
-			int index = findFontCharRaster(font, text[i]);
-			img_r->drawImage(font->r_glyphs[index].data, {x1, y1}, {scale, scale});
+			int index = findFontCharRaster(Font, text[i]);
+			img_r->drawImage(Font->r_glyphs[index].data, {x1, y1}, {scale, scale});
 			//addImageCall( x1, y1, scale, scale);
-			//bindImg(font->r_glyphs[index].data);
+			//bindImg(gore::Font->r_glyphs[index].data);
 			//renderImgs(true);
 		}
 		x1 += scale + 2;
@@ -1148,21 +1149,21 @@ void FontRenderer::drawRasterText(Font* font, imagerenderer* img_r, std::string 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
 //cutout memory inefficient parts of glyph like points
-void FontRenderer::drawText(std::string text, Font* font, float x, float y, int ptsize) {
+void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, float y, int ptsize) {
 	float x1 = x;
 	float y1 = y;
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
-			int index = findFontChar(font, text[i]);
-			for (size_t j = 0; j < font->glyphs[index].contours.size(); j++) {
-				Line l = font->glyphs[index].contours[j];
+			int index = findFontChar(Font, text[i]);
+			for (size_t j = 0; j < Font->glyphs[index].contours.size(); j++) {
+				Line l = Font->glyphs[index].contours[j];
 				//converting line points to ptsize
-				l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize - 1, font->glyphs[index].xMin, font->glyphs[index].xMax);
-				l.p1.y = convertToRange(l.p1.y, y1, y1 + ptsize - 1, font->glyphs[index].yMin, font->glyphs[index].yMax);
+				l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize - 1, Font->glyphs[index].xMin, Font->glyphs[index].xMax);
+				l.p1.y = convertToRange(l.p1.y, y1, y1 + ptsize - 1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
 
 
-				l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize - 1, font->glyphs[index].xMin, font->glyphs[index].xMax);
-				l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize - 1, font->glyphs[index].yMin, font->glyphs[index].yMax);
+				l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize - 1, Font->glyphs[index].xMin, Font->glyphs[index].xMax);
+				l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize - 1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
 				pr->addLine(l.p1, l.p2);
 			}
 		}

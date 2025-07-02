@@ -138,6 +138,10 @@
 #define g_KP_Multiply VK_MULTIPLY
 #define g_KP_Divide VK_DIVIDE
 #define g_KP_Dot VK_DECIMAL
+
+#define g_MouseLeft VK_LBUTTON
+#define g_MouseRight VK_RBUTTON
+#define g_MouseMiddle VK_MBUTTON
 #endif
 #if defined(__unix__)
 #include <X11/Xlib.h>
@@ -279,6 +283,10 @@
 #define g_KP_Multiply XK_KP_Multiply
 #define g_KP_Divide XK_KP_Divide
 #define g_KP_Dot XK_KP_Decimal
+
+#define g_MouseLeft 0x1000ffff
+#define g_MouseRight 0x2000ffff
+#define g_MouseMiddle 0x3000ffff
 #endif
 
 //added customizability and clean up

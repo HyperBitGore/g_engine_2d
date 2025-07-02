@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
-
+#include <cstring>
+#include <cmath>
 //class vec3;
 //class vec4;
 

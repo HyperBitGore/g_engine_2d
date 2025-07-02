@@ -38,6 +38,10 @@ private:
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
+	#if defined (__unix__)
+	Display* display;
+	GLXContext ctx;
+	#endif
 public:
 	EngineNewGL(const char* window_name, int width, int height);
 
@@ -48,6 +52,14 @@ public:
 	//copy constructor
 	EngineNewGL(const EngineNewGL& o) {
 
+	}
+	~EngineNewGL () {
+		#if defined (__unix__)
+		glXMakeCurrent(display, None, NULL);
+		glXDestroyContext(display, ctx);
+		XDestroyWindow(display, wind->getRawWindow());
+		XCloseDisplay(display);
+		#endif
 	}
 
 	//sets renderfunction
@@ -60,18 +72,18 @@ public:
 
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
-	bool getKeyDown(char key);
-	bool getKeyReleased(char key);
+	bool getKeyDown(uint32_t key);
+	bool getKeyReleased(uint32_t key);
 
 	vec2 getMousePos();
 	//ease of use
-	bool getMouseLeftDown() { return in->GetKeyDown(VK_LBUTTON); }
-	bool getMouseRightDown() { return in->GetKeyDown(VK_RBUTTON); }
-	bool getMouseMiddleDown() { return in->GetKeyDown(VK_MBUTTON); }
+	bool getMouseLeftDown() { return in->GetKeyDown(g_MouseLeft); }
+	bool getMouseRightDown() { return in->GetKeyDown(g_MouseRight); }
+	bool getMouseMiddleDown() { return in->GetKeyDown(g_MouseMiddle); }
 
-	bool getMouseLeftReleased() { return in->GetKeyReleased(VK_LBUTTON); }
-	bool getMouseRightReleased() { return in->GetKeyReleased(VK_RBUTTON); }
-	bool getMouseMiddleReleased() { return in->GetKeyReleased(VK_MBUTTON); }
+	bool getMouseLeftReleased() { return in->GetKeyReleased(g_MouseLeft); }
+	bool getMouseRightReleased() { return in->GetKeyReleased(g_MouseRight); }
+	bool getMouseMiddleReleased() { return in->GetKeyReleased(g_MouseMiddle); }
 
 	//color functions
 	void setDrawColor(vec4 c) {

@@ -1,24 +1,41 @@
 #include "g_engine_2d.hpp"
 
-bool EngineNewGL::getKeyDown(char key) {
+bool EngineNewGL::getKeyDown(uint32_t key) {
 	return in->GetKeyDown(key);
 }
-bool EngineNewGL::getKeyReleased(char key) {
+bool EngineNewGL::getKeyReleased(uint32_t key) {
 	return in->GetKeyReleased(key);
 }
 
 vec2 EngineNewGL::getMousePos() {
 	vec2 p;
+	#if defined(_WIN32)
 	LPPOINT po = new tagPOINT;
 	GetCursorPos(po);
 	ScreenToClient(wind->getHwnd(), po);
 	p.x = (float)po->x;
 	p.y = (float)po->y;
+	#endif
+	#if defined(__unix__)
+	int x, y, win_x, win_y;
+	Window root_return, child_return;
+	unsigned int mask_return;
+	XQueryPointer(display, wind->getRawWindow(),
+		&root_return, &child_return,
+		&x, &y,       // Root (global) coords
+		&win_x, &win_y, // Window-relative coords
+		&mask_return);
+	p.x = (float)win_x;
+	p.y = (float)win_y;
+	#endif
+
 	//gotta translate the y axis for my coord system
 	p.y = p.y - wind->getHeight();
 	p.y = std::abs(p.y);
 
+	#if defined(_WIN32)
 	delete po;
+	#endif
 	return p;
 }
 

@@ -1,15 +1,9 @@
 #include "g_engine_2d.hpp"
 #include "shader.hpp"
 
-int indexs_hash(GLint n) {
-	return n % 48;
-}
-
-
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
 EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
-	//indexs.setHashFunction(indexs_hash);
-
+	#if defined(_WIN32)
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
 	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
@@ -143,6 +137,65 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	if (!wglMakeCurrent(dc_w, context)) {
 		std::cerr << "Failed to make context current\n";
 	}
+	#endif
+	#if defined(__unix__)
+	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+	display = XOpenDisplay(NULL);
+    if (!display) FatalError("Cannot open X display");
+
+    static int visual_attribs[] = {
+        GLX_X_RENDERABLE    , True,
+        GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+        GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+        GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+        GLX_RED_SIZE        , 8,
+        GLX_GREEN_SIZE      , 8,
+        GLX_BLUE_SIZE       , 8,
+        GLX_ALPHA_SIZE      , 8,
+        GLX_DEPTH_SIZE      , 24,
+        GLX_STENCIL_SIZE    , 8,
+        GLX_DOUBLEBUFFER    , True,
+        // Uncomment for multisampling:
+        // GLX_SAMPLE_BUFFERS  , 1,
+        // GLX_SAMPLES         , 4,
+        None
+    };
+	int fbcount;
+    GLXFBConfig* fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
+    if (!fbc) {
+        FatalError("Failed to get framebuffer config");
+    }
+
+	GLXFBConfig fbconfig = fbc[0];
+
+	wind = new g_window(window_name, "ENG1", height, width, 300, 300);
+	in = new Input(wind->getRawDisplay());
+
+    if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");
+	// Load context creation function
+	glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
+	(glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
+
+    int context_attribs[] = {
+        GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+        GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+        GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+        None
+    };
+
+    ctx = glXCreateContextAttribsARB(display, fbconfig, 0, True, context_attribs);
+    if (!ctx) {
+        FatalError("failed to create gl context");
+    }
+
+    XFree(fbc);
+
+	if (!glXMakeCurrent(display, wind->getRawWindow(), ctx)) {
+        FatalError("Failed to make context current");
+    }
+
+
+	#endif
 	//glEnable(GL_TEXTURE_2D);
 	//glEnable(GL_DEBUG_OUTPUT);
 	glDisable(GL_CULL_FACE);
@@ -161,6 +214,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 
 	//start modern opengl needed stuff like shaders and vertex buffers
 
-
+	#if defined(_WIN32)
 	ShowWindow(wind->getHwnd(), SW_SHOW);
+	#endif
 }

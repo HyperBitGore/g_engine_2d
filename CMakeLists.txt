@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 add_executable(g_engine source/g_engine_2d.hpp source/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/font_renderer.cpp 
-source/function_loader.cpp source/g_primitive_funcs.h source/gl_defines.hpp source/image_loader.cpp source/input.cpp source/lodepng.cpp
+source/function_loader.cpp source/gl_defines.hpp source/hashmap.hpp source/image_loader.cpp source/input.cpp source/lodepng.cpp
 source/lodepng.h source/matrix.cpp source/matrix.hpp source/shader.cpp source/window.cpp example/example.cpp source/audio.hpp source/backend.hpp source/vector.cpp 
 source/vector.hpp source/primitive_renderer.cpp source/image_renderer.cpp source/image_atlas.cpp source/img_loading/bmp_loader.cpp source/shader.hpp source/image_loader.hpp source/image_renderer.hpp
 source/primitive_renderer.hpp source/font_renderer.hpp)
@@ -26,6 +26,7 @@ target_compile_options(g_engine PRIVATE /utf-8)
 endif(WIN32)
 if(UNIX)
 find_package(X11 REQUIRED)
+find_package(ALSA REQUIRED)
 message(STATUS "X11_FOUND: ${X11_FOUND}")
 message(STATUS "X11_INCLUDE_DIR: ${X11_INCLUDE_DIR}")
 message(STATUS "X11_LIBRARIES: ${X11_LIBRARIES}")
@@ -35,7 +36,7 @@ if (NOT X11_Xkb_FOUND)
     message(FATAL_ERROR "XKB extension not found")
 endif()
 target_include_directories(g_engine PRIVATE ${X11_INCLUDE_DIR} ${X11_Xkb_INCLUDE_PATH})
-target_link_libraries(g_engine OpenGL::GL dl X11::X11 X11::Xkb)
+target_link_libraries(g_engine OpenGL::GL dl X11::X11 X11::Xkb ALSA::ALSA)
 endif(UNIX)
 
 target_include_directories(g_engine PUBLIC include/GL)

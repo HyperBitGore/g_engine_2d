@@ -1,4 +1,11 @@
 #include "audio.hpp"
+#include <alsa/asoundlib.h>
+#include <cmath>
+#include <cstdint>
+#include <sstream>
+#include <cstring>
+#include <iostream>
+
 #define SwapFourBytes(data)   \
 ( (((data) >> 24) & 0x000000FF) | (((data) >>  8) & 0x0000FF00) | \
   (((data) <<  8) & 0x00FF0000) | (((data) << 24) & 0xFF000000) ) 
@@ -60,13 +67,13 @@ Audio AudioPlayer::loadWavFile(std::string file) {
     Audio ad = new Sound;
     ad->name = file;
     ad->size = datasize;
-    ad->channels = (BYTE)num_channels;
-    ad->samplebits = (BYTE)bitspps;
+    ad->channels = (uint8_t)num_channels;
+    ad->samplebits = (uint8_t)bitspps;
     ad->framesize = byterate;
     ad->blockalign = blockalign;
     ad->data = (char*)std::malloc(ad->size);
     if (ad->data) {
-        std::memcpy(ad->data, c, ad->size);
+        memcpy(ad->data, c, ad->size);
     }
     else {
         std::cout << "Failed to allocate enough space for audio data\n";
@@ -260,6 +267,7 @@ AudioPlayer::~AudioPlayer() {
 
 void AudioStream::playStream() {
     if (play) {
+        #if defined(_WIN32)
         int32_t res = WaitForSingleObject(bufReady, 0);
 
         if (res == WAIT_OBJECT_0) {
@@ -295,10 +303,47 @@ void AudioStream::playStream() {
                 }
             }
         }
+        #endif
+        snd_pcm_sframes_t avail = snd_pcm_avail_update(pcm_handle);
+        if (avail > 0) {
+            uint32_t free = buffer_size - avail;
+            if (free > 0) {
+                for (size_t i = 0; i < stream_files.size();) {
+                    if (!stream_files[i]->writeData((uint8_t*)buffer, free, format)) {
+                        FileStream* fp = stream_files[i];
+                        stream_files.erase(stream_files.begin() + i);
+                        delete fp; //dont need to call destructor since delete does that for us
+                    }
+                    else {
+                        i++;
+                    }
+                }
+                for (size_t i = 0; i < sound_files.size();) {
+                    if (!sound_files[i].writeData((uint8_t*)buffer, free, format)) {
+                        sound_files.erase(sound_files.begin() + i);
+                    }
+                    else {
+                        i++;
+                    }
+                }
+                snd_pcm_sframes_t written = snd_pcm_writei(pcm_handle, buffer, avail);
+                if (written < 0) {
+                    if (written == -EPIPE) {
+                        snd_pcm_prepare(pcm_handle); // buffer underrun
+                    } else {
+                       std::cerr << "ALSA write error: " << snd_strerror(written) << "\n";
+                    }
+                }
+                if (sound_files.size() <= 0 && stream_files.size() <= 0) {
+                    play = false;
+                }
+            }
+        }
     }
 }
 
 AudioStream::AudioStream() {
+    #if defined(_WIN32)
     HRESULT hr = CoInitializeEx(NULL, 0);
     if (FAILED(hr)) {
         return;
@@ -360,13 +405,55 @@ AudioStream::AudioStream() {
 
     render->ReleaseBuffer(buffer_size, 0);
     client->Start();
+    #endif
+    #if defined(__unix__)
+    int err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=Class", SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+    if (err < 0) {
+        std::cout << "Failed to open alsa device\n";
+        return;
+    }
+    snd_pcm_sw_params_malloc(&sw_params);
+	snd_pcm_sw_params_current(pcm_handle, sw_params);
+
+	snd_pcm_hw_params_alloca(&hw_params);
+    /* Setup HW params for all possible parameters */
+	if (snd_pcm_hw_params_any(pcm_handle, hw_params) < 0) {
+		std::cout << "Failed to retrieve HW params\n";
+		return;
+	}
+    //set hw params
+    snd_pcm_hw_params_set_access(pcm_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+    snd_pcm_hw_params_set_format(pcm_handle, hw_params, SND_PCM_FORMAT_S16_LE);
+    snd_pcm_hw_params_set_channels(pcm_handle, hw_params, 2);
+    snd_pcm_hw_params_set_rate(pcm_handle, hw_params, 44100, 0);
+    snd_pcm_hw_params_set_period_size(pcm_handle, hw_params, 32, 0);
+    //apply params
+    snd_pcm_hw_params(pcm_handle, hw_params);
+
+    int dir;
+    snd_pcm_hw_params_get_period_size(hw_params, &frames, &dir);
+    // setting up the buffer, since alsa requires we make our own
+    // rework this to be setttable by user
+    buffer = (uint16_t*)malloc(frames * 2 * sizeof(int16_t));
+    buffer_size = frames * 2 * sizeof(int16_t);
+    if (!buffer) {
+        std::cerr << "Audio stream memory allocate error\n";
+        return;
+    }
+    #endif
 }
 AudioStream::~AudioStream() {
+    #if defined(_WIN32)
     CoTaskMemFree(format);
     SAFE_RELEASE(penum);
     SAFE_RELEASE(pdevice);
     SAFE_RELEASE(client);
     SAFE_RELEASE(render);
+    #endif
+    #if defined(__unix__)
+    snd_pcm_close(pcm_handle);
+    free(buffer);
+    #endif
 }
 
 void AudioStream::playFile(Audio file) {
@@ -383,14 +470,30 @@ void AudioStream::streamFile(std::string file) {
 }
 void AudioStream::pause() {
     play = false;
+    #if defined(__unix__)
+    snd_pcm_drain(pcm_handle);
+    #endif
+    #if defined(_WIN32)
     client->Stop();
+    #endif
 }
 void AudioStream::start() {
     play = true;
+    #if defined(__unix__)
+    snd_pcm_start(pcm_handle);
+    #endif
+    #if defined(_WIN32)
     client->Start();
+    #endif
 }
 void AudioStream::reset() {
+    #if defined(__unix__)
+    snd_pcm_drop(pcm_handle);
+    snd_pcm_prepare(pcm_handle);
+    #endif
+    #if defined(_WIN32)
     client->Reset();
+    #endif
 }
 
 
@@ -567,6 +670,8 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE32:
             convertTo8bit((float*)mem, size, mem2, *n_size);
             break;
+        case WavBytes::BYTE8:
+          break;
         }
         break;
     case WavBytes::BYTE16:
@@ -580,6 +685,8 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE32:
             convertTo16bit((float*)mem, size, mem2, *n_size);
             break;
+        case WavBytes::BYTE16:
+          break;
         }
         break;
     case WavBytes::BYTE24:
@@ -593,6 +700,8 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE32:
             convertTo24bit((float*)mem, size, mem2, *n_size);
             break;
+        case WavBytes::BYTE24:
+          break;
         }
         break;
     case WavBytes::BYTE32:
@@ -606,6 +715,8 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE16:
             convertToFloat((short*)mem, size, mem2, *n_size);
             break;
+        case WavBytes::BYTE32:
+          break;
         }
         break;
     }
@@ -640,7 +751,7 @@ AudioStream::FileStream::FileStream(std::string file) {
 AudioStream::FileStream::~FileStream() {
     fi.close();
 }
-bool AudioStream::FileStream::writeData(BYTE* dat, size_t n, WavBytes bits) {
+bool AudioStream::FileStream::writeData(uint8_t* dat, size_t n, WavBytes bits) {
     if (n_write) {
         return false;
     }
@@ -687,7 +798,7 @@ bool AudioStream::FileStream::strMatch(std::string str) {
     return false;
 }
 
-bool AudioStream::SoundP::writeData(BYTE* dat, size_t n, WavBytes bits) {
+bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, WavBytes bits) {
     if (n_write) {
         return false;
     }

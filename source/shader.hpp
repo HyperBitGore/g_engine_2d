@@ -1,10 +1,7 @@
 #pragma once
-#include "g_primitive_funcs.h"
 #include "backend.hpp"
-#include "matrix.hpp"
 #include "vector.hpp"
-#include "audio.hpp"
-#include "lodepng.h"
+#include "hashmap.hpp"
 
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
 #define pack_rgb(r,g,b) (uint32_t)(r<<24|g<<16|b<<8)
@@ -14,15 +11,32 @@
 #define unpack_a(col) (uint8_t)(col&0xff)
 
 // replace this with your favorite Assert() implementation
+#if defined (_WIN32)
 #include <intrin.h>
 #define Assert(cond) do { if (!(cond)) __debugbreak(); } while (0)
+#endif
 
+#if defined (__unix__)
+#define Assert(cond) do { \
+    if (!(cond)) { \
+        raise(SIGTRAP); \
+    } \
+} while (0)
+#endif
 
 static void FatalError(const char* message)
 {
 	#if defined(_WIN32)
 	MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
 	ExitProcess(0);
+	#endif
+	#if defined(__unix__)
+	// Print message to stderr
+	std::cerr << "Fatal error: " << message << "\n";
+	// Optionally you can use a GUI dialog with GTK or Zenity, but CLI is simpler here
+
+	// Exit immediately
+	exit(EXIT_FAILURE);
 	#endif
 }
 
@@ -39,7 +53,7 @@ private:
 	GLuint attrib;
 	void* data; //user set pointer
 	
-	Gore::HashMap<GLint, std::string> uniform_map;
+	HashMap<GLint, std::string> uniform_map;
 	static int hash(std::string str) {
 		size_t total = 0;
 		for (size_t i = 0; i < str.size(); i++) {
