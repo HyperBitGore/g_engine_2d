@@ -64,7 +64,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 		DestroyWindow(dummy);
 	}
 	//create window
-	wind = new g_window(window_name, "ENG1", height, width, 300, 300);
+	wind = new g_window(window_name, nullptr, height, width, 300, 300);
 	in = new Input(wind->getRawDisplay());
 	HDC dc_w = GetDC(wind->getHwnd());
 	// set pixel format for OpenGL context
@@ -168,7 +168,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 
 	GLXFBConfig fbconfig = fbc[0];
 
-	wind = new g_window(window_name, "ENG1", height, width, 300, 300);
+	wind = new g_window(window_name, display, height, width, 300, 300);
 	in = new Input(wind->getRawDisplay());
 
     if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");

@@ -26,7 +26,6 @@ g_window::~g_window() {
 	#endif
 	#if defined(__unix__)
     XDestroyWindow(display, m_hwnd);
-    XCloseDisplay(display);
 	#endif
 }
 
@@ -71,13 +70,14 @@ bool g_window::swapBuffers() {
 	#endif
 	#if defined(__unix__)
 	glXSwapBuffers(display, m_hwnd);
+	return true;
 	#endif
 }
 #if defined(_WIN32)
 g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int x, int y)
 	: display(GetModuleHandle(nullptr))
 {
-	class_name = CLASS_NAME;
+	class_name = "GENG";
 	WNDCLASS wnd = {};
 	wnd.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wnd.lpszClassName = CLASS_NAME;
@@ -120,12 +120,14 @@ g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int 
 #endif
 
 #if defined(__unix__)
-g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int x, int y) {
-	display = XOpenDisplay(NULL);
+g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y) {
     if (!display) {
         std::cout << "Unable to open X display\n";
         exit(1);
     }
+	this->display = display;
+	height = h;
+	width = w;
     Window root = DefaultRootWindow(display);
 	// Choose framebuffer config
 	static int visual_attribs[] = {

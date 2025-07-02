@@ -57,7 +57,6 @@ public:
 		#if defined (__unix__)
 		glXMakeCurrent(display, None, NULL);
 		glXDestroyContext(display, ctx);
-		XDestroyWindow(display, wind->getRawWindow());
 		XCloseDisplay(display);
 		#endif
 	}

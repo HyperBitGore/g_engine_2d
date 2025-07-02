@@ -294,13 +294,12 @@ class g_window {
 private:
 	RAW_DISPLAY display;
 	RAW_WINDOW m_hwnd;
-	const char* class_name;
 	int height;
 	int width;
 public:
-	g_window(const char* title, const char* CLASS_NAME, int h, int w, int x, int y);
-	g_window(const Window&) = delete;
-	g_window& operator =(const Window&) = delete;
+	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y);
+	g_window(const g_window&) = delete;
+	g_window& operator =(const g_window&) = delete;
 	~g_window();
 	bool ProcessMessage();
 	int getWidth();

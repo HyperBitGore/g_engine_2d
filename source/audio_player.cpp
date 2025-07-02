@@ -306,6 +306,14 @@ void AudioStream::playStream() {
         #endif
         snd_pcm_sframes_t avail = snd_pcm_avail_update(pcm_handle);
         if (avail > 0) {
+            // clamp to frame capacity
+            if ((size_t)avail > buffer_size / (2 * sizeof(int16_t))) {
+                avail = buffer_size / (2 * sizeof(int16_t));
+            }
+            // prevent underflow
+            if (avail <= 0 || (size_t)avail > buffer_size / (2 * sizeof(int16_t))) {
+                return;
+            }
             uint32_t free = buffer_size - avail;
             if (free > 0) {
                 for (size_t i = 0; i < stream_files.size();) {
@@ -407,7 +415,7 @@ AudioStream::AudioStream() {
     client->Start();
     #endif
     #if defined(__unix__)
-    int err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=Class", SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+    int err = snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
     if (err < 0) {
         std::cout << "Failed to open alsa device\n";
         return;
