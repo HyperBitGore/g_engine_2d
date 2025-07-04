@@ -10,11 +10,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
-add_executable(g_engine source/g_engine_2d.hpp source/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/font_renderer.cpp 
-source/function_loader.cpp source/gl_defines.hpp source/hashmap.hpp source/image_loader.cpp source/input.cpp source/lodepng.cpp
-source/lodepng.h source/matrix.cpp source/matrix.hpp source/shader.cpp source/window.cpp example/example.cpp source/audio.hpp source/backend.hpp source/vector.cpp 
-source/vector.hpp source/primitive_renderer.cpp source/image_renderer.cpp source/image_atlas.cpp source/img_loading/bmp_loader.cpp source/shader.hpp source/image_loader.hpp source/image_renderer.hpp
-source/primitive_renderer.hpp source/font_renderer.hpp)
+add_executable(g_engine source/g_engine_2d.hpp source/audio/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/rendering/font_renderer.cpp 
+source/function_loader.cpp source/gl_defines.hpp source/util/hashmap.hpp source/img_loading/image_loader.cpp source/input.cpp source/img_loading/lodepng.cpp
+source/img_loading/lodepng.h source/util/matrix.cpp source/util/matrix.hpp source/util/shader.cpp source/window.cpp example/example.cpp source/audio/audio.hpp source/backend.hpp source/util/vector.cpp 
+source/util/vector.hpp source/rendering/primitive_renderer.cpp source/rendering/image_renderer.cpp source/img_loading/image_atlas.cpp source/img_loading/bmp_loader.cpp source/util/shader.hpp source/img_loading/image_loader.hpp source/rendering/image_renderer.hpp
+source/rendering/primitive_renderer.hpp source/rendering/font_renderer.hpp)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)

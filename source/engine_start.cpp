@@ -1,5 +1,5 @@
 #include "g_engine_2d.hpp"
-#include "shader.hpp"
+#include "util/shader.hpp"
 
 #if defined (__unix__)
 int myXIOErrorHandler(Display *dpy) {

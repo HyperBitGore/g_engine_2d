@@ -1,5 +1,5 @@
 #pragma once
-#include "shader.hpp"
+#include "../util/shader.hpp"
 
 
 //convert all data allocation to new so we can delete it in destructor

@@ -1,6 +1,6 @@
 #include "../source/g_engine_2d.hpp"
-#include "../source/audio.hpp"
-#include "../source/matrix.hpp"
+#include "../source/audio/audio.hpp"
+#include "../source/util/matrix.hpp"
 #include <bitset>
 
 EngineNewGL eng2("Test Window", 640, 480);

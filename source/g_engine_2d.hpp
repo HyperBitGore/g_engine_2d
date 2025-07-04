@@ -1,13 +1,11 @@
 #pragma once
-#include "font_renderer.hpp"
+#include "rendering/font_renderer.hpp"
 
 //add 3d support
 //add 3d line rendering
 //add 3d primitives
 //voxel engine plug-in
 //isometric engine plug-in
-
-
 
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
@@ -43,6 +41,7 @@ private:
 	GLXContext ctx;
 	#endif
 public:
+	// parts is a bitmask which tells us what to load
 	EngineNewGL(const char* window_name, int width, int height);
 
 	//move constructor
