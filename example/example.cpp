@@ -319,6 +319,7 @@ int main() {
 	double d = 0;
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();
+		eng2.updateInputState();
 		d += del;
 		timer += del;
 		s_cool += del;

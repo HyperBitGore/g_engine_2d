@@ -73,6 +73,7 @@ public:
 	//takes keys so you can use either virtual key codes or the char value for letters
 	bool getKeyDown(uint32_t key);
 	bool getKeyReleased(uint32_t key);
+	void updateInputState();
 
 	vec2 getMousePos();
 	//ease of use

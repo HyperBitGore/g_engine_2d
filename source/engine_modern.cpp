@@ -7,12 +7,16 @@ bool EngineNewGL::getKeyReleased(uint32_t key) {
 	return in->GetKeyReleased(key);
 }
 
+void EngineNewGL::updateInputState(){
+	in->updateState();
+}
+
 vec2 EngineNewGL::getMousePos() {
 	vec2 p;
 	#if defined(_WIN32)
 	LPPOINT po = new tagPOINT;
 	GetCursorPos(po);
-	ScreenToClient(wind->getHwnd(), po);
+	ScreenToClient(wind->getRawWindow(), po);
 	p.x = (float)po->x;
 	p.y = (float)po->y;
 	#endif

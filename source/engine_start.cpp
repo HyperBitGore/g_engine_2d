@@ -73,8 +73,8 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	}
 	//create window
 	wind = new g_window(window_name, nullptr, height, width, 300, 300);
-	in = new Input(wind->getRawDisplay());
-	HDC dc_w = GetDC(wind->getHwnd());
+	in = new Input(wind->getRawDisplay(), wind->getRawWindow());
+	HDC dc_w = GetDC(wind->getRawWindow());
 	// set pixel format for OpenGL context
 	{
 		//https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
@@ -201,7 +201,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	if (!glXMakeCurrent(display, wind->getRawWindow(), ctx)) {
         FatalError("Failed to make context current");
     }
-
+	XSetIOErrorHandler(myXIOErrorHandler);
 
 	#endif
 	//glEnable(GL_TEXTURE_2D);
@@ -220,10 +220,9 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	glViewport(0, 0, width, height);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
 	std::cout << "Texture Units on this machine: " << texture_units << "\n";
-	XSetIOErrorHandler(myXIOErrorHandler);
 	//start modern opengl needed stuff like shaders and vertex buffers
 
 	#if defined(_WIN32)
-	ShowWindow(wind->getHwnd(), SW_SHOW);
+	ShowWindow(wind->getRawWindow(), SW_SHOW);
 	#endif
 }

@@ -6,71 +6,71 @@
 #if defined(_WIN32)
 #define RAW_WINDOW HWND
 #define RAW_DISPLAY HINSTANCE
-#define g_A VK_A
-#define g_B VK_B
-#define g_C VK_C
-#define g_D VK_D
-#define g_E VK_E
-#define g_F VK_F
-#define g_G VK_G
-#define g_H VK_H
-#define g_I VK_I
-#define g_J VK_J
-#define g_K VK_K
-#define g_L VK_L
-#define g_M VK_M
-#define g_N VK_N
-#define g_O VK_O
-#define g_P VK_P
-#define g_Q VK_Q
-#define g_R VK_R
-#define g_S VK_S
-#define g_T VK_T
-#define g_U VK_U
-#define g_V VK_V
-#define g_W VK_W
-#define g_X VK_X
-#define g_Y VK_Y
-#define g_Z VK_Z
+#define g_A 'A'
+#define g_B 'B'
+#define g_C 'C'
+#define g_D 'D'
+#define g_E 'E'
+#define g_F 'F'
+#define g_G 'G'
+#define g_H 'H'
+#define g_I 'I'
+#define g_J 'J'
+#define g_K 'K'
+#define g_L 'L'
+#define g_M 'M'
+#define g_N 'N'
+#define g_O 'O'
+#define g_P 'P'
+#define g_Q 'Q'
+#define g_R 'R'
+#define g_S 'S'
+#define g_T 'T'
+#define g_U 'U'
+#define g_V 'V'
+#define g_W 'W'
+#define g_X 'X'
+#define g_Y 'Y'
+#define g_Z 'Z'
 
 // Lowercase alphabetic keys (Shift is used for lowercase)
-#define g_a VK_A
-#define g_b VK_B
-#define g_c VK_C
-#define g_d VK_D
-#define g_e VK_E
-#define g_f VK_F
-#define g_g VK_G
-#define g_h VK_H
-#define g_i VK_I
-#define g_j VK_J
-#define g_k VK_K
-#define g_l VK_L
-#define g_m VK_M
-#define g_n VK_N
-#define g_o VK_O
-#define g_p VK_P
-#define g_q VK_Q
-#define g_r VK_R
-#define g_s VK_S
-#define g_t VK_T
-#define g_u VK_U
-#define g_v VK_V
-#define g_w VK_W
-#define g_x VK_X
-#define g_y VK_Y
-#define g_z VK_Z
+#define g_a 'A'
+#define g_b 'B'
+#define g_c 'C'
+#define g_d 'D'
+#define g_e 'E'
+#define g_f 'F'
+#define g_g 'G'
+#define g_h 'H'
+#define g_i 'I'
+#define g_j 'J'
+#define g_k 'K'
+#define g_l 'L'
+#define g_m 'M'
+#define g_n 'N'
+#define g_o 'O'
+#define g_p 'P'
+#define g_q 'Q'
+#define g_r 'R'
+#define g_s 'S'
+#define g_t 'T'
+#define g_u 'U'
+#define g_v 'V'
+#define g_w 'W'
+#define g_x 'X'
+#define g_y 'Y'
+#define g_z 'Z'
 
-#define g_1 VK_1
-#define g_2 VK_2
-#define g_3 VK_3
-#define g_4 VK_4
-#define g_5 VK_5
-#define g_6 VK_6
-#define g_7 VK_7
-#define g_8 VK_8
-#define g_9 VK_9
-#define g_0 VK_0
+#define g_1 '1'
+#define g_2 '2'
+#define g_3 '3'
+#define g_4 '4'
+#define g_5 '5'
+#define g_6 '6'
+#define g_7 '7'
+#define g_8 '8'
+#define g_9 '9'
+#define g_0 '0'
 
 #define g_Comma VK_OEM_COMMA
 #define g_Period VK_OEM_PERIOD
@@ -149,6 +149,7 @@
 #include <X11/X.h>
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
+#include <X11/Xlib.h>
 #include <X11/extensions/XKBstr.h>
 #define RAW_WINDOW Window
 #define RAW_DISPLAY Display*
@@ -292,7 +293,7 @@
 //added customizability and clean up
 class g_window {
 private:
-	RAW_DISPLAY display;
+	RAW_DISPLAY r_display;
 	RAW_WINDOW m_hwnd;
 	int height;
 	int width;
@@ -339,6 +340,10 @@ private:
 	#endif
 	RAW_DISPLAY display;
 	RAW_WINDOW wind;
+	void setLastState();
+	//input functions
+	//probably switch to GetKeyboardState, so easier to use getKeyReleased
+	bool getState();
 public:
 	Input(RAW_DISPLAY display, RAW_WINDOW wind) {
 		#if defined(_WIN32)
@@ -359,11 +364,7 @@ public:
 	~Input () {
 
 	}
-	//input functions
-	void setLastState();
-	//probably switch to GetKeyboardState, so easier to use getKeyReleased
-	bool getState();
-
+	void updateState();
 
 	bool GetKeyDown(uint32_t key);
 	bool GetKeyReleased(uint32_t key);

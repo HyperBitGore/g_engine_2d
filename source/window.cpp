@@ -22,10 +22,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 g_window::~g_window() {
 	//has to be same class name
 	#if defined(_WIN32)
-	UnregisterClass(class_name, m_hinstance);
+	UnregisterClass("GENG", r_display);
 	#endif
 	#if defined(__unix__)
-    XDestroyWindow(display, m_hwnd);
+    XDestroyWindow(r_display, m_hwnd);
 	#endif
 }
 
@@ -43,8 +43,8 @@ bool g_window::ProcessMessage() {
 	#endif
 	#if defined(__unix__)
 	XEvent event;
-        if (XPending(display)) {
-            XNextEvent(display, &event);
+        if (XPending(r_display)) {
+            XNextEvent(r_display, &event);
 			if (event.type == DestroyNotify) {
 				return false;
 			}
@@ -59,7 +59,7 @@ bool g_window::updateWindow() {
 	return UpdateWindow(getRawWindow());
 	#endif
 	#if defined(__unix__)
-	return XMapWindow(display, m_hwnd);
+	return XMapWindow(r_display, m_hwnd);
 	#endif
 }
 
@@ -69,19 +69,18 @@ bool g_window::swapBuffers() {
 	return SwapBuffers(GetDC(getRawWindow()));
 	#endif
 	#if defined(__unix__)
-	glXSwapBuffers(display, m_hwnd);
+	glXSwapBuffers(r_display, m_hwnd);
 	return true;
 	#endif
 }
 #if defined(_WIN32)
-g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int x, int y)
-	: display(GetModuleHandle(nullptr))
+g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y)
+	: r_display(GetModuleHandle(nullptr))
 {
-	class_name = "GENG";
 	WNDCLASS wnd = {};
 	wnd.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
-	wnd.lpszClassName = CLASS_NAME;
-	wnd.hInstance = display;
+	wnd.lpszClassName = "GENG";
+	wnd.hInstance = r_display;
 	wnd.hIcon = LoadIcon(NULL, IDI_WINLOGO);
 	wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wnd.hbrBackground = NULL;
@@ -104,7 +103,7 @@ g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int 
 
 	AdjustWindowRect(&rect, windStyle, false);
 
-	m_hwnd = CreateWindowEx(0, CLASS_NAME,
+	m_hwnd = CreateWindowEx(0, wnd.lpszClassName,
 		title,
 		windStyle,
 		rect.left,
@@ -113,7 +112,7 @@ g_window::g_window(const char* title, const char* CLASS_NAME, int h, int w, int 
 		rect.bottom - rect.top,
 		NULL,
 		NULL,
-		display,
+		r_display,
 		NULL
 	);
 }
@@ -125,7 +124,7 @@ g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, 
         std::cout << "Unable to open X display\n";
         exit(1);
     }
-	this->display = display;
+	this->r_display = display;
 	height = h;
 	width = w;
     Window root = DefaultRootWindow(display);
@@ -144,24 +143,24 @@ g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, 
 	None
 	};
 	int fbcount;
-    GLXFBConfig* fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
+    GLXFBConfig* fbc = glXChooseFBConfig(r_display, DefaultScreen(r_display), visual_attribs, &fbcount);
     if (!fbc) {
         fprintf(stderr, "Failed to get framebuffer config\n");
         return;
     }
 
     GLXFBConfig fbconfig = fbc[0];
-    XVisualInfo* vi = glXGetVisualFromFBConfig(display, fbconfig);
+    XVisualInfo* vi = glXGetVisualFromFBConfig(r_display, fbconfig);
 
     // Create window
     XSetWindowAttributes swa;
-    swa.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
+    swa.colormap = XCreateColormap(r_display, RootWindow(r_display, vi->screen), vi->visual, AllocNone);
     swa.event_mask = ExposureMask | KeyPressMask;
 
-    m_hwnd = XCreateWindow(display, root, 0, 0, 800, 600, 0, vi->depth,
+    m_hwnd = XCreateWindow(r_display, root, 0, 0, 800, 600, 0, vi->depth,
                         InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
-	XMapWindow(display, m_hwnd);
-	XStoreName(display, m_hwnd, title);
+	XMapWindow(r_display, m_hwnd);
+	XStoreName(r_display, m_hwnd, title);
 	XFree(vi);
 	XFree(fbc);
 
@@ -178,5 +177,5 @@ RAW_WINDOW g_window::getRawWindow() {
 	return m_hwnd;
 }
 RAW_DISPLAY g_window::getRawDisplay() {
-	return display;
+	return r_display;
 }

@@ -11,6 +11,8 @@
 //#include <glcorearb.h>
 #include <wglext.h>
 #include <glext.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #endif
 
 #if defined(__unix__)

@@ -1,15 +1,14 @@
 #include "backend.hpp"
-#include <X11/X.h>
-#include <X11/XKBlib.h>
-#include <X11/Xlib.h>
 
 
 
 void Input::setLastState() {
 	memcpy(last_state, keys, keys_size);
+	#if defined(__unix__)
 	last_lstate = cur_lstate;
 	last_rstate = cur_rstate;
 	last_mstate = cur_mstate;
+	#endif
 }
 //input functions
 //probably switch to GetKeyboardState, so easier to use getKeyReleased
@@ -17,8 +16,11 @@ bool Input::getState() {
 	setLastState();
 	#if defined(_WIN32)
 	bool success = GetKeyboardState((PBYTE)keys);
+	for (size_t i = 0; i < keys_size; i++) {
+		keys[i] = keys[i] >> 7;
+	}
 	#endif
-	#if defined(__unix)
+	#if defined(__unix__)
 	bool success = XQueryKeymap(display, raw_keys);
 	if (success) {
 		for (size_t i = 0; i < 32; i++) {
@@ -48,12 +50,7 @@ bool Input::getState() {
 
 
 bool Input::GetKeyDown(uint32_t key) {
-	getState();
-	#if defined (_WIN32)
-	if (key >= 97 && key <= 122) {
-		t = VkKeyScanEx(key, layout);
-	}
-	#endif
+	#if defined(__unix__)
 	switch (key) {
 		case g_MouseLeft:
 			return cur_lstate;
@@ -62,17 +59,14 @@ bool Input::GetKeyDown(uint32_t key) {
 		case g_MouseMiddle:
 			return cur_mstate;
 	}
+	#endif
 	if (keys[key]) {
 		return true;
 	}
 	return false;
 }
 bool Input::GetKeyReleased(uint32_t key) {
-	#if defined (_WIN32)
-	if (key >= 97 && key <= 122) {
-		t = VkKeyScanEx(key, layout);
-	}
-	#endif
+	#if defined (__unix__)
 	switch (key) {
 		case g_MouseLeft:
 			return cur_lstate - last_lstate == -1;
@@ -81,11 +75,14 @@ bool Input::GetKeyReleased(uint32_t key) {
 		case g_MouseMiddle:
 			return cur_mstate - last_mstate == -1;
 	}
-	if ((last_state[key]) != (keys[key]) && (keys[key]) != 0) {
-		getState();
+	#endif
+	if ((last_state[key]) != (keys[key]) && (keys[key]) != 1) {
 		return true;
 	}
-	getState();
 	return false;
 }
 
+
+void Input::updateState() {
+	getState();
+}

@@ -1,5 +1,4 @@
 #include "audio.hpp"
-#include <alsa/asoundlib.h>
 #include <cmath>
 #include <cstdint>
 #include <sstream>
@@ -304,6 +303,7 @@ void AudioStream::playStream() {
             }
         }
         #endif
+        #if defined (__unix__)
         snd_pcm_state_t state = snd_pcm_state(pcm_handle);
         if (state == SND_PCM_STATE_XRUN) {
             //std::cerr << "Buffer underrun/overrun occurred, recovering...\n";
@@ -358,6 +358,7 @@ void AudioStream::playStream() {
                 play = false;
             }
         }
+        #endif
     }
 }
 
