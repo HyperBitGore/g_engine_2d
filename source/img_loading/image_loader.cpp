@@ -1,7 +1,7 @@
 #include "image_loader.hpp"
 #include "lodepng.h"
 
-IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
+/*IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
 	IMG img = new g_img;
 	unsigned error = lodepng_decode32_file((&(img->data)), &w, &h, path.c_str());
 	img->w = w;
@@ -18,7 +18,7 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
 	glGenerateMipmap_g(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return img;
-}
+}*/
 
 IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	IMG img = new g_img;

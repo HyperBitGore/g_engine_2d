@@ -1,5 +1,6 @@
 #include "image_loader.hpp"
 #include <fstream>
+#include <vector>
 /*
 //https://docs.fileformat.com/image/bmp/
 //https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
