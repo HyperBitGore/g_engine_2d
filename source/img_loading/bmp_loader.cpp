@@ -10,19 +10,18 @@
 //http://www.paulbourke.net/dataformats/bmp/
 */
 
-#pragma pack(push, 1)
-struct BITMAPHEADER{
+
+PREVENT_PACKING_STRUCT BITMAPHEADER{
     int16_t identifier;
     int32_t size;
     int16_t reserved_1;
     int16_t reserved_2;
     int32_t offset;
 };
-#pragma pack(pop)
+END_PACKING_STRUCT
 //portable instead of using win32
 
-#pragma pack(push, 1)
-struct BITMAPINFOHEADERV1{
+PREVENT_PACKING_STRUCT BITMAPINFOHEADERV1{
     int32_t header_size;
     int32_t width;
     int32_t height;
@@ -112,7 +111,7 @@ struct FourBytePallete{
     uint8_t reserved;
 };
 
-#pragma pack(pop)
+END_PACKING_STRUCT
 //supports bitmapinfoheader
 
 uint8_t loopUntilOnBit(uint32_t value){

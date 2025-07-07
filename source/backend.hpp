@@ -6,6 +6,8 @@
 #if defined(_WIN32)
 #define RAW_WINDOW HWND
 #define RAW_DISPLAY HINSTANCE
+#define PREVENT_PACKING_STRUCT #pragma pack(push, 1) struct
+#define END_PACKING_STRUCT #pragma pack(pop)
 #define g_A 'A'
 #define g_B 'B'
 #define g_C 'C'
@@ -153,6 +155,8 @@
 #include <X11/extensions/XKBstr.h>
 #define RAW_WINDOW Window
 #define RAW_DISPLAY Display*
+#define PREVENT_PACKING_STRUCT struct __attribute__((__packed__))
+#define END_PACKING_STRUCT 
 #define g_A XK_A
 #define g_B XK_B
 #define g_C XK_C
