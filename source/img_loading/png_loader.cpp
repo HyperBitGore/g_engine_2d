@@ -27,7 +27,7 @@ void readInto (char* target, char* buffer, uintmax_t buffer_size, uintmax_t star
     }
 }
 
-
+// https://www.libpng.org/pub/png/spec/1.2/PNG-Contents.html
 IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     // open file
     std::ifstream file;
@@ -70,18 +70,25 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     readInto((char*)&ihdr, buffer, file_size, 16, 13);
     ihdr.width = FLIP_ENDIAN_32(ihdr.width);
     ihdr.height = FLIP_ENDIAN_32(ihdr.height);
+    IMG img;
+    bool pallete = false;
+    uint32_t bytes_per_pixel = 0;
     switch (ihdr.color_type) {
+        case 3:
+        pallete = true;
         case 0:
-        
+        bytes_per_pixel = (ihdr.bit_depth < 8) ? 8 : ihdr.bit_depth;
         break;
         case 2:
-        break;
-        case 3:
+        bytes_per_pixel = (ihdr.bit_depth * 3) / 8; // pixel is rgb triple
         break;
         case 4:
+        bytes_per_pixel = (ihdr.bit_depth * 2) / 8; // grayscale plus alpha channel
         break;
         case 6:
+        bytes_per_pixel = (ihdr.bit_depth * 4) / 8; // pixel is rgba
         break;
     }
-    return nullptr;
+    img = imageloader::createBlank(ihdr.width, ihdr.height, bytes_per_pixel);
+    return img;
 }
