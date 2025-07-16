@@ -37,15 +37,25 @@ void readInto (char* target, char* buffer, uintmax_t buffer_size, uintmax_t star
     }
 }
 
+uint8_t PaethPredictor (uint8_t a, uint8_t b, uint8_t c) {
+    int p = (a + b) - c;
+    int pa = abs(p - a);
+    int pb = abs(p - b);
+    int pc = abs(p - c);
+    if (pa <= pb && pa <= pc) { return a; }
+    else if (pb <= pc) { return b; }
+    return c;
+}
+
 enum FilterType {FILTER_NONE = 0, FILTER_SUB = 1, FILTER_UP = 2, FILTER_AVERAGE = 3, FILTER_PAETH = 4};
 
 //For all filters, the bytes "to the left of" the first pixel in a scanline must be treated as being zero. For filters that refer to the prior scanline, the entire prior scanline must be treated as being zeroes for the first scanline of an image (or of a pass of an interlaced image). 
 
-void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uintmax_t buffer_size, IHDR ihdr, const uint32_t bytes_per_pixel) {
+void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uintmax_t buffer_size, IHDR ihdr, const uint32_t bytes_per_pixel, IMG img) {
     // skipping the first two bytes of zlib header data
     std::vector<uint8_t> read = inflate::decompressZlib(buffer + start, chunk_length);
     std::vector<uint8_t> output;
-    const uint32_t scanline_length = (ihdr.width * bytes_per_pixel) + 1;
+    const uint32_t scanline_length = (ihdr.width * bytes_per_pixel);
     // now process the data!
     size_t row_count = 0;
     for (size_t i = 0; i < read.size(); row_count++) {
@@ -53,13 +63,13 @@ void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uin
         switch (read[i]) {
             case FILTER_NONE:
                 i++;
-                for (size_t j = 0; j < scanline_length - 1; j++, i++) {
+                for (size_t j = 0; j < scanline_length; j++, i++) {
                     output.push_back(read[i]);
                 }
             break;
             case FILTER_SUB:
                 i++;
-                for (size_t j = 0; j < scanline_length - 1; j++, i++) {
+                for (size_t j = 0; j < scanline_length; j++, i++) {
                     if (j < bytes_per_pixel) {
                         output.push_back(read[i]);
                     } else {
@@ -69,17 +79,17 @@ void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uin
             break;
             case FILTER_UP:
                 i++;
-                for (size_t j = 0; j < scanline_length - 1; j++, i++) {
+                for (size_t j = 0; j < scanline_length; j++, i++) {
                     if (row_count == 0) {
                         output.push_back(read[i]);
                     } else {
-                        output.push_back(read[i] - output[output.size() - ihdr.width*bytes_per_pixel]);
+                        output.push_back(read[i] - output[output.size() - scanline_length]);
                     }
                 }
             break;
             case FILTER_AVERAGE:
                 i++;
-                for (size_t j = 0; j < scanline_length - 1; j++, i++) {
+                for (size_t j = 0; j < scanline_length; j++, i++) {
                     if (row_count == 0) {
                         if (j == 0) {
                             output.push_back(read[i]);
@@ -93,13 +103,15 @@ void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uin
             break;
             case FILTER_PAETH:
                 i++;
-                for (size_t j = 0; j < scanline_length - 1; j++, i++) {
-                    
+                for (size_t j = 0; j < scanline_length; j++, i++) {
+                    uint8_t left = (j != 0) ? output[output.size() - bytes_per_pixel] : 0;
+                    uint8_t upper = (row_count != 0) ? output[output.size() - scanline_length] : 0;
+                    uint8_t upper_left = (row_count != 0 && j != 0) ? output[output.size() - scanline_length - bytes_per_pixel] : 0;
                 }
             break;
         }
     }
-    for (auto& i : output) {
+    for (size_t i = 0; i < output.size(); i += bytes_per_pixel) {
         
     }
 }
@@ -181,7 +193,7 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
             case PNG_PLTE_TAG:
             break;
             case PNG_IDAT_TAG:
-                processIDATChunk(buffer, i, length, file_size, ihdr, bytes_per_pixel);
+                processIDATChunk(buffer, i, length, file_size, ihdr, bytes_per_pixel, img);
             break;
         }
         // 4 extra byte for crc
