@@ -14,7 +14,9 @@ add_executable(g_engine source/g_engine_2d.hpp source/audio/audio_player.cpp sou
 source/function_loader.cpp source/gl_defines.hpp source/util/hashmap.hpp source/img_loading/image_loader.cpp source/input.cpp source/img_loading/lodepng.cpp
 source/img_loading/lodepng.h source/util/matrix.cpp source/util/matrix.hpp source/util/shader.cpp source/window.cpp example/example.cpp source/audio/audio.hpp source/backend.hpp source/util/vector.cpp 
 source/util/vector.hpp source/rendering/primitive_renderer.cpp source/rendering/image_renderer.cpp source/img_loading/image_atlas.cpp source/img_loading/bmp_loader.cpp source/util/shader.hpp source/img_loading/image_loader.hpp source/rendering/image_renderer.hpp
-source/rendering/primitive_renderer.hpp source/rendering/font_renderer.hpp source/img_loading/png_loader.cpp)
+source/rendering/primitive_renderer.hpp source/rendering/font_renderer.hpp source/img_loading/png_loader.cpp
+source/img_loading/common.hpp source/img_loading/inflate.hpp
+)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
