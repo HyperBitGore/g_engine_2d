@@ -9,8 +9,9 @@
 #define PNG_SIGNATURE_FIRST_FOUR 0x474E5089
 #define PNG_SIGNATURE_SECOND_FOUR 0x0A1A0A0D
 #define PNG_IHDR_TAG 0x52444849
-#define PNG_PLTE_TAG 0x454C5450 // this is wrong
+#define PNG_PLTE_TAG 0x45544C50
 #define PNG_IDAT_TAG 0x54414449
+#define PNG_IEND_TAG 0x444E4549
 
 #define FLIP_ENDIAN_32(x) ( \
     (((x) >> 24) & 0x000000FF) | \
@@ -51,13 +52,14 @@ enum FilterType {FILTER_NONE = 0, FILTER_SUB = 1, FILTER_UP = 2, FILTER_AVERAGE 
 
 //For all filters, the bytes "to the left of" the first pixel in a scanline must be treated as being zero. For filters that refer to the prior scanline, the entire prior scanline must be treated as being zeroes for the first scanline of an image (or of a pass of an interlaced image). 
 
-void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uintmax_t buffer_size, IHDR ihdr, const uint32_t bytes_per_pixel, IMG img) {
+std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uintmax_t buffer_size, IHDR ihdr, const uint32_t bytes_per_pixel) {
     // skipping the first two bytes of zlib header data
     std::vector<uint8_t> read = inflate::decompressZlib(buffer + start, chunk_length);
     std::vector<uint8_t> output;
     const uint32_t scanline_length = (ihdr.width * bytes_per_pixel);
     // now process the data!
     size_t row_count = 0;
+    uint32_t none = 0, sub = 0, up = 0, avera = 0, paeth = 0;
     for (size_t i = 0; i < read.size(); row_count++) {
         // switching on scanline filter type
         switch (read[i]) {
@@ -66,6 +68,7 @@ void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uin
                 for (size_t j = 0; j < scanline_length; j++, i++) {
                     output.push_back(read[i]);
                 }
+                none++;
             break;
             case FILTER_SUB:
                 i++;
@@ -73,9 +76,10 @@ void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uin
                     if (j < bytes_per_pixel) {
                         output.push_back(read[i]);
                     } else {
-                        output.push_back(read[i] + output[output.size() - 1]);
+                        output.push_back(read[i] + output[output.size() - bytes_per_pixel]);
                     }
                 }
+                sub++;
             break;
             case FILTER_UP:
                 i++;
@@ -83,40 +87,54 @@ void processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uin
                     if (row_count == 0) {
                         output.push_back(read[i]);
                     } else {
-                        output.push_back(read[i] - output[output.size() - scanline_length]);
+                        output.push_back(read[i] + output[output.size() - scanline_length]);
                     }
                 }
+                up++;
             break;
             case FILTER_AVERAGE:
                 i++;
                 for (size_t j = 0; j < scanline_length; j++, i++) {
                     if (row_count == 0) {
-                        if (j == 0) {
+                        if (j < bytes_per_pixel) {
                             output.push_back(read[i]);
                         } else {
-                            output.push_back(read[i] - floor((double)read[i - 1] / 2));
+                            uint8_t left = output[output.size() - bytes_per_pixel];
+                            output.push_back(read[i] + (uint8_t)floor(((double)left / 2)));
                         }
                     } else {
-                        output.push_back(read[i] - floor(((double)read[i - 1] + read[i - scanline_length]) / 2));
+                        if (j < bytes_per_pixel) {
+                            uint8_t upper = output[output.size() - scanline_length];
+                            output.push_back(read[i] + (uint8_t)floor(((double)upper / 2)));
+                        } else {
+                            uint8_t left = output[output.size() - bytes_per_pixel];
+                            uint8_t upper = output[output.size() - scanline_length];
+                            
+                            output.push_back(read[i] + (uint8_t)floor(((double)left + (double)upper) / 2.0));
+                        }
                     }
                 }
+                avera++;
             break;
             case FILTER_PAETH:
                 i++;
                 for (size_t j = 0; j < scanline_length; j++, i++) {
-                    uint8_t left = (j != 0) ? output[output.size() - bytes_per_pixel] : 0;
+                    uint8_t left = (j >= 0) ? output[output.size() - bytes_per_pixel] : 0;
                     uint8_t upper = (row_count != 0) ? output[output.size() - scanline_length] : 0;
                     uint8_t upper_left = (row_count != 0 && j != 0) ? output[output.size() - scanline_length - bytes_per_pixel] : 0;
+                    output.push_back(read[i] + PaethPredictor(left, upper, upper_left));
                 }
+                paeth++;
             break;
         }
     }
-    for (size_t i = 0; i < output.size(); i += bytes_per_pixel) {
-        
-    }
+    std::cout << "none " << none << " sub " << sub << " up " << up << " aver " << avera << " paeth " << paeth << "\n";
+    return output;
 }
 
 // https://www.libpng.org/pub/png/spec/1.2/PNG-Contents.html
+// https://www.w3.org/TR/png-3/#abstract
+
 IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     // open file
     std::ifstream file;
@@ -164,28 +182,29 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     uint32_t bytes_per_pixel = 0;
     switch (ihdr.color_type) {
         case 3:
-        pallete = true;
+            pallete = true;
         case 0:
-        bytes_per_pixel = (ihdr.bit_depth < 8) ? 8 : ihdr.bit_depth;
+            bytes_per_pixel = (ihdr.bit_depth < 8) ? 32 : (ihdr.bit_depth / 8); // set to 32 as signal to idat processor??
         break;
         case 2:
-        bytes_per_pixel = (ihdr.bit_depth * 3) / 8; // pixel is rgb triple
+            bytes_per_pixel = (ihdr.bit_depth * 3) / 8; // pixel is rgb triple
         break;
         case 4:
-        bytes_per_pixel = (ihdr.bit_depth * 2) / 8; // grayscale plus alpha channel
+            bytes_per_pixel = (ihdr.bit_depth * 2) / 8; // grayscale plus alpha channel
         break;
         case 6:
-        bytes_per_pixel = (ihdr.bit_depth * 4) / 8; // pixel is rgba
+            bytes_per_pixel = (ihdr.bit_depth * 4) / 8; // pixel is rgba
         break;
     }
     img = imageloader::createBlank(ihdr.width, ihdr.height, bytes_per_pixel);
+    std::vector<uint8_t> idat;
     // process the actual chunks now!
-    uintmax_t i = 33; // skipping crc at end of IHDR chunk
-    while (i < file_size) {
+    for (uintmax_t i = 33; i < file_size; ) {
         length = READ_AS_UINT32(buffer + i);
         length = FLIP_ENDIAN_32(length);
         i += 4;
         std::string cc = { buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]};
+        std::cout << cc << "\n";
         val = READ_AS_UINT32(buffer + i);
         i += 4;
         // the chunk type
@@ -193,12 +212,72 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
             case PNG_PLTE_TAG:
             break;
             case PNG_IDAT_TAG:
-                processIDATChunk(buffer, i, length, file_size, ihdr, bytes_per_pixel, img);
+            {
+                std::vector<uint8_t> dat = processIDATChunk(buffer, i, length, file_size, ihdr, bytes_per_pixel);
+                for (auto& i : dat) {
+                    idat.push_back(i);
+                }
+            }
+            break;
+            case PNG_IEND_TAG:
+                i = file_size;
             break;
         }
         // 4 extra byte for crc
         i += length + 4;
     }
+    glGenTextures(1, &img->tex);
+    glActiveTexture_g(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
+    glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // now create gl image
+    switch (ihdr.color_type) {
+        case 3:
+        // process the data and set the pixels based on pallete
+        break;
+        case 0:
+        // figure out how to deal with less than 8 bit color here
+        break;
+        case 2:
+            // rgb triple can just throw into gl texture
+            {
+                for (size_t i = 0; i < idat.size(); i++) {
+                    img->data[i] = idat[i];
+                }
+                const GLint format = (ihdr.bit_depth == 8) ? GL_RGB8 : GL_RGB16;
+                const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+                glTexImage2D(GL_TEXTURE_2D, 0, format, img->w, img->h, 0, GL_RGB, type, img->data);
+            }
+        break;
+        case 4:
+            // grayscale with alpha
+            {
+                for (size_t i = 0; i < idat.size(); i++) {
+                    img->data[i] = idat[i];
+                }
+                const GLint format = (ihdr.bit_depth == 8) ? GL_R8 : GL_R16;
+                const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+                glTexImage2D(GL_TEXTURE_2D, 0, format, img->w, img->h, 0, GL_R, type, img->data);
+            }
+        break;
+        case 6:
+            // rgb triple with alpha
+            {
+                for (size_t i = 0; i < idat.size(); i++) {
+                    img->data[i] = idat[i];
+                }
+                const GLint format = (ihdr.bit_depth == 8) ? GL_RGBA8 : GL_RGBA16;
+                const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+                glTexImage2D(GL_TEXTURE_2D, 0, format, img->w, img->h, 0, GL_RGBA, type, img->data);
+            }
+        break;
+    }
     delete[] buffer;
+
+    glGenerateMipmap_g(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
     return img;
 }
