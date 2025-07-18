@@ -194,6 +194,7 @@ void renderFunction() {
 	pos = atlas.getImagePos("enem2", true);
 	img_r.addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
 	img_r.drawBuffer(atlas.getImg());
+	img_r.drawImage(imgtest, {0.0f, 0.0f}, {600.0f, 600.0f});
 	eng2.disable(GL_BLEND);
 	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
 	dr.unbind();
@@ -202,7 +203,8 @@ void renderFunction() {
 		draw_timer = 0.0f;
 	}
 	if(draw_mode){
-		invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		// invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}else{
 		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}

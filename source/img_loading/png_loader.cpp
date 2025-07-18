@@ -61,6 +61,9 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
     size_t row_count = 0;
     uint32_t none = 0, sub = 0, up = 0, avera = 0, paeth = 0;
     for (size_t i = 0; i < read.size(); row_count++) {
+        size_t current_line_start = output.size();
+        size_t prev_line_start = (row_count > 0) ? current_line_start - scanline_length : 0;
+        
         // switching on scanline filter type
         switch (read[i]) {
             case FILTER_NONE:
@@ -73,55 +76,36 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
             case FILTER_SUB:
                 i++;
                 for (size_t j = 0; j < scanline_length; j++, i++) {
-                    if (j < bytes_per_pixel) {
-                        output.push_back(read[i]);
-                    } else {
-                        output.push_back(read[i] + output[output.size() - bytes_per_pixel]);
-                    }
+                    uint8_t left = (j >= bytes_per_pixel) ? output[current_line_start + j - bytes_per_pixel] : 0;
+                    output.push_back(read[i] + left);
                 }
                 sub++;
             break;
             case FILTER_UP:
                 i++;
                 for (size_t j = 0; j < scanline_length; j++, i++) {
-                    if (row_count == 0) {
-                        output.push_back(read[i]);
-                    } else {
-                        output.push_back(read[i] + output[output.size() - scanline_length]);
-                    }
+                    uint8_t up = (row_count > 0) ? output[prev_line_start + j] : 0;
+                    output.push_back(read[i] + up);
                 }
                 up++;
             break;
             case FILTER_AVERAGE:
                 i++;
                 for (size_t j = 0; j < scanline_length; j++, i++) {
-                    if (row_count == 0) {
-                        if (j < bytes_per_pixel) {
-                            output.push_back(read[i]);
-                        } else {
-                            uint8_t left = output[output.size() - bytes_per_pixel];
-                            output.push_back(read[i] + (uint8_t)floor(((double)left / 2)));
-                        }
-                    } else {
-                        if (j < bytes_per_pixel) {
-                            uint8_t upper = output[output.size() - scanline_length];
-                            output.push_back(read[i] + (uint8_t)floor(((double)upper / 2)));
-                        } else {
-                            uint8_t left = output[output.size() - bytes_per_pixel];
-                            uint8_t upper = output[output.size() - scanline_length];
-                            
-                            output.push_back(read[i] + (uint8_t)floor(((double)left + (double)upper) / 2.0));
-                        }
-                    }
+                    uint8_t left = (j >= bytes_per_pixel) ? output[current_line_start + j - bytes_per_pixel] : 0;
+                    uint8_t upper = (row_count > 0) ? output[prev_line_start + j] : 0;
+                    uint8_t avg  = (left + upper) / 2;
+
+                    output.push_back(read[i] + avg);
                 }
                 avera++;
             break;
             case FILTER_PAETH:
                 i++;
                 for (size_t j = 0; j < scanline_length; j++, i++) {
-                    uint8_t left = (j >= 0) ? output[output.size() - bytes_per_pixel] : 0;
-                    uint8_t upper = (row_count != 0) ? output[output.size() - scanline_length] : 0;
-                    uint8_t upper_left = (row_count != 0 && j != 0) ? output[output.size() - scanline_length - bytes_per_pixel] : 0;
+                    uint8_t left = (j >= bytes_per_pixel) ? output[current_line_start + j - bytes_per_pixel] : 0;
+                    uint8_t upper = (row_count > 0) ? output[prev_line_start + j] : 0;
+                    uint8_t upper_left = (row_count > 0 && j >= bytes_per_pixel) ? output[prev_line_start + j - bytes_per_pixel] : 0;
                     output.push_back(read[i] + PaethPredictor(left, upper, upper_left));
                 }
                 paeth++;
@@ -129,11 +113,29 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
         }
     }
     std::cout << "none " << none << " sub " << sub << " up " << up << " aver " << avera << " paeth " << paeth << "\n";
+    for (size_t y = 0; y < ihdr.height; ++y) {
+        if (y == 130) {
+            std::cout << "\n";
+        }
+        for (size_t x = 0; x < ihdr.width; ++x) {
+            size_t index = (y * ihdr.width + x) * 3;
+            uint8_t r = output[index];
+            uint8_t g = output[index + 1];
+            uint8_t b = output[index + 2];
+            std::cout << "[" << (int)r << "," << (int)g << "," << (int)b << "] \n";
+        }
+        std::cout << "\n";
+    }
+
     return output;
 }
 
 // https://www.libpng.org/pub/png/spec/1.2/PNG-Contents.html
 // https://www.w3.org/TR/png-3/#abstract
+
+//issue with color type 2 could be the byte alignment?
+//data seems to be correct
+//maybe write a test to test the pixel data
 
 IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     // open file
@@ -204,7 +206,7 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
         length = FLIP_ENDIAN_32(length);
         i += 4;
         std::string cc = { buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]};
-        std::cout << cc << "\n";
+        // std::cout << cc << "\n";
         val = READ_AS_UINT32(buffer + i);
         i += 4;
         // the chunk type
@@ -233,6 +235,7 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     // now create gl image
     switch (ihdr.color_type) {
         case 3:
@@ -243,13 +246,14 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
         break;
         case 2:
             // rgb triple can just throw into gl texture
-            {
+            {   
                 for (size_t i = 0; i < idat.size(); i++) {
                     img->data[i] = idat[i];
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_RGB8 : GL_RGB16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-                glTexImage2D(GL_TEXTURE_2D, 0, format, img->w, img->h, 0, GL_RGB, type, img->data);
+                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
             }
         break;
         case 4:
@@ -260,7 +264,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_R8 : GL_R16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-                glTexImage2D(GL_TEXTURE_2D, 0, format, img->w, img->h, 0, GL_R, type, img->data);
+                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_R, type, img->data);
             }
         break;
         case 6:
@@ -271,7 +276,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_RGBA8 : GL_RGBA16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-                glTexImage2D(GL_TEXTURE_2D, 0, format, img->w, img->h, 0, GL_RGBA, type, img->data);
+                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, type, img->data);
             }
         break;
     }
