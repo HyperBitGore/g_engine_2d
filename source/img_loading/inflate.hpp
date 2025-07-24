@@ -56,12 +56,13 @@ class inflate : deflate_compressor {
             uint32_t total_bits = 0;
             for (int32_t i = bits; i > 0;) {
                 uint32_t remaining = 8 - bit_offset;
-                uint32_t change = ((i) < remaining) ? i : remaining;
-                uint32_t chunk = (data[offset] >> bit_offset) & ((1 << change) - 1); // mask created here and grab data same line
+                uint32_t to_read  = ((i) < (int32_t)remaining) ? i : remaining;
+                uint32_t mask = ((1u << to_read) - 1);
+                uint32_t chunk = (data[offset] >> bit_offset) & mask; // mask created here and grab data same line
                 val |= (chunk << total_bits); // move captured data to correct spot in val
-                bit_offset += change;
-                total_bits += change;
-                i -= change;
+                bit_offset += to_read ;
+                total_bits += to_read ;
+                i -= to_read ;
                 if (bit_offset > 7) {
                     offset++;
                     bit_offset = 0;
@@ -373,7 +374,7 @@ class inflate : deflate_compressor {
             // read 32kb from the file then 
             f.read((char*)read_buffer, KB32);
             std::streamsize read = f.gcount();
-            Bitwrapper dat(read_buffer, read);
+            Bitwrapper dat(read_buffer, (size_t)read);
             uint8_t final = dat.readBits(1);
             uint8_t type = dat.readBits(2);
             FlatHuffmanTree used_tree = fixed_huffman;

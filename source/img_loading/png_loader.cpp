@@ -252,8 +252,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_RGB8 : GL_RGB16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
-                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
+                glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
             }
         break;
         case 4:
@@ -264,8 +264,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_R8 : GL_R16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
-                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_R, type, img->data);
+                glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_R, type, img->data);
             }
         break;
         case 6:
@@ -276,8 +276,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_RGBA8 : GL_RGBA16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
-                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, type, img->data);
+                glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, type, img->data);
             }
         break;
     }

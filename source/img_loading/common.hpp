@@ -94,19 +94,18 @@ class deflate_compressor {
                     }
                 }
             }
-            static struct {
-                bool operator()(Code a, Code b) const { 
-                    if (a.len < b.len) return true;
-                    if (b.len < a.len) return false;
-
-                    if (a.value < b.value) return true;
-                    if (b.value < a.value) return false;
-                    return false;
-                }
-            } compareCode;
             void construct (std::vector<Code>& codes) {
                  // sort the codes based on len, then sort by smallest value upward
+                static struct {
+                    bool operator()(Code a, Code b) const { 
+                        if (a.len < b.len) return true;
+                        if (b.len < a.len) return false;
 
+                        if (a.value < b.value) return true;
+                        if (b.value < a.value) return false;
+                        return false;
+                    }
+                } compareCode;
                 std::sort(codes.begin(), codes.end(), compareCode);
                 int32_t code = 0;
                 int32_t next_code[16] = {0};
@@ -169,6 +168,16 @@ class deflate_compressor {
             
 
             static double checkCodesOversubscribed (std::vector<Code> codes) {
+                static struct {
+                    bool operator()(Code a, Code b) const { 
+                        if (a.len < b.len) return true;
+                        if (b.len < a.len) return false;
+
+                        if (a.value < b.value) return true;
+                        if (b.value < a.value) return false;
+                        return false;
+                    }
+                } compareCode;
                 std::sort(codes.begin(), codes.end(), compareCode);
                 double total = 0.0;
                 for (uint32_t i = 0; i < codes.size();) {
@@ -176,7 +185,7 @@ class deflate_compressor {
                     for(size_t j = i; j < codes.size() && codes[j].len == codes[i].len; j++, count += 1.0);   
                     double v = (count / (double)(std::pow(2, codes[i].len)));
                     total += v;
-                    i += count;   
+                    i += (uint32_t)count;   
                 }
                 total = round1Up(total);
                 return total;

@@ -6,8 +6,8 @@
 #if defined(_WIN32)
 #define RAW_WINDOW HWND
 #define RAW_DISPLAY HINSTANCE
-#define PREVENT_PACKING_STRUCT #pragma pack(push, 1) struct
-#define END_PACKING_STRUCT #pragma pack(pop)
+#define PREVENT_PACKING_STRUCT __pragma(pack(push, 1)) struct
+#define END_PACKING_STRUCT __pragma(pack(pop))
 #define g_A 'A'
 #define g_B 'B'
 #define g_C 'C'
