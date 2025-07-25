@@ -20,6 +20,7 @@
     (((x) << 24) & 0xFF000000) )
 
 #define READ_AS_UINT32(x) *((uint32_t*)(x))
+#define READ_24_BITS(x) (*((uint8_t*)x)) | ((*((uint8_t*)x + 1)) << 8) | ((*((uint8_t*)x + 2)) << 16)
 
 PREVENT_PACKING_STRUCT IHDR {
     uint32_t width;
@@ -113,7 +114,7 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
         }
     }
     std::cout << "none " << none << " sub " << sub << " up " << up << " aver " << avera << " paeth " << paeth << "\n";
-    for (size_t y = 0; y < ihdr.height; ++y) {
+    /*for (size_t y = 0; y < ihdr.height; ++y) {
         if (y == 130) {
             std::cout << "\n";
         }
@@ -125,7 +126,7 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
             std::cout << "[" << (int)r << "," << (int)g << "," << (int)b << "] \n";
         }
         std::cout << "\n";
-    }
+    }*/
 
     return output;
 }
@@ -180,11 +181,10 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     ihdr.width = FLIP_ENDIAN_32(ihdr.width);
     ihdr.height = FLIP_ENDIAN_32(ihdr.height);
     IMG img;
-    bool pallete = false;
     uint32_t bytes_per_pixel = 0;
     switch (ihdr.color_type) {
         case 3:
-            pallete = true;
+            bytes_per_pixel = 3;
         case 0:
             bytes_per_pixel = (ihdr.bit_depth < 8) ? 32 : (ihdr.bit_depth / 8); // set to 32 as signal to idat processor??
         break;
@@ -200,6 +200,7 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     }
     img = imageloader::createBlank(ihdr.width, ihdr.height, bytes_per_pixel);
     std::vector<uint8_t> idat;
+    std::vector<uint32_t> pallete;
     // process the actual chunks now!
     for (uintmax_t i = 33; i < file_size; ) {
         length = READ_AS_UINT32(buffer + i);
@@ -212,6 +213,9 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
         // the chunk type
         switch (val) {
             case PNG_PLTE_TAG:
+                for (size_t j = 0; j < length; j+=3) {
+                    pallete.push_back(READ_24_BITS(buffer + i + j));
+                }
             break;
             case PNG_IDAT_TAG:
             {
@@ -235,11 +239,14 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     // now create gl image
     switch (ihdr.color_type) {
         case 3:
         // process the data and set the pixels based on pallete
+            if (pallete.size() == 0) {
+                throw std::runtime_error("Failed to parse pallete for pallete based color png!");
+            }
         break;
         case 0:
         // figure out how to deal with less than 8 bit color here
@@ -252,6 +259,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_RGB8 : GL_RGB16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+                img->format = format;
+                img->type = type;
                 glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
                 glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
             }
@@ -264,6 +273,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_R8 : GL_R16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+                img->format = format;
+                img->type = type;
                 glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
                 glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_R, type, img->data);
             }
@@ -276,6 +287,8 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
                 }
                 const GLint format = (ihdr.bit_depth == 8) ? GL_RGBA8 : GL_RGBA16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+                img->format = format;
+                img->type = type;
                 glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
                 glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, type, img->data);
             }

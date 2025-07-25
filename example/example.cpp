@@ -16,6 +16,7 @@ Audio s_test3;
 Audio s_test4;
 
 IMG imgtest;
+IMG imgtest_bmp;
 IMG atlas_test;
 IMG bmptest;
 IMG blank_test;
@@ -194,9 +195,10 @@ void renderFunction() {
 	pos = atlas.getImagePos("enem2", true);
 	img_r.addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
 	img_r.drawBuffer(atlas.getImg());
-	img_r.drawImage(imgtest, {0.0f, 0.0f}, {600.0f, 600.0f});
+	// img_r.drawImage(imgtest, {0.0f, 0.0f}, {300.0f, 300.0f});
+	// img_r.drawImage(imgtest_bmp, {300.0f, 0.0f}, {300.0f, 300.0f});
 	eng2.disable(GL_BLEND);
-	//img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
+	// img_r.drawImage(atlas.getImg(), {100.0f, 200.0f}, {400.0f, 400.0f});
 	dr.unbind();
 	if(draw_timer > 1.0f){
 		draw_mode = !draw_mode;
@@ -282,8 +284,9 @@ int main() {
 	bmptest = imageloader::loadBMP("resources/test1.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png", 300, 241);
+	imgtest_bmp = imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
 	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
-	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA);
+	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	atlas.addImage(atlas_test, "atlas_test");
 	atlas.addImage(imgtest, "img_test");
 	atlas.addImage("resources/enem2_1.png", IMG_TYPE::PNG, 50, 60, "enem2");
@@ -293,7 +296,7 @@ int main() {
 
 	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
-		imageloader::setPixel(imgtest, x, 1, 4278190335, 4);
+		imageloader::setPixel(imgtest, x, 1, 0xff0000, imgtest->bytes_per_pixel);
 	}
 	std::cout << imageloader::getPixel(imgtest, 0, 100, 4) << "\n";
 	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
@@ -305,7 +308,7 @@ int main() {
 	font_r.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
 	blank_test = imageloader::createBlank(100, 100, 4);
-	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA);
+	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {
 		for(int j = 0; j < 100; j++){
 			imageloader::setPixel(blank_test, j, i, 4278190335, 4);

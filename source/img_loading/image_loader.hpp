@@ -9,6 +9,8 @@ struct g_img {
 	unsigned int w;
 	unsigned int h;
 	uint8_t bytes_per_pixel;
+	GLenum format;
+	GLenum type;
 };
 typedef g_img* IMG;
 struct Point {
@@ -83,7 +85,7 @@ public:
 class imageloader{
 	public:
 	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel);
-	static void createTexture(IMG img, GLenum internalformat, GLenum format);
+	static void createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type);
 	static IMG loadPNG(std::string path, unsigned int w, unsigned int h);
 	static IMG loadBMP(std::string path);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
@@ -96,7 +98,7 @@ class imageloader{
 	//run after you've done all the editing of data you want to
 	static void updateIMG(IMG img) {
 		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, img->format, img->type, img->data);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 

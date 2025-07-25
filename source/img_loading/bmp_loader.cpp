@@ -607,31 +607,37 @@ IMG imageloader::loadBMP(std::string path){
         img->data = decode8RLE(img->data, dib_header.image_size, dib_header);
         dib_header.image_size = dib_header.width * dib_header.height;
     }
+    img->type = GL_UNSIGNED_BYTE;
     //need switch here to determine the type of pixel to load
     switch(dib_header.bitspp){
         case 1:
             img->data = parse1BitColor(img->data, dib_header.image_size, dib_header, pallete);
+            img->format = GL_BGR;
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 4:
-
+            img->format = GL_BGR;
             img->data = parse4BitColor(img->data, dib_header.image_size, dib_header, pallete);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 8:
+            img->format = GL_BGR;
             img->data = parse8BitColor(img->data, real_size, dib_header, pallete);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 16:
+            img->format = GL_RGBA;
             if(dib_header.compression == 3){
                 img->data = mask16Bit(img->data, real_size, dib_header);
             }
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 24:
+            img->format = GL_BGR;
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img->w, img->h, 0, GL_BGR, GL_UNSIGNED_BYTE, img->data); //done
         break;
         case 32:
+            img->format = GL_RGBA;
             if(dib_header.compression == 3){
                 img->data = mask32Bit(img->data, real_size, dib_header);
             }

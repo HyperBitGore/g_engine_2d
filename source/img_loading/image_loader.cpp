@@ -30,7 +30,9 @@ IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	return img;
 }
 
-void imageloader::createTexture(IMG img, GLenum internalformat, GLenum format){
+void imageloader::createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type){
+	img->format = format;
+	img->type = type;
 	glGenTextures(1, &img->tex);
 	//glActiveTexture_g(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
