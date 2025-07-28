@@ -26,7 +26,7 @@ IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	img->bytes_per_pixel = bytes_per_pixel;
 	img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
 	std::memset(img->data, 0, (w * bytes_per_pixel) * h);
-
+	img->size = (w * bytes_per_pixel * h);
 	return img;
 }
 

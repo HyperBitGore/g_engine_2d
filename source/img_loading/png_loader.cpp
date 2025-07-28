@@ -22,6 +22,8 @@
 #define READ_AS_UINT32(x) *((uint32_t*)(x))
 #define READ_24_BITS(x) (*((uint8_t*)x)) | ((*((uint8_t*)x + 1)) << 8) | ((*((uint8_t*)x + 2)) << 16)
 
+#define WRITE_24_BITS(x, n) (((uint8_t*)x)[0] = (n & 0xff)); (((uint8_t*)x)[1] = (n & 0xff00)); (((uint8_t*)x)[2] = (n & 0xff0000));
+
 PREVENT_PACKING_STRUCT IHDR {
     uint32_t width;
     uint32_t height;
@@ -60,7 +62,6 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
     const uint32_t scanline_length = (ihdr.width * bytes_per_pixel);
     // now process the data!
     size_t row_count = 0;
-    uint32_t none = 0, sub = 0, up = 0, avera = 0, paeth = 0;
     for (size_t i = 0; i < read.size(); row_count++) {
         size_t current_line_start = output.size();
         size_t prev_line_start = (row_count > 0) ? current_line_start - scanline_length : 0;
@@ -72,7 +73,6 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
                 for (size_t j = 0; j < scanline_length; j++, i++) {
                     output.push_back(read[i]);
                 }
-                none++;
             break;
             case FILTER_SUB:
                 i++;
@@ -80,7 +80,6 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
                     uint8_t left = (j >= bytes_per_pixel) ? output[current_line_start + j - bytes_per_pixel] : 0;
                     output.push_back(read[i] + left);
                 }
-                sub++;
             break;
             case FILTER_UP:
                 i++;
@@ -88,7 +87,6 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
                     uint8_t up = (row_count > 0) ? output[prev_line_start + j] : 0;
                     output.push_back(read[i] + up);
                 }
-                up++;
             break;
             case FILTER_AVERAGE:
                 i++;
@@ -99,7 +97,6 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
 
                     output.push_back(read[i] + avg);
                 }
-                avera++;
             break;
             case FILTER_PAETH:
                 i++;
@@ -109,27 +106,64 @@ std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t c
                     uint8_t upper_left = (row_count > 0 && j >= bytes_per_pixel) ? output[prev_line_start + j - bytes_per_pixel] : 0;
                     output.push_back(read[i] + PaethPredictor(left, upper, upper_left));
                 }
-                paeth++;
             break;
         }
     }
-    std::cout << "none " << none << " sub " << sub << " up " << up << " aver " << avera << " paeth " << paeth << "\n";
-    /*for (size_t y = 0; y < ihdr.height; ++y) {
-        if (y == 130) {
-            std::cout << "\n";
-        }
-        for (size_t x = 0; x < ihdr.width; ++x) {
-            size_t index = (y * ihdr.width + x) * 3;
-            uint8_t r = output[index];
-            uint8_t g = output[index + 1];
-            uint8_t b = output[index + 2];
-            std::cout << "[" << (int)r << "," << (int)g << "," << (int)b << "] \n";
-        }
-        std::cout << "\n";
-    }*/
 
     return output;
 }
+
+
+class BitReader {
+private:
+    uint8_t* data;
+public:
+    uint32_t offset;
+    uint8_t bit_offset;
+    BitReader(void* data) {
+        this->data = (uint8_t*)data;
+        offset = 0;
+        bit_offset = 0;
+    }
+    // copy constructor
+    BitReader(const BitReader& b) {
+        this->data = b.data;
+        this->offset = b.offset;
+        this->bit_offset = b.bit_offset;
+    } 
+    // move constructor
+    BitReader(const BitReader&& b) {
+        this->data = b.data;
+        this->offset = b.offset;
+        this->bit_offset = b.bit_offset;
+    } 
+    // assignment operators
+    BitReader& operator=(const BitReader& b) {
+        return *this = BitReader(b);
+    }
+    BitReader& operator=(const BitReader&& b) noexcept {
+        return *this = BitReader(b);
+    }
+    uint32_t readBits (uint8_t bits) {
+        uint32_t val = 0;
+        uint32_t total_bits = 0;
+        for (int32_t i = bits; i > 0;) {
+            uint32_t remaining = 8 - bit_offset;
+            uint32_t to_read  = ((i) < (int32_t)remaining) ? i : remaining;
+            uint32_t mask = ((1u << to_read) - 1);
+            uint32_t chunk = (data[offset] >> bit_offset) & mask; // mask created here and grab data same line
+            val |= (chunk << total_bits); // move captured data to correct spot in val
+            bit_offset += to_read ;
+            total_bits += to_read ;
+            i -= to_read ;
+            if (bit_offset > 7) {
+                offset++;
+                bit_offset = 0;
+            }
+        }
+        return val;
+    }
+};
 
 // https://www.libpng.org/pub/png/spec/1.2/PNG-Contents.html
 // https://www.w3.org/TR/png-3/#abstract
@@ -142,6 +176,9 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
     // open file
     std::ifstream file;
     file.open(path, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Failed to open png " + path);
+    }
     uintmax_t file_size = std::filesystem::file_size(path);
     char* buffer = new char [file_size];
     file.read(buffer, file_size);
@@ -246,6 +283,19 @@ IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
         // process the data and set the pixels based on pallete
             if (pallete.size() == 0) {
                 throw std::runtime_error("Failed to parse pallete for pallete based color png!");
+            }
+            {
+                BitReader br(idat.data());
+                for(size_t i = 0; br.offset < idat.size() && i < img->size; i+=3) {
+                    uint32_t index = br.readBits(ihdr.bit_depth);
+                    if (index > pallete.size() - 1) {
+                        throw std::runtime_error("Read pallete index outside of pallete bounds!");
+                    }
+                    uint32_t color = pallete[index];
+                    WRITE_24_BITS(img->data + i, color);
+                }
+                glTextureStorage2D_g(img->tex, 1, GL_RGB8, img->w, img->h);
+                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, GL_UNSIGNED_BYTE, img->data);
             }
         break;
         case 0:

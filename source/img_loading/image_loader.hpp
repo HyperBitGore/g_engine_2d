@@ -11,6 +11,7 @@ struct g_img {
 	uint8_t bytes_per_pixel;
 	GLenum format;
 	GLenum type;
+	size_t size;
 };
 typedef g_img* IMG;
 struct Point {

@@ -18,6 +18,7 @@ ImageAtlas::ImageAtlas(int w, int h, int bytes_per_pixel) {
     img->bytes_per_pixel = bytes_per_pixel;
     img->data = (unsigned char*)std::malloc((img->w * img->bytes_per_pixel) * img->h); //pixel is four bytes so w*4 is the stride
     std::memset(img->data, 0, (img->w * img->bytes_per_pixel) * img->h);
+    img->size = (img->w * img->bytes_per_pixel) * img->h;
 }
 ImageAtlas::~ImageAtlas(){
     for(int i = 0; i < 256; i++){

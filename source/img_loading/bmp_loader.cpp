@@ -560,6 +560,7 @@ IMG imageloader::loadBMP(std::string path){
     img->h = dib_header.height;
     img->w = dib_header.width;
     int32_t real_size = (dib_header.bitspp > 4) ? img->h * img->w * img->bytes_per_pixel : (img->h * img->w) / (8 / dib_header.bitspp);
+    img->size = real_size;
     if(dib_header.header_size <= 40 || (dib_header.bitspp <= 8)){
         img->data = new uint8_t[dib_header.image_size]; //img->w for this version includes padding
         if(!img->data){
