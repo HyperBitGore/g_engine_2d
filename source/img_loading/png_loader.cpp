@@ -172,7 +172,7 @@ public:
 //data seems to be correct
 //maybe write a test to test the pixel data
 
-IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h) {
+IMG imageloader::loadPNG(std::string path) {
     // open file
     std::ifstream file;
     file.open(path, std::ios::binary);

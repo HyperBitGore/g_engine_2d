@@ -2,6 +2,7 @@
 #include "../source/audio/audio.hpp"
 #include "../source/util/matrix.hpp"
 #include <bitset>
+#include <cstdint>
 
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
@@ -16,6 +17,7 @@ Audio s_test3;
 Audio s_test4;
 
 IMG imgtest;
+IMG imgtest_types;
 IMG imgtest_bmp;
 IMG atlas_test;
 IMG bmptest;
@@ -283,20 +285,21 @@ int main() {
 
 	bmptest = imageloader::loadBMP("resources/test1.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
-	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png", 300, 241);
+	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
+	//imgtest_types = imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png");
 	imgtest_bmp = imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
-	atlas_test = imageloader::loadPNG("resources/test.png", 30, 50);
+	atlas_test = imageloader::loadPNG("resources/test.png");
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	atlas.addImage(atlas_test, "atlas_test");
 	atlas.addImage(imgtest, "img_test");
-	atlas.addImage("resources/enem2_1.png", IMG_TYPE::PNG, 50, 60, "enem2");
+	atlas.addImage("resources/enem2_1.png", IMG_TYPE::PNG, "enem2");
 
 	//adding bmp to atlas, don't need width and height
 	//atlas.addImage("resources/test1.bmp", IMG_TYPE::BMP, 0, 0, "test1");
 
 	imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
-		imageloader::setPixel(imgtest, x, 1, 0xff0000, imgtest->bytes_per_pixel);
+		imageloader::setPixelRaw(imgtest, x, 1, (uint32_t)0xff0000, imgtest->bytes_per_pixel);
 	}
 	std::cout << imageloader::getPixel(imgtest, 0, 100, 4) << "\n";
 	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
@@ -311,7 +314,7 @@ int main() {
 	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {
 		for(int j = 0; j < 100; j++){
-			imageloader::setPixel(blank_test, j, i, 4278190335, 4);
+			imageloader::setPixelRaw(blank_test, j, i, 4278190335, 4);
 		}
 	}
 	imageloader::updateIMG(blank_test);

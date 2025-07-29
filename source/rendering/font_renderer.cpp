@@ -1053,7 +1053,7 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 			float y1 = inters[i - 1].y;
 			float y2 = inters[i].y;
 			for (int y = (int)y1; y <= y2; y++) {
-				imageloader::setPixel(r_g.data, x, y, color, 4);
+				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
 			}
 			if (inters.size() % 2 == 0) {
 				i += 2;
@@ -1071,8 +1071,8 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 			for (int x = 0, x1 = w - 1; x <= x1; x++, x1--) {
 				uint32_t c1 = (uint32_t)imageloader::getPixel(r_g.data, x, y, 4);
 				uint32_t c2 = (uint32_t)imageloader::getPixel(r_g.data, x1, y, 4);
-				imageloader::setPixel(r_g.data, x, y, c2, 4);
-				imageloader::setPixel(r_g.data, x1, y, c1, 4);
+				imageloader::setPixelRaw(r_g.data, x, y, c2, 4);
+				imageloader::setPixelRaw(r_g.data, x1, y, c1, 4);
 			}
 		}
 	}

@@ -1,24 +1,5 @@
 #include "image_loader.hpp"
 
-/*IMG imageloader::loadPNG(std::string path, unsigned int w, unsigned int h){
-	IMG img = new g_img;
-	unsigned error = lodepng_decode32_file((&(img->data)), &w, &h, path.c_str());
-	img->w = w;
-	img->h = h;
-	img->bytes_per_pixel = 4;
-	glGenTextures(1, &img->tex);
-	glActiveTexture_g(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, img->tex);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
-	glGenerateMipmap_g(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	return img;
-}*/
-
 IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	IMG img = new g_img;
 	img->h = h;
@@ -76,7 +57,7 @@ void imageloader::setPixel(IMG img, int x, int y, uint8_t r) {
 }
 
 
-void imageloader::setPixel(IMG img, int x, int y, uint32_t color, int bytes) {
+void imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes) {
 	size_t row = y * (img->w * bytes);
 	size_t col = x * bytes;
 	int shift = (bytes * 8) - 8;

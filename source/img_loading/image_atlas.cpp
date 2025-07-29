@@ -107,21 +107,21 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
     for (size_t y = 0; y < n_img->h; y++) {
         for (size_t x = 0; x < n_img->w; x++) {
             uint32_t col = (uint32_t)imageloader::getPixel(n_img, x, y, img->bytes_per_pixel);
-            imageloader::setPixel(img, c.x + x, c.y + y, col, 4);
+            imageloader::setPixelRaw(img, c.x + x, c.y + y, col, 4);
         }
     }
     
     insert(name, n_img, {(float)c.x, (float)c.y});
 }
 
-void ImageAtlas::addImage(std::string path, IMG_TYPE type, unsigned int w, unsigned int h, std::string name){
+void ImageAtlas::addImage(std::string path, IMG_TYPE type, std::string name){
     IMG img;
     switch(type){
         case IMG_TYPE::BMP:
             img = imageloader::loadBMP(path);
         break;
         case IMG_TYPE::PNG:
-            img = imageloader::loadPNG(path, w, h);
+            img = imageloader::loadPNG(path);
         break;
     }
     addImage(img, name);

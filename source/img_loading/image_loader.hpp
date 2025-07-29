@@ -77,7 +77,7 @@ public:
 	ImageAtlas(int w, int h, int bytes_per_pixel);
 	~ImageAtlas();
 	void addImage(IMG img, std::string name);
-	void addImage(std::string path, IMG_TYPE type, unsigned int w, unsigned int h, std::string name);
+	void addImage(std::string path, IMG_TYPE type, std::string name);
 	vec4 getImagePos(std::string name, bool normalize = false);
 	IMG getImg();
 };
@@ -87,14 +87,14 @@ class imageloader{
 	public:
 	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel);
 	static void createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type);
-	static IMG loadPNG(std::string path, unsigned int w, unsigned int h);
+	static IMG loadPNG(std::string path);
 	static IMG loadBMP(std::string path);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);
 	static void setPixel(IMG img, int x, int y, uint8_t r);
 	//assumed the color components are 8 bits each
-	static void setPixel(IMG img, int x, int y, uint32_t color, int bytes);
+	static void setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes);
 
 	//run after you've done all the editing of data you want to
 	static void updateIMG(IMG img) {

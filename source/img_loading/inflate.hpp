@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include <stdexcept>
 #define KB32 32768
 /*
 In other words, if one were to print out the compressed data as
@@ -54,6 +55,9 @@ class inflate : deflate_compressor {
         uint32_t readBits (uint8_t bits) {
             uint32_t val = 0;
             uint32_t total_bits = 0;
+            if (offset > size) {
+                throw std::runtime_error("Reading bits beyond the alloted buffer size!");
+            }
             for (int32_t i = bits; i > 0;) {
                 uint32_t remaining = 8 - bit_offset;
                 uint32_t to_read  = ((i) < (int32_t)remaining) ? i : remaining;
@@ -67,12 +71,18 @@ class inflate : deflate_compressor {
                     offset++;
                     bit_offset = 0;
                 }
+                if (offset > size) {
+                    throw std::runtime_error("Reading bits beyond the alloted buffer size!");
+                }
             }
             return val;
         }
 
         uint8_t readByte () {
             bit_offset = 0;
+            if (offset > size) {
+                throw std::runtime_error("Reading bits beyond the alloted buffer size!");
+            }
             return data[offset++];
         }
 
