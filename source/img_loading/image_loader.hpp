@@ -69,7 +69,6 @@ private:
 		}
 		return cur;
 	}
-	//Gore::HashMap<Member, std::string> images;
 	IMG img;
 	unsigned int max_images;
 

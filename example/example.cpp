@@ -285,8 +285,8 @@ int main() {
 
 	bmptest = imageloader::loadBMP("resources/test1.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
+	imgtest_types = imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale.png");
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
-	//imgtest_types = imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png");
 	imgtest_bmp = imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
 	atlas_test = imageloader::loadPNG("resources/test.png");
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);

@@ -26,6 +26,10 @@ class deflate_compressor {
     static uint8_t extract1Bit(uint32_t c, uint16_t n) {
         return (c >> n) & 1;
     }
+    //from left to right
+    static uint8_t extract1BitLeft(uint32_t c, uint16_t n) {
+    return (c >> (31 - n)) & 1;
+    }
 
     struct Code {
         uint16_t code; //actual code

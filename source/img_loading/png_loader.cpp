@@ -55,9 +55,8 @@ enum FilterType {FILTER_NONE = 0, FILTER_SUB = 1, FILTER_UP = 2, FILTER_AVERAGE 
 
 //For all filters, the bytes "to the left of" the first pixel in a scanline must be treated as being zero. For filters that refer to the prior scanline, the entire prior scanline must be treated as being zeroes for the first scanline of an image (or of a pass of an interlaced image). 
 
-std::vector<uint8_t> processIDATChunk (char* buffer, uintmax_t start, uint32_t chunk_length, uintmax_t buffer_size, IHDR ihdr, const uint32_t bytes_per_pixel) {
-    // skipping the first two bytes of zlib header data
-    std::vector<uint8_t> read = inflate::decompressZlib(buffer + start, chunk_length);
+std::vector<uint8_t> processIDATChunk (std::vector<uint8_t> buffer, IHDR ihdr, const uint32_t bytes_per_pixel) {
+    std::vector<uint8_t> read = inflate::decompressZlib(buffer.data(), buffer.size());
     std::vector<uint8_t> output;
     const uint32_t scanline_length = (ihdr.width * bytes_per_pixel);
     // now process the data!
@@ -256,9 +255,8 @@ IMG imageloader::loadPNG(std::string path) {
             break;
             case PNG_IDAT_TAG:
             {
-                std::vector<uint8_t> dat = processIDATChunk(buffer, i, length, file_size, ihdr, bytes_per_pixel);
-                for (auto& i : dat) {
-                    idat.push_back(i);
+                for (size_t j = 0; j < length; j++) {
+                    idat.push_back(*(buffer + i + j));
                 }
             }
             break;
@@ -269,6 +267,7 @@ IMG imageloader::loadPNG(std::string path) {
         // 4 extra byte for crc
         i += length + 4;
     }
+    idat = processIDATChunk(idat, ihdr, bytes_per_pixel);
     glGenTextures(1, &img->tex);
     glActiveTexture_g(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
@@ -276,7 +275,6 @@ IMG imageloader::loadPNG(std::string path) {
 	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     // now create gl image
     switch (ihdr.color_type) {
         case 3:
@@ -299,7 +297,13 @@ IMG imageloader::loadPNG(std::string path) {
             }
         break;
         case 0:
-        // figure out how to deal with less than 8 bit color here
+        {
+            
+            const GLint format = (ihdr.bit_depth <= 8) ? GL_R8 : GL_R16;
+            const GLenum type = (ihdr.bit_depth <= 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+            glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
+            glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
+        }
         break;
         case 2:
             // rgb triple can just throw into gl texture

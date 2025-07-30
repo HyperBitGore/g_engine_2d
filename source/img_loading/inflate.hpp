@@ -52,6 +52,24 @@ class inflate : deflate_compressor {
             data_clone = wrap.data_clone;
         }
 
+        Bitwrapper& operator=(const Bitwrapper& wrap) {
+            return *this = Bitwrapper(wrap);
+        }
+
+
+        //move constructor
+        Bitwrapper (const Bitwrapper&& wrap) noexcept {
+            size = wrap.size;
+            offset = wrap.size;
+            bit_offset = wrap.bit_offset;
+            data = wrap.data;
+            data_clone = wrap.data_clone;
+        }
+
+        Bitwrapper& operator=(const Bitwrapper&& wrap) {
+            return *this = Bitwrapper(wrap);
+        }
+
         uint32_t readBits (uint8_t bits) {
             uint32_t val = 0;
             uint32_t total_bits = 0;
@@ -253,8 +271,14 @@ class inflate : deflate_compressor {
     public:
 
     static size_t decompressZlib (void* in, size_t in_size, void* out, size_t out_size) {
-        // idc about zlib headers :)
-        return decompress((char*)in + 2, in_size-2, out, out_size);
+        // idc about zlib data :)
+        uint32_t change = 2;
+        uint8_t v = extract1BitLeft(*(uint8_t*)in + 1, 5);
+        // fdict set, skip the other four bytes with the checksum
+        if (v) {
+            change = 6;
+        }
+        return decompress((char*)in + change, in_size - change, out, out_size);
     }
 
     // done
@@ -313,7 +337,13 @@ class inflate : deflate_compressor {
 
     static std::vector<uint8_t> decompressZlib (void* in, size_t in_size) {
         // idc about zlib data :)
-        return decompress(((char*)in) + 2, in_size-2);
+        uint32_t change = 2;
+        uint8_t v = extract1BitLeft(*(uint8_t*)in + 1, 5);
+        // fdict set, skip the other four bytes with the checksum
+        if (v) {
+            change = 6;
+        }
+        return decompress(((char*)in) + change, in_size - change);
     }
 
     static std::vector<uint8_t> decompress (void* in, size_t in_size) {
