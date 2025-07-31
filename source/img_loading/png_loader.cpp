@@ -1,5 +1,6 @@
 #include "image_loader.hpp"
 #include "inflate.hpp"
+#include <GL/gl.h>
 #include <cstdint>
 #include <fstream>
 #include <filesystem>
@@ -298,7 +299,18 @@ IMG imageloader::loadPNG(std::string path) {
         break;
         case 0:
         {
-            
+            BitReader br(idat.data());
+            for(size_t i = 0; br.offset < idat.size() && i < img->size;)  {
+                uint32_t val = br.readBits(ihdr.bit_depth);
+                if (ihdr.bit_depth <= 8) {
+                    img->data[i] = val;
+                    i++;
+                } else {
+                    img->data[i] = (val & 0xff);
+                    img->data[i + 1] = (val >> 8);
+                    i+=2;
+                }
+            }
             const GLint format = (ihdr.bit_depth <= 8) ? GL_R8 : GL_R16;
             const GLenum type = (ihdr.bit_depth <= 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
             glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
@@ -325,7 +337,7 @@ IMG imageloader::loadPNG(std::string path) {
                 for (size_t i = 0; i < idat.size(); i++) {
                     img->data[i] = idat[i];
                 }
-                const GLint format = (ihdr.bit_depth == 8) ? GL_R8 : GL_R16;
+                const GLint format = (ihdr.bit_depth == 8) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE16_ALPHA16;
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
                 img->format = format;
                 img->type = type;

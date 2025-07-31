@@ -192,6 +192,7 @@ void renderFunction() {
 	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
+	img_r.drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
 	vec4 pos = atlas.getImagePos("atlas_test", true);
 	img_r.addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
 	pos = atlas.getImagePos("enem2", true);
