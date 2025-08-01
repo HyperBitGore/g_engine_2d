@@ -191,3 +191,65 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
     shader.setuniform("screen", {(float)w, (float)h});
     shader.setuniform("mtexture", (GLuint)0);
 }
+
+
+grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
+    const char* vertex_shader = "#version 450 core\n"
+        "\n"
+        "layout(location = 0) in vec2 pos;\n"
+        "layout(location = 1) in vec2 uv;\n"
+        "layout(location = 2) in float ang;\n"
+        "layout(location = 3) in vec2 rot_p;\n"
+        "uniform vec2 screen;\n"
+        "out vec2 tex_coord;\n"
+        "void main(){\n"
+        "    //vec2 pre = vec2(pos.x - rot_p.x, pos.y - rot_p.y); //moving origin to rotation point\n"
+        "    //pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
+        "    //vec2 p = vec2(pre.x + rot_p.x, pre.y + rot_p.y);\n"
+        "    //doing the rotation before conversion causes warpage\n"
+        "    vec2 p = pos;\n"
+        "    vec2 rot = rot_p;\n"
+        "    rot /= screen;\n"
+        "    rot = (rot * 2.0) - 1;\n"
+        "    p /= screen;\n"
+        "    p = (p * 2.0) - 1;\n"
+        "    vec2 pre = p - rot;\n"
+        "    pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
+        "    pre = pre + rot;\n"
+        "    p = pre;\n"
+        "    tex_coord = uv;\n"
+        "    gl_Position = vec4(p.x, -p.y, 0.0, 1.0);\n"
+        "}\n"
+        "";
+    const char* fragment_shader = "#version 450 core\n"
+        "out vec4 color;\n"
+        "in vec2 tex_coord;\n"
+        "uniform sampler2D mtexture;\n"
+        "uniform bool withAlpha;"
+        "void main(){\n"
+        "    vec4 texcolor = texture(mtexture, tex_coord);\n"
+        "    if(withAlpha) {\n"
+        "      color = vec4(texcolor.r, texcolor.r, texcolor.r, texcolor.g);\n"
+        "    } else {\n"
+        "    color = vec4(texcolor.r, texcolor.r, texcolor.r, texcolor.a);\n"
+        "    }\n"
+        "}";
+    allocated = 0;
+    shader.compile(vertex_shader, fragment_shader);
+    glGenVertexArrays_g(1, &vao);
+    glGenBuffers_g(1, &vertex_buffer);
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray_g(1);
+    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray_g(2);
+    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray_g(3);
+    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    shader.bind();
+    shader.setuniform("screen", {(float)w, (float)h});
+    shader.setuniform("mtexture", (GLuint)0);
+    shader.setuniform("withAlpha", false);
+}

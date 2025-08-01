@@ -6,7 +6,7 @@
 	//-read the glsl binding section
 //https://learnopengl.com/Getting-started/Transformations
 class imagerenderer {
-private:
+protected:
 	struct ivertex{
 		float x;
 		float y;
@@ -21,6 +21,9 @@ private:
 	GLuint vao;
 	GLuint vertex_buffer;
 	GLuint allocated;
+	imagerenderer() {
+
+	}
 public:
 	imagerenderer(size_t w, size_t h);
 	void addImageVertex(vec2 pos, vec2 dimensions);
@@ -34,6 +37,14 @@ public:
 	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions);
 	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions, vec4 uvs);
 	void drawTextureRotated(GLuint texture, vec2 pos, vec2 dimensions, float rot);
+};
+
+class grayscalerenderer : public imagerenderer {
+	public:
+	grayscalerenderer(size_t w, size_t h);
+	void setWithAlpha(bool withAlpha) {
+		shader.setuniform("withAlpha", withAlpha);
+	}
 };
 
 //https://open.gl/framebuffers

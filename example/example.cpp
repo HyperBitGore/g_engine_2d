@@ -7,6 +7,7 @@
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
 imagerenderer img_r(640, 480);
+grayscalerenderer gsc_r(640, 480);
 gore::FontRenderer font_r(&prim_r);
 DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
@@ -17,7 +18,9 @@ Audio s_test3;
 Audio s_test4;
 
 IMG imgtest;
+IMG imgtest_pallete;
 IMG imgtest_types;
+IMG imgtest_grayalpha;
 IMG imgtest_bmp;
 IMG atlas_test;
 IMG bmptest;
@@ -192,7 +195,11 @@ void renderFunction() {
 	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
-	img_r.drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
+	img_r.drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
+	gsc_r.drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
+	gsc_r.setWithAlpha(true);
+	gsc_r.drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
+	gsc_r.setWithAlpha(false);
 	vec4 pos = atlas.getImagePos("atlas_test", true);
 	img_r.addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
 	pos = atlas.getImagePos("enem2", true);
@@ -286,7 +293,9 @@ int main() {
 
 	bmptest = imageloader::loadBMP("resources/test1.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
-	imgtest_types = imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale.png");
+	imgtest_types = imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale16.png");
+	imgtest_pallete = imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png");
+	imgtest_grayalpha = imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscalealpha.png");
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
 	imgtest_bmp = imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
 	atlas_test = imageloader::loadPNG("resources/test.png");
