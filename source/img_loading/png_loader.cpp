@@ -1,7 +1,9 @@
 #include "image_loader.hpp"
 #include "inflate.hpp"
 #include <GL/gl.h>
+#if defined(__unix__)
 #include <GL/glext.h>
+#endif
 #include <cstdint>
 #include <fstream>
 #include <filesystem>
@@ -15,6 +17,11 @@
 #define PNG_PLTE_TAG 0x45544C50
 #define PNG_IDAT_TAG 0x54414449
 #define PNG_IEND_TAG 0x444E4549
+#define PNG_SRGB_TAG 0x52444849
+#define PNG_CHRM_TAG 0x414d4167
+#define PNG_GAMA_TAG 0x42475273
+#define PNG_ICCP_TAG 0x0
+#define PNG_TRNS_TAG 0x0
 
 #define FLIP_ENDIAN_32(x) ( \
     (((x) >> 24) & 0x000000FF) | \
@@ -36,6 +43,17 @@ PREVENT_PACKING_STRUCT IHDR {
 };
 END_PACKING_STRUCT
 
+PREVENT_PACKING_STRUCT CHRM {
+    uint32_t whitePointX;
+    uint32_t whitePointY;
+    uint32_t redX;
+    uint32_t redY;
+    uint32_t greenX;
+    uint32_t greenY;
+    uint32_t blueX;
+    uint32_t blueY;
+};
+END_PACKING_STRUCT
 void readInto (char* target, char* buffer, uintmax_t buffer_size, uintmax_t start, uintmax_t size) {
     for (uintmax_t i = 0, j = start; i < size && j < buffer_size; i++, j++) {
         target[i] = buffer[j];
@@ -170,11 +188,11 @@ public:
 
 // can load all color types now
 // chunks yet to be added
-//  -cHRM
-//  -gAMA
+//  -tRNS
+// not supporting these cause I'm lazy
 //  -iCCP
 //  -sRGB
-//  -tRNS
+//  -cHRM
 
 IMG imageloader::loadPNG(std::string path) {
     // open file
@@ -221,8 +239,12 @@ IMG imageloader::loadPNG(std::string path) {
     readInto((char*)&ihdr, buffer, file_size, 16, 13);
     ihdr.width = FLIP_ENDIAN_32(ihdr.width);
     ihdr.height = FLIP_ENDIAN_32(ihdr.height);
+    if (ihdr.interlace) {
+        throw std::runtime_error("Tried to load interlaced PNG image! Unsupported!");
+    }
     IMG img;
     uint32_t bytes_per_pixel = 0;
+    uint32_t valRange = 255;
     switch (ihdr.color_type) {
         case 3:
             bytes_per_pixel = 3;
@@ -240,9 +262,34 @@ IMG imageloader::loadPNG(std::string path) {
             bytes_per_pixel = (ihdr.bit_depth * 4) / 8; // pixel is rgba
         break;
     }
+    if (ihdr.color_type != 3) {
+        switch (ihdr.bit_depth) {
+            case 1:
+                valRange = 1;
+            break;
+            case 2:
+                valRange = 3;
+            break;
+            case 4:
+                valRange = 15;
+            break;
+            case 8:
+                valRange = 255;
+            break;
+            case 16:
+                valRange = 65535;
+            break;
+        }
+    }
+
     img = imageloader::createBlank(ihdr.width, ihdr.height, bytes_per_pixel);
     std::vector<uint8_t> idat;
     std::vector<uint32_t> pallete;
+    int32_t sRgb = -1;
+    uint32_t gamma = 0;
+    bool gammaUsed = false;
+    bool chrmUsed = false;
+    CHRM chrm;
     // process the actual chunks now!
     for (uintmax_t i = 33; i < file_size; ) {
         length = READ_AS_UINT32(buffer + i);
@@ -268,6 +315,24 @@ IMG imageloader::loadPNG(std::string path) {
                     idat.push_back(*(buffer + i + j));
                 }
             }
+            break;
+            case PNG_SRGB_TAG:
+                sRgb = buffer[i];
+            break;
+            case PNG_GAMA_TAG:
+                gamma = READ_AS_UINT32(buffer + i);
+                gammaUsed = true;
+            break;
+            case PNG_CHRM_TAG:
+                readInto((char*)&chrm, buffer, file_size, i, sizeof(CHRM));
+                chrm.whitePointX = FLIP_ENDIAN_32(chrm.whitePointX);
+                chrm.whitePointY = FLIP_ENDIAN_32(chrm.whitePointY);
+                chrm.redX = FLIP_ENDIAN_32(chrm.redX);
+                chrm.redY = FLIP_ENDIAN_32(chrm.redY);
+                chrm.greenX = FLIP_ENDIAN_32(chrm.greenX);
+                chrm.greenY = FLIP_ENDIAN_32(chrm.greenY);
+                chrm.blueX = FLIP_ENDIAN_32(chrm.blueX);
+                chrm.blueY = FLIP_ENDIAN_32(chrm.blueY);
             break;
             case PNG_IEND_TAG:
                 i = file_size;
@@ -382,7 +447,18 @@ IMG imageloader::loadPNG(std::string path) {
         break;
     }
     delete[] buffer;
+    if (gammaUsed) {
+        float gammaVal = gamma / 100000.0f;
+        for (size_t i = 0; i < img->size; i++) {
+            float normal = (float)img->data[i] / (float)valRange;
+            float convert = std::pow(normal, (1.0/gammaVal));
+            uint8_t out = (uint8_t)(convert * valRange);
+            img->data[i] = out; 
+        }
+    }
+    if (chrmUsed) {
 
+    }
     glGenerateMipmap_g(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
     return img;
