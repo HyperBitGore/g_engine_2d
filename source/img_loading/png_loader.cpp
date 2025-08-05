@@ -187,9 +187,9 @@ public:
 // https://www.w3.org/TR/png-3/#abstract
 
 // can load all color types now
+// not supporting these cause I'm lazy
 // chunks yet to be added
 //  -tRNS
-// not supporting these cause I'm lazy
 //  -iCCP
 //  -sRGB
 //  -cHRM

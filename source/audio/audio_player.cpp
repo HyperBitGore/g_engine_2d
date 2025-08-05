@@ -1,9 +1,12 @@
 #include "audio.hpp"
+#include <alsa/asoundlib.h>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 #include <sstream>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
 
 #define SwapFourBytes(data)   \
 ( (((data) >> 24) & 0x000000FF) | (((data) >>  8) & 0x0000FF00) | \
@@ -63,14 +66,7 @@ Audio AudioPlayer::loadWavFile(std::string file) {
     it++;
     //now we are at the pcm data
     c = (char*)it;
-    Audio ad = new Sound;
-    ad->name = file;
-    ad->size = datasize;
-    ad->channels = (uint8_t)num_channels;
-    ad->samplebits = (uint8_t)bitspps;
-    ad->framesize = byterate;
-    ad->blockalign = blockalign;
-    ad->data = (char*)std::malloc(ad->size);
+    Audio ad = new Sound(file, bitspps, num_channels, byterate, blockalign, datasize);
     if (ad->data) {
         memcpy(ad->data, c, ad->size);
     }
@@ -94,6 +90,7 @@ Audio AudioPlayer::loadWavFile(std::string file) {
 
 //adds data to stream and checks if already playing, if already playing start again? if not playsound
 void AudioPlayer::playFile(Audio file, size_t stream) {
+    std::lock_guard<std::mutex> guard(mtx);
     if (stream < streams.size()) {
         PAudio sp;
         sp.aud = file;
@@ -103,6 +100,7 @@ void AudioPlayer::playFile(Audio file, size_t stream) {
 }
 
 void AudioPlayer::playFile(std::string path, size_t stream) {
+    std::lock_guard<std::mutex> guard(mtx);
     if (stream < streams.size()) {
         FStream fp;
         fp.file = path;
@@ -112,20 +110,22 @@ void AudioPlayer::playFile(std::string path, size_t stream) {
 }
 
 void AudioPlayer::start(size_t stream) {
+    std::lock_guard<std::mutex> guard(mtx);
     commands.push_back({ 1, stream });
 }
 
 void AudioPlayer::clear(size_t stream) {
+    std::lock_guard<std::mutex> guard(mtx);
     commands.push_back({ 2, stream });
 }
 void AudioPlayer::pause(size_t stream) {
+    std::lock_guard<std::mutex> guard(mtx);
     commands.push_back({ 0, stream });
 }
 
 void AudioPlayer::end() {
-    mtx.lock();
+    std::lock_guard<std::mutex> guard(mtx);
     run = false;
-    mtx.unlock();
 }
 
 float sgn(float x) {
@@ -136,13 +136,7 @@ float sgn(float x) {
 
 //generates sin wave, based on length given in milliseconds
 Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound;
-    a->blockalign = 8;
-    a->channels = 2;
-    a->samplebits = 32;
-    a->framesize = (sample_rate * 32 * 2) / 8;
-    a->size = (length * (a->framesize / 1000));
-    a->data = (char*)std::malloc(a->size);
+    Audio a = new Sound("sine", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -153,13 +147,7 @@ Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
 }
 //generates square wave, based on length given in milliseconds
 Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound;
-    a->blockalign = 8;
-    a->channels = 2;
-    a->samplebits = 32;
-    a->framesize = (sample_rate * 32 * 2) / 8;
-    a->size = (length * (a->framesize / 1000));
-    a->data = (char*)std::malloc(a->size);
+    Audio a = new Sound("square", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -170,13 +158,7 @@ Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate)
 }
 //generates triangle wave, based on length given in milliseconds
 Audio AudioPlayer::generateTriangle(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound;
-    a->blockalign = 8;
-    a->channels = 2;
-    a->samplebits = 32;
-    a->framesize = (sample_rate * 32 * 2) / 8;
-    a->size = (length * (a->framesize / 1000));
-    a->data = (char*)std::malloc(a->size);
+    Audio a = new Sound("triangle", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -191,13 +173,7 @@ float frac(float x) {
 }
 
 Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound;
-    a->blockalign = 8;
-    a->channels = 2;
-    a->samplebits = 32;
-    a->framesize = (sample_rate * 32 * 2) / 8;
-    a->size = (length * (a->framesize / 1000));
-    a->data = (char*)std::malloc(a->size);
+    Audio a = new Sound("sawtooth", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -209,7 +185,7 @@ Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rat
 
 void AudioPlayer::_RenderThread() {
     while (run) {
-        mtx.lock();
+        std::lock_guard<std::mutex> guard(mtx);
         for (auto& i : sound_files) {
             streams[i.stream]->playFile(i.aud);
             streams[i.stream]->start();
@@ -240,7 +216,6 @@ void AudioPlayer::_RenderThread() {
         for (auto& i : streams) {
             i->playStream();
         }
-        mtx.unlock();
     }
 }
 
@@ -306,33 +281,33 @@ void AudioStream::playStream() {
         #if defined (__unix__)
         snd_pcm_state_t state = snd_pcm_state(pcm_handle);
         if (state == SND_PCM_STATE_XRUN) {
-            //std::cerr << "Buffer underrun/overrun occurred, recovering...\n";
             int err = snd_pcm_prepare(pcm_handle);
             if (err < 0) {
-                //std::cerr << "Failed to prepare device: " << snd_strerror(err) << "\n";
-                // handle error (maybe abort playback)
+                std::stringstream ss;
+                ss << "Failed to prepare device: " << snd_strerror(err) << "\n";
+                throw std::runtime_error(ss.str());
             }
             err = snd_pcm_start(pcm_handle);
             if (err < 0) {
-                //std::cerr << "Failed to start device: " << snd_strerror(err) << "\n";
                 // handle error
+                std::stringstream ss;
+                ss << "Failed to start device: " << snd_strerror(err) << "\n";
+                throw std::runtime_error(ss.str());
             }
         }
         snd_pcm_sframes_t avail = snd_pcm_avail_update(pcm_handle);
         if (avail > 0) {
             // clamp to frame capacity
-            if ((size_t)avail > buffer_size / (2 * sizeof(int16_t))) {
-                avail = buffer_size / (2 * sizeof(int16_t));
+            if ((size_t)avail > buffer_size / (2 * static_cast<size_t>(this->format))) {
+                avail = buffer_size / (2 * static_cast<size_t>(this->format));
             }
             // prevent underflow
-            if (avail <= 0 || (size_t)avail > buffer_size / (2 * sizeof(int16_t))) {
+            if (avail <= 0 || (size_t)avail > buffer_size / (2 * static_cast<size_t>(this->format))) {
                 return;
             }
             for (size_t i = 0; i < stream_files.size();) {
                 if (!stream_files[i]->writeData((uint8_t*)buffer, avail, format)) {
-                    FileStream* fp = stream_files[i];
                     stream_files.erase(stream_files.begin() + i);
-                    delete fp; //dont need to call destructor since delete does that for us
                 }
                 else {
                     i++;
@@ -443,7 +418,15 @@ AudioStream::AudioStream() {
 	}
     //set hw params
     snd_pcm_hw_params_set_access(pcm_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
-    snd_pcm_hw_params_set_format(pcm_handle, hw_params, SND_PCM_FORMAT_S16_LE);
+    snd_pcm_format_t avail[] = { SND_PCM_FORMAT_U8, SND_PCM_FORMAT_S16_LE, SND_PCM_FORMAT_S24_LE, SND_PCM_FORMAT_FLOAT_LE};
+    snd_pcm_format_t format = avail[0];
+    for (size_t i = 0; i < 4; i++) {
+        if (snd_pcm_hw_params_test_format(pcm_handle, hw_params, format) == 0) {
+            format = avail[i];
+        }
+    }
+    // format = avail[0];
+    snd_pcm_hw_params_set_format(pcm_handle, hw_params, format);
     snd_pcm_hw_params_set_channels(pcm_handle, hw_params, 2);
     snd_pcm_hw_params_set_rate(pcm_handle, hw_params, 44100, 0);
     snd_pcm_hw_params_set_period_size(pcm_handle, hw_params, 32, 0);
@@ -454,8 +437,29 @@ AudioStream::AudioStream() {
     snd_pcm_hw_params_get_period_size(hw_params, &frames, &dir);
     // setting up the buffer, since alsa requires we make our own
     // rework this to be setttable by user
-    buffer = (uint16_t*)malloc(frames * 2 * sizeof(int16_t));
-    buffer_size = frames * 2 * sizeof(int16_t);
+    switch (format) {
+        break;
+        case SND_PCM_FORMAT_S16_LE:
+            this->format = WavBytes::BYTE16;
+            buffer = (uint16_t*)malloc(frames * 2 * static_cast<size_t>(this->format));
+            buffer_size = frames * 2 * static_cast<size_t>(this->format);
+        break;
+        case SND_PCM_FORMAT_S24_LE:
+            this->format = WavBytes::BYTE24;
+            buffer = (uint16_t*)malloc(frames * 2 * 3);
+            buffer_size = frames * 2 * static_cast<size_t>(this->format);
+        break;
+        case SND_PCM_FORMAT_FLOAT_LE:
+            this->format = WavBytes::BYTE32;
+            buffer = (uint16_t*)malloc(frames * 2 * static_cast<size_t>(this->format));
+            buffer_size = frames * 2 * static_cast<size_t>(this->format);
+        break;
+        default:
+            buffer = (uint16_t*)malloc(frames * 2 * sizeof(uint8_t));
+            buffer_size = frames * 2 * sizeof(uint8_t);
+            this->format = WavBytes::BYTE8;
+        break;
+    }
     if (!buffer) {
         std::cerr << "Audio stream memory allocate error\n";
         return;
@@ -473,7 +477,9 @@ AudioStream::~AudioStream() {
     #endif
     #if defined(__unix__)
     snd_pcm_close(pcm_handle);
-    free(buffer);
+    if (buffer) {
+        free(buffer);
+    }
     #endif
 }
 
@@ -486,7 +492,7 @@ void AudioStream::playFile(Audio file) {
     sound_files.push_back(sp);
 }
 void AudioStream::streamFile(std::string file) {
-    FileStream* fs = new FileStream(file);
+    std::shared_ptr<FileStream> fs = std::make_shared<FileStream>(file);
     stream_files.push_back(fs);
 }
 void AudioStream::pause() {
@@ -568,7 +574,7 @@ void AudioStream::Translator::convert24ToFloat(uint8_t* mem, size_t size, void* 
     size_t s = size;
     float* f_mem = (float*)n_mem;
     float pow = (1.0f / 8388607.0f);
-    for (size_t i = 0, j = 0; i < s && j < n_size; i+=3, j++) {
+    for (size_t i = 0, j = 0; i < s - 2 && j < n_size; i+=3, j++) {
         int sam = mem[i] | (mem[i + 1] << 8) | ((int8_t)mem[i + 2] << 16);
         //sam = clamp<int>(sam, -8388607, 8388607);
         float o = (float)sam * pow;
@@ -595,7 +601,7 @@ void AudioStream::Translator::convertTo16bit(float* mem, size_t size, void* n_me
 void AudioStream::Translator::convert24To16bit(char* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     short* f_mem = (short*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i+=3, j++) {
+    for (size_t i = 0, j = 0; i < s - 2; i+=3, j++) {
         int p = mem[i] << 16 | mem[i + 1] << 8 | mem[i + 2];
         p = convertRange(p, -8388608, 8388607, -32768, 32767);
         *(f_mem + j) = ((short)p);
@@ -605,15 +611,17 @@ void AudioStream::Translator::convert24To16bit(char* mem, size_t size, void* n_m
 void AudioStream::Translator::convertTo8bit(short* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size / 2;
     char* f_mem = (char*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i++, j++) {
-        *(f_mem + j) = ((char)convertRange(*(mem + i), (short)-32768, (short)32768, (short)0, (short)255));
+    char* old_mem = (char*)mem;
+    for (size_t i = 0, j = 0; i < s - 2 && j < n_size; i+=2, j++) {
+        short ss = ((*(old_mem + i)) << 8) | *(old_mem + i + 1);
+        *(f_mem + j) = ((char)convertRange(ss, (short)-32768, (short)32768, (short)0, (short)255));
     }
 }
 //redone
 void AudioStream::Translator::convert24To8bit(char* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     char* f_mem = (char*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i+=3, j++) {
+    for (size_t i = 0, j = 0; i < s - 2; i+=3, j++) {
         int p = mem[i] << 16 | mem[i + 1] << 8 | mem[i + 2];
         p = convertRange(p, -8388608, 8388607, 0, 255);
         *(f_mem + j) = ((char)p);
@@ -621,10 +629,11 @@ void AudioStream::Translator::convert24To8bit(char* mem, size_t size, void* n_me
 }
 //redone
 void AudioStream::Translator::convertTo8bit(float* mem, size_t size, void* n_mem, size_t n_size) {
-    size_t s = size / 4;
     char* f_mem = (char*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i++, j++) {
-        *(f_mem + j) = ((char)convertRange(*(mem + i), -1.0f, 1.0f, 0.0f, 255.0f));
+    char* old_mem = (char*)mem;
+    for (size_t i = 0, j = 0; i < size - 4; i+=4, j++) {
+        float* f = (float*)(old_mem + i);
+        *(f_mem + j) = ((char)convertRange(*f, -1.0f, 1.0f, 0.0f, 255.0f));
     }
 }
 //redone
@@ -632,7 +641,7 @@ void AudioStream::Translator::convertTo24bit(uint8_t* mem, size_t size, void* n_
     size_t s = size;
     uint8_t* m = mem;
     uint8_t* f_mem = (uint8_t*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i++, j+=3) {
+    for (size_t i = 0, j = 0; i < s && j < n_size - 2; i++, j+=3) {
         int p = convertRange(m[i], 0, 255, -8388608, 8388607);
         f_mem[j] = (p) & 0xff;
         f_mem[j + 1] = (p >> 8) & 0xff;
@@ -643,7 +652,7 @@ void AudioStream::Translator::convertTo24bit(uint8_t* mem, size_t size, void* n_
 void AudioStream::Translator::convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size / 2;
     uint8_t* f_mem = (uint8_t*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i++, j+=3) {
+    for (size_t i = 0, j = 0; i < s && j < n_size - 2; i++, j+=3) {
         int p = convertRange((int)mem[i], -32768, 32768, -8388608, 8388607);
         f_mem[j] = (p) & 0xff;
         f_mem[j + 1] = (p >> 8) & 0xff;
@@ -654,7 +663,7 @@ void AudioStream::Translator::convertTo24bit(short* mem, size_t size, void* n_me
 void AudioStream::Translator::convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size) {
     size_t s = size;
     char* f_mem = (char*)n_mem;
-    for (size_t i = 0, j = 0; i < s; i++, j++) {
+    for (size_t i = 0, j = 0; i < s && j < n_size - 2; i++, j+=3) {
         int p = (int)convertRange((float)mem[i], -1.0f, 1.0f, -8388608.0f, 8388607.0f);
         f_mem[j] = (p) & 0xff;
         f_mem[j + 1] = (p >> 8) & 0xff;

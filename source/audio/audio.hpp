@@ -1,4 +1,6 @@
 #pragma once
+#include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 #include <thread>
@@ -27,7 +29,48 @@ public:
 	int framesize; //frame size
 	int blockalign; //block align for samples
 	size_t size; //in bytes
-	char* data; //actual wave form data
+	char* data = nullptr; //actual wave form data
+	Sound (std::string name, uint8_t samplebits, uint8_t channels, int framesize, int blockalign, size_t size) {
+		this->name = name;
+		this->samplebits = samplebits;
+		this->channels = channels;
+		this->framesize = framesize;
+		this->blockalign = blockalign;
+		this->size = size;
+		this->data = (char*)std::malloc(this->size);
+	}
+	~Sound() {
+		if (data) {
+			std::free(data);
+		}
+	}
+	// copy constructor
+	Sound(const Sound& s) {
+		this->name = s.name;
+		this->samplebits = s.samplebits;
+		this->channels = s.channels;
+		this->framesize = s.framesize;
+		this->blockalign = s.blockalign;
+		this->size = s.size;
+		this->data = (char*)std::malloc(this->size);
+		std::memcpy(this->data, s.data, this->size);
+	}
+	// move constructor
+	Sound(const Sound&& s) {
+		this->name = s.name;
+		this->samplebits = s.samplebits;
+		this->channels = s.channels;
+		this->framesize = s.framesize;
+		this->blockalign = s.blockalign;
+		this->size = s.size;
+		this->data = std::move(s.data);
+	}
+	Sound& operator=(const Sound& s) {
+		return *this = Sound(s);
+	}
+	Sound& operator=(const Sound&& s) {
+		return *this = Sound(s);
+	}
 };
 typedef Sound* Audio;
 
@@ -116,10 +159,11 @@ private:
     snd_pcm_uframes_t frames;
 	uint16_t* buffer = nullptr;
 	WavBytes format = WavBytes::BYTE16;
+
 	#endif
 	uint32_t buffer_size = 0;
 	std::vector<SoundP> sound_files;
-	std::vector<FileStream*> stream_files;
+	std::vector<std::shared_ptr<FileStream>> stream_files;
 
 	bool play = true;
 	bool fs = false;
@@ -141,6 +185,8 @@ public:
 //https://stackoverflow.com/questions/44759526/how-winapi-handle-iaudioclient-seteventhandle-works
 //https://gist.github.com/Liastre/ff201f37bc62f6dc0b7f5541923565ab
 //https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/audio/RenderExclusiveEventDriven/WASAPIRenderer.cpp
+
+// need to fix the audio player with 8 bit data
 class AudioPlayer {
 private:
 	struct PAudio {
@@ -169,8 +215,17 @@ private:
 	bool run = true;
 	void _RenderThread();
 public:
+	AudioPlayer() = delete;
 	AudioPlayer(size_t n_streams);
 	~AudioPlayer();
+	// copy
+	AudioPlayer(const AudioPlayer& a) = delete;
+	AudioPlayer& operator=(const AudioPlayer& a) = delete;
+	//move
+	AudioPlayer(const AudioPlayer&& a) = delete;
+	AudioPlayer& operator=(const AudioPlayer&& a) = delete;
+
+
 	Audio loadWavFile(std::string file);
 
 	void playFile(std::string path, size_t stream);
