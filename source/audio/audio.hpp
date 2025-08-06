@@ -37,12 +37,10 @@ public:
 		this->framesize = framesize;
 		this->blockalign = blockalign;
 		this->size = size;
-		this->data = (char*)std::malloc(this->size);
+		this->data = new char[this->size];
 	}
 	~Sound() {
-		if (data) {
-			std::free(data);
-		}
+		delete[] data;
 	}
 	// copy constructor
 	Sound(const Sound& s) {
@@ -52,7 +50,7 @@ public:
 		this->framesize = s.framesize;
 		this->blockalign = s.blockalign;
 		this->size = s.size;
-		this->data = (char*)std::malloc(this->size);
+		this->data = new char[this->size];
 		std::memcpy(this->data, s.data, this->size);
 	}
 	// move constructor
@@ -187,6 +185,7 @@ public:
 //https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/audio/RenderExclusiveEventDriven/WASAPIRenderer.cpp
 
 // need to fix the audio player with 8 bit data
+//	-remove all mallocs??
 class AudioPlayer {
 private:
 	struct PAudio {

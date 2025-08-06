@@ -425,7 +425,7 @@ AudioStream::AudioStream() {
             format = avail[i];
         }
     }
-    // format = avail[0];
+    format = avail[0];
     snd_pcm_hw_params_set_format(pcm_handle, hw_params, format);
     snd_pcm_hw_params_set_channels(pcm_handle, hw_params, 2);
     snd_pcm_hw_params_set_rate(pcm_handle, hw_params, 44100, 0);
@@ -446,7 +446,7 @@ AudioStream::AudioStream() {
         break;
         case SND_PCM_FORMAT_S24_LE:
             this->format = WavBytes::BYTE24;
-            buffer = (uint16_t*)malloc(frames * 2 * 3);
+            buffer = (uint16_t*)malloc(frames * 2 * static_cast<size_t>(this->format));
             buffer_size = frames * 2 * static_cast<size_t>(this->format);
         break;
         case SND_PCM_FORMAT_FLOAT_LE:
