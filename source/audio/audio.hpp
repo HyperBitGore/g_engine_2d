@@ -81,14 +81,13 @@ private:
 	struct SoundP {
 	private:
 		size_t pos = 0;
-		bool n_write = false;
 	public:
 		int blockalign;
 		size_t size; //in bytes
 		char* data; //actual wave form data
 		int bytesp = 1; //bytes per sample
-
-		bool writeData(uint8_t* dat, size_t n, WavBytes bits);
+		bool n_write = false;
+		bool writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits);
 	};
 
 	class FileStream {
@@ -101,7 +100,7 @@ private:
 	public:
 		FileStream(std::string file);
 		~FileStream();
-		bool writeData(uint8_t* dat, size_t n, WavBytes bits);
+		bool writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits);
 		bool strMatch(std::string str);
 	};
 	//https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
@@ -155,7 +154,7 @@ private:
     snd_pcm_hw_params_t *hw_params;
 	snd_pcm_sw_params_t *sw_params;
     snd_pcm_uframes_t frames;
-	uint16_t* buffer = nullptr;
+	uint8_t* buffer = nullptr;
 	WavBytes format = WavBytes::BYTE16;
 
 	#endif
@@ -184,8 +183,8 @@ public:
 //https://gist.github.com/Liastre/ff201f37bc62f6dc0b7f5541923565ab
 //https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/audio/RenderExclusiveEventDriven/WASAPIRenderer.cpp
 
-// need to fix the audio player with 8 bit data
-//	-remove all mallocs??
+// need to fix audio data converion
+//	-switch to using a single function instead of big switch
 class AudioPlayer {
 private:
 	struct PAudio {

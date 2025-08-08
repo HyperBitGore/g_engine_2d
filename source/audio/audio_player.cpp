@@ -306,7 +306,7 @@ void AudioStream::playStream() {
                 return;
             }
             for (size_t i = 0; i < stream_files.size();) {
-                if (!stream_files[i]->writeData((uint8_t*)buffer, avail, format)) {
+                if (!stream_files[i]->writeData((uint8_t*)buffer, avail, this->buffer_size, format)) {
                     stream_files.erase(stream_files.begin() + i);
                 }
                 else {
@@ -314,7 +314,7 @@ void AudioStream::playStream() {
                 }
             }
             for (size_t i = 0; i < sound_files.size();) {
-                if (!sound_files[i].writeData((uint8_t*)buffer, avail, format)) {
+                if (!sound_files[i].writeData((uint8_t*)buffer, avail, this->buffer_size, format)) {
                     sound_files.erase(sound_files.begin() + i);
                 }
                 else {
@@ -441,21 +441,21 @@ AudioStream::AudioStream() {
         break;
         case SND_PCM_FORMAT_S16_LE:
             this->format = WavBytes::BYTE16;
-            buffer = (uint16_t*)malloc(frames * 2 * static_cast<size_t>(this->format));
+            buffer = (uint8_t*)new char[frames * 2 * static_cast<size_t>(this->format)];
             buffer_size = frames * 2 * static_cast<size_t>(this->format);
         break;
         case SND_PCM_FORMAT_S24_LE:
             this->format = WavBytes::BYTE24;
-            buffer = (uint16_t*)malloc(frames * 2 * static_cast<size_t>(this->format));
+            buffer = (uint8_t*)new char[frames * 2 * static_cast<size_t>(this->format)];
             buffer_size = frames * 2 * static_cast<size_t>(this->format);
         break;
         case SND_PCM_FORMAT_FLOAT_LE:
             this->format = WavBytes::BYTE32;
-            buffer = (uint16_t*)malloc(frames * 2 * static_cast<size_t>(this->format));
+            buffer = (uint8_t*)new char[frames * 2 * static_cast<size_t>(this->format)];
             buffer_size = frames * 2 * static_cast<size_t>(this->format);
         break;
         default:
-            buffer = (uint16_t*)malloc(frames * 2 * sizeof(uint8_t));
+            buffer = (uint8_t*)new char[frames * 2 * sizeof(uint8_t)];
             buffer_size = frames * 2 * sizeof(uint8_t);
             this->format = WavBytes::BYTE8;
         break;
@@ -478,7 +478,7 @@ AudioStream::~AudioStream() {
     #if defined(__unix__)
     snd_pcm_close(pcm_handle);
     if (buffer) {
-        free(buffer);
+        delete[] buffer;
     }
     #endif
 }
@@ -671,6 +671,12 @@ void AudioStream::Translator::convertTo24bit(float* mem, size_t size, void* n_me
     }
 }
 
+void convertBits (char* mem, size_t size, void* n_mem, size_t n_size, WavBytes org_bytes, WavBytes new_bytes) {
+    for (size_t i = 0, j = 0; i < size && j < n_size - (size_t)org_bytes;) {
+        
+    }
+}
+
 void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes) {
     //return nullptr;
     void* mem2;
@@ -678,12 +684,16 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         return nullptr;
     }
     else if (org_bytes > new_bytes) {
-        *n_size = size / (size_t)new_bytes;
-        mem2 = std::malloc(*n_size);
+        if (new_bytes == WavBytes::BYTE8) {
+            *n_size = size / (size_t)org_bytes;
+        } else {
+            *n_size = size / (size_t)new_bytes;
+        }
+        mem2 = new char[*n_size];
     }
     else {
         *n_size = (size / (size_t)org_bytes) * ((size_t)new_bytes);
-        mem2 = std::malloc(*n_size);
+        mem2 = new char[*n_size];
     }
     if (!mem2) {
         return nullptr;
@@ -781,26 +791,30 @@ AudioStream::FileStream::FileStream(std::string file) {
 AudioStream::FileStream::~FileStream() {
     fi.close();
 }
-bool AudioStream::FileStream::writeData(uint8_t* dat, size_t n, WavBytes bits) {
+bool AudioStream::FileStream::writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits) {
     if (n_write) {
         return false;
     }
-    void* d1 = std::malloc(n * blockalign);
+    char* d1 = new char[n * blockalign];
     if (d1 == nullptr) {
         return false;
     }
     fi.read((char*)d1, n * blockalign);
     size_t tt;
     WavBytes w1 = (WavBytes)(bytesp);
-    void* da1 = Translator::translate(d1, n * blockalign, &tt, w1, bits);
+    char* da1 = (char*)Translator::translate(d1, n * blockalign, &tt, w1, bits);
+    
     if (da1 == nullptr) {
         std::memcpy(dat, d1, n * blockalign);
     }
     else {
+        if (tt > buffer_size) {
+            throw std::runtime_error("Trying to write data greater than audiostream buffer!");
+        }
         std::memcpy(dat, da1, tt);
-        std::free(da1);
+        delete[] da1;
     }
-    std::free(d1);
+    delete[] d1;
     if (!fi) {
         n_write = true;
     }
@@ -828,35 +842,28 @@ bool AudioStream::FileStream::strMatch(std::string str) {
     return false;
 }
 
-bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, WavBytes bits) {
-    if (n_write) {
+bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits) {
+    if (n_write || pos >= size) {
         return false;
     }
-    else if ((pos + (n * blockalign) >= size)) {
-        size_t nt = (size - pos);
-        size_t tt;
-        WavBytes w1 = (WavBytes)(bytesp);
-        void* da1 = Translator::translate(data + pos, n * blockalign, &tt, w1, bits);
-        if (da1 == nullptr) {
-            std::memcpy(dat, data + pos, nt - 1);
-        }
-        else {
-            std::memcpy(dat, da1, tt);
-            std::free(da1);
-        }
-        n_write = true;
-        return false;
-    }
+    size_t translateSize = ((pos + (n * blockalign) >= size)) ? (size - pos) : n * blockalign;
     size_t tt;
     WavBytes w1 = (WavBytes)(bytesp);
-    void* da1 = Translator::translate(data + pos, n * blockalign, &tt, w1, bits);
+    std::cout << "Translate size: " << translateSize << "\n";
+    std::cout << size << " , " << pos << "\n";
+    char* da1 = (char*)Translator::translate(data + pos, translateSize, &tt, w1, bits);
+    std::cout << "before free2\n";
     if (da1 == nullptr) {
         std::memcpy(dat, data + pos, n * blockalign);
     }
     else {
+        if (tt > buffer_size) {
+            throw std::runtime_error("Trying to write data greater than audiostream buffer!");
+        }
         std::memcpy(dat, da1, tt);
-        std::free(da1);
+        delete[] da1;
     }
+    std::cout << "after free2\n";
     pos += (n * (blockalign));
     return true;
 }
