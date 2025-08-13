@@ -66,7 +66,7 @@ Audio AudioPlayer::loadWavFile(std::string file) {
     it++;
     //now we are at the pcm data
     c = (char*)it;
-    Audio ad = new Sound(file, bitspps, num_channels, byterate, blockalign, datasize);
+    Audio ad = new Sound(file, num_channels, byterate, blockalign, datasize, (typef == 3) ? WavBytes::FLOAT : (WavBytes)(bitspps / 8));
     if (ad->data) {
         memcpy(ad->data, c, ad->size);
     }
@@ -136,7 +136,7 @@ float sgn(float x) {
 
 //generates sin wave, based on length given in milliseconds
 Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("sine", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
+    Audio a = new Sound("sine", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -147,7 +147,7 @@ Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
 }
 //generates square wave, based on length given in milliseconds
 Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("square", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
+    Audio a = new Sound("square", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -158,7 +158,7 @@ Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate)
 }
 //generates triangle wave, based on length given in milliseconds
 Audio AudioPlayer::generateTriangle(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("triangle", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
+    Audio a = new Sound("triangle", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -173,7 +173,7 @@ float frac(float x) {
 }
 
 Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("sawtooth", 32, 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)));
+    Audio a = new Sound("sawtooth", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -450,6 +450,11 @@ AudioStream::AudioStream() {
             buffer_size = frames * 2 * static_cast<size_t>(this->format);
         break;
         case SND_PCM_FORMAT_FLOAT_LE:
+            this->format = WavBytes::FLOAT;
+            buffer = (uint8_t*)new char[frames * 2 * 4];
+            buffer_size = frames * 2 * 4;
+        break;
+        case SND_PCM_FORMAT_S32_LE:
             this->format = WavBytes::BYTE32;
             buffer = (uint8_t*)new char[frames * 2 * static_cast<size_t>(this->format)];
             buffer_size = frames * 2 * static_cast<size_t>(this->format);
@@ -488,7 +493,7 @@ void AudioStream::playFile(Audio file) {
     sp.blockalign = file->blockalign;
     sp.data = file->data;
     sp.size = file->size;
-    sp.bytesp = (file->samplebits / 8);
+    sp.byteFormat = file->byteFormat;
     sound_files.push_back(sp);
 }
 void AudioStream::streamFile(std::string file) {
@@ -671,9 +676,66 @@ void AudioStream::Translator::convertTo24bit(float* mem, size_t size, void* n_me
     }
 }
 
-void convertBits (char* mem, size_t size, void* n_mem, size_t n_size, WavBytes org_bytes, WavBytes new_bytes) {
-    for (size_t i = 0, j = 0; i < size && j < n_size - (size_t)org_bytes;) {
-        
+std::pair<float, float> calculateRange (WavBytes org_bytes) {
+    float orignalRangeLow, orignalRangeHigh;
+    size_t origBytes = (org_bytes != WavBytes::FLOAT) ? (size_t)org_bytes : 4;
+    size_t bits = ((size_t)origBytes) * 8;
+    switch (org_bytes) {
+        case WavBytes::BYTE8:
+            orignalRangeLow = 0.0f;
+            orignalRangeHigh = 255.0f;
+        break;
+        case WavBytes::BYTE16:
+        case WavBytes::BYTE24:
+        case WavBytes::BYTE32:
+            orignalRangeLow = -(std::pow(2, bits - 1));
+            orignalRangeHigh = (std::pow(2, bits - 1) - 1);
+        break;
+        case WavBytes::FLOAT:
+            orignalRangeLow = -1.0f;
+            orignalRangeHigh = 1.0f;
+        break;
+    }
+    return std::pair<float, float>(orignalRangeLow, orignalRangeHigh);
+}
+
+
+float convertRange(float n, float OldMin, float OldMax, float NewMin, float NewMax) {
+    float OldRange = (OldMax - OldMin);
+    float NewRange = (NewMax - NewMin);
+    float NewValue = (((n - OldMin) * NewRange) / OldRange) + NewMin;
+    return NewValue;
+}
+
+
+void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, WavBytes org_bytes, WavBytes new_bytes) {
+    size_t origBytes = (org_bytes != WavBytes::FLOAT) ? (size_t)org_bytes : 4;
+    size_t newBytes = (new_bytes != WavBytes::FLOAT) ? (size_t)new_bytes : 4;
+    std::pair<float, float> originalRange = calculateRange(org_bytes);
+    std::pair<float, float> newRange = calculateRange(new_bytes);
+    for (size_t i = 0, j = 0; i < size && j < n_size - origBytes; i += (size_t)origBytes, j += (size_t)new_bytes) {
+        uint32_t orgValue = 0;
+        for (size_t bytes = 0; bytes < origBytes; bytes++) {
+            orgValue |= (mem[i + bytes] << (origBytes - bytes));
+        }
+        float out = convertRange(orgValue, originalRange.first, originalRange.second, newRange.first, newRange.second);
+        if (new_bytes != WavBytes::FLOAT) {
+            uint32_t castOut = out;
+            for (size_t bytes = 0; bytes < newBytes; bytes++) {
+                if (newBytes != 1) {
+                    n_mem[j + bytes] = (castOut >> (newBytes - bytes)) & 0xff;
+                } else {
+                    n_mem[j + bytes] = (castOut) & 0xff;
+                }
+            }
+        } else {
+            // need to cast differently here to retain actual float binary data, to actually do bitwise ops
+            uint32_t* u = (uint32_t*)&out;
+            uint32_t castOut = *u;
+             for (size_t bytes = 0; bytes < newBytes; bytes++) {
+                n_mem[j + bytes] = (castOut >> (newBytes - bytes)) & 0xff;
+            }
+        }
     }
 }
 
@@ -698,7 +760,8 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
     if (!mem2) {
         return nullptr;
     }
-    switch (new_bytes) {
+    convertBits((char*)mem, size, (char*)mem2, *n_size, org_bytes, new_bytes);
+    /*switch (new_bytes) {
     case WavBytes::BYTE8:
         switch (org_bytes) {
         case WavBytes::BYTE16:
@@ -759,7 +822,7 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
           break;
         }
         break;
-    }
+    }*/
 
     return mem2;
 }
@@ -848,10 +911,9 @@ bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, size_t buffer_size, 
     }
     size_t translateSize = ((pos + (n * blockalign) >= size)) ? (size - pos) : n * blockalign;
     size_t tt;
-    WavBytes w1 = (WavBytes)(bytesp);
     std::cout << "Translate size: " << translateSize << "\n";
     std::cout << size << " , " << pos << "\n";
-    char* da1 = (char*)Translator::translate(data + pos, translateSize, &tt, w1, bits);
+    char* da1 = (char*)Translator::translate(data + pos, translateSize, &tt, this->byteFormat, bits);
     std::cout << "before free2\n";
     if (da1 == nullptr) {
         std::memcpy(dat, data + pos, n * blockalign);

@@ -20,23 +20,27 @@
 #include <alloca.h>
 #endif
 
+enum class WavBytes {
+	BYTE8 = 1, BYTE16 = 2, BYTE24 = 3, BYTE32 = 4, FLOAT = 5
+};
+
 //PCM data
 struct Sound {
 public:
 	std::string name; //file name
-	uint8_t samplebits; //number of bits per sample
 	uint8_t channels; //number of channels
 	int framesize; //frame size
 	int blockalign; //block align for samples
 	size_t size; //in bytes
+	WavBytes byteFormat = WavBytes::BYTE8;
 	char* data = nullptr; //actual wave form data
-	Sound (std::string name, uint8_t samplebits, uint8_t channels, int framesize, int blockalign, size_t size) {
+	Sound (std::string name, uint8_t channels, int framesize, int blockalign, size_t size, WavBytes byteFormat) {
 		this->name = name;
-		this->samplebits = samplebits;
 		this->channels = channels;
 		this->framesize = framesize;
 		this->blockalign = blockalign;
 		this->size = size;
+		this->byteFormat = byteFormat;
 		this->data = new char[this->size];
 	}
 	~Sound() {
@@ -45,22 +49,22 @@ public:
 	// copy constructor
 	Sound(const Sound& s) {
 		this->name = s.name;
-		this->samplebits = s.samplebits;
 		this->channels = s.channels;
 		this->framesize = s.framesize;
 		this->blockalign = s.blockalign;
 		this->size = s.size;
 		this->data = new char[this->size];
+		this->byteFormat = s.byteFormat;
 		std::memcpy(this->data, s.data, this->size);
 	}
 	// move constructor
 	Sound(const Sound&& s) {
 		this->name = s.name;
-		this->samplebits = s.samplebits;
 		this->channels = s.channels;
 		this->framesize = s.framesize;
 		this->blockalign = s.blockalign;
 		this->size = s.size;
+		this->byteFormat = s.byteFormat;
 		this->data = std::move(s.data);
 	}
 	Sound& operator=(const Sound& s) {
@@ -72,10 +76,6 @@ public:
 };
 typedef Sound* Audio;
 
-enum class WavBytes {
-	BYTE8 = 1, BYTE16 = 2, BYTE24 = 3, BYTE32 = 4
-};
-
 class AudioStream {
 private:
 	struct SoundP {
@@ -85,8 +85,8 @@ private:
 		int blockalign;
 		size_t size; //in bytes
 		char* data; //actual wave form data
-		int bytesp = 1; //bytes per sample
 		bool n_write = false;
+		WavBytes byteFormat = WavBytes::BYTE8;
 		bool writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits);
 	};
 
