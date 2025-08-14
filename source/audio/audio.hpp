@@ -94,7 +94,7 @@ private:
 		bool n_write = false;
 		size_t pos = 0;
 		std::string file;
-		int bytesp = 1;
+		WavBytes byteFormat = WavBytes::BYTE8;
 		int blockalign = 0;
 		std::ifstream fi;
 	public:

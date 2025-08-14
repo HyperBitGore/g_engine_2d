@@ -425,7 +425,7 @@ AudioStream::AudioStream() {
             format = avail[i];
         }
     }
-    format = avail[0];
+    format = avail[2];
     snd_pcm_hw_params_set_format(pcm_handle, hw_params, format);
     snd_pcm_hw_params_set_channels(pcm_handle, hw_params, 2);
     snd_pcm_hw_params_set_rate(pcm_handle, hw_params, 44100, 0);
@@ -700,6 +700,7 @@ std::pair<float, float> calculateRange (WavBytes org_bytes) {
 }
 
 
+// this is now the issue I believe!
 float convertRange(float n, float OldMin, float OldMax, float NewMin, float NewMax) {
     float OldRange = (OldMax - OldMin);
     float NewRange = (NewMax - NewMin);
@@ -715,27 +716,18 @@ void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, WavBytes o
     std::pair<float, float> newRange = calculateRange(new_bytes);
     for (size_t i = 0, j = 0; i < size && j < n_size - origBytes; i += (size_t)origBytes, j += (size_t)new_bytes) {
         uint32_t orgValue = 0;
-        for (size_t bytes = 0; bytes < origBytes; bytes++) {
-            orgValue |= (mem[i + bytes] << (origBytes - bytes));
+        // grab the orignal bytes
+        std::memcpy(&orgValue, (mem + i), origBytes);
+        float tf;
+        // convert the value to a float
+        std::memcpy(&tf, &orgValue, sizeof(float));
+        float out = convertRange(tf, originalRange.first, originalRange.second, newRange.first, newRange.second);
+        uint32_t castOut = out;
+        if (new_bytes == WavBytes::FLOAT) {
+            std::memcpy(&castOut, &out, sizeof(float));
         }
-        float out = convertRange(orgValue, originalRange.first, originalRange.second, newRange.first, newRange.second);
-        if (new_bytes != WavBytes::FLOAT) {
-            uint32_t castOut = out;
-            for (size_t bytes = 0; bytes < newBytes; bytes++) {
-                if (newBytes != 1) {
-                    n_mem[j + bytes] = (castOut >> (newBytes - bytes)) & 0xff;
-                } else {
-                    n_mem[j + bytes] = (castOut) & 0xff;
-                }
-            }
-        } else {
-            // need to cast differently here to retain actual float binary data, to actually do bitwise ops
-            uint32_t* u = (uint32_t*)&out;
-            uint32_t castOut = *u;
-             for (size_t bytes = 0; bytes < newBytes; bytes++) {
-                n_mem[j + bytes] = (castOut >> (newBytes - bytes)) & 0xff;
-            }
-        }
+        // put into the new data output
+        std::memcpy(n_mem + j, &castOut, newBytes);
     }
 }
 
@@ -770,7 +762,7 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE24:
             convert24To8bit((char*)mem, size, mem2, *n_size);
             break;
-        case WavBytes::BYTE32:
+        case WavBytes::FLOAT:
             convertTo8bit((float*)mem, size, mem2, *n_size);
             break;
         case WavBytes::BYTE8:
@@ -785,7 +777,7 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE24:
             convert24To16bit((char*)mem, size, mem2, *n_size);
             break;
-        case WavBytes::BYTE32:
+        case WavBytes::FLOAT:
             convertTo16bit((float*)mem, size, mem2, *n_size);
             break;
         case WavBytes::BYTE16:
@@ -800,14 +792,14 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE16:
             convertTo24bit((short*)mem, size, mem2, *n_size);
             break;
-        case WavBytes::BYTE32:
+        case WavBytes::FLOAT:
             convertTo24bit((float*)mem, size, mem2, *n_size);
             break;
         case WavBytes::BYTE24:
           break;
         }
         break;
-    case WavBytes::BYTE32:
+    case WavBytes::FLOAT:
         switch (org_bytes) {
         case WavBytes::BYTE8:
             convertToFloat((uint8_t*)mem, size, mem2, *n_size);
@@ -818,7 +810,7 @@ void* AudioStream::Translator::translate(void* mem, size_t size, size_t* n_size,
         case WavBytes::BYTE16:
             convertToFloat((short*)mem, size, mem2, *n_size);
             break;
-        case WavBytes::BYTE32:
+        case WavBytes::FLOAT:
           break;
         }
         break;
@@ -835,14 +827,21 @@ AudioStream::FileStream::FileStream(std::string file) {
     if (fi) {
         this->file = file;
         char c[40];
-        fi.read(c, 32);
-        pos += 32;
+        fi.read(c, 20);
+        pos += 20;
+        uint16_t format;
+        fi.read((char*)&format, 2);
+        pos += 2;
+        fi.read(c, 10);
+        pos += 10;
         short bl;
+        // read blockalign
         fi.read((char*)&bl, 2);
         blockalign = (int)bl;
         pos += 2;
+        // read the bits per sample
         fi.read((char*)&bl, 2);
-        bytesp = (bl) / 8;
+        this->byteFormat = (format == 3) ? WavBytes::FLOAT : (WavBytes)(bl / 8);
         pos += 2;
         //now find the data section
         strMatch("data");
@@ -864,8 +863,7 @@ bool AudioStream::FileStream::writeData(uint8_t* dat, size_t n, size_t buffer_si
     }
     fi.read((char*)d1, n * blockalign);
     size_t tt;
-    WavBytes w1 = (WavBytes)(bytesp);
-    char* da1 = (char*)Translator::translate(d1, n * blockalign, &tt, w1, bits);
+    char* da1 = (char*)Translator::translate(d1, n * blockalign, &tt, this->byteFormat, bits);
     
     if (da1 == nullptr) {
         std::memcpy(dat, d1, n * blockalign);
@@ -911,10 +909,7 @@ bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, size_t buffer_size, 
     }
     size_t translateSize = ((pos + (n * blockalign) >= size)) ? (size - pos) : n * blockalign;
     size_t tt;
-    std::cout << "Translate size: " << translateSize << "\n";
-    std::cout << size << " , " << pos << "\n";
     char* da1 = (char*)Translator::translate(data + pos, translateSize, &tt, this->byteFormat, bits);
-    std::cout << "before free2\n";
     if (da1 == nullptr) {
         std::memcpy(dat, data + pos, n * blockalign);
     }
@@ -925,7 +920,6 @@ bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, size_t buffer_size, 
         std::memcpy(dat, da1, tt);
         delete[] da1;
     }
-    std::cout << "after free2\n";
     pos += (n * (blockalign));
     return true;
 }
