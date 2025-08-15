@@ -1,4 +1,5 @@
 #include "audio.hpp"
+#include <algorithm>
 #include <alsa/asoundlib.h>
 #include <cmath>
 #include <cstdint>
@@ -701,7 +702,17 @@ std::pair<float, float> calculateRange (WavBytes org_bytes) {
 
 
 // this is now the issue I believe!
+// 24 bit still broken
 float convertRange(float n, float OldMin, float OldMax, float NewMin, float NewMax) {
+    if (NewMin >= 0 && OldMin < 0) {
+        if (n == 0) {
+            return 0;
+        }
+        return ((n + OldMax) * (NewMax / 2));
+    }
+    if (OldMax < NewMax) {
+        return n * NewMax;
+    }
     float OldRange = (OldMax - OldMin);
     float NewRange = (NewMax - NewMin);
     float NewValue = (((n - OldMin) * NewRange) / OldRange) + NewMin;
@@ -722,7 +733,7 @@ void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, WavBytes o
         // convert the value to a float
         std::memcpy(&tf, &orgValue, sizeof(float));
         float out = convertRange(tf, originalRange.first, originalRange.second, newRange.first, newRange.second);
-        uint32_t castOut = out;
+        int32_t castOut = std::clamp(out, newRange.first, newRange.second);
         if (new_bytes == WavBytes::FLOAT) {
             std::memcpy(&castOut, &out, sizeof(float));
         }
