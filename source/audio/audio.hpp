@@ -21,7 +21,7 @@
 #endif
 
 enum class WavBytes {
-	BYTE8 = 1, BYTE16 = 2, BYTE24 = 3, BYTE32 = 4, FLOAT = 5
+	BYTE8 = 1, BYTE16 = 2, BYTE24 = 3, BYTE32 = 4, FLOAT = 5, BYTE24PACKED = 6
 };
 
 //PCM data
@@ -105,38 +105,7 @@ private:
 	};
 	//https://stackoverflow.com/questions/74596138/microsoft-wasapi-do-different-audio-formats-need-different-data-in-the-buffer
 	//translates to whatever format u need from input data
-	class Translator {
-	private:
-		static int convertRange(int n, int min, int max, int n_min, int n_max);
-		static float convertRange(float n, float min, float max, float n_min, float n_max);
-		static short convertRange(short n, short min, short max, short n_min, short n_max);
-		//redone
-		static void convertToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size);
-		//redone
-		static void convertToFloat(short* mem, size_t size, void* n_mem, size_t n_size);
-		//redone
-		static void convert24ToFloat(uint8_t* mem, size_t size, void* n_mem, size_t n_size);
-		//redone
-		static void convertTo16bit(char* mem, size_t size, void* n_mem, size_t n_size);
-		//redone
-		static void convertTo16bit(float* mem, size_t size, void* n_mem, size_t n_size);
-		//redo 24 bit
-		static void convert24To16bit(char* mem, size_t size, void* n_mem, size_t n_size);
-		//redone
-		static void convertTo8bit(short* mem, size_t size, void* n_mem, size_t n_size);
-		//redo 24 bit
-		static void convert24To8bit(char* mem, size_t size, void* n_mem, size_t n_size);
-		//redone
-		static void convertTo8bit(float* mem, size_t size, void* n_mem, size_t n_size);
-		//redo this
-		static void convertTo24bit(uint8_t* mem, size_t size, void* n_mem, size_t n_size);
-		static void convertTo24bit(short* mem, size_t size, void* n_mem, size_t n_size);
-		static void convertTo24bit(float* mem, size_t size, void* n_mem, size_t n_size);
-
-	public:
-		//make sure to free the memory returned here
-		static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes);
-	};
+	static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes);
 
 	#if defined(_WIN32)
 	WAVEFORMATEX* format = nullptr;
