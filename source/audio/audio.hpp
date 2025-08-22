@@ -30,7 +30,7 @@ public:
 	std::string name; //file name
 	uint8_t channels; //number of channels
 	int framesize; //frame size
-	int blockalign; //block align for samples
+	int blockalign; //block align for samples, the size of (channels * sample size in bytes)
 	size_t size; //in bytes
 	WavBytes byteFormat = WavBytes::BYTE8;
 	char* data = nullptr; //actual wave form data
@@ -108,7 +108,7 @@ private:
 	static void* translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes);
 
 	#if defined(_WIN32)
-	WAVEFORMATEX* format = nullptr;
+	WAVEFORMATEX* formatex = nullptr;
 	IAudioClient* client = nullptr;
 	IAudioRenderClient* render = nullptr;
 	ISimpleAudioVolume* volume = nullptr;
@@ -124,9 +124,9 @@ private:
 	snd_pcm_sw_params_t *sw_params;
     snd_pcm_uframes_t frames;
 	uint8_t* buffer = nullptr;
-	WavBytes format = WavBytes::BYTE16;
 
 	#endif
+	WavBytes format = WavBytes::BYTE16;
 	uint32_t buffer_size = 0;
 	std::vector<SoundP> sound_files;
 	std::vector<std::shared_ptr<FileStream>> stream_files;

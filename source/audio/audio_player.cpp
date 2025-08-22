@@ -1,6 +1,5 @@
 #include "audio.hpp"
 #include <algorithm>
-#include <alsa/asoundlib.h>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -156,7 +155,7 @@ float sgn(float x) {
 
 //generates sin wave, based on length given in milliseconds
 Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("sine", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
+    Audio a = new Sound("sine", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -167,7 +166,7 @@ Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
 }
 //generates square wave, based on length given in milliseconds
 Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("square", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
+    Audio a = new Sound("square", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -178,7 +177,7 @@ Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate)
 }
 //generates triangle wave, based on length given in milliseconds
 Audio AudioPlayer::generateTriangle(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("triangle", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
+    Audio a = new Sound("triangle", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -193,7 +192,7 @@ float frac(float x) {
 }
 
 Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("sawtooth", 2, (sample_rate * 32 * 2) / 8, 8, (length * (a->framesize / 1000)), WavBytes::FLOAT);
+    Audio a = new Sound("sawtooth", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -270,21 +269,18 @@ void AudioStream::playStream() {
             client->GetCurrentPadding(&filled);
             uint32_t free = buffer_size - filled;
             if (free > 0) {
-                WavBytes bits = (WavBytes)((this->format->wBitsPerSample)/8);
                 uint8_t* data;
                 render->GetBuffer(free, &data);
                 for (size_t i = 0; i < stream_files.size();) {
-                    if (!stream_files[i]->writeData(data, free, bits)) {
-                        FileStream* fp = stream_files[i];
+                    if (!stream_files[i]->writeData((uint8_t*)data, free, this->buffer_size, this->format)) {
                         stream_files.erase(stream_files.begin() + i);
-                        delete fp; //dont need to call destructor since delete does that for us
                     }
                     else {
                         i++;
                     }
                 }
                 for (size_t i = 0; i < sound_files.size();) {
-                    if (!sound_files[i].writeData(data, free, bits)) {
+                    if (!sound_files[i].writeData((uint8_t*)data, free, this->buffer_size, this->format)) {
                         sound_files.erase(sound_files.begin() + i);
                     }
                     else {
@@ -378,14 +374,54 @@ AudioStream::AudioStream() {
     }
 
 
-    hr = client->GetMixFormat(&format);
+    hr = client->GetMixFormat(&formatex);
+    switch(formatex->wFormatTag) {
+        case WAVE_FORMAT_PCM:
+            switch (formatex->wBitsPerSample) {
+                case 8:
+                    this->format = WavBytes::BYTE8;
+                break;
+                case 16:
+                    this->format = WavBytes::BYTE16;
+                break;
+                case 24:
+                    this->format = WavBytes::BYTE24PACKED;
+                break;
+                case 32:
+                    this->format = WavBytes::BYTE32;
+                break;
+            }    
+        break;
+        case WAVE_FORMAT_IEEE_FLOAT:
+            this->format = WavBytes::FLOAT;
+        break;
+        case WAVE_FORMAT_EXTENSIBLE:
+            {
+                WAVEFORMATEXTENSIBLE* ex = (WAVEFORMATEXTENSIBLE*)formatex;
+                if (ex->SubFormat == KSDATAFORMAT_SUBTYPE_PCM) {
+                    if (ex->Samples.wValidBitsPerSample != formatex->wBitsPerSample) {
+                        if (ex->Samples.wValidBitsPerSample == 24 && formatex->wBitsPerSample == 32) {
+                            this->format = WavBytes::BYTE24;
+                        } else {
+                            throw std::runtime_error("Unsupported sound hardware!");
+                        }
+                    } else {
+                        this->format = (WavBytes)(formatex->wBitsPerSample/8);
+                    }
+                } else if (ex->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
+                     this->format = WavBytes::FLOAT;
+                }
+
+            }
+        break;
+    }
 
     if (FAILED(hr)) {
         return;
     }
     int buffer_length_msec = 10;
     REFERENCE_TIME dur = buffer_length_msec * 1000 * 10;
-    hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY, dur, dur, format, NULL);
+    hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY, dur, dur, formatex, NULL);
     if (FAILED(hr)) {
         return;
     }
@@ -494,7 +530,7 @@ AudioStream::AudioStream() {
 }
 AudioStream::~AudioStream() {
     #if defined(_WIN32)
-    CoTaskMemFree(format);
+    CoTaskMemFree(formatex);
     SAFE_RELEASE(penum);
     SAFE_RELEASE(pdevice);
     SAFE_RELEASE(client);

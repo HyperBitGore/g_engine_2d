@@ -8,7 +8,7 @@ project(g_engine VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS Off)
-set(CMAKE_EXPORT_COMPILE_COMMANDS true)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(g_engine source/g_engine_2d.hpp source/audio/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/rendering/font_renderer.cpp 
 source/function_loader.cpp source/gl_defines.hpp source/util/hashmap.hpp source/img_loading/image_loader.cpp source/input.cpp source/util/matrix.cpp source/util/matrix.hpp source/util/shader.cpp source/window.cpp example/example.cpp source/audio/audio.hpp source/backend.hpp source/util/vector.cpp 
