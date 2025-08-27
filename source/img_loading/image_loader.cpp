@@ -1,4 +1,7 @@
 #include "image_loader.hpp"
+#include <GL/glext.h>
+#include <cstdint>
+#include <stdexcept>
 
 IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	IMG img = new g_img;
@@ -80,4 +83,87 @@ uint64_t imageloader::getPixel(IMG img, int x, int y, int bytes) {
 		shift -= 8;
 	}
 	return out;
+}
+
+IMG imageloader::convertIMGRGBA8(IMG img) {
+	if (img->format == GL_RGBA8) {
+		return img;
+	}
+	IMG data = createBlank(img->w, img->h, 4);
+	switch (img->format) {
+		case GL_R8:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i++, j += 4) {
+				uint8_t val = img->data[i];
+				data->data[j] = val;
+				data->data[j + 1] = val;
+				data->data[j + 2] = val;
+				data->data[j + 3] = 255;
+			}
+		break;
+		case GL_R16:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=2, j += 4) {
+				uint16_t val = (img->data[i] << 8) | (img->data[i + 1]);
+				data->data[j] = (val >> 8);
+				data->data[j + 1] = (val >> 8);
+				data->data[j + 2] = (val >> 8);
+				data->data[j + 3] = 255;
+			}
+		break;
+		case GL_RGB16:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i += 6, j += 4) {
+				uint16_t r = (img->data[i] << 8) | (img->data[i + 1]);
+				uint16_t g = (img->data[i + 2] << 8) | (img->data[i + 3]);
+				uint16_t b = (img->data[i + 4] << 8) | (img->data[i + 5]);
+				data->data[j] = r >> 8;
+				data->data[j + 1] = g >> 8;
+				data->data[j + 2] = b >> 8;
+				data->data[j + 3] = 255;
+			}
+		break;
+		case GL_RGB8:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i += 3, j += 4) {
+				uint8_t r = img->data[i];
+				uint8_t g = img->data[i + 1];
+				uint8_t b = img->data[i + 2];
+				data->data[j] = r;
+				data->data[j + 1] = g;
+				data->data[j + 2] = b;
+				data->data[j + 3] = 255;
+			}
+		break;
+		case GL_RG16:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=4, j += 4) {
+				uint16_t val = (img->data[i] << 8) | (img->data[i + 1]);
+				uint16_t alpha = (img->data[i + 2] << 8) | (img->data[i + 3]);
+				data->data[j] = (val >> 8);
+				data->data[j + 1] = (val >> 8);
+				data->data[j + 2] = (val >> 8);
+				data->data[j + 3] = alpha;
+			}
+		case GL_RG8:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=2, j += 4) {
+				uint8_t val = img->data[i];
+				data->data[j] = val;
+				data->data[j + 1] = val;
+				data->data[j + 2] = val;
+				data->data[j + 3] = img->data[i + 1];
+			}
+		break;
+		case GL_RGBA16:
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i += 8, j += 4) {
+				uint16_t r = (img->data[i] << 8) | (img->data[i + 1]);
+				uint16_t g = (img->data[i + 2] << 8) | (img->data[i + 3]);
+				uint16_t b = (img->data[i + 4] << 8) | (img->data[i + 5]);
+				uint16_t a = (img->data[i + 6] << 8) | (img->data[i + 7]);
+				data->data[j] = r >> 8;
+				data->data[j + 1] = g >> 8;
+				data->data[j + 2] = b >> 8;
+				data->data[j + 3] = a >> 8;
+			}
+		break;
+		default:
+			throw std::runtime_error("Unsupported color type trying to convert img!");
+		break;
+	}
+	return data;
 }

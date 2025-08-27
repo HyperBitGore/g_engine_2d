@@ -25,6 +25,7 @@ IMG imgtest_bmp;
 IMG atlas_test;
 IMG bmptest;
 IMG blank_test;
+IMG conversion_test;
 ImageAtlas atlas = ImageAtlas(400, 400, 4);
 gore::Font f_test;
 
@@ -196,6 +197,7 @@ void renderFunction() {
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
+	img_r.drawImage(conversion_test, {500.0f, 200.0f}, {100.0f, 100.0f});
 	gsc_r.drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
 	gsc_r.setWithAlpha(true);
 	gsc_r.drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
@@ -301,6 +303,7 @@ int main() {
 	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
 	imgtest_bmp = imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
 	atlas_test = imageloader::loadPNG("resources/test.png");
+	conversion_test = imageloader::convertIMGRGBA8(imgtest_types);
 	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	atlas.addImage(atlas_test, "atlas_test");
 	atlas.addImage(imgtest, "img_test");

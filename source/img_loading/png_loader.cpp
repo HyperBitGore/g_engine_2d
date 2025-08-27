@@ -368,6 +368,8 @@ IMG imageloader::loadPNG(std::string path) {
                     img->data[i + 1] = (color >> 8) & 0xff;
                     img->data[i + 2] = color & 0xff;
                 }
+                img->format = GL_RGB8;
+                img->type = GL_UNSIGNED_BYTE;
                 glTextureStorage2D_g(img->tex, 1, GL_RGB8, img->w, img->h);
                 glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, GL_UNSIGNED_BYTE, img->data);
             }
@@ -399,6 +401,8 @@ IMG imageloader::loadPNG(std::string path) {
             }
             const GLint format = (ihdr.bit_depth <= 8) ? GL_R8 : GL_R16;
             const GLenum type = (ihdr.bit_depth <= 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+            img->format = format;
+            img->type = type;
             glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
             glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RED, type, img->data);
         }

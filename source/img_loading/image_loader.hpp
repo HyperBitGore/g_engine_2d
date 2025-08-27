@@ -88,6 +88,7 @@ class imageloader{
 	static void createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type);
 	static IMG loadPNG(std::string path);
 	static IMG loadBMP(std::string path);
+	static IMG convertIMGRGBA8(IMG img);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
 	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);
