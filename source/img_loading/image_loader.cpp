@@ -1,13 +1,16 @@
 #include "image_loader.hpp"
+#include <GL/gl.h>
 #include <GL/glext.h>
 #include <cstdint>
 #include <stdexcept>
 
-IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
+IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel, GLenum format, GLenum type){
 	IMG img = new g_img;
 	img->h = h;
 	img->w = w;
 	img->bytes_per_pixel = bytes_per_pixel;
+	img->format = format;
+	img->type = type;
 	img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
 	std::memset(img->data, 0, (w * bytes_per_pixel) * h);
 	img->size = (w * bytes_per_pixel * h);
@@ -89,7 +92,7 @@ IMG imageloader::convertIMGRGBA8(IMG img) {
 	if (img->format == GL_RGBA8) {
 		return img;
 	}
-	IMG data = createBlank(img->w, img->h, 4);
+	IMG data = createBlank(img->w, img->h, 4, GL_RGBA8, GL_UNSIGNED_BYTE);
 	switch (img->format) {
 		case GL_R8:
 			for(size_t i = 0, j = 0; i < img->size && j < data->size; i++, j += 4) {

@@ -325,7 +325,7 @@ int main() {
 	//testing font rasterizing
 	font_r.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
-	blank_test = imageloader::createBlank(100, 100, 4);
+	blank_test = imageloader::createBlank(100, 100, 4, GL_RGBA8, GL_UNSIGNED_BYTE);
 	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {
 		for(int j = 0; j < 100; j++){
