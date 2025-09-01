@@ -197,7 +197,7 @@ void renderFunction() {
 	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
 	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
 	img_r.drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
-	img_r.drawImage(conversion_test, {500.0f, 200.0f}, {100.0f, 100.0f});
+	img_r.drawImage(conversion_test, {560.0f, 200.0f}, {100.0f, 100.0f});
 	gsc_r.drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
 	gsc_r.setWithAlpha(true);
 	gsc_r.drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
@@ -291,9 +291,9 @@ int main() {
 	s_test2 = ap.generateSquare(300, 200.0f, 44100);
 	s_test3 = ap.generateTriangle(300, 200.0f, 44100);
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
-	ap.playFile("resources/dungeonsynth5.wav", 1);
+	//ap.playFile("resources/dungeonsynth5.wav", 1);
 	for (size_t i = 0; i < 100; i++) {
-		ap.playFile(s_test3, 3);
+		//ap.playFile(s_test3, 3);
 	}
 	bmptest = imageloader::loadBMP("resources/test1.bmp");
 	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
@@ -325,7 +325,7 @@ int main() {
 	//testing font rasterizing
 	font_r.rasterizeFont(&f_test, 64, 4278190335, {'l'});
 
-	blank_test = imageloader::createBlank(100, 100, 4, GL_RGBA8, GL_UNSIGNED_BYTE);
+	blank_test = imageloader::createBlank(100, 100, 4);
 	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {
 		for(int j = 0; j < 100; j++){

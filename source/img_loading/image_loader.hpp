@@ -84,7 +84,7 @@ public:
 //rewrite image loader to be manageable
 class imageloader{
 	public:
-	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel, GLenum format, GLenum type);
+	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel);
 	static void createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type);
 	static IMG loadPNG(std::string path);
 	static IMG loadBMP(std::string path);

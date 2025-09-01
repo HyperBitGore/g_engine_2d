@@ -282,7 +282,7 @@ IMG imageloader::loadPNG(std::string path) {
         }
     }
 
-    img = imageloader::createBlank(ihdr.width, ihdr.height, bytes_per_pixel, GL_RGBA8, GL_UNSIGNED_BYTE);
+    img = imageloader::createBlank(ihdr.width, ihdr.height, bytes_per_pixel);
     std::vector<uint8_t> idat;
     std::vector<uint32_t> pallete;
     int32_t sRgb = -1;

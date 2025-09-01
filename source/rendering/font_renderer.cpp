@@ -1023,7 +1023,7 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
-	r_g.data = imageloader::createBlank(w, h, 4, GL_RGBA8, GL_UNSIGNED_BYTE);
+	r_g.data = imageloader::createBlank(w, h, 4);
 	imageloader::createTexture(r_g.data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
 	struct sortContours {
