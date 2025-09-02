@@ -1,6 +1,4 @@
 #include "image_loader.hpp"
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <cstdint>
 #include <stdexcept>
 #include <fstream>
