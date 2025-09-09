@@ -1,6 +1,9 @@
 #pragma once
 #include "../util/shader.hpp"
-
+#if defined(__unix__)
+#include <GL/gl.h>
+#include <GL/glext.h>
+#endif
 
 //convert all data allocation to new so we can delete it in destructor
 struct g_img {
