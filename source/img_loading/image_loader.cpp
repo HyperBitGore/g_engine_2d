@@ -3,7 +3,6 @@
 #include <GL/glext.h>
 #include <cstdint>
 #include <stdexcept>
-#include <fstream>
 
 IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	IMG img = new g_img;
@@ -91,9 +90,8 @@ IMG imageloader::convertIMGRGBA8(IMG img) {
 	if (img->format == GL_RGBA8) {
 		return img;
 	}
-	std::ofstream out;
-	out.open("out.txt");
 	IMG data = createBlank(img->w, img->h, 4);
+	createTexture(data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	switch (img->format) {
 		case GL_R8:
 			for(size_t i = 0, j = 0; i < img->size && j < data->size; i++, j += 4) {
@@ -105,16 +103,26 @@ IMG imageloader::convertIMGRGBA8(IMG img) {
 			}
 		break;
 		case GL_R16:
-			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=2, j += 4) {
-				uint16_t val = img->data[i] | (img->data[i + 1] << 8);
-				uint8_t gray = (val + 128) / 257;
-				data->data[j] = gray;
-				data->data[j + 1] = gray;
-				data->data[j + 2] = gray;
-				data->data[j + 3] = 255;
-				out << gray;
-				out << "\n";
+		{
+			uint16_t min_val = UINT16_MAX;
+			uint16_t max_val = 0;
+			// First pass to find min/max
+			for (size_t i = 0; i < img->size; i += 2) {
+				uint16_t val = (img->data[i] << 8) | img->data[i + 1];
+				if (val < min_val) min_val = val;
+				if (val > max_val) max_val = val;
 			}
+			float range = max_val - min_val;
+			if (range == 0) range = 1; // prevent divide by zero
+			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=2, j += 4) {
+				uint16_t val = (img->data[i] << 8) | img->data[i + 1];				
+				uint8_t norm = ((val - min_val) * 255.0f) / range;
+				data->data[j] = norm;
+				data->data[j + 1] = norm;
+				data->data[j + 2] = norm;
+				data->data[j + 3] = 255;
+			}
+		}
 		break;
 		case GL_RGB16:
 			for(size_t i = 0, j = 0; i < img->size && j < data->size; i += 6, j += 4) {
@@ -139,14 +147,38 @@ IMG imageloader::convertIMGRGBA8(IMG img) {
 			}
 		break;
 		case GL_RG16:
-			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=4, j += 4) {
+		{
+			uint16_t min_val = UINT16_MAX;
+			uint16_t max_val = 0;
+			uint16_t alpha_min = UINT16_MAX;
+			uint16_t alpha_max = 0;
+			// First pass to find min/max
+			for (size_t i = 0; i + 3 < img->size; i += 4) {
+				uint16_t val = (img->data[i] << 8) | img->data[i + 1];
+				uint16_t alpha = (img->data[i + 2] << 8) | (img->data[i + 3]);
+				if (val < min_val) min_val = val;
+				if (val > max_val) max_val = val;
+				if (alpha < alpha_min) alpha_min = alpha;
+				if (alpha > alpha_max) alpha_max = alpha;
+			}
+			float range = max_val - min_val;
+			if (range == 0) range = 1; // prevent divide by zero
+			float alpha_range = alpha_max - alpha_min;
+			if (alpha_range == 0) alpha_range = 1;
+			for(size_t i = 0, j = 0; i + 3 < img->size && j < data->size; i+=4, j += 4) {
 				uint16_t val = (img->data[i] << 8) | (img->data[i + 1]);
 				uint16_t alpha = (img->data[i + 2] << 8) | (img->data[i + 3]);
-				data->data[j] = (val >> 8);
-				data->data[j + 1] = (val >> 8);
-				data->data[j + 2] = (val >> 8);
-				data->data[j + 3] = alpha;
+				float v = ((val - min_val) * 255.0f) / range;
+				uint8_t norm = std::roundf(v);
+				float av = ((alpha - alpha_min) * 255.0f) / alpha_range;
+				uint8_t anorm = std::roundf(av);
+				data->data[j] = norm;
+				data->data[j + 1] = norm;
+				data->data[j + 2] = norm;
+				data->data[j + 3] = anorm;
 			}
+		}
+			break;
 		case GL_RG8:
 			for(size_t i = 0, j = 0; i < img->size && j < data->size; i+=2, j += 4) {
 				uint8_t val = img->data[i];
@@ -172,7 +204,6 @@ IMG imageloader::convertIMGRGBA8(IMG img) {
 			throw std::runtime_error("Unsupported color type trying to convert img!");
 		break;
 	}
-	out.close();
-	createTexture(data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+	updateIMG(data);
 	return data;
 }
