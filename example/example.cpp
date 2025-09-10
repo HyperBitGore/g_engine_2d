@@ -340,10 +340,12 @@ int main() {
 	std::cout << nthBit(10, 2) << "\n";
 	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
+	double dd = 0;
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();
 		eng2.updateInputState();
 		d += del;
+		dd += del;
 		timer += del;
 		s_cool += del;
 		draw_timer += del;
@@ -352,6 +354,11 @@ int main() {
 			std::cout << "1 second\n";
 			std::cout << "Frames: " << frames.first << ", average time: " << frames.second << "\n";
 			d = 0;
+		}
+		if (dd >= 2.0 && eng2.getKeyDown(g_f)) {
+			std::cout << "set full!\n";
+			eng2.setWindowFullscreen(true);
+			dd = 0;
 		}
 		if (eng2.getKeyDown(g_Return)) {
 			std::cout << "key down\n";

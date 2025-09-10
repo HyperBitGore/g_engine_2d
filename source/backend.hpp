@@ -152,6 +152,8 @@
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
 #include <X11/extensions/XKBstr.h>
 #define RAW_WINDOW Window
 #define RAW_DISPLAY Display*
@@ -302,7 +304,7 @@ private:
 	int height;
 	int width;
 public:
-	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y);
+	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false);
 	g_window(const g_window&) = delete;
 	g_window& operator =(const g_window&) = delete;
 	~g_window();
@@ -313,7 +315,7 @@ public:
 	RAW_DISPLAY getRawDisplay();
 	bool updateWindow();
 	bool swapBuffers();
-
+	void setWindowFullscreen();
 };
 
 

@@ -1,4 +1,6 @@
 #include "backend.hpp"
+#include <X11/Xlib.h>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 
@@ -74,7 +76,7 @@ bool g_window::swapBuffers() {
 	#endif
 }
 #if defined(_WIN32)
-g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y)
+g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y, bool fullscreen)
 	: r_display(GetModuleHandle(nullptr))
 {
 	WNDCLASS wnd = {};
@@ -119,7 +121,7 @@ g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x
 #endif
 
 #if defined(__unix__)
-g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y) {
+g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen) {
     if (!display) {
         std::cout << "Unable to open X display\n";
         exit(1);
@@ -159,6 +161,14 @@ g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, 
 
     m_hwnd = XCreateWindow(r_display, root, 0, 0, 800, 600, 0, vi->depth,
                         InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+	if (fullscreen) {
+		XWindowAttributes window_attributes;
+		XGetWindowAttributes(r_display, root, &window_attributes);
+		XResizeWindow(r_display, m_hwnd, window_attributes.width, window_attributes.height);
+		Atom wm_state = XInternAtom(r_display, "_NET_WM_STATE" ,False);
+		Atom wm_fullscreen = XInternAtom(r_display, "_NET_WM_STATE_FULLSCREEN", False);
+		XChangeProperty(r_display, m_hwnd, wm_state, XA_ATOM, 32, PropModeReplace, (unsigned char*)&wm_fullscreen, 1);
+	}
 	XMapWindow(r_display, m_hwnd);
 	XStoreName(r_display, m_hwnd, title);
 	XFree(vi);
@@ -178,4 +188,23 @@ RAW_WINDOW g_window::getRawWindow() {
 }
 RAW_DISPLAY g_window::getRawDisplay() {
 	return r_display;
+}
+
+
+void g_window::setWindowFullscreen(){
+
+	#if defined(__unix__)
+	 	// need to use xrandr lol!
+		int32_t screen = DefaultScreen(r_display);
+		Window root = RootWindow(r_display, screen);
+		int32_t screen_width = DisplayWidth(r_display, screen);
+		int32_t screen_height = DisplayHeight(r_display, screen);
+		XResizeWindow(r_display, m_hwnd, screen_width, screen_height);
+		std::cout << screen_width << " : " << screen_height << "\n";
+		Atom wm_state = XInternAtom(r_display, "_NET_WM_STATE" ,False);
+		Atom fullscreen = XInternAtom(r_display, "_NET_WM_STATE_FULLSCREEN", False);
+		XChangeProperty(r_display, m_hwnd, wm_state, XA_ATOM, 32, PropModeReplace, (unsigned char*)&fullscreen, 1);
+		XMoveWindow(r_display, m_hwnd, 0, 0);
+		XMapWindow(r_display, m_hwnd);
+	#endif
 }
