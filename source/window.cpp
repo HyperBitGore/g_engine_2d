@@ -1,5 +1,4 @@
 #include "backend.hpp"
-#include <X11/Xlib.h>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -9,6 +8,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	switch (msg) {
 	case WM_PAINT:
 
+		break;
+	case WM_SIZE:
+		{
+			uint32_t width = LOWORD(lparam);
+			uint32_t height = HIWORD(lparam);
+			glViewport(0, 0, width, height);
+		}
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
@@ -191,8 +197,18 @@ RAW_DISPLAY g_window::getRawDisplay() {
 }
 
 
-void g_window::setWindowFullscreen(){
-
+void g_window::setWindowFullscreen() {
+	#if defined(_WIN32)
+	DWORD dwStyle = GetWindowLong(m_hwnd, GWL_STYLE);
+	MONITORINFO mi = { sizeof(mi) };
+	mi.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST), &mi);
+	SetWindowLongPtr(m_hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+	SetWindowPos(m_hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top,
+                     mi.rcMonitor.right - mi.rcMonitor.left,
+                     mi.rcMonitor.bottom - mi.rcMonitor.top,
+                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	#endif
 	#if defined(__unix__)
 	 	// need to use xrandr lol!
 		int32_t screen = DefaultScreen(r_display);
