@@ -1,5 +1,4 @@
 #include "backend.hpp"
-#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 
@@ -210,17 +209,21 @@ void g_window::setWindowFullscreen() {
                      SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 	#endif
 	#if defined(__unix__)
-	 	// need to use xrandr lol!
-		int32_t screen = DefaultScreen(r_display);
-		Window root = RootWindow(r_display, screen);
-		int32_t screen_width = DisplayWidth(r_display, screen);
-		int32_t screen_height = DisplayHeight(r_display, screen);
-		XResizeWindow(r_display, m_hwnd, screen_width, screen_height);
-		std::cout << screen_width << " : " << screen_height << "\n";
 		Atom wm_state = XInternAtom(r_display, "_NET_WM_STATE" ,False);
 		Atom fullscreen = XInternAtom(r_display, "_NET_WM_STATE_FULLSCREEN", False);
-		XChangeProperty(r_display, m_hwnd, wm_state, XA_ATOM, 32, PropModeReplace, (unsigned char*)&fullscreen, 1);
-		XMoveWindow(r_display, m_hwnd, 0, 0);
+		XEvent event;
+		event.xclient.type = ClientMessage;
+		event.xclient.serial = 0;
+		event.xclient.send_event = True;
+		event.xclient.window = m_hwnd;
+		event.xclient.message_type = wm_state;
+		event.xclient.format = 32;
+		event.xclient.data.l[0] = 1; // 1 for _NET_WM_STATE_ADD
+		event.xclient.data.l[1] = fullscreen;
+		event.xclient.data.l[2] = 0;
+		XSendEvent(r_display, DefaultRootWindow(r_display), False, 
+               SubstructureNotifyMask | SubstructureRedirectMask, &event);   
+    	XFlush(r_display);
 		XMapWindow(r_display, m_hwnd);
 	#endif
 }
