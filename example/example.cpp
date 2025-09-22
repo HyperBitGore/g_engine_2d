@@ -357,7 +357,7 @@ int main() {
 		}
 		if (dd >= 2.0 && eng2.getKeyDown(g_f)) {
 			std::cout << "set full!\n";
-			eng2.setWindowFullscreen(true);
+			eng2.toggleFullscreen();
 			dd = 0;
 		}
 		if (eng2.getKeyDown(g_Return)) {

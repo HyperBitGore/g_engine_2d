@@ -303,6 +303,7 @@ private:
 	RAW_WINDOW m_hwnd;
 	int height;
 	int width;
+	bool fullscreen = false;
 public:
 	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false);
 	g_window(const g_window&) = delete;
@@ -315,7 +316,7 @@ public:
 	RAW_DISPLAY getRawDisplay();
 	bool updateWindow();
 	bool swapBuffers();
-	void setWindowFullscreen();
+	void toggleFullscreen();
 };
 
 
