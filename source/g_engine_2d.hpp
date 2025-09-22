@@ -67,7 +67,7 @@ public:
 	//updates the window
 	bool updateWindow();
 	
-	void setWindowFullscreen(bool mode);
+	void toggleFullscreen();
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
 	bool getKeyDown(uint32_t key);

@@ -196,7 +196,7 @@ RAW_DISPLAY g_window::getRawDisplay() {
 }
 
 
-void g_window::setWindowFullscreen() {
+void g_window::toggleFullscreen() {
 	#if defined(_WIN32)
 	DWORD dwStyle = GetWindowLong(m_hwnd, GWL_STYLE);
 	MONITORINFO mi = { sizeof(mi) };
@@ -218,7 +218,7 @@ void g_window::setWindowFullscreen() {
 		event.xclient.window = m_hwnd;
 		event.xclient.message_type = wm_state;
 		event.xclient.format = 32;
-		event.xclient.data.l[0] = 1; // 1 for _NET_WM_STATE_ADD
+		event.xclient.data.l[0] = !this->fullscreen; // 1 for _NET_WM_STATE_ADD
 		event.xclient.data.l[1] = fullscreen;
 		event.xclient.data.l[2] = 0;
 		XSendEvent(r_display, DefaultRootWindow(r_display), False, 
@@ -226,4 +226,5 @@ void g_window::setWindowFullscreen() {
     	XFlush(r_display);
 		XMapWindow(r_display, m_hwnd);
 	#endif
+	this->fullscreen = !this->fullscreen;
 }

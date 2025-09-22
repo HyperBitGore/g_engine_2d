@@ -99,8 +99,6 @@ void EngineNewGL::disable(GLenum en){
 	glDisable(en);
 }
 
-void EngineNewGL::setWindowFullscreen(bool mode) {
-	if (mode) {
-		wind->setWindowFullscreen();
-	}
+void EngineNewGL::toggleFullscreen() {
+	wind->toggleFullscreen();
 }
