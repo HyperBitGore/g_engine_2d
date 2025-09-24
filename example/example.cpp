@@ -234,9 +234,16 @@ int nthBit(int number, int n) {
 	return (number >> n) & 1;
 }
 
+void windowResize (uint32_t width, uint32_t height) {
+	prim_r.setDimensions(width, height);
+	img_r.setDimensions(width, height);
+	gsc_r.setDimensions(width, height);
+}
+
 
 //4278190335
 int main() {
+	eng2.setWindowResize(windowResize);
 	Line l11({0.0f, 1.0f}, {10.0f, 8.0f});
 	l11.p1.x = 1.0f;
 	l11.p2.x = 11.0f;

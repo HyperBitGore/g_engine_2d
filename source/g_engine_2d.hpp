@@ -16,7 +16,6 @@ private:
 	g_window* wind;
 	Input* in;
 	std::function<void()> renderFund;
-	std::function<void(uint32_t, uint32_t)> windowResize;
 	//color constants
 	vec4 draw_color;
 	vec4 clear_color;
@@ -67,7 +66,7 @@ public:
 	}
 	// sets the window resize user function
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
-		windowResize = func;
+		wind->setWindowResize(func);
 	}
 	//updates the window
 	bool updateWindow();

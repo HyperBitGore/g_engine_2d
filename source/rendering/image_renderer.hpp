@@ -37,6 +37,9 @@ public:
 	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions);
 	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions, vec4 uvs);
 	void drawTextureRotated(GLuint texture, vec2 pos, vec2 dimensions, float rot);
+	void setDimensions (uint32_t width, uint32_t height) {
+		shader.setuniform("screen", {(float)width, (float)height});
+	}
 };
 
 class grayscalerenderer : public imagerenderer {

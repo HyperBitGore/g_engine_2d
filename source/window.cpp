@@ -2,6 +2,9 @@
 #include <cstdlib>
 #include <iostream>
 
+
+std::function<void(uint32_t, uint32_t)> resizeFunction;
+
 #if defined(_WIN32)
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	switch (msg) {
@@ -13,6 +16,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 			uint32_t width = LOWORD(lparam);
 			uint32_t height = HIWORD(lparam);
 			glViewport(0, 0, width, height);
+			if (resizeFunction) {
+				resizeFunction(width, height);
+			}
 		}
 		break;
 	case WM_CLOSE:
@@ -201,12 +207,30 @@ void g_window::toggleFullscreen() {
 	DWORD dwStyle = GetWindowLong(m_hwnd, GWL_STYLE);
 	MONITORINFO mi = { sizeof(mi) };
 	mi.cbSize = sizeof(MONITORINFO);
+	
 	GetMonitorInfo(MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST), &mi);
-	SetWindowLongPtr(m_hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-	SetWindowPos(m_hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top,
-                     mi.rcMonitor.right - mi.rcMonitor.left,
-                     mi.rcMonitor.bottom - mi.rcMonitor.top,
-                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	if (!fullscreen) {
+		SetWindowLongPtr(m_hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+		SetWindowPos(m_hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top,
+						mi.rcMonitor.right - mi.rcMonitor.left,
+						mi.rcMonitor.bottom - mi.rcMonitor.top,
+						SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	} else {
+		RECT rect;
+		rect.left = (mi.rcMonitor.left + (width/2));
+		rect.top = (mi.rcMonitor.top + (height/2));
+		rect.right = rect.left + width;
+		rect.bottom = rect.top + height;
+
+		AdjustWindowRect(&rect, WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_SYSMENU, false);
+		SetWindowLongPtr(m_hwnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_MINIMIZEBOX | WS_SYSMENU);
+		SetWindowPos(m_hwnd, HWND_TOP, 
+				rect.left,
+				rect.top,
+				rect.right - rect.left,
+				rect.bottom - rect.top,
+				SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	}
 	#endif
 	#if defined(__unix__)
 		Atom wm_state = XInternAtom(r_display, "_NET_WM_STATE" ,False);
@@ -227,4 +251,8 @@ void g_window::toggleFullscreen() {
 		XMapWindow(r_display, m_hwnd);
 	#endif
 	this->fullscreen = !this->fullscreen;
+}
+
+void g_window::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
+	resizeFunction = func;
 }

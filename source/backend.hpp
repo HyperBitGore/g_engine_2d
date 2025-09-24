@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <cstring>
+#include <functional>
 
 #if defined(_WIN32)
 #define RAW_WINDOW HWND
@@ -317,6 +318,7 @@ public:
 	bool updateWindow();
 	bool swapBuffers();
 	void toggleFullscreen();
+	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 };
 
 
