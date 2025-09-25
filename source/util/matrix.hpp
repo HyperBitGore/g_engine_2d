@@ -56,4 +56,6 @@ public:
 	bool setrow(size_t row, float val);
 	std::string to_string();
 	float* data();
+
+	static Matrix calculateOrtho(uint32_t width, uint32_t height);
 };

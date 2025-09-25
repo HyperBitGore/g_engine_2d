@@ -242,6 +242,7 @@ void windowResize (uint32_t width, uint32_t height) {
 
 
 //4278190335
+// issue is the image renderer not mapping correctly!
 int main() {
 	eng2.setWindowResize(windowResize);
 	Line l11({0.0f, 1.0f}, {10.0f, 8.0f});

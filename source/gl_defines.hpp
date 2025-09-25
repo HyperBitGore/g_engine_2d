@@ -8,7 +8,6 @@
 
 #include <gl/GL.h>
 #include <gl/GLU.h>
-//#include <glcorearb.h>
 #include <wglext.h>
 #include <glext.h>
 #define _USE_MATH_DEFINES
@@ -115,3 +114,5 @@ extern PFNGLUNIFORM1DVPROC glUniform1dv_g;
 extern PFNGLUNIFORM2DVPROC glUniform2dv_g;
 extern PFNGLUNIFORM3DVPROC glUniform3dv_g;
 extern PFNGLUNIFORM4DVPROC glUniform4dv_g;
+
+extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_g;

@@ -113,6 +113,8 @@ PFNGLUNIFORM2DVPROC glUniform2dv_g;
 PFNGLUNIFORM3DVPROC glUniform3dv_g;
 PFNGLUNIFORM4DVPROC glUniform4dv_g;
 
+PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_g;
+
 void EngineNewGL::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
 	glGenVertexArrays_g = (PFNGLGENVERTEXARRAYSPROC)GetGLFuncAddress("glGenVertexArrays");
@@ -206,5 +208,6 @@ void EngineNewGL::loadFunctions() {
 	glRenderbufferStorage_g = (PFNGLRENDERBUFFERSTORAGEPROC)GetGLFuncAddress("glRenderbufferStorage");
 	glFramebufferRenderbuffer_g = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)GetGLFuncAddress("glFramebufferRenderbuffer");
 
+	glUniformMatrix4fv_g = (PFNGLUNIFORMMATRIX4FVPROC)GetGLFuncAddress("glUniformMatrix4fv");
 
 }

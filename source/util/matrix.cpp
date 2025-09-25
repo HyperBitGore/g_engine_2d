@@ -133,3 +133,18 @@ std::string Matrix::to_string() {
 float* Matrix::data() {
 	return dat;
 }
+
+
+
+
+Matrix Matrix::calculateOrtho(uint32_t width, uint32_t height) {
+	Matrix matrice(4, 4);
+	matrice[0][0] = 2.0f / (float)width;
+	matrice[1][1] = -2.0f / (float)height;
+	matrice[2][2] = 1.0f;
+	matrice[3][3] = 1.0f;
+	matrice[0][3] = -1.0f;
+	matrice[1][3] = 1.0f;
+
+	return matrice;
+}

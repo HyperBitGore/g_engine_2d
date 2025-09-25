@@ -37,15 +37,14 @@ public:
 	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions);
 	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions, vec4 uvs);
 	void drawTextureRotated(GLuint texture, vec2 pos, vec2 dimensions, float rot);
-	void setDimensions (uint32_t width, uint32_t height) {
-		shader.setuniform("screen", {(float)width, (float)height});
-	}
+	void setDimensions (uint32_t width, uint32_t height);
 };
 
 class grayscalerenderer : public imagerenderer {
 	public:
 	grayscalerenderer(size_t w, size_t h);
 	void setWithAlpha(bool withAlpha) {
+		shader.bind();
 		shader.setuniform("withAlpha", withAlpha);
 	}
 };

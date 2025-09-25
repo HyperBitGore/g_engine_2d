@@ -193,6 +193,11 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
 }
 
 
+void imagerenderer::setDimensions (uint32_t width, uint32_t height) {
+    shader.bind();
+    shader.setuniform("screen", {(float)width, (float)height});
+}
+
 grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     const char* vertex_shader = "#version 450 core\n"
         "\n"

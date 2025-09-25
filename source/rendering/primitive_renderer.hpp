@@ -59,9 +59,5 @@ public:
 	void cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
 	void circle(vec2 p, float r);
 	// for width and height
-	void setDimensions (uint32_t width, int32_t height) {
-		triangle_shader.setuniform("screen", {(float)width, (float)height});
-		point_shader.setuniform("screen", {(float)width, (float)height});
-		line_shader.setuniform("screen", {(float)width, (float)height});
-	}
+	void setDimensions (uint32_t width, int32_t height);
 };

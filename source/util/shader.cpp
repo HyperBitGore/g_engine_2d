@@ -384,6 +384,56 @@ bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsiz
 	}
 	return true;
 }
+// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glUniform.xhtml
+bool Shader::setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, Matrix& matrice) {
+	GLint* uf = uniform_map.get(uni);
+	if (uf == nullptr) {
+		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		if (point != -1) {
+			uniform_map.insert(uni, point);
+		} else {
+			return false;
+		}
+		uf = uniform_map.get(uni);
+	}
+	switch (matrice.numColumns()) {
+		case 2:
+			switch (matrice.numRows()) {
+				case 2:
+
+				break;
+				case 3:
+				break;
+				case 4:
+				break;
+			}
+		break;
+		case 3:
+			switch (matrice.numRows()) {
+				case 2:
+				break;
+				case 3:
+				break;
+				case 4:
+				break;
+			}
+		break;
+		case 4:
+			switch (matrice.numRows()) {
+				case 2:
+				break;
+				case 3:
+				break;
+				case 4:
+					glUniformMatrix4fv_g(*uf, count, transpose, matrice.data());
+				break;
+			}
+		break;
+		default:
+		return false;
+	}
+	return true;
+}
 
 void Shader::compile(const char* vertex_file, const char* fragment_file) {
 	// Create the shaders

@@ -2,6 +2,7 @@
 #include "../backend.hpp"
 #include "vector.hpp"
 #include "hashmap.hpp"
+#include "matrix.hpp"
 
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
 #define pack_rgb(r,g,b) (uint32_t)(r<<24|g<<16|b<<8)
@@ -105,6 +106,7 @@ public:
 	bool setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value);
 	bool setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLdouble* value);
 	//matrix overloads
+	bool setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, Matrix& matrice);
 
 	void compile(const char* vertex, const char* frag);
 	void compile(const std::string vert_path, const std::string frag_path);
