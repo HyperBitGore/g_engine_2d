@@ -1,4 +1,5 @@
 #include "backend.hpp"
+#include <X11/X.h>
 #include <cstdlib>
 #include <iostream>
 
@@ -58,10 +59,27 @@ bool g_window::ProcessMessage() {
 	XEvent event;
         if (XPending(r_display)) {
             XNextEvent(r_display, &event);
-			if (event.type == DestroyNotify) {
-				return false;
+			std::cout << "event: " << event.type << "\n";
+			switch (event.type) {
+				case DestroyNotify:
+					return false;
+				case ConfigureNotify:
+					if (resizeFunction) {
+						this->width = event.xconfigure.width;
+						this->height = event.xconfigure.height;
+						resizeFunction(width, height);
+						glViewport(0, 0, width, height);
+					}
+				break;
+				case Expose:
+					if (resizeFunction) {
+						this->width = event.xexpose.width;
+						this->height = event.xexpose.height;
+						resizeFunction(width, height);
+						glViewport(0, 0, width, height);
+					}
+				break;
 			}
-
 		}
 	#endif
 	return true;

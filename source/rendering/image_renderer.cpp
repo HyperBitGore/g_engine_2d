@@ -144,25 +144,18 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
         "layout(location = 1) in vec2 uv;\n"
         "layout(location = 2) in float ang;\n"
         "layout(location = 3) in vec2 rot_p;\n"
-        "uniform vec2 screen;\n"
+        "uniform mat4 projection;\n"
         "out vec2 tex_coord;\n"
         "void main(){\n"
-        "    //vec2 pre = vec2(pos.x - rot_p.x, pos.y - rot_p.y); //moving origin to rotation point\n"
-        "    //pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
-        "    //vec2 p = vec2(pre.x + rot_p.x, pre.y + rot_p.y);\n"
         "    //doing the rotation before conversion causes warpage\n"
-        "    vec2 p = pos;\n"
-        "    vec2 rot = rot_p;\n"
-        "    rot /= screen;\n"
-        "    rot = (rot * 2.0) - 1;\n"
-        "    p /= screen;\n"
-        "    p = (p * 2.0) - 1;\n"
+        "    vec2 p = (projection * vec4(pos.x, pos.y, 0.0, 1.0)).xy;\n"
+        "    vec2 rot = (projection * vec4(rot_p.x, rot_p.y, 0.0, 1.0)).xy;\n"
         "    vec2 pre = p - rot;\n"
         "    pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
         "    pre = pre + rot;\n"
         "    p = pre;\n"
         "    tex_coord = uv;\n"
-        "    gl_Position = vec4(p.x, -p.y, 0.0, 1.0);\n"
+        "    gl_Position = vec4(p.x, p.y, 0.0, 1.0);\n"
         "}\n"
         "";
     const char* fragment_shader = "#version 450 core\n"
@@ -188,14 +181,16 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
     glEnableVertexAttribArray_g(3);
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
-    shader.setuniform("screen", {(float)w, (float)h});
+    Matrix ortho = Matrix::calculateOrtho(w, h);
+    shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
 }
 
 
 void imagerenderer::setDimensions (uint32_t width, uint32_t height) {
     shader.bind();
-    shader.setuniform("screen", {(float)width, (float)height});
+    Matrix ortho = Matrix::calculateOrtho(width, height);
+    shader.setuniform("projection", 1, true, ortho);
 }
 
 grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
@@ -205,25 +200,18 @@ grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
         "layout(location = 1) in vec2 uv;\n"
         "layout(location = 2) in float ang;\n"
         "layout(location = 3) in vec2 rot_p;\n"
-        "uniform vec2 screen;\n"
+        "uniform mat4 projection;\n"
         "out vec2 tex_coord;\n"
         "void main(){\n"
-        "    //vec2 pre = vec2(pos.x - rot_p.x, pos.y - rot_p.y); //moving origin to rotation point\n"
-        "    //pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
-        "    //vec2 p = vec2(pre.x + rot_p.x, pre.y + rot_p.y);\n"
         "    //doing the rotation before conversion causes warpage\n"
-        "    vec2 p = pos;\n"
-        "    vec2 rot = rot_p;\n"
-        "    rot /= screen;\n"
-        "    rot = (rot * 2.0) - 1;\n"
-        "    p /= screen;\n"
-        "    p = (p * 2.0) - 1;\n"
+        "    vec2 p = (projection * vec4(pos.x, pos.y, 0.0, 1.0)).xy;\n"
+        "    vec2 rot = (projection * vec4(rot_p.x, rot_p.y, 0.0, 1.0)).xy;\n"
         "    vec2 pre = p - rot;\n"
         "    pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
         "    pre = pre + rot;\n"
         "    p = pre;\n"
         "    tex_coord = uv;\n"
-        "    gl_Position = vec4(p.x, -p.y, 0.0, 1.0);\n"
+        "    gl_Position = vec4(p.x, p.y, 0.0, 1.0);\n"
         "}\n"
         "";
     const char* fragment_shader = "#version 450 core\n"
@@ -254,7 +242,8 @@ grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     glEnableVertexAttribArray_g(3);
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
-    shader.setuniform("screen", {(float)w, (float)h});
+    Matrix ortho = Matrix::calculateOrtho(w, h);
+    shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);
 }

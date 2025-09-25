@@ -375,6 +375,7 @@ int main() {
 			std::cout << "key tapped\n";
 		}
 	}
+	std::cout << "loop exit\n";
 	ap.end();
 	return 0;
 }
