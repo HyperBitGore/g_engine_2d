@@ -181,7 +181,9 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
     glEnableVertexAttribArray_g(3);
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
-    Matrix ortho = Matrix::calculateOrtho(w, h);
+    Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
+    this->width = w;
+    this->height = h;
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
 }
@@ -189,8 +191,10 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
 
 void imagerenderer::setDimensions (uint32_t width, uint32_t height) {
     shader.bind();
-    Matrix ortho = Matrix::calculateOrtho(width, height);
+    Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
     shader.setuniform("projection", 1, true, ortho);
+    this->width = width;
+    this->height = height;
 }
 
 grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
@@ -242,7 +246,7 @@ grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     glEnableVertexAttribArray_g(3);
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
-    Matrix ortho = Matrix::calculateOrtho(w, h);
+    Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);

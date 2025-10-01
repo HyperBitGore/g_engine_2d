@@ -1,5 +1,4 @@
 #include "backend.hpp"
-#include <X11/X.h>
 #include <cstdlib>
 #include <iostream>
 

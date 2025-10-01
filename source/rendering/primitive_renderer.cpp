@@ -222,7 +222,7 @@ void PrimitiveRenderer::circle(vec2 p, float r){
 }
 
 PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
-    Matrix ortho = Matrix::calculateOrtho(sw, sh);
+    Matrix ortho = Matrix::calculateOrtho(sw, sh, sw, sh);
     const char* triangle_vertex ="#version 450 core\n"
         "\n"
         "layout(location = 0) in vec2 pos;\n"
@@ -301,15 +301,19 @@ PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
     glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     line_shader.setuniform("projection", 1, true, ortho);
     setLineWidth(1.0f);
+    this->width = sw;
+    this->height = sh;
 }
 
 
 void PrimitiveRenderer::setDimensions (uint32_t width, int32_t height) {
-    Matrix ortho = Matrix::calculateOrtho(width, height);
+    Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
     triangle_shader.bind();
     triangle_shader.setuniform("projection", 1, true, ortho);
     point_shader.bind();
     point_shader.setuniform("projection", 1, true, ortho);
     line_shader.bind();
     line_shader.setuniform("projection", 1, true, ortho);
+    this->width = width;
+    this->height = height;
 }

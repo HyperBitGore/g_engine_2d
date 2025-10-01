@@ -58,5 +58,5 @@ public:
 	std::string to_string();
 	float* data();
 
-	static Matrix calculateOrtho(uint32_t width, uint32_t height);
+	static Matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
 };

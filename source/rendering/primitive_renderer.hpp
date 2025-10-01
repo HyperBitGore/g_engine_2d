@@ -31,6 +31,7 @@ private:
 	GLuint point_vao;
 	Shader line_shader;
 	GLuint line_vao;
+	uint32_t width, height;
 public:
 	//use to initialize shaders
 	PrimitiveRenderer(GLuint sw, GLuint sh);

@@ -21,6 +21,7 @@ protected:
 	GLuint vao;
 	GLuint vertex_buffer;
 	GLuint allocated;
+	uint32_t width, height;
 	imagerenderer() {
 
 	}

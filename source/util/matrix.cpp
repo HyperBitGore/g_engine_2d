@@ -135,13 +135,24 @@ float* Matrix::data() {
 }
 
 
-
-
-Matrix Matrix::calculateOrtho(uint32_t width, uint32_t height) {
+// https://stackoverflow.com/questions/12230312/is-glmortho-actually-wrong
+// https://docs.gl/gl3/glOrtho
+// height shifting too far up
+Matrix Matrix::calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height) {
+	float aspect = (float)width / (float)height;
+	float adjustedWidth = (float)width;
+	float adjustedHeight = (float)height;
+	if (aspect > ((float)last_width / (float)last_height)) {
+		float adjustedWidth = adjustedHeight * aspect;
+	} else {
+		adjustedHeight = adjustedWidth / aspect;
+	}
 	Matrix matrice(4, 4);
-	matrice[0][0] = 2.0f / (float)width;
-	matrice[1][1] = -2.0f / (float)height;
-	matrice[2][2] = 1.0f;
+	matrice[0][0] = 2.0f / adjustedWidth;
+	matrice[1][1] = -2.0f / height;
+	matrice[2][2] = -2.0f / (1.0f - -1.0f); //zfar
+
+	matrice[2][3] = 0.0f;
 	matrice[3][3] = 1.0f;
 	matrice[0][3] = -1.0f;
 	matrice[1][3] = 1.0f;
