@@ -143,7 +143,7 @@ Matrix Matrix::calculateOrtho(uint32_t width, uint32_t height, uint32_t last_wid
 	float adjustedWidth = (float)width;
 	float adjustedHeight = (float)height;
 	if (aspect > ((float)last_width / (float)last_height)) {
-		float adjustedWidth = adjustedHeight * aspect;
+		adjustedWidth = adjustedHeight * aspect;
 	} else {
 		adjustedHeight = adjustedWidth / aspect;
 	}

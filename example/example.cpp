@@ -4,6 +4,8 @@
 #include <bitset>
 #include <cstdint>
 
+uint32_t globalWidth = 640;
+uint32_t globalHeight = 480;
 EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
 imagerenderer img_r(640, 480);
@@ -217,10 +219,10 @@ void renderFunction() {
 		draw_timer = 0.0f;
 	}
 	if(draw_mode){
-		// invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
-		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		// img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}else{
-		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {640.0f, 480.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}
 	eng2.enable(GL_BLEND);
 	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
@@ -238,6 +240,9 @@ void windowResize (uint32_t width, uint32_t height) {
 	prim_r.setDimensions(width, height);
 	img_r.setDimensions(width, height);
 	gsc_r.setDimensions(width, height);
+	dr.resize(width, height);
+	globalWidth = width;
+	globalHeight = height;
 }
 
 

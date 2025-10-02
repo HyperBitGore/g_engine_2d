@@ -202,7 +202,23 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
         FatalError("Failed to make context current");
     }
 	XSetIOErrorHandler(myXIOErrorHandler);
-
+	PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = 
+    (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const GLubyte*)"glXSwapIntervalEXT");
+	if (glXSwapIntervalEXT) {
+    	glXSwapIntervalEXT(display, glXGetCurrentDrawable(), 0); // 0 = disable vsync
+	} else {
+		typedef int (*glXSwapIntervalMESAFunc)(unsigned int);
+		auto glXSwapIntervalMESA = (glXSwapIntervalMESAFunc)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
+		if (glXSwapIntervalMESA) {
+			glXSwapIntervalMESA(0);
+		} else {
+			typedef int (*glXSwapIntervalSGIFunc)(int);
+			auto glXSwapIntervalSGI = (glXSwapIntervalSGIFunc)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalSGI");
+			if (glXSwapIntervalSGI) {
+				glXSwapIntervalSGI(0);
+			}
+		}
+	}
 	#endif
 	//glEnable(GL_TEXTURE_2D);
 	//glEnable(GL_DEBUG_OUTPUT);

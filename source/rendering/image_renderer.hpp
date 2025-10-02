@@ -112,4 +112,23 @@ class DrawPass {
 		GLuint getTexture() {
 			return texture;
 		}
+		void resize (uint32_t width, uint32_t height) {
+			this->w = width;
+			this->h = height;
+			bind();
+			glViewport(0, 0, width, height);
+			// Reallocate the texture
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+			// Reallocate the depth/stencil renderbuffer
+			glBindRenderbuffer_g(GL_RENDERBUFFER, depth_buffer);
+			glRenderbufferStorage_g(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+
+			// Re-attach them (optional, in case you're paranoid about driver bugs)
+			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
+			glFramebufferTexture2D_g(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+			glFramebufferRenderbuffer_g(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+			unbind();
+		}
 };
