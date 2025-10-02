@@ -1,8 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <iostream>
 #include <string>
-#include <vector>
 
 //https://en.wikipedia.org/wiki/Matrix_(mathematics)
 //https://en.wikipedia.org/wiki/Computational_complexity_of_matrix_multiplication

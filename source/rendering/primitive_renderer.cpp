@@ -187,7 +187,7 @@ void PrimitiveRenderer::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv){
 		float t2 = t * t;
 		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
 		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
-		(i == 0) ? lx = x, ly = y : lx, ly;
+		(i == 0) ? lx = x, ly = y : lx = lx, ly = ly;
 		vertexs.push_back({ lx, ly });
 		vertexs.push_back({ x, y });
 		lx = x;
@@ -203,7 +203,7 @@ void PrimitiveRenderer::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subd
 		float t2 = t * t;
 		float x = t1 * t1 * t1 * p1.x + 3 * t1 * t1 * t * p2.x + 3 * t1 * t2 * p3.x + t2 * t * p4.x;
 		float y = t1 * t1 * t1 * p1.y + 3 * t1 * t1 * t * p2.y + 3 * t1 * t2 * p3.y + t2 * t * p4.y;
-		(i == 0) ? lx = x, ly = y : lx, ly;
+		(i == 0) ? lx = x, ly = y : lx = lx, ly = ly;
 		vertexs.push_back({ lx, ly });
 		vertexs.push_back({ x, y });
 		lx = x;

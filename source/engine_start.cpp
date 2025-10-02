@@ -5,7 +5,7 @@
 int myXIOErrorHandler(Display *dpy) {
     fprintf(stderr, "X server connection lost. Cleaning up.\n");
     // You could save state, attempt recovery, etc.
-    exit(1); // Avoid calling exit(), which may trigger undefined behavior in some cases
+    exit(EXIT_FAILURE); // Avoid calling exit(), which may trigger undefined behavior in some cases
 }
 #endif
 
