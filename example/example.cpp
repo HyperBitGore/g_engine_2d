@@ -372,6 +372,14 @@ int main() {
 			std::cout << "set full!\n";
 			eng2.toggleFullscreen();
 			dd = 0;
+		} else if (dd >= 2.0 && eng2.getKeyDown(g_c)) {
+			std::cout << "capture mouse!\n";
+			eng2.toggleMouseCapture(false);
+			dd = 0;
+		} else if (dd >= 2.0 && eng2.getKeyDown(g_v)) {
+			std::cout << "center mouse\n";
+			eng2.toggleMouseCapture(true);
+			dd = 0;
 		}
 		if (eng2.getKeyDown(g_Return)) {
 			std::cout << "key down\n";

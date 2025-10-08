@@ -102,3 +102,7 @@ void EngineNewGL::disable(GLenum en){
 void EngineNewGL::toggleFullscreen() {
 	wind->toggleFullscreen();
 }
+
+void EngineNewGL::toggleMouseCapture(bool center) {
+	wind->captureMouseToggle(center);
+}

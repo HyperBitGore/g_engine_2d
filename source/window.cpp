@@ -1,4 +1,6 @@
 #include "backend.hpp"
+#include <X11/X.h>
+#include <X11/Xlib.h>
 #include <cstdlib>
 #include <iostream>
 
@@ -76,6 +78,12 @@ bool g_window::ProcessMessage() {
 						this->height = event.xexpose.height;
 						resizeFunction(width, height);
 						glViewport(0, 0, width, height);
+					}
+				break;
+				case MotionNotify:
+					if (this->center) {
+						XWarpPointer(r_display, None, m_hwnd, 0, 0, 0, 0, width/2, height/2);
+						XFlush(r_display);
 					}
 				break;
 			}
@@ -272,4 +280,19 @@ void g_window::toggleFullscreen() {
 
 void g_window::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 	resizeFunction = func;
+}
+
+void g_window::captureMouseToggle(bool center){
+	#if defined(_WIN32)
+
+	#endif
+	#if defined(__unix__)
+	if (!captured) {
+		XGrabPointer(r_display, m_hwnd, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, m_hwnd, None, CurrentTime);
+	} else {
+		XUngrabPointer(r_display, CurrentTime);
+	}
+	#endif
+	captured = !captured;
+	this->center = center;
 }

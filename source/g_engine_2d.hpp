@@ -71,7 +71,10 @@ public:
 	//updates the window
 	bool updateWindow();
 	
+	//toggles the window to fullscreen
 	void toggleFullscreen();
+	// bool center toggles whether to keep mouse in center of screen
+	void toggleMouseCapture(bool center);
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
 	bool getKeyDown(uint32_t key);
