@@ -60,8 +60,9 @@ namespace gore {
 		FontRenderer(PrimitiveRenderer* pr){
 			this->pr = pr;
 		}
-		//font functions
+		//font loading
 		Font loadFont(std::string file, uint16_t start, uint16_t end);
+		//font drawing
 		void drawText(std::string text, Font* font, float x, float y, int ptsize);
 		RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
 		void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<uint16_t> flipx);
