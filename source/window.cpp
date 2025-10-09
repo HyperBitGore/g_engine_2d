@@ -1,11 +1,10 @@
 #include "backend.hpp"
-#include <X11/X.h>
-#include <X11/Xlib.h>
 #include <cstdlib>
 #include <iostream>
 
 
 std::function<void(uint32_t, uint32_t)> resizeFunction;
+bool globalCapture = false;
 
 #if defined(_WIN32)
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -20,6 +19,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 			glViewport(0, 0, width, height);
 			if (resizeFunction) {
 				resizeFunction(width, height);
+			}
+			if (globalCapture) {
+				RECT rect;
+				RECT clRect;
+				GetClientRect(hwnd, &clRect);
+				GetWindowRect(hwnd, &rect);
+				rect.left += clRect.left;
+				rect.top += clRect.top;
+				ClipCursor(&rect);
 			}
 		}
 		break;
@@ -51,6 +59,14 @@ bool g_window::ProcessMessage() {
 	while (PeekMessage(&msg, nullptr, 0u, 0u, PM_REMOVE)) {
 		if (msg.message == WM_QUIT) {
 			return false;
+		} else if (msg.message == WM_MOUSEMOVE) {
+			if (this->center && globalCapture) {
+				RECT rect;
+				GetClientRect(m_hwnd, &rect);
+				ClientToScreen(m_hwnd, (POINT*)&rect.left);
+				ClientToScreen(m_hwnd, (POINT*)&rect.right);
+				SetCursorPos((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+			}
 		}
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -284,7 +300,18 @@ void g_window::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 
 void g_window::captureMouseToggle(bool center){
 	#if defined(_WIN32)
-
+	if (!captured) {
+		RECT rect;
+		RECT clRect;
+		GetClientRect(m_hwnd, &clRect);
+		GetWindowRect(m_hwnd, &rect);
+		rect.left += clRect.left;
+		rect.top += clRect.top;
+		ClipCursor(&rect);
+	} else {
+		ClipCursor(NULL);
+		//ShowCursor(TRUE);
+	}
 	#endif
 	#if defined(__unix__)
 	if (!captured) {
@@ -294,5 +321,32 @@ void g_window::captureMouseToggle(bool center){
 	}
 	#endif
 	captured = !captured;
+	globalCapture = captured;
 	this->center = center;
+}
+
+void g_window::mouseHideToggle() {
+	#if defined(_WIN32)
+	ShowCursor(!mouseHide);
+	mouseHide = !mouseHide;
+	#endif
+	#if defined(__unix__)
+	if (cur_mstate == 0) {
+		Cursor invisibleCursor;
+		Pixmap bitmapNoData;
+		XColor black;
+		static char noData[] = { 0,0,0,0,0,0,0,0 };
+		black.red = black.green = black.blue = 0;
+
+		bitmapNoData = XCreateBitmapFromData (r_display, m_hwnd, noData, 8, 8);
+		invisibleCursor = XCreatePixmapCursor(r_display, bitmapNoData, bitmapNoData, &black, &black, 0, 0);
+		XDefineCursor(r_display, m_hwnd, invisibleCursor);
+		XFreeCursor(r_display, invisibleCursor);
+		XFreePixmap(r_display, bitmapNoData);
+		cur_mstate = 1;
+	} else {
+		XUndefineCursor(r_display, m_hwnd);
+		cur_mstate = 0;
+	}
+	#endif
 }

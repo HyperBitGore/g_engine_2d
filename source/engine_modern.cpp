@@ -106,3 +106,7 @@ void EngineNewGL::toggleFullscreen() {
 void EngineNewGL::toggleMouseCapture(bool center) {
 	wind->captureMouseToggle(center);
 }
+
+void EngineNewGL::toggleMouseHide() {
+	wind->mouseHideToggle();	
+}

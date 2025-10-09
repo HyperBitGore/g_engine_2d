@@ -307,6 +307,7 @@ private:
 	bool fullscreen = false;
 	bool captured = false;
 	bool center = false;
+	bool mouseHide = true;
 public:
 	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false);
 	g_window(const g_window&) = delete;
@@ -322,6 +323,7 @@ public:
 	void toggleFullscreen();
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 	void captureMouseToggle(bool center);
+	void mouseHideToggle();
 };
 
 

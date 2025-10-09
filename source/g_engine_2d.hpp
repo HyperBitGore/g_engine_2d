@@ -75,6 +75,8 @@ public:
 	void toggleFullscreen();
 	// bool center toggles whether to keep mouse in center of screen
 	void toggleMouseCapture(bool center);
+	// toggles whether to hide the mouse cursor
+	void toggleMouseHide();
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
 	bool getKeyDown(uint32_t key);

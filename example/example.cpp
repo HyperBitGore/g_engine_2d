@@ -380,6 +380,10 @@ int main() {
 			std::cout << "center mouse\n";
 			eng2.toggleMouseCapture(true);
 			dd = 0;
+		} else if (dd >= 2.0 && eng2.getKeyDown(g_b)) {
+			std::cout << "toggle mouse hide\n";
+			eng2.toggleMouseHide();
+			dd = 0;
 		}
 		if (eng2.getKeyDown(g_Return)) {
 			std::cout << "key down\n";
