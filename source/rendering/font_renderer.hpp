@@ -52,14 +52,17 @@ namespace gore {
 
 	class FontRenderer {
 		private:
-		PrimitiveRenderer* pr;
 		float convertToRange(float n, float min, float max, float old_min, float old_max) {
 			return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 		}
+		std::vector<vec2> vertexs;
+		GLuint vertex_buffer;
+		GLuint allocated;
+		Shader font_shader;
+		GLuint font_vao;
+		uint32_t width, height;
 		public:
-		FontRenderer(PrimitiveRenderer* pr){
-			this->pr = pr;
-		}
+		FontRenderer(uint32_t w, uint32_t h);
 		//font loading
 		Font loadFont(std::string file, uint16_t start, uint16_t end);
 		//font drawing
@@ -67,6 +70,13 @@ namespace gore {
 		RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
 		void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<uint16_t> flipx);
 		void drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize);
+		// for width and height
+		void setDimensions (uint32_t width, int32_t height);
+		// set color of rendered text
+		void setColor(vec4 color) {
+			font_shader.bind();
+			font_shader.setuniform("textColor", color);
+		}
 	};
 
 }

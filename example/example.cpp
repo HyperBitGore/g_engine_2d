@@ -10,7 +10,7 @@ EngineNewGL eng2("Test Window", 640, 480);
 PrimitiveRenderer prim_r(640, 480);
 imagerenderer img_r(640, 480);
 grayscalerenderer gsc_r(640, 480);
-gore::FontRenderer font_r(&prim_r);
+gore::FontRenderer font_r(640, 480);
 DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
@@ -228,6 +228,7 @@ void renderFunction() {
 	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32);
+	font_r.drawRasterText(&f_test, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789", 50.0f, 500.0f, 16);
 	eng2.disable(GL_BLEND);
 	font_r.drawText("Hello World", &f_test, 100, 30, 24);
 }
@@ -240,6 +241,7 @@ void windowResize (uint32_t width, uint32_t height) {
 	prim_r.setDimensions(width, height);
 	img_r.setDimensions(width, height);
 	gsc_r.setDimensions(width, height);
+	font_r.setDimensions(width, height);
 	dr.resize(width, height);
 	globalWidth = width;
 	globalHeight = height;

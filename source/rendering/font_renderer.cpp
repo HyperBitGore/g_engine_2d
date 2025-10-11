@@ -1,4 +1,5 @@
 #include "font_renderer.hpp"
+#include "font_renderer_shader.hpp"
 #include <algorithm>
 #include <cstdint>
 
@@ -207,16 +208,57 @@ void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, f
 				Line l = Font->glyphs[index].contours[j];
 				//converting line points to ptsize
 				l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize - 1, Font->glyphs[index].xMin, Font->glyphs[index].xMax);
-				l.p1.y = convertToRange(l.p1.y, y1, y1 + ptsize - 1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
+				l.p1.y = convertToRange(l.p1.y, y1 + ptsize - 1, y1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
 
 
 				l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize - 1, Font->glyphs[index].xMin, Font->glyphs[index].xMax);
-				l.p2.y = convertToRange(l.p2.y, y1, y1 + ptsize - 1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
-				pr->addLine(l.p1, l.p2);
+				l.p2.y = convertToRange(l.p2.y, y1 + ptsize - 1, y1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
+				vertexs.push_back(l.p1);
+				vertexs.push_back(l.p2);
 			}
 		}
 		//increase the pos by ptsize and a small gap
 		x1 += ptsize + 2;
 	}
-	pr->drawBufferLine();
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    font_shader.bind();
+    glBindVertexArray_g(font_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    if(vertexs.size() > allocated){
+        allocated = vertexs.size();
+        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+    }else{
+        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+    }
+    glDrawArrays_g(GL_LINES, 0, (GLsizei)vertexs.size());
+    vertexs.clear();
+    glBindVertexArray_g(0);
+   glDisable(GL_LINE_SMOOTH);
+}
+
+
+gore::FontRenderer::FontRenderer(uint32_t w, uint32_t h) {
+	this->width = w;
+	this->height = h;
+	Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
+	vertexs.reserve(1000);
+    allocated = 1;
+    glGenBuffers_g(1, &vertex_buffer);
+	font_shader.compile(vertexShaderSourceFont, fragmentShaderSourceFont);
+    font_shader.bind();
+    glGenVertexArrays_g(1, &font_vao);
+    glBindVertexArray_g(font_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    font_shader.setuniform("projection", 1, true, ortho);
+}
+
+void gore::FontRenderer::setDimensions (uint32_t width, int32_t height) {
+	Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
+	font_shader.bind();
+	font_shader.setuniform("projection", 1, true, ortho);
+	this->width = width;
+	this->height = height;
 }

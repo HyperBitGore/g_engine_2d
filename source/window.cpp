@@ -310,7 +310,6 @@ void g_window::captureMouseToggle(bool center){
 		ClipCursor(&rect);
 	} else {
 		ClipCursor(NULL);
-		//ShowCursor(TRUE);
 	}
 	#endif
 	#if defined(__unix__)
