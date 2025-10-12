@@ -51,21 +51,27 @@ vec2 getIntersection(Line l1, Line l2) {
 	return { -1, -1 };
 }
 
+const float DENSITY_CONSTANT = 72.0f; // Points per inch
 /*float convertToRange(float n, float min, float max, float old_min, float old_max) {
 	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 }*/
 
-gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int h, uint32_t color, bool flipx) {
+// issue with Q missing part of glyph when rasterizing is some of y's being negative after scaling
+gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int h, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
+	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
-		l.p1.x = convertToRange(l.p1.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
-		l.p1.y = convertToRange(l.p1.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
+		l.p1.x = l.p1.x * scale_factor;
+		l.p1.y = l.p1.y * scale_factor;
+		//l.p1.x = convertToRange(l.p1.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
+		//l.p1.y = convertToRange(l.p1.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
 		
-
-		l.p2.x = convertToRange(l.p2.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
-		l.p2.y = convertToRange(l.p2.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
+		l.p2.x = l.p2.x * scale_factor;
+		l.p2.y = l.p2.y * scale_factor;
+		//l.p2.x = convertToRange(l.p2.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
+		//l.p2.y = convertToRange(l.p2.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
 
 		lines.push_back(l);
 	}
@@ -113,43 +119,22 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 		}
 		
 	}
-	//flip the image
-	if (flipx) {
-		//hacky way to deal with fucked up L's
-		for (int y = 0; y < h - 1; y++) {
-			for (int x = 0, x1 = w - 1; x <= x1; x++, x1--) {
-				uint32_t c1 = (uint32_t)imageloader::getPixel(r_g.data, x, y, 4);
-				uint32_t c2 = (uint32_t)imageloader::getPixel(r_g.data, x1, y, 4);
-				imageloader::setPixelRaw(r_g.data, x, y, c2, 4);
-				imageloader::setPixelRaw(r_g.data, x1, y, c1, 4);
-			}
-		}
-	}
-	else {
-		for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
-			//flipping the current rows
-			unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
-			std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
-			unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
-			std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
-			std::memcpy(c2, c1, w * 4);
-			std::free(c1);
-		}
+	for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
+		//flipping the current rows
+		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
+		std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
+		unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
+		std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
+		std::memcpy(c2, c1, w * 4);
+		std::free(c1);
 	}
 	return r_g;
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
-void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t color, std::vector<uint16_t> flipx) {
+void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color) {
 	Font->ptsize = ptsize;
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
-		bool flip = false;
-		for (auto& j : flipx) {
-			if (Font->glyphs[i].c == j) {
-				flip = true;
-				break;
-			}
-		}
-		Font->r_glyphs.push_back(rasterizeGlyph(&Font->glyphs[i], ptsize, ptsize, color, flip));
+		Font->r_glyphs.push_back(rasterizeGlyph(&Font->glyphs[i], ptsize, ptsize, color, ptsize, dpi, Font));
 		imageloader::updateIMG(Font->r_glyphs[Font->r_glyphs.size() - 1].data);
 		//imageloader::createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 		//createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
@@ -173,7 +158,7 @@ int findFontChar(gore::Font* f, uint16_t c) {
 	return 0;
 }
 
-void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::string text, float x, float y, int ptsize) {
+void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
 	if (Font->r_glyphs.size() <= 0) {
 		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
@@ -182,6 +167,7 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 	float y1 = y;
 	//have to scale images based on ptsize
 	float scale = (float)Font->ptsize / ((float)Font->ptsize / (float)ptsize);
+	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontCharRaster(Font, text[i]);
@@ -189,8 +175,12 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 			//addImageCall( x1, y1, scale, scale);
 			//bindImg(gore::Font->r_glyphs[index].data);
 			//renderImgs(true);
+			float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
+			x1 += adv_pixels;
+		} else {
+			//increase the pos by ptsize and a small gap
+			x1 += scale + 2;
 		}
-		x1 += scale + 2;
 	}
 	
 }
@@ -198,27 +188,32 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
 //cutout memory inefficient parts of glyph like points
-void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, float y, int ptsize) {
+void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, float y, int ptsize, uint32_t dpi) {
 	float x1 = x;
 	float y1 = y;
+	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < text.size(); i++) {
 		if (text[i] >= 33) {
 			int index = findFontChar(Font, text[i]);
+			float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
+			//draw the glyph
 			for (size_t j = 0; j < Font->glyphs[index].contours.size(); j++) {
 				Line l = Font->glyphs[index].contours[j];
 				//converting line points to ptsize
-				l.p1.x = convertToRange(l.p1.x, x1, x1 + ptsize - 1, Font->glyphs[index].xMin, Font->glyphs[index].xMax);
-				l.p1.y = convertToRange(l.p1.y, y1 + ptsize - 1, y1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
+				l.p1.x = x1 + (l.p1.x * scale_factor);
+				l.p1.y = y1 - (l.p1.y * scale_factor);
 
 
-				l.p2.x = convertToRange(l.p2.x, x1, x1 + ptsize - 1, Font->glyphs[index].xMin, Font->glyphs[index].xMax);
-				l.p2.y = convertToRange(l.p2.y, y1 + ptsize - 1, y1, Font->glyphs[index].yMin, Font->glyphs[index].yMax);
+				l.p2.x = x1 + (l.p2.x * scale_factor);
+				l.p2.y = y1 - (l.p2.y * scale_factor);
 				vertexs.push_back(l.p1);
 				vertexs.push_back(l.p2);
 			}
+			x1 += adv_pixels;
+		} else {
+			//increase the pos by ptsize and a small gap
+			x1 += ptsize + 2;
 		}
-		//increase the pos by ptsize and a small gap
-		x1 += ptsize + 2;
 	}
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);

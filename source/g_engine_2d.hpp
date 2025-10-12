@@ -77,6 +77,8 @@ public:
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor
 	void toggleMouseHide();
+	// get window dpi
+	uint32_t getDPI();
 	//input functions
 	//takes keys so you can use either virtual key codes or the char value for letters
 	bool getKeyDown(uint32_t key);

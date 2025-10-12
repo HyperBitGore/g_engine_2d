@@ -324,6 +324,7 @@ public:
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 	void captureMouseToggle(bool center);
 	void mouseHideToggle();
+	uint32_t getDPI();
 };
 
 

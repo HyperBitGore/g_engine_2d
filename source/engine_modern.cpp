@@ -110,3 +110,7 @@ void EngineNewGL::toggleMouseCapture(bool center) {
 void EngineNewGL::toggleMouseHide() {
 	wind->mouseHideToggle();	
 }
+
+uint32_t EngineNewGL::getDPI() {
+	return wind->getDPI();
+}

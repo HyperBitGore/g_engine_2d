@@ -349,3 +349,17 @@ void g_window::mouseHideToggle() {
 	}
 	#endif
 }
+
+
+uint32_t g_window::getDPI() {
+	#if defined(_WIN32)
+		UINT dpi = GetDpiForWindow(m_hwnd);
+		return dpi;
+	#endif
+	#if defined(__unix__)
+		Screen* screen = DefaultScreenOfDisplay(r_display);
+		int dpi = (int)((WidthOfScreen(screen) * 25.4) / WidthMMOfScreen(screen));
+		return dpi;
+	#endif
+	return 96;
+}

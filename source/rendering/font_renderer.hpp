@@ -27,10 +27,12 @@ namespace gore {
 	struct Glyph {
 		uint16_t c; //for unicode
 		std::vector<Line> contours;
-		short yMax;
-		short yMin;
-		short xMax;
-		short xMin;
+		int16_t yMax;
+		int16_t yMin;
+		int16_t xMax;
+		int16_t xMin;
+		uint16_t advanceWidth;
+		int16_t lsb; //left side bearing
 	};
 
 	//speed this up with a hashmap when done
@@ -39,6 +41,7 @@ namespace gore {
 		std::vector<Glyph> glyphs;
 		std::vector<RasterGlyph> r_glyphs; //can ignore this if don't plan on using my rasterization
 		int ptsize;
+		uint16_t unitsPerEm;
 	};
 
 
@@ -66,10 +69,10 @@ namespace gore {
 		//font loading
 		Font loadFont(std::string file, uint16_t start, uint16_t end);
 		//font drawing
-		void drawText(std::string text, Font* font, float x, float y, int ptsize);
-		RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, bool flipx = false);
-		void rasterizeFont(Font* font, int ptsize, uint32_t color, std::vector<uint16_t> flipx);
-		void drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize);
+		void drawText(std::string text, Font* font, float x, float y, int ptsize, uint32_t dpi);
+		RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, int ptsize, uint32_t dpi, Font* Font);
+		void rasterizeFont(Font* font, int ptsize, uint32_t dpi, uint32_t color);
+		void drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
 		// for width and height
 		void setDimensions (uint32_t width, int32_t height);
 		// set color of rendered text

@@ -542,7 +542,91 @@ TTFHeader readHead(char* c, int offset, int length) {
 	return head;
 }
 
+struct hhea_table {
+	uint16_t majorVersion; // should be 1
+	uint16_t minorVersion; // should be 0
+	int16_t ascender; //typical height above baseline
+	int16_t descender; //typical depth below baseline
+	int16_t lineGap; //typical gap between lines
+	uint16_t advanceWidthMax; //maximum advance width value in 'hmtx' table
+	int16_t minLeftSideBearing; //minimum left sidebearing value in 'hmtx' table
+	int16_t minRightSideBearing; //minimum right sidebearing value in 'hmtx' table
+	int16_t xMaxExtent; //max(lsb + (xMax-xMin))
+	int16_t caretSlopeRise; //used to calculate the slope of the cursor (rise/run); 1 for vertical
+	int16_t caretSlopeRun; //0 for vertical
+	int16_t caretOffset; //set to 0 for non-slanted fonts
+	//int16_t reserved[4]; //set to 0
+	int16_t metricDataFormat; //0 for current format
+	uint16_t numberOfHMetrics; //number of hMetric entries in 'hmtx' table
+};
 
+hhea_table readHheaTable(char* c, int offset, int length) {
+	hhea_table h;
+	char* m = c + offset;
+	int16_t* t = (int16_t*)m;
+	h.majorVersion = SwapTwoBytes(*t);
+	t++;
+	h.minorVersion = SwapTwoBytes(*t);
+	t++;
+	h.ascender = SwapTwoBytes(*t);
+	t++;
+	h.descender = SwapTwoBytes(*t);
+	t++;
+	h.lineGap = SwapTwoBytes(*t);
+	t++;
+	h.advanceWidthMax = SwapTwoBytes(*t);
+	t++;
+	h.minLeftSideBearing = SwapTwoBytes(*t);
+	t++;
+	h.minRightSideBearing = SwapTwoBytes(*t);
+	t++;
+	h.xMaxExtent = SwapTwoBytes(*t);
+	t++;
+	h.caretSlopeRise = SwapTwoBytes(*t);
+	t++;
+	h.caretSlopeRun = SwapTwoBytes(*t);
+	t++;
+	h.caretOffset = SwapTwoBytes(*t);
+	t++;
+	t += 4; //skipping reserved
+	h.metricDataFormat = SwapTwoBytes(*t);
+	t++;
+	h.numberOfHMetrics = SwapTwoBytes(*t);
+	t++;
+
+	return h;
+}
+
+struct long_hor_metric {
+	uint16_t advanceWidth;
+	int16_t lsb; //left side bearing
+};
+
+struct hmtx_table {
+	std::vector<long_hor_metric> hMetrics;
+	std::vector<int16_t> leftSideBearings; //for glyphs that have same width as previous glyph
+};
+
+hmtx_table readHmtxTable(char* c, int offset, int length, uint16_t numHMetrics, size_t numGlyphs) {
+	hmtx_table h;
+	char* m = c + offset;
+	uint16_t* t = (uint16_t*)m;
+	for (size_t i = 0; i < numHMetrics; i++) {
+		long_hor_metric hm;
+		hm.advanceWidth = SwapTwoBytes(*t);
+		t++;
+		hm.lsb = SwapTwoBytes(*t);
+		t++;
+		h.hMetrics.push_back(hm);
+	}
+	//now we read the left side bearings
+	int16_t* s = (int16_t*)t;
+	for (size_t i = numHMetrics; i < numGlyphs; i++) {
+		h.leftSideBearings.push_back(SwapTwoBytes(*s));
+		s++;
+	}
+	return h;
+}
 
 struct glyf {
 	uint16_t c;
@@ -576,11 +660,7 @@ struct glyph_table {
 	std::vector<simp_glyf> simple_glyphs;
 	std::vector<comp_glyf> compound_glyphs;
 };
-
-
-
-//glyf time
-
+// read glyf table
 glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) {
 	glyph_table table;
 	for (size_t i = 0; i < locas.size(); i++) {
@@ -724,7 +804,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 	return table;
 }
 
-
+// find table in directory
 table_dir* findTable(std::string table, Font_dir* directory) {
 	for (size_t i = 0; i < directory->table.size(); i++) {
 		if (directory->table[i].t.compare(table) == 0) {
@@ -733,7 +813,7 @@ table_dir* findTable(std::string table, Font_dir* directory) {
 	}
 	return nullptr;
 }
-
+// tesslate bezier curve into line segments
 void tesslateBezier(std::vector<vec2>& points, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
 	float step = 1.0f / subdiv;
 	float lx = 0, ly = 0;
@@ -807,16 +887,18 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 	header = readHead(c, tab->offset, tab->length);
 	tab = findTable("loca", directory);
 	locas = readLoca(c, tab->offset, tab->length, header.indexToLocFormat, &c_map);
+	tab = findTable("hhea", directory);
+	hhea_table hhea = readHheaTable(c, tab->offset, tab->length);
+    tab = findTable("hmtx", directory);
+	hmtx_table hmtx = readHmtxTable(c, tab->offset, tab->length, hhea.numberOfHMetrics, locas.size());
 	tab = findTable("glyf", directory);
 	g_table = readGlyfs(c, tab->offset, tab->length, locas);
     tab = findTable("vmtx", directory);
     tab = findTable("vhea", directory);
-    tab = findTable("hmtx", directory);
-    tab = findTable("hhea", directory);
     tab = findTable("gpos", directory);
     tab = findTable("gdef", directory);
     tab = findTable("kern", directory);
-
+	f->unitsPerEm = header.uintsPerEm;
 	//don't want to store pointers to anything in gore::Font file
 	//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization, 2.2
 	for (auto& i : g_table.simple_glyphs) {
@@ -826,6 +908,8 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 		g.yMax = i.yMax;
 		g.yMin = i.yMin;
 		g.xMin = i.xMin;
+		g.advanceWidth = hmtx.hMetrics[i.c].advanceWidth;
+		g.lsb = hmtx.hMetrics[i.c].lsb;
 		int k = 0;
 		std::vector<vec2> points;
 		std::vector<int> end_contours;
