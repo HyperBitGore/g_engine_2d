@@ -327,27 +327,24 @@ void g_window::captureMouseToggle(bool center){
 void g_window::mouseHideToggle() {
 	#if defined(_WIN32)
 	ShowCursor(!mouseHide);
-	mouseHide = !mouseHide;
 	#endif
 	#if defined(__unix__)
-	if (cur_mstate == 0) {
+	if (!mouseHide) {
 		Cursor invisibleCursor;
-		Pixmap bitmapNoData;
+		Pixmap blank;
 		XColor black;
-		static char noData[] = { 0,0,0,0,0,0,0,0 };
-		black.red = black.green = black.blue = 0;
+		static char noData[1] = { 0};
 
-		bitmapNoData = XCreateBitmapFromData (r_display, m_hwnd, noData, 8, 8);
-		invisibleCursor = XCreatePixmapCursor(r_display, bitmapNoData, bitmapNoData, &black, &black, 0, 0);
+		blank = XCreateBitmapFromData (r_display, m_hwnd, noData, 1, 1);
+		invisibleCursor = XCreatePixmapCursor(r_display, blank, blank, &black, &black, 0, 0);
 		XDefineCursor(r_display, m_hwnd, invisibleCursor);
 		XFreeCursor(r_display, invisibleCursor);
-		XFreePixmap(r_display, bitmapNoData);
-		cur_mstate = 1;
+		XFreePixmap(r_display, blank);
 	} else {
 		XUndefineCursor(r_display, m_hwnd);
-		cur_mstate = 0;
 	}
 	#endif
+	mouseHide = !mouseHide;
 }
 
 
