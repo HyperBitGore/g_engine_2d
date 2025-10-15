@@ -51,9 +51,41 @@ vec2 getIntersection(Line l1, Line l2) {
 	return { -1, -1 };
 }
 
+float isLeft(vec2 P0, vec2 P1, vec2 P) {
+    return (P1.x - P0.x) * (P.y - P0.y) - (P.x - P0.x) * (P1.y - P0.y);
+}
+
+int32_t windingNumber (vec2 p, std::vector<Line>& lines, float maxx) {
+	int32_t winding = 0;
+    const float EPSILON = 1e-6;
+
+    for (const auto& line : lines) {
+        const vec2& p0 = line.p1;
+        const vec2& p1 = line.p2;
+
+        // Skip horizontal edges
+        if (fabs(p0.y - p1.y) < EPSILON) continue;
+
+        if (p0.y < p1.y) { // upward edge
+            if (p.y >= p0.y && p.y < p1.y && isLeft(p0, p1, p) > 0) {
+                ++winding;
+            }
+        } else if (p0.y > p1.y) { // downward edge
+            if (p.y >= p1.y && p.y < p0.y && isLeft(p0, p1, p) < 0) {
+                --winding;
+            }
+        }
+    }
+	return winding;
+}
+
+
+bool isInside (vec2 p, std::vector<Line>& lines, float maxx) {
+	return windingNumber(p, lines, maxx) != 0;
+}
+
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
 
-// issue with Q missing part of glyph when rasterizing is some of y's being negative after scaling
 gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
@@ -117,10 +149,25 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	//do vertical scanlines
-	if (g->c == 'p') {
+	if (g->c == '6') {
 		std::cout << "here\n";
 	}
-	for (int x = (int)minx; x < w; x++) {
+	if (miny < 0) {
+		for (size_t i = 0; i < lines.size(); i++) {
+			lines[i].p1.y += std::abs(miny);
+			lines[i].p2.y += std::abs(miny);
+		}
+	}
+	// winding rule
+	for (size_t y = 0; y < h; y++) {
+		for(size_t x = 0; x < w; x++) {
+			if (isInside({(float)x, (float)y}, lines, w)) {
+				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
+			}
+		}
+	}
+	// line intersections
+	/*for (int x = (int)minx; x < w; x++) {
 		Line test_line = { {(float)x, miny}, {(float)x, (float)h} };
 		std::vector<vec2> inters; //list of intersection points
 		std::vector<Line> adds;
@@ -136,18 +183,7 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 			float y1 = inters[i - 1].y;
 			float y2 = inters[i].y;
 			for (int y = (int)y1; y <= y2; y++) {
-				int tempy = y;
-				if (miny < 0) {
-					if (y < 0) {
-						tempy = (abs((int)miny) - abs(y));
-					} else {
-						tempy = y + (int)abs(miny);
-					}
-				}
-				if (tempy >= h) {
-					tempy = h - 1;
-				}
-				imageloader::setPixelRaw(r_g.data, x, tempy, color, 4);
+				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
 			}
 			if (inters.size() % 2 == 0) {
 				i += 2;
@@ -157,7 +193,7 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 			}
 		}
 		
-	}
+	}*/
 	for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
 		//flipping the current rows
 		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
