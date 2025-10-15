@@ -118,19 +118,19 @@ void renderFunction() {
 	if (s_cool >= 0.1f) {
 		if (eng2.getKeyDown(g_1)) {
 			s_cool = 0;
-			ap.playFile(s_test, 0);
+			//ap.playFile(s_test, 0);
 		}
 		else if (eng2.getKeyDown(g_2)) {
 			s_cool = 0;
-			ap.playFile(s_test2, 0);
+			//ap.playFile(s_test2, 0);
 		}
 		else if (eng2.getKeyDown(g_3)) {
 			s_cool = 0;
-			ap.playFile(s_test3, 3);
+			//ap.playFile(s_test3, 3);
 		}
 		else if (eng2.getKeyDown(g_4)) {
 			s_cool = 0;
-			ap.playFile(s_test4, 1);
+			//ap.playFile(s_test4, 1);
 		}
 		
 	}
@@ -228,7 +228,7 @@ void renderFunction() {
 	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
-	font_r.drawRasterText(&f_test, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789", 50.0f, 500.0f, 16, eng2.getDPI());
+	font_r.drawRasterText(&f_test, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789", 50.0f, 500.0f, 48, eng2.getDPI());
 	eng2.disable(GL_BLEND);
 	font_r.drawText("Hello World qqjj", &f_test, 100, 30, 24, eng2.getDPI());
 }

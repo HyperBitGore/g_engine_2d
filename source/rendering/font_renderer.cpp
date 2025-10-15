@@ -52,12 +52,9 @@ vec2 getIntersection(Line l1, Line l2) {
 }
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
-/*float convertToRange(float n, float min, float max, float old_min, float old_max) {
-	return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
-}*/
 
 // issue with Q missing part of glyph when rasterizing is some of y's being negative after scaling
-gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int h, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
+gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
@@ -65,19 +62,47 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 		Line l = g->contours[i];
 		l.p1.x = l.p1.x * scale_factor;
 		l.p1.y = l.p1.y * scale_factor;
-		//l.p1.x = convertToRange(l.p1.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
-		//l.p1.y = convertToRange(l.p1.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
 		
 		l.p2.x = l.p2.x * scale_factor;
 		l.p2.y = l.p2.y * scale_factor;
-		//l.p2.x = convertToRange(l.p2.x, 0.0f, (float)w - 1, g->xMin, g->xMax);
-		//l.p2.y = convertToRange(l.p2.y, 0.0f, (float)h - 1, g->yMin, g->yMax);
 
 		lines.push_back(l);
+	}
+	float miny = 0.0f;
+	float minx = 0.0f;
+	float maxy = 0.0f;
+	float maxx = 0.0f;
+	for (size_t i = 0; i < lines.size(); i++) {
+		if (lines[i].p1.x < minx) {
+			minx = lines[i].p1.x;
+		}
+		if (lines[i].p2.x < minx) {
+			minx = lines[i].p2.x;
+		}
+		if (lines[i].p1.y < miny) {
+			miny = lines[i].p1.y;
+		}
+		if (lines[i].p2.y < miny) {
+			miny = lines[i].p2.y;
+		}
+		if (lines[i].p1.x > maxx) {
+			maxx = lines[i].p1.x;
+		}
+		if (lines[i].p2.x > maxx) {
+			maxx = lines[i].p2.x;
+		}
+		if (lines[i].p1.y > maxy) {
+			maxy = lines[i].p1.y;
+		}
+		if (lines[i].p2.y > maxy) {
+			maxy = lines[i].p2.y;
+		}
 	}
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
+	int w = ptsize + (abs((int)minx)); //have to add abs minx to width so we can fit glyphs that go below left side bearing
+	int h = ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
 	r_g.data = imageloader::createBlank(w, h, 4);
 	imageloader::createTexture(r_g.data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
@@ -92,8 +117,11 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	//do vertical scanlines
-	for (int x = 0; x < w; x++) {
-		Line test_line = { {(float)x, 0.0f}, {(float)x, (float)h} };
+	if (g->c == 'p') {
+		std::cout << "here\n";
+	}
+	for (int x = (int)minx; x < w; x++) {
+		Line test_line = { {(float)x, miny}, {(float)x, (float)h} };
 		std::vector<vec2> inters; //list of intersection points
 		std::vector<Line> adds;
 		for (size_t i = 0; i < lines.size(); i++) {
@@ -108,7 +136,18 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 			float y1 = inters[i - 1].y;
 			float y2 = inters[i].y;
 			for (int y = (int)y1; y <= y2; y++) {
-				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
+				int tempy = y;
+				if (miny < 0) {
+					if (y < 0) {
+						tempy = (abs((int)miny) - abs(y));
+					} else {
+						tempy = y + (int)abs(miny);
+					}
+				}
+				if (tempy >= h) {
+					tempy = h - 1;
+				}
+				imageloader::setPixelRaw(r_g.data, x, tempy, color, 4);
 			}
 			if (inters.size() % 2 == 0) {
 				i += 2;
@@ -134,7 +173,7 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, int w, int 
 void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color) {
 	Font->ptsize = ptsize;
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
-		Font->r_glyphs.push_back(rasterizeGlyph(&Font->glyphs[i], ptsize, ptsize, color, ptsize, dpi, Font));
+		Font->r_glyphs.push_back(rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font));
 		imageloader::updateIMG(Font->r_glyphs[Font->r_glyphs.size() - 1].data);
 		//imageloader::createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
 		//createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
@@ -169,18 +208,21 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 	float scale = (float)Font->ptsize / ((float)Font->ptsize / (float)ptsize);
 	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < text.size(); i++) {
+		int index = findFontCharRaster(Font, text[i]);
+		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
 		if (text[i] >= 33) {
-			int index = findFontCharRaster(Font, text[i]);
-			img_r->drawImage(Font->r_glyphs[index].data, {x1, y1}, {scale, scale});
+			float tempy = y1;
+			if (Font->ptsize < Font->r_glyphs[index].data->h) {
+				int dif = Font->r_glyphs[index].data->h - Font->ptsize;
+				float diff = (float)dif * scale_factor;
+				tempy += diff;
+			}
+			img_r->drawImage(Font->r_glyphs[index].data, {x1, tempy}, {scale, scale});
 			//addImageCall( x1, y1, scale, scale);
 			//bindImg(gore::Font->r_glyphs[index].data);
 			//renderImgs(true);
-			float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
-			x1 += adv_pixels;
-		} else {
-			//increase the pos by ptsize and a small gap
-			x1 += scale + 2;
 		}
+		x1 += adv_pixels;
 	}
 	
 }
@@ -193,9 +235,9 @@ void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, f
 	float y1 = y;
 	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < text.size(); i++) {
+		int index = findFontChar(Font, text[i]);
+		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
 		if (text[i] >= 33) {
-			int index = findFontChar(Font, text[i]);
-			float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
 			//draw the glyph
 			for (size_t j = 0; j < Font->glyphs[index].contours.size(); j++) {
 				Line l = Font->glyphs[index].contours[j];
@@ -209,11 +251,8 @@ void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, f
 				vertexs.push_back(l.p1);
 				vertexs.push_back(l.p2);
 			}
-			x1 += adv_pixels;
-		} else {
-			//increase the pos by ptsize and a small gap
-			x1 += ptsize + 2;
 		}
+		x1 += adv_pixels;
 	}
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);

@@ -53,11 +53,10 @@ namespace gore {
 
 
 
+	// https://axleos.com/writing-a-truetype-font-renderer/
+	// Render ur favorite fonts
 	class FontRenderer {
 		private:
-		float convertToRange(float n, float min, float max, float old_min, float old_max) {
-			return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
-		}
 		std::vector<vec2> vertexs;
 		GLuint vertex_buffer;
 		GLuint allocated;
@@ -70,7 +69,7 @@ namespace gore {
 		Font loadFont(std::string file, uint16_t start, uint16_t end);
 		//font drawing
 		void drawText(std::string text, Font* font, float x, float y, int ptsize, uint32_t dpi);
-		RasterGlyph rasterizeGlyph(Glyph* g, int w, int h, uint32_t color, int ptsize, uint32_t dpi, Font* Font);
+		RasterGlyph rasterizeGlyph(Glyph* g, uint32_t color, int ptsize, uint32_t dpi, Font* Font);
 		void rasterizeFont(Font* font, int ptsize, uint32_t dpi, uint32_t color);
 		void drawRasterText(Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
 		// for width and height
