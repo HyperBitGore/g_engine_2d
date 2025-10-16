@@ -51,37 +51,21 @@ vec2 getIntersection(Line l1, Line l2) {
 	return { -1, -1 };
 }
 
-float isLeft(vec2 P0, vec2 P1, vec2 P) {
-    return (P1.x - P0.x) * (P.y - P0.y) - (P.x - P0.x) * (P1.y - P0.y);
-}
+bool rayIntersectsSegment(vec2 p, vec2 a, vec2 b) {
+	if (a.y > b.y) std::swap(a, b);
+	if (p.y == a.y || p.y == b.y) p.y += 0.0001f;  // Avoids ambiguity on vertex
 
-int32_t windingNumber (vec2 p, std::vector<Line>& lines, float maxx) {
-	int32_t winding = 0;
-    const float EPSILON = 1e-6;
+	if (p.y > b.y || p.y < a.y || p.x > std::max(a.x, b.x))
+		return false;
 
-    for (const auto& line : lines) {
-        const vec2& p0 = line.p1;
-        const vec2& p1 = line.p2;
+	if (p.x < std::min(a.x, b.x)) return true;
 
-        // Skip horizontal edges
-        if (fabs(p0.y - p1.y) < EPSILON) continue;
+	float dx = b.x - a.x;
+	float dy = b.y - a.y;
+	if (dy == 0) return false;
 
-        if (p0.y < p1.y) { // upward edge
-            if (p.y >= p0.y && p.y < p1.y && isLeft(p0, p1, p) > 0) {
-                ++winding;
-            }
-        } else if (p0.y > p1.y) { // downward edge
-            if (p.y >= p1.y && p.y < p0.y && isLeft(p0, p1, p) < 0) {
-                --winding;
-            }
-        }
-    }
-	return winding;
-}
-
-
-bool isInside (vec2 p, std::vector<Line>& lines, float maxx) {
-	return windingNumber(p, lines, maxx) != 0;
+	float x_intersect = a.x + (p.y - a.y) * dx / dy;
+	return p.x < x_intersect;
 }
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
@@ -101,99 +85,43 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 		lines.push_back(l);
 	}
 	float miny = 0.0f;
-	float minx = 0.0f;
-	float maxy = 0.0f;
-	float maxx = 0.0f;
 	for (size_t i = 0; i < lines.size(); i++) {
-		if (lines[i].p1.x < minx) {
-			minx = lines[i].p1.x;
-		}
-		if (lines[i].p2.x < minx) {
-			minx = lines[i].p2.x;
-		}
 		if (lines[i].p1.y < miny) {
 			miny = lines[i].p1.y;
 		}
 		if (lines[i].p2.y < miny) {
 			miny = lines[i].p2.y;
 		}
-		if (lines[i].p1.x > maxx) {
-			maxx = lines[i].p1.x;
-		}
-		if (lines[i].p2.x > maxx) {
-			maxx = lines[i].p2.x;
-		}
-		if (lines[i].p1.y > maxy) {
-			maxy = lines[i].p1.y;
-		}
-		if (lines[i].p2.y > maxy) {
-			maxy = lines[i].p2.y;
-		}
 	}
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
-	int w = ptsize + (abs((int)minx)); //have to add abs minx to width so we can fit glyphs that go below left side bearing
+	int w = ptsize; //have to add abs minx to width so we can fit glyphs that go below left side bearing
 	int h = ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
 	r_g.data = imageloader::createBlank(w, h, 4);
 	imageloader::createTexture(r_g.data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-	//rewrite this myself cause I think the tutorials version is utter dogshit water, 
-	struct sortContours {
-		bool operator() (Line l1, Line l2) { return l1.p1.y < l2.p1.y; }
-	} sortLines;
-	std::sort(lines.begin(), lines.end(), sortLines);
-
-	struct sortInters {
-		bool operator() (vec2 l1, vec2 l2) { return l1.y < l2.y; }
-	} sortVec2;
-
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-	//do vertical scanlines
-	if (g->c == '6') {
-		std::cout << "here\n";
-	}
 	if (miny < 0) {
 		for (size_t i = 0; i < lines.size(); i++) {
 			lines[i].p1.y += std::abs(miny);
 			lines[i].p2.y += std::abs(miny);
 		}
 	}
-	// winding rule
-	for (size_t y = 0; y < h; y++) {
-		for(size_t x = 0; x < w; x++) {
-			if (isInside({(float)x, (float)y}, lines, w)) {
+	// even odd
+	for (uint32_t y = 0; y < h; y++) {
+		bool pos = false;
+		for (uint32_t x = 0; x < w; x++) {
+			int intersections = 0;
+			for (auto& edge : lines) {
+				if (rayIntersectsSegment({x + 0.5f, y + 0.5f}, edge.p1, edge.p2)) {
+					intersections++;
+				}
+			}
+			if (intersections % 2 == 1) {
 				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
 			}
 		}
 	}
-	// line intersections
-	/*for (int x = (int)minx; x < w; x++) {
-		Line test_line = { {(float)x, miny}, {(float)x, (float)h} };
-		std::vector<vec2> inters; //list of intersection points
-		std::vector<Line> adds;
-		for (size_t i = 0; i < lines.size(); i++) {
-			vec2 l = getIntersection(test_line, lines[i]);
-			if (l.x >= 0 && l.x <= w) {
-				adds.push_back(lines[i]);
-				inters.push_back({ (float)x, (float)l.y});
-			}
-		}
-		std::sort(inters.begin(), inters.end(), sortVec2);
-		for (size_t i = 1; i < inters.size() && i < adds.size();) {
-			float y1 = inters[i - 1].y;
-			float y2 = inters[i].y;
-			for (int y = (int)y1; y <= y2; y++) {
-				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
-			}
-			if (inters.size() % 2 == 0) {
-				i += 2;
-			}
-			else {
-				i++;
-			}
-		}
-		
-	}*/
 	for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
 		//flipping the current rows
 		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
