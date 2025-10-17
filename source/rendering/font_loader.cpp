@@ -17,6 +17,14 @@
   (((data) << 40) & 0x00FF000000000000) | (((data) << 56) & 0xFF00000000000000) ) 
 
 
+#define ARG_1_AND_2_ARE_WORDS 0x0001
+#define MORE_COMPONENTS 0x0020
+#define WE_HAVE_A_SCALE 0x0008
+#define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
+#define WE_HAVE_A_TWO_BY_TWO 0x0080
+#define WE_HAVE_INSTRUCTIONS 0x0100
+
+
 int getnthBit(short number, int n) {
 	return (number >> n) & 1;
 }
@@ -797,7 +805,31 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			table.simple_glyphs.push_back(sg);
 		}
 		else {
+			// https://learn.microsoft.com/en-us/typography/opentype/spec/glyf
 			//compound glyph do nothing for now
+			glyf g;
+			uint16_t flags;
+			do {
+				flags = SwapTwoBytes(*s);
+				s++;
+				uint16_t glyphIndex = SwapTwoBytes(*s);
+				s++;
+				if (flags & ARG_1_AND_2_ARE_WORDS) {
+
+				} else {
+
+				}
+				if ( flags & WE_HAVE_A_SCALE ) {
+					
+				} else if ( flags & WE_HAVE_AN_X_AND_Y_SCALE ) {
+					
+				} else if ( flags & WE_HAVE_A_TWO_BY_TWO ) {
+					
+				}
+			} while (flags & MORE_COMPONENTS);
+			if (flags & WE_HAVE_INSTRUCTIONS) {
+				
+			}
 		}
 
 	}
@@ -1004,6 +1036,9 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 		//cull duplicate lines
 		cullEdges(&g);
 		f->glyphs.push_back(g);
+	}
+	for (auto& i : g_table.compound_glyphs) {
+		std::cout << i.c << "\n";
 	}
 
 }
