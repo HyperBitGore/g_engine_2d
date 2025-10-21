@@ -30,6 +30,8 @@ IMG blank_test;
 IMG conversion_test;
 ImageAtlas atlas = ImageAtlas(400, 400, 4);
 gore::Font f_test;
+gore::Font roboto;
+gore::Font roboto_italic;
 
 int ang = 0;
 int r_ang = 360;
@@ -228,7 +230,8 @@ void renderFunction() {
 	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
 	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
-	font_r.drawRasterText(&f_test, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789", 50.0f, 500.0f, 48, eng2.getDPI());
+	font_r.drawRasterText(&f_test, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
+	font_r.drawRasterText(&roboto, &img_r, "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
 	eng2.disable(GL_BLEND);
 	font_r.drawText("Hello World qqjj", &f_test, 100, 30, 24, eng2.getDPI());
 }
@@ -336,9 +339,12 @@ int main() {
 	imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
 	f_test = font_r.loadFont("resources/EnvyCodeR.ttf", 32, 127);
+	roboto = font_r.loadFont("resources/Roboto-VariableFont.ttf", 32, 127);
+	roboto_italic = font_r.loadFont("resources/Roboto-Italic.ttf", 32, 127);
 
 	//testing font rasterizing
 	font_r.rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335);
+	font_r.rasterizeFont(&roboto, 64, eng2.getDPI(), 4278190335);
 
 	blank_test = imageloader::createBlank(100, 100, 4);
 	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);

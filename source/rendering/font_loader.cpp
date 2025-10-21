@@ -1059,6 +1059,10 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 gore::Font gore::FontRenderer::loadFont(std::string file, uint16_t start, uint16_t end) {
 	std::ifstream f;
 	f.open(file.c_str(), std::ios::binary);
+	if (!f.is_open()) {
+		std::cout << "Failed to open font file: " << file << std::endl;
+		return gore::Font();
+	}
 	//read the file into memory
 	std::stringstream stream;
 	stream << f.rdbuf();

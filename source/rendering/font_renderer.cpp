@@ -4,11 +4,6 @@
 #include <cstdint>
 
 
-bool range(float n, float brange, float trange) {
-	return n >= brange && n <= trange;
-}
-
-
 //https://www.youtube.com/watch?v=4bIsntTiKfM
 //coding math is the goat
 //this can't do collinear lines yet
@@ -55,10 +50,10 @@ bool rayIntersectsSegment(vec2 p, vec2 a, vec2 b) {
 	if (a.y > b.y) std::swap(a, b);
 	if (p.y == a.y || p.y == b.y) p.y += 0.0001f;  // Avoids ambiguity on vertex
 
-	if (p.y > b.y || p.y < a.y || p.x > std::max(a.x, b.x))
+	if (p.y > b.y || p.y < a.y || p.x > (std::max)(a.x, b.x))
 		return false;
 
-	if (p.x < std::min(a.x, b.x)) return true;
+	if (p.x < (std::min)(a.x, b.x)) return true;
 
 	float dx = b.x - a.x;
 	float dy = b.y - a.y;
