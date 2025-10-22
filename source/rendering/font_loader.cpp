@@ -16,14 +16,21 @@
   (((data) <<  8) & 0x000000FF00000000) | (((data) << 24) & 0x0000FF0000000000) | \
   (((data) << 40) & 0x00FF000000000000) | (((data) << 56) & 0xFF00000000000000) ) 
 
-
+// compound glyf flags
 #define ARG_1_AND_2_ARE_WORDS 0x0001
 #define MORE_COMPONENTS 0x0020
 #define WE_HAVE_A_SCALE 0x0008
 #define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
 #define WE_HAVE_A_TWO_BY_TWO 0x0080
 #define WE_HAVE_INSTRUCTIONS 0x0100
-
+// simple glyf flags
+#define ON_CURVE_POINT 0x01
+#define X_SHORT_VECTOR 0x02
+#define Y_SHORT_VECTOR 0x04
+#define REPEAT_FLAG 0x08
+#define X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR 0x10
+#define Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR 0x20
+#define OVERLAP_SIMPLE 0x40
 
 int getnthBit(short number, int n) {
 	return (number >> n) & 1;
@@ -711,11 +718,17 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				d++;
 			}
 			//now flags
+			bool overlap_simple = false;
 			int last_index = sg.endPtsOfCountours[sg.numberOfContours - 1];
 			for (int j = 0; j < (last_index + 1); j++) {
+				if (j == 0) {
+					if (((*d) & OVERLAP_SIMPLE) != 0) {
+						overlap_simple = true;
+					}
+				}
 				sg.flags.push_back(*d);
 				d++;
-				if (((sg.flags[j] >> 3) & 1) == 1) {
+				if (((sg.flags[j] & REPEAT_FLAG) != 0)) {
 					uint8_t repeat_count = *d;
 					while (repeat_count-- > 0) {
 						j++;
@@ -734,19 +747,19 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				//fuck ur combined flag bitch
 				//int flag_combined = ((getnthBit(sg.flags[j], 1) << 1) | (getnthBit(sg.flags[j], 4)));
 				bool dor = false;
-				if (getnthBit(sg.flags[j], 1) == 1) {
+				if ((sg.flags[j] & X_SHORT_VECTOR) != 0) {
 					//one byte
 					uint8_t temp = *d;
 					d++;
 					short out = temp;
-					if (getnthBit(sg.flags[j], 4) != 1) {
+					if ((sg.flags[j] & X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) != 16) {
 						out *= -1;
 					}
 					cur_coord = out + prev_coord;
 				}
 				else {
 					//two byte
-					if (getnthBit(sg.flags[j], 4) == 1) {
+					if ((sg.flags[j] & X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) != 0) {
 						//same as previous
 						cur_coord = prev_coord;
 						//dor = true;
@@ -771,19 +784,19 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			cur_coord = 0;
 			for (int j = 0; j < (last_index + 1); j++) {
 				bool dor = false;
-				if (getnthBit(sg.flags[j], 2) == 1) {
+				if ((sg.flags[j] & Y_SHORT_VECTOR) != 0) {
 					//one byte
 					uint8_t temp = *d;
 					d++;
 					short out = temp;
-					if (getnthBit(sg.flags[j], 5) != 1) {
+					if ((sg.flags[j] & Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) != 32) {
 						out *= -1;
 					}
 					cur_coord = out + prev_coord;
 				}
 				else {
 					//two byte
-					if (getnthBit(sg.flags[j], 5) == 1) {
+					if ((sg.flags[j] & Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) != 0) {
 						//same as previous
 						cur_coord = prev_coord;
 						//dor = true;
@@ -961,8 +974,7 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 
 				float x = i.xCoords[k];
 				float y = i.yCoords[k];
-				//g.points.push_back({ (float)i.xCoords[k], (float)i.yCoords[k] });
-				if (getnthBit(i.flags[k], 0) == 1) {
+				if ((i.flags[k] & ON_CURVE_POINT) != 0) {
 					size_t p3_in = k + 1;
 					if (k == i.endPtsOfCountours[j]) {
 						p3_in = 0;
@@ -972,9 +984,7 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 					vec2 p3;
 					p3.x = p2.x + (p1.x - p2.x) / 2.0f;
 					p3.y = p2.y + (p1.y - p2.y) / 2.0f;
-					//tesslateBezier(&g, p1, p2, p3, 20);
 					points.push_back({ x, y});
-					//g.points.push_back({ (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] });
 					
 					
 				}
@@ -983,7 +993,7 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 					if (contour_start) {
 						contour_started_off = true; 
 						//next point is on curve
-						if (getnthBit(i.flags[next_index], 0) == 1) {
+						if ((i.flags[next_index] & ON_CURVE_POINT) != 0) {
 							points.push_back({ (float)i.xCoords[next_index], (float)i.yCoords[next_index] });
 							k++;
 							continue;
@@ -998,23 +1008,19 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 					vec2 p2 = { (float)x, (float)y };
 					vec2 p3 = { (float)i.xCoords[next_index], (float)i.yCoords[next_index] };
 					//get the middle point between p1 and p3
-					if (getnthBit(i.flags[next_index], 0) == 1) {
+					if ((i.flags[next_index] & ON_CURVE_POINT) != 0) {
 						p3.x = p2.x + (p3.x - p2.x) / 2.0f;
 						p3.y = p2.y + (p3.y - p2.y) / 2.0f;
 					}
 					else {
 						k++;
 					}
-					//g.points.push_back(p1);
-					//g.points.push_back(p2);
-					//g.points.push_back(p3);
 					//generate points
 					tesslateBezier(points, p1, p2, p3, 2);
 				}
 				contour_start = false;
 			}
-			if (getnthBit(i.flags[k - 1], 0) == 1) {
-				//g.points.push_back(g.points[generated_points_start_index]);
+			if ((i.flags[k - 1] & ON_CURVE_POINT) != 0) {
 				points.push_back({ (float)i.xCoords[contour_start_index] , (float)i.yCoords[contour_start_index] });
 			}
 			if (contour_started_off) {
@@ -1023,10 +1029,6 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 				p2.x = (float)i.xCoords[contour_start_index];
 				p2.y = (float)i.yCoords[contour_start_index];
 				vec2 p3 = points[generated_points_start_index];
-
-				//g.points.push_back(p1);
-				//g.points.push_back(p2);
-				//g.points.push_back(p3);
 
 				tesslateBezier(points, p1, p2, p3, 2);
 			}

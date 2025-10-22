@@ -6,65 +6,78 @@
 
 //https://www.youtube.com/watch?v=4bIsntTiKfM
 //coding math is the goat
-//this can't do collinear lines yet
-vec2 getIntersection(Line l1, Line l2) {
-	float A1 = (l1.p2.y - l1.p1.y);
-	float B1 = (l1.p1.x - l1.p2.x);
-	float C1 = (A1 * l1.p1.x + B1 * l1.p1.y);
-	float A2 = (l2.p2.y - l2.p1.y);
-	float B2 = (l2.p1.x - l2.p2.x);
-	float C2 = (A2 * l2.p1.x + B2 * l2.p1.y);
-	float denominator = A1 * B2 - A2 * B1;
-	
-	//checking if line is collinear or parallel
-	vec2 delta_l1 = { l1.p2.x - l1.p1.x, l1.p2.y - l1.p1.y };
-	vec2 delta_l2 = { l2.p2.x - l2.p1.x, l2.p2.y - l2.p1.y };
-	float slope1 = delta_l1.y / delta_l1.x;
-	float slope2 = delta_l2.y / delta_l2.x;
-	float in1 = l1.p1.y - (slope1 * l1.p1.x);
-	float in2 = l2.p1.y - (slope2 * l2.p1.x);
 
-	vec2 inter = { (B2 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator };
+std::vector<float> getRayIntersections(vec2 origin, const std::vector<Line>& lines) {
+    std::vector<float> contributions;
+    float x0 = origin.x;
+    float y0 = origin.y;
+	int32_t winding = 0;
+    for (const Line& line : lines) {
+        vec2 p1 = line.p1;
+        vec2 p2 = line.p2;
 
+        // Skip horizontal lines (no intersection with horizontal ray)
+        if (p1.y == p2.y) continue;
 
-	if (denominator == 0 && in1 != in2) {
-		//line is parallel
-		return { -1, -1 };
-	}
-	else if (in1 == in2) {
-		//line is collinear
-		return { -2, -2 };
-	}
-	//checking if intersection lies on the segment
-	float rx0 = (inter.x - l1.p1.x) / (l1.p2.x - l1.p1.x);
-	float ry0 = (inter.y - l1.p1.y) / (l1.p2.y - l1.p1.y);
-	float rx1 = (inter.x - l2.p1.x) / (l2.p2.x - l2.p1.x);
-	float ry1 = (inter.y - l2.p1.y) / (l2.p2.y - l2.p1.y);
-	if (((rx0 >= 0 && rx0 <= 1) || (ry0 >= 0 && ry0 <= 1)) && ((rx1 >= 0 && rx1 <= 1) || (ry1 >= 0 && ry1 <= 1))) {
-		return inter;
-	}
-	return { -1, -1 };
+        // Ensure p1.y <= p2.y
+		int32_t direction = 1;
+        if (p1.y > p2.y) {
+			std::swap(p1, p2);
+			direction = -1;
+		}
+
+        if (y0 <= p1.y || y0 > p2.y) continue;
+        // Compute intersection X using line equation:
+        // x = x1 + (y0 - y1) * (x2 - x1) / (y2 - y1)
+        float intersectX = p1.x + (y0 - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+
+        // Check that intersection is to the right of the origin
+        if (intersectX > x0) {
+            contributions.push_back(intersectX);
+        }
+    }
+
+    return contributions;
 }
 
-bool rayIntersectsSegment(vec2 p, vec2 a, vec2 b) {
-	if (a.y > b.y) std::swap(a, b);
-	if (p.y == a.y || p.y == b.y) p.y += 0.0001f;  // Avoids ambiguity on vertex
+std::vector<int> getWindingContributions(vec2 origin, const std::vector<Line>& lines) {
+    std::vector<int> contributions;
+    float x0 = origin.x;
+    float y0 = origin.y;
 
-	if (p.y > b.y || p.y < a.y || p.x > (std::max)(a.x, b.x))
-		return false;
+    for (const Line& line : lines) {
+        vec2 p1 = line.p1;
+        vec2 p2 = line.p2;
 
-	if (p.x < (std::min)(a.x, b.x)) return true;
+        // Skip horizontal lines
+        if (p1.y == p2.y) continue;
 
-	float dx = b.x - a.x;
-	float dy = b.y - a.y;
-	if (dy == 0) return false;
+        // Determine direction and ensure p1.y <= p2.y
+        int direction = 1; // upward
+        if (p1.y > p2.y) {
+            std::swap(p1, p2);
+            direction = -1; // downward
+        }
 
-	float x_intersect = a.x + (p.y - a.y) * dx / dy;
-	return p.x < x_intersect;
+        // Ray must be strictly between y1 and y2
+        if (y0 <= p1.y || y0 > p2.y) continue;
+
+        // Compute intersection X
+        float dx = p2.x - p1.x;
+        float dy = p2.y - p1.y;
+        float intersectX = p1.x + (y0 - p1.y) * dx / dy;
+
+        // Only count intersections to the right of origin
+        if (intersectX > x0) {
+            contributions.push_back(direction); // +1 for upward, -1 for downward
+        }
+    }
+
+    return contributions;
 }
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
-
+// https://github.com/GreenLightning/gpu-font-rendering#method
 gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
@@ -79,18 +92,11 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 
 		lines.push_back(l);
 	}
-	float miny = 0.0f;
-	for (size_t i = 0; i < lines.size(); i++) {
-		if (lines[i].p1.y < miny) {
-			miny = lines[i].p1.y;
-		}
-		if (lines[i].p2.y < miny) {
-			miny = lines[i].p2.y;
-		}
-	}
+
 	RasterGlyph r_g;
 	std::vector<float> intersections;
 	r_g.c = g->c;
+	float miny = g->yMin * scale_factor;
 	int w = ptsize; //have to add abs minx to width so we can fit glyphs that go below left side bearing
 	int h = ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
 	r_g.data = imageloader::createBlank(w, h, 4);
@@ -102,23 +108,42 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 			lines[i].p2.y += std::abs(miny);
 		}
 	}
+	// winding
+	/*for (uint32_t y = 0; y < h; y++) {
+		for (uint32_t x = 0; x < w; x++) {
+			vec2 origin = { x + 0.5f, y + 0.5f };
+			std::vector<int> contributions = getWindingContributions(origin, lines);
+			int winding = 0;
+			for (int c : contributions) winding += c;
+			if (winding != 0) {
+				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
+			}
+		}
+	}*/
 	// even odd
 	for (uint32_t y = 0; y < h; y++) {
-		bool pos = false;
-		for (uint32_t x = 0; x < w; x++) {
-			int intersections = 0;
-			for (auto& edge : lines) {
-				if (rayIntersectsSegment({x + 0.5f, y + 0.5f}, edge.p1, edge.p2)) {
-					intersections++;
+		std::vector<float> intersections = getRayIntersections({0, (float)y}, lines);
+		std::sort(intersections.begin(), intersections.end());
+		if (intersections.size() > 1) {
+			size_t i = 0;
+			while (i < intersections.size() - 1) {
+				float x = intersections[i];
+				float x2 = intersections[i + 1];
+				for (float cx = x; cx <= x2; cx += 1.0f) {
+					imageloader::setPixelRaw(r_g.data, cx, y, color, 4);
 				}
+				i += 2;
 			}
-			if (intersections % 2 == 1) {
+			for (size_t i = 0; i < intersections.size() - 1; i += 2) {
+			} 
+		} else if (intersections.size() == 1) {
+			for (size_t x = (size_t)intersections[0]; x < w; x++) {
 				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
 			}
 		}
 	}
+	//flipping the current rows
 	for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
-		//flipping the current rows
 		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
 		std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
 		unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
