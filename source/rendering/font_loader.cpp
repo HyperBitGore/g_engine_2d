@@ -901,7 +901,34 @@ bool compareLine(Line l1, Line l2) {
 	return (l1.p1.x == l2.p1.x && l1.p1.y == l2.p1.y && l1.p2.x == l2.p2.x && l1.p2.y == l2.p2.y);
 }
 
+vec2 lineIntersection (Line l1, Line l2) {
+	float denominator = (l1.p1.x - l1.p2.x) * (l2.p1.y - l2.p2.y) - (l1.p1.y - l1.p2.y) * (l2.p1.x - l2.p2.x);
+	if (denominator == 0) {
+		return {-1, -1};
+	}
+
+	float t = ((l1.p1.x - l1.p1.x) * (l2.p1.y - l2.p2.y) - (l1.p1.y - l2.p1.y) * (l2.p1.x - l2.p2.x)) / denominator;
+	float u = ((l1.p1.x - l2.p1.x) * (l1.p1.y - l1.p2.y) - (l1.p1.y - l2.p1.y) * (l1.p1.x - l1.p2.x)) / denominator;
+
+	if ((0 <= t && t <= 1) && (0 <= u && u<= 1)) {
+		float x = l1.p1.x + t * (l1.p2.x - l1.p1.x);
+        float y = l1.p1.y + t * (l1.p2.y - l1.p1.y);
+		return {x, y};
+	}
+	return {-1, -1};
+}
+
 void cullEdges(gore::Glyph* g) {
+	for (auto& i : g->contours) {
+		for (auto& j : g->contours) {
+			vec2 inter = lineIntersection(i, j); 
+			if (inter.x != -1) {
+				if (inter.x != j.p1.x && inter.x != j.p2.x)
+				std::cout << "line inter!\n";
+			}
+		}
+	}
+
 	for (size_t i = 0; i < g->contours.size();) {
 		bool cull = false;
 		for (size_t j = 0; j < g->contours.size(); j++) {
@@ -911,7 +938,8 @@ void cullEdges(gore::Glyph* g) {
 			}
 		}
 		if (cull) {
-			g->contours.erase(g->contours.begin() + i);
+			//g->contours.erase(g->contours.begin() + i);
+			i++;
 		}
 		else {
 			i++;

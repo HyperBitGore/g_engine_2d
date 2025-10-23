@@ -7,6 +7,7 @@
 //voxel engine plug-in
 //isometric engine plug-in
 
+// https://victorlecomte.com/cp-geo.pdf
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
