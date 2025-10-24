@@ -3,85 +3,19 @@
 #include <algorithm>
 #include <cstdint>
 
-
 //https://www.youtube.com/watch?v=4bIsntTiKfM
 //coding math is the goat
-
-std::vector<float> getRayIntersections(vec2 origin, const std::vector<Line>& lines) {
-    std::vector<float> contributions;
-    float x0 = origin.x;
-    float y0 = origin.y;
-	int32_t winding = 0;
-    for (const Line& line : lines) {
-        vec2 p1 = line.p1;
-        vec2 p2 = line.p2;
-
-        // Skip horizontal lines (no intersection with horizontal ray)
-        if (p1.y == p2.y) continue;
-
-        // Ensure p1.y <= p2.y
-		int32_t direction = 1;
-        if (p1.y > p2.y) {
-			std::swap(p1, p2);
-			direction = -1;
-		}
-
-        if (y0 <= p1.y || y0 > p2.y) continue;
-        // Compute intersection X using line equation:
-        // x = x1 + (y0 - y1) * (x2 - x1) / (y2 - y1)
-        float intersectX = p1.x + (y0 - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
-
-        // Check that intersection is to the right of the origin
-        if (intersectX > x0) {
-            contributions.push_back(intersectX);
-        }
-    }
-
-    return contributions;
-}
-
-std::vector<int> getWindingContributions(vec2 origin, const std::vector<Line>& lines) {
-    std::vector<int> contributions;
-    float x0 = origin.x;
-    float y0 = origin.y;
-
-    for (const Line& line : lines) {
-        vec2 p1 = line.p1;
-        vec2 p2 = line.p2;
-
-        // Skip horizontal lines
-        if (p1.y == p2.y) continue;
-
-        // Determine direction and ensure p1.y <= p2.y
-        int direction = 1; // upward
-        if (p1.y > p2.y) {
-            std::swap(p1, p2);
-            direction = -1; // downward
-        }
-
-        // Ray must be strictly between y1 and y2
-        if (y0 <= p1.y || y0 > p2.y) continue;
-
-        // Compute intersection X
-        float dx = p2.x - p1.x;
-        float dy = p2.y - p1.y;
-        float intersectX = p1.x + (y0 - p1.y) * dx / dy;
-
-        // Only count intersections to the right of origin
-        if (intersectX > x0) {
-            contributions.push_back(direction); // +1 for upward, -1 for downward
-        }
-    }
-
-    return contributions;
-}
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
 // https://github.com/GreenLightning/gpu-font-rendering#method
 gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
-	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
+	int32_t new_ptsize = ptsize;
+	if (Font->overlap_simple) {
+		new_ptsize *= 2;
+	}
+	float scale_factor = (new_ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
 		l.p1.x = l.p1.x * scale_factor;
@@ -94,11 +28,10 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 	}
 
 	RasterGlyph r_g;
-	std::vector<float> intersections;
 	r_g.c = g->c;
 	float miny = g->yMin * scale_factor;
-	int w = ptsize; //have to add abs minx to width so we can fit glyphs that go below left side bearing
-	int h = ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
+	int w = new_ptsize; //have to add abs minx to width so we can fit glyphs that go below left side bearing
+	int h = new_ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
 	r_g.data = imageloader::createBlank(w, h, 4);
 	imageloader::createTexture(r_g.data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
@@ -109,35 +42,47 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 		}
 	}
 	// winding
-	/*for (uint32_t y = 0; y < h; y++) {
-		for (uint32_t x = 0; x < w; x++) {
-			vec2 origin = { x + 0.5f, y + 0.5f };
-			std::vector<int> contributions = getWindingContributions(origin, lines);
-			int winding = 0;
-			for (int c : contributions) winding += c;
-			if (winding != 0) {
-				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
-			}
+	float minx = (lines[0].p1.x < lines[0].p2.x) ? lines[0].p1.x : lines[0].p2.x;
+	for (auto& i : lines) {
+		if (i.p1.x < minx) {
+			minx = i.p1.x;
 		}
-	}*/
-	// even odd
+		if (i.p2.x < minx) {
+			minx = i.p2.x;
+		}
+	}
+	uint32_t rminx = (uint32_t)roundf(minx) - 1;
 	for (uint32_t y = 0; y < h; y++) {
-		std::vector<float> intersections = getRayIntersections({0, (float)y}, lines);
-		std::sort(intersections.begin(), intersections.end());
-		if (intersections.size() > 1) {
-			size_t i = 0;
-			while (i < intersections.size() - 1) {
-				float x = intersections[i];
-				float x2 = intersections[i + 1];
-				for (float cx = x; cx <= x2; cx += 1.0f) {
-					imageloader::setPixelRaw(r_g.data, cx, y, color, 4);
+		for (uint32_t x = 0; x < w; x++) {
+			vec2 origin = { x + 0.0f, y + 0.0f };
+			Line ray = {{origin.x, origin.y}, {(float)w, origin.y}};
+			int32_t winding = 0;
+			for (const Line& line : lines) {
+				vec2 p1 = line.p1;
+				vec2 p2 = line.p2;
+
+				// Skip horizontal lines
+				if (p1.y == p2.y) continue;
+
+				int direction = 1; // upward
+				if (p1.y > p2.y) {
+					std::swap(p1, p2);
+					direction = -1; // downward
 				}
-				i += 2;
+
+				// Ray must be strictly between y1 and y2
+				if (origin.y <= p1.y || origin.y > p2.y) continue;
+
+				// Compute intersection X
+				float dx = p2.x - p1.x;
+				float dy = p2.y - p1.y;
+				float intersectX = p1.x + (origin.y - p1.y) * dx / dy;
+				// Only count intersections to the right of origin
+				if (intersectX > origin.x) {
+					winding += direction;
+				}
 			}
-			for (size_t i = 0; i < intersections.size() - 1; i += 2) {
-			} 
-		} else if (intersections.size() == 1) {
-			for (size_t x = (size_t)intersections[0]; x < w; x++) {
+			if (winding != 0) {
 				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
 			}
 		}

@@ -14,9 +14,6 @@ T clamp(T p, T n1, T n2) {
 
 
 
-
-
-
 namespace gore {
 
 	struct RasterGlyph {
@@ -42,6 +39,7 @@ namespace gore {
 		std::vector<RasterGlyph> r_glyphs; //can ignore this if don't plan on using my rasterization
 		int ptsize;
 		uint16_t unitsPerEm;
+		bool overlap_simple;
 	};
 
 

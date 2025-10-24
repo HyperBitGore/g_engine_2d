@@ -674,6 +674,7 @@ struct comp_glyf : glyf {
 struct glyph_table {
 	std::vector<simp_glyf> simple_glyphs;
 	std::vector<comp_glyf> compound_glyphs;
+	bool overlap_simple = false;
 };
 // read glyf table
 glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) {
@@ -718,12 +719,11 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				d++;
 			}
 			//now flags
-			bool overlap_simple = false;
 			int last_index = sg.endPtsOfCountours[sg.numberOfContours - 1];
 			for (int j = 0; j < (last_index + 1); j++) {
 				if (j == 0) {
 					if (((*d) & OVERLAP_SIMPLE) != 0) {
-						overlap_simple = true;
+						table.overlap_simple = true;
 					}
 				}
 				sg.flags.push_back(*d);
@@ -897,56 +897,6 @@ std::vector<Line> generate_edges(std::vector<int>& end_contours, std::vector<vec
 	return lines;
 }
 
-vec2 lineIntersection (Line l1, Line l2) {
-	float denominator = (l1.p1.x - l1.p2.x) * (l2.p1.y - l2.p2.y) - (l1.p1.y - l1.p2.y) * (l2.p1.x - l2.p2.x);
-	if (denominator == 0) {
-		return {-1, -1};
-	}
-
-	float t = ((l1.p1.x - l1.p1.x) * (l2.p1.y - l2.p2.y) - (l1.p1.y - l2.p1.y) * (l2.p1.x - l2.p2.x)) / denominator;
-	float u = ((l1.p1.x - l2.p1.x) * (l1.p1.y - l1.p2.y) - (l1.p1.y - l2.p1.y) * (l1.p1.x - l1.p2.x)) / denominator;
-
-	if ((0 <= t && t <= 1) && (0 <= u && u<= 1)) {
-		float x = l1.p1.x + t * (l1.p2.x - l1.p1.x);
-        float y = l1.p1.y + t * (l1.p2.y - l1.p1.y);
-		return {x, y};
-	}
-	return {-1, -1};
-}
-
-void cullEdges(gore::Glyph* g) {
-	for (auto& i : g->contours) {
-		for (auto& j : g->contours) {
-			vec2 inter = lineIntersection(i, j); 
-			if (inter.x != -1) {
-				if (inter.x != j.p1.x && inter.x != j.p2.x && inter.y != j.p1.y && inter.y != j.p2.y) {
-					std::cout << "Intersection at: " << inter.x << ", " << inter.y << "\n";
-					// check which line is internal
-					if ((i.p1.x > j.p1.x && i.p1.x < j.p2.x) || (i.p2.x > j.p1.x && i.p2.x < j.p2.x) ||
-						(i.p1.y > j.p1.y && i.p1.y < j.p2.y) || (i.p2.y > j.p1.y && i.p2.y < j.p2.y)) {
-						// i is internal
-						i.p1 = { -1, -1 };
-						i.p2 = { -1, -1 };
-					}
-					else {
-						// j is internal
-						j.p1 = { -1, -1 };
-						j.p2 = { -1, -1 };
-					}
-				}
-			}
-		}
-	}
-	// removed culled lines
-	for (size_t i = 0; i < g->contours.size(); i++) {
-		if (g->contours[i].p1.x == -1 && g->contours[i].p1.y == -1 &&
-			g->contours[i].p2.x == -1 && g->contours[i].p2.y == -1) {
-			g->contours.erase(g->contours.begin() + i);
-			i--;
-		}
-	}
-}
-
 void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start, uint16_t end) {
 	//getting directorys in order we need them
 	cmap c_map;
@@ -972,6 +922,7 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
     tab = findTable("gdef", directory);
     tab = findTable("kern", directory);
 	f->unitsPerEm = header.uintsPerEm;
+	f->overlap_simple = g_table.overlap_simple;
 	//don't want to store pointers to anything in gore::Font file
 	//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization, 2.2
 	for (auto& i : g_table.simple_glyphs) {
@@ -1063,8 +1014,6 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 			end_contours.push_back((int)points.size());
 		}
 		g.contours = generate_edges(end_contours, points);
-		//cull duplicate lines
-		cullEdges(&g);
 		f->glyphs.push_back(g);
 	}
 	for (auto& i : g_table.compound_glyphs) {
@@ -1108,6 +1057,7 @@ gore::Font gore::FontRenderer::loadFont(std::string file, uint16_t start, uint16
 	//now we read all of the directorys we need to
 	gore::Font Font;
 	Font.name = file;
+	Font.overlap_simple = false;
 	readDirectorys(&directory, &Font, c, start, end);
 
 	return Font;
