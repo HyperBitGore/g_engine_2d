@@ -897,10 +897,6 @@ std::vector<Line> generate_edges(std::vector<int>& end_contours, std::vector<vec
 	return lines;
 }
 
-bool compareLine(Line l1, Line l2) {
-	return (l1.p1.x == l2.p1.x && l1.p1.y == l2.p1.y && l1.p2.x == l2.p2.x && l1.p2.y == l2.p2.y);
-}
-
 vec2 lineIntersection (Line l1, Line l2) {
 	float denominator = (l1.p1.x - l1.p2.x) * (l2.p1.y - l2.p2.y) - (l1.p1.y - l1.p2.y) * (l2.p1.x - l2.p2.x);
 	if (denominator == 0) {
@@ -923,26 +919,30 @@ void cullEdges(gore::Glyph* g) {
 		for (auto& j : g->contours) {
 			vec2 inter = lineIntersection(i, j); 
 			if (inter.x != -1) {
-				if (inter.x != j.p1.x && inter.x != j.p2.x)
-				std::cout << "line inter!\n";
+				if (inter.x != j.p1.x && inter.x != j.p2.x && inter.y != j.p1.y && inter.y != j.p2.y) {
+					std::cout << "Intersection at: " << inter.x << ", " << inter.y << "\n";
+					// check which line is internal
+					if ((i.p1.x > j.p1.x && i.p1.x < j.p2.x) || (i.p2.x > j.p1.x && i.p2.x < j.p2.x) ||
+						(i.p1.y > j.p1.y && i.p1.y < j.p2.y) || (i.p2.y > j.p1.y && i.p2.y < j.p2.y)) {
+						// i is internal
+						i.p1 = { -1, -1 };
+						i.p2 = { -1, -1 };
+					}
+					else {
+						// j is internal
+						j.p1 = { -1, -1 };
+						j.p2 = { -1, -1 };
+					}
+				}
 			}
 		}
 	}
-
-	for (size_t i = 0; i < g->contours.size();) {
-		bool cull = false;
-		for (size_t j = 0; j < g->contours.size(); j++) {
-			if (compareLine(g->contours[i], g->contours[j]) && i != j){ 
-				cull = true;
-				break;
-			}
-		}
-		if (cull) {
-			//g->contours.erase(g->contours.begin() + i);
-			i++;
-		}
-		else {
-			i++;
+	// removed culled lines
+	for (size_t i = 0; i < g->contours.size(); i++) {
+		if (g->contours[i].p1.x == -1 && g->contours[i].p1.y == -1 &&
+			g->contours[i].p2.x == -1 && g->contours[i].p2.y == -1) {
+			g->contours.erase(g->contours.begin() + i);
+			i--;
 		}
 	}
 }
