@@ -896,6 +896,59 @@ std::vector<Line> generate_edges(std::vector<int>& end_contours, std::vector<vec
 	}
 	return lines;
 }
+struct bezier_point {
+	vec2 point;
+	bool on_curve;
+};
+
+std::vector<Line> constructLineSegments (std::vector<bezier_point>& countour_points) {
+	std::vector<Line> lines;
+	for (size_t i = 0; i < countour_points.size();) {
+		if (countour_points[i].on_curve && i + 1 < countour_points.size() && countour_points[i + 1].on_curve) {
+			// straight line
+			Line l;
+			l.p1 = countour_points[i].point;
+			l.p2 = countour_points[i + 1].point;
+			lines.push_back(l);
+			i += 2;
+		} else if (countour_points[i].on_curve && i + 1 < countour_points.size() && !countour_points[i + 1].on_curve) {
+			// quadratic bezier curve
+			// check if need to split or just three points
+			
+		}
+	}
+	return lines;
+}
+
+void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, hmtx_table* hmtx) {
+	for (auto& i : g_table->simple_glyphs) {
+		gore::Glyph g;
+		g.c = i.c;
+		g.xMax = i.xMax;
+		g.yMax = i.yMax;
+		g.yMin = i.yMin;
+		g.xMin = i.xMin;
+		g.advanceWidth = hmtx->hMetrics[i.c].advanceWidth;
+		g.lsb = hmtx->hMetrics[i.c].lsb;
+		int32_t k = 0;
+		std::vector<vec2> points;
+		for (int32_t j = 0; j < i.numberOfContours; j++) {
+			int32_t generated_points_start_index = (points.size() > 0) ? (int32_t)points.size() - 1 : 0;
+			int32_t contour_start_index = k;
+			std::vector<bezier_point> contour_points;
+			for (int32_t c = 0; k <= i.endPtsOfCountours[j]; k++, c++) {
+				// the x and y coords are diffs from the last points
+				float x = i.xCoords[k];
+				float y = i.yCoords[k];
+				contour_points.push_back({ { x, y }, (i.flags[k] & ON_CURVE_POINT) != 0 });
+			}
+			//now we have all contour points, we can generate the bezier curves
+
+			k = i.endPtsOfCountours[j] + 1;
+
+		}
+	}
+}
 
 void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start, uint16_t end) {
 	//getting directorys in order we need them
@@ -964,8 +1017,6 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 					p3.x = p2.x + (p1.x - p2.x) / 2.0f;
 					p3.y = p2.y + (p1.y - p2.y) / 2.0f;
 					points.push_back({ x, y});
-					
-					
 				}
 				else{
 					//if this is the first contour point
