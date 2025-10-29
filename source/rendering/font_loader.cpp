@@ -901,21 +901,53 @@ struct bezier_point {
 	bool on_curve;
 };
 
+// breakdown bezier curve into line segments
+void breakBezier(std::vector<Line>& lines, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
+	float step = 1.0f / subdiv;
+	float lx = 0, ly = 0;
+	for (int i = 0; i <= subdiv; i++) {
+		float t = i * step;
+		float t1 = (1.0f - t);
+		float t2 = t * t;
+		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
+		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
+		(i == 0) ? lx = x, ly = y : lx = lx, ly = ly;
+		lines.push_back({ { lx, ly }, { x, y } });
+		lx = x;
+		ly = y;
+	}
+}
+// have to process contour points that are off in a more meaningful way
 std::vector<Line> constructLineSegments (std::vector<bezier_point>& countour_points) {
 	std::vector<Line> lines;
 	for (size_t i = 0; i < countour_points.size();) {
-		if (countour_points[i].on_curve && i + 1 < countour_points.size() && countour_points[i + 1].on_curve) {
-			// straight line
+		size_t j = 0;
+		for (j = i + 1; j < countour_points.size() && !countour_points[j].on_curve; j++);
+		if (j - i == 1 && i + 1 < countour_points.size()) {
+			// simple line
 			Line l;
 			l.p1 = countour_points[i].point;
 			l.p2 = countour_points[i + 1].point;
 			lines.push_back(l);
-			i += 2;
-		} else if (countour_points[i].on_curve && i + 1 < countour_points.size() && !countour_points[i + 1].on_curve) {
-			// quadratic bezier curve
-			// check if need to split or just three points
-			
+		} else if (j - i > 1) {
+			// bezier curves
+			for (size_t k = i + 1; k <= j && k < countour_points.size(); k+=2) {
+				bezier_point p1 = countour_points[k - 1];
+				bezier_point p2 = countour_points[k];
+				bezier_point p3;
+				if (k + 1 <= j && k + 1 < countour_points.size()) {
+					p3 = countour_points[k + 1];
+				} else {
+					// create midpoint between p2 and p1
+					vec2 mid;
+					mid.x = (p2.point.x + p1.point.x) / 2.0f;
+					mid.y = (p2.point.y + p1.point.y) / 2.0f;
+					p3 = { mid, true };
+				}
+				breakBezier(lines, p1.point, p2.point, p3.point, 5);
+			}
 		}
+		i += (j - i) + 1;
 	}
 	return lines;
 }
@@ -943,10 +975,13 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 				contour_points.push_back({ { x, y }, (i.flags[k] & ON_CURVE_POINT) != 0 });
 			}
 			//now we have all contour points, we can generate the bezier curves
-
+			std::vector<Line> contour_lines = constructLineSegments(contour_points);
+			//append to glyph lines
+			g.contours.insert(g.contours.end(), contour_lines.begin(), contour_lines.end());
 			k = i.endPtsOfCountours[j] + 1;
 
 		}
+		f->glyphs.push_back(g);
 	}
 }
 
@@ -976,9 +1011,10 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
     tab = findTable("kern", directory);
 	f->unitsPerEm = header.uintsPerEm;
 	f->overlap_simple = g_table.overlap_simple;
+	constructGlyphs(directory, f, &g_table, &hmtx);
 	//don't want to store pointers to anything in gore::Font file
 	//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization, 2.2
-	for (auto& i : g_table.simple_glyphs) {
+	/*for (auto& i : g_table.simple_glyphs) {
 		gore::Glyph g;
 		g.c = i.c;
 		g.xMax = i.xMax;
@@ -1066,10 +1102,7 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 		}
 		g.contours = generate_edges(end_contours, points);
 		f->glyphs.push_back(g);
-	}
-	for (auto& i : g_table.compound_glyphs) {
-		std::cout << i.c << "\n";
-	}
+	}*/
 
 }
 
