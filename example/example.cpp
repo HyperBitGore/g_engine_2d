@@ -235,6 +235,9 @@ void renderFunction() {
 	eng2.disable(GL_BLEND);
 	font_r.drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
 	font_r.drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
+	font_r.drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
+	font_r.drawRasterText(&open_sans, &img_r, "o", 300.0f, 850.0f, 128, eng2.getDPI());
+	font_r.drawRasterText(&open_sans, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }
 
 int nthBit(int number, int n) {

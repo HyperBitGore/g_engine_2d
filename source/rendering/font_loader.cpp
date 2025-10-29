@@ -858,44 +858,6 @@ table_dir* findTable(std::string table, Font_dir* directory) {
 	}
 	return nullptr;
 }
-// tesslate bezier curve into line segments
-void tesslateBezier(std::vector<vec2>& points, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
-	float step = 1.0f / subdiv;
-	float lx = 0, ly = 0;
-	for (int i = 0; i <= subdiv; i++) {
-		float t = i * step;
-		float t1 = (1.0f - t);
-		float t2 = t * t;
-		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
-		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
-		(i == 0) ? lx = x, ly = y : lx = lx, ly = ly;
-		points.push_back({ lx, ly });
-		points.push_back({ x, y });
-		lx = x;
-		ly = y;
-	}
-}
-
-
-std::vector<Line> generate_edges(std::vector<int>& end_contours, std::vector<vec2>& points) {
-	std::vector<Line> lines;
-	int j = 0;
-	for (size_t i = 0; i < end_contours.size(); i++) {
-		int first = j;
-		for (; j < end_contours[i] - 1; j++) {
-			Line l;
-			l.p1.x = points[j].x;
-			l.p1.y = points[j].y;
-			l.p2.x = points[j + 1].x;
-			l.p2.y = points[j + 1].y;
-			lines.push_back(l);
-		}
-		//have to add endpoint of contour and last point of contour as a line, so we can fix any possible gaps in glyphs
-		lines.push_back({ { points[first].x, points[first].y}, {points[j].x, points[j].y}});
-		j++;
-	}
-	return lines;
-}
 struct bezier_point {
 	vec2 point;
 	bool on_curve;
@@ -904,14 +866,13 @@ struct bezier_point {
 // breakdown bezier curve into line segments
 void breakBezier(std::vector<Line>& lines, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
 	float step = 1.0f / subdiv;
-	float lx = 0, ly = 0;
+	float lx = p1.x, ly = p1.y;
 	for (int i = 0; i <= subdiv; i++) {
 		float t = i * step;
 		float t1 = (1.0f - t);
 		float t2 = t * t;
 		float x = t1 * t1 * p1.x + 2 * t1 * t * p2.x + t2 * p3.x;
 		float y = t1 * t1 * p1.y + 2 * t1 * t * p2.y + t2 * p3.y;
-		(i == 0) ? lx = x, ly = y : lx = lx, ly = ly;
 		lines.push_back({ { lx, ly }, { x, y } });
 		lx = x;
 		ly = y;
@@ -919,35 +880,35 @@ void breakBezier(std::vector<Line>& lines, vec2 p1, vec2 p2, vec2 p3, int subdiv
 }
 // have to process contour points that are off in a more meaningful way
 std::vector<Line> constructLineSegments (std::vector<bezier_point>& countour_points) {
+	for (size_t i = 0; i < countour_points.size(); i++) {
+		if (i != 0 && !countour_points[i].on_curve && !countour_points[i - 1].on_curve) {
+			vec2 mid;
+			mid.x = (countour_points[i - 1].point.x + countour_points[i].point.x) / 2.0f;
+			mid.y = (countour_points[i - 1].point.y + countour_points[i].point.y) / 2.0f;
+			countour_points.insert(countour_points.begin() + i, {mid, true});
+		}
+	}
 	std::vector<Line> lines;
-	for (size_t i = 0; i < countour_points.size();) {
-		size_t j = 0;
-		for (j = i + 1; j < countour_points.size() && !countour_points[j].on_curve; j++);
-		if (j - i == 1 && i + 1 < countour_points.size()) {
+	vec2 last_on_curve;
+	for (size_t i = 0; i < countour_points.size(); i++) {
+		bezier_point p1 = countour_points[i];
+		bezier_point p2 = countour_points[(i + 1) % countour_points.size()];
+		if (p1.on_curve && p2.on_curve) {
 			// simple line
 			Line l;
-			l.p1 = countour_points[i].point;
-			l.p2 = countour_points[i + 1].point;
+			l.p1 = p1.point;
+			l.p2 = p2.point;
 			lines.push_back(l);
-		} else if (j - i > 1) {
-			// bezier curves
-			for (size_t k = i + 1; k <= j && k < countour_points.size(); k+=2) {
-				bezier_point p1 = countour_points[k - 1];
-				bezier_point p2 = countour_points[k];
-				bezier_point p3;
-				if (k + 1 <= j && k + 1 < countour_points.size()) {
-					p3 = countour_points[k + 1];
-				} else {
-					// create midpoint between p2 and p1
-					vec2 mid;
-					mid.x = (p2.point.x + p1.point.x) / 2.0f;
-					mid.y = (p2.point.y + p1.point.y) / 2.0f;
-					p3 = { mid, true };
-				}
-				breakBezier(lines, p1.point, p2.point, p3.point, 5);
-			}
+			last_on_curve = p2.point;
+		} else if (p1.on_curve && !p2.on_curve) {
+			bezier_point p3 = countour_points[(i + 2) % countour_points.size()];
+			last_on_curve = p3.point;
+			breakBezier(lines, p1.point, p2.point, p3.point, 5);
+			i++;
 		}
-		i += (j - i) + 1;
+	}
+	if (lines.back().p2.x != lines.front().p1.x && lines.back().p2.y != lines.front().p1.y) {
+    	lines.push_back({ lines.back().p2, lines.front().p1 });
 	}
 	return lines;
 }
@@ -984,7 +945,7 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 		f->glyphs.push_back(g);
 	}
 }
-
+// issue is overlapping lines and gaps, that creates the line artifacts with the winding rasterization
 void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start, uint16_t end) {
 	//getting directorys in order we need them
 	cmap c_map;
@@ -1014,96 +975,6 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 	constructGlyphs(directory, f, &g_table, &hmtx);
 	//don't want to store pointers to anything in gore::Font file
 	//https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization, 2.2
-	/*for (auto& i : g_table.simple_glyphs) {
-		gore::Glyph g;
-		g.c = i.c;
-		g.xMax = i.xMax;
-		g.yMax = i.yMax;
-		g.yMin = i.yMin;
-		g.xMin = i.xMin;
-		g.advanceWidth = hmtx.hMetrics[i.c].advanceWidth;
-		g.lsb = hmtx.hMetrics[i.c].lsb;
-		int k = 0;
-		std::vector<vec2> points;
-		std::vector<int> end_contours;
-		for (int j = 0; j < i.numberOfContours; j++) {
-			int generated_points_start_index = (int)points.size() - 1;
-			if (generated_points_start_index < 0) {
-				generated_points_start_index = 0;
-			}
-			int contour_start_index = k;
-			bool contour_start = true;
-			bool contour_started_off = false;
-			//this was the issue
-			for (; k <= i.endPtsOfCountours[j]; k++) {
-				int contour_len = i.endPtsOfCountours[j] - contour_start_index + 1;
-				int cur_index = k;
-				int next_index = (k + 1 - contour_start_index) % contour_len + contour_start_index;
-
-				float x = i.xCoords[k];
-				float y = i.yCoords[k];
-				if ((i.flags[k] & ON_CURVE_POINT) != 0) {
-					size_t p3_in = k + 1;
-					if (k == i.endPtsOfCountours[j]) {
-						p3_in = 0;
-					}
-					vec2 p1 = { (float)i.xCoords[k], (float)i.yCoords[k] };
-					vec2 p2 = { (float)i.xCoords[p3_in], (float)i.yCoords[p3_in] };
-					vec2 p3;
-					p3.x = p2.x + (p1.x - p2.x) / 2.0f;
-					p3.y = p2.y + (p1.y - p2.y) / 2.0f;
-					points.push_back({ x, y});
-				}
-				else{
-					//if this is the first contour point
-					if (contour_start) {
-						contour_started_off = true; 
-						//next point is on curve
-						if ((i.flags[next_index] & ON_CURVE_POINT) != 0) {
-							points.push_back({ (float)i.xCoords[next_index], (float)i.yCoords[next_index] });
-							k++;
-							continue;
-						}
-						x = x + (i.xCoords[next_index] - x) / 2.0f;
-						y = y + (i.yCoords[next_index] - y) / 2.0f;
-						points.push_back({ x, y });
-						
-					}
-					
-					vec2 p1 = points[points.size() - 1];
-					vec2 p2 = { (float)x, (float)y };
-					vec2 p3 = { (float)i.xCoords[next_index], (float)i.yCoords[next_index] };
-					//get the middle point between p1 and p3
-					if ((i.flags[next_index] & ON_CURVE_POINT) != 0) {
-						p3.x = p2.x + (p3.x - p2.x) / 2.0f;
-						p3.y = p2.y + (p3.y - p2.y) / 2.0f;
-					}
-					else {
-						k++;
-					}
-					//generate points
-					tesslateBezier(points, p1, p2, p3, 2);
-				}
-				contour_start = false;
-			}
-			if ((i.flags[k - 1] & ON_CURVE_POINT) != 0) {
-				points.push_back({ (float)i.xCoords[contour_start_index] , (float)i.yCoords[contour_start_index] });
-			}
-			if (contour_started_off) {
-				vec2 p1 = points[points.size() - 1];
-				vec2 p2;
-				p2.x = (float)i.xCoords[contour_start_index];
-				p2.y = (float)i.yCoords[contour_start_index];
-				vec2 p3 = points[generated_points_start_index];
-
-				tesslateBezier(points, p1, p2, p3, 2);
-			}
-			end_contours.push_back((int)points.size());
-		}
-		g.contours = generate_edges(end_contours, points);
-		f->glyphs.push_back(g);
-	}*/
-
 }
 
 
