@@ -74,6 +74,15 @@ void readGpos (char* c, int32_t offset, int32_t length) {
 			case GPOS_CONTEXTUAL_POSITIONING:
 			break;
 			case GPOS_CHAINED_CONTEXTS_POSITIONING:
+				{
+					char* cur_off = off + sizeof(LookupTable);
+					uint16_t format = SwapTwoBytes(*(uint16_t*)(cur_off));
+					uint16_t coverageOffset = SwapTwoBytes(*(uint16_t*)(cur_off + 2));
+					uint16_t chainedSeqRuleCount = SwapTwoBytes(*(uint16_t*)(cur_off + 4));
+					for (size_t j = 0; j < chainedSeqRuleCount; j++) {
+						uint16_t chainedSeqRuleSetOffset = SwapTwoBytes(*(uint16_t*)(cur_off + 6 + (j * sizeof(uint16_t))));
+					}
+				}
 			break;
 			case GPOS_POSITIONING_EXTENSION:
 				{
