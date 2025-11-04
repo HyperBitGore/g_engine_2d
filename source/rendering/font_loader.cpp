@@ -27,6 +27,19 @@ PREVENT_PACKING_STRUCT LookupTable {
 };
 END_PACKING_STRUCT
 
+PREVENT_PACKING_STRUCT SequenceLookup {
+	uint16_t sequenceIndex; // Index (zero-based) into the input glyph sequence.
+	uint16_t lookupListIndex; // Index (zero-based) into the LookupList.
+};
+END_PACKING_STRUCT
+
+struct ChainedSequenceRule {
+	std::vector<uint16_t> backtrackSequence;
+	std::vector<uint16_t> inputSequence;
+	std::vector<uint16_t> lookaheadSequence;
+	std::vector<SequenceLookup> seqLookupRecords;
+};
+
 // https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
 void readGpos (char* c, int32_t offset, int32_t length) {
 	char* t = c + offset;
@@ -51,6 +64,7 @@ void readGpos (char* c, int32_t offset, int32_t length) {
 	// parsing lookup list
 	char* lookuplist = t + gposheader.lookupListOffset;
 	uint16_t lookup_count = SwapTwoBytes(*(uint16_t*)(lookuplist));
+	std::vector<ChainedSequenceRule> chainedSeqRules;
 	for (size_t i = 0; i < lookup_count; i++) {
 		uint16_t look = SwapTwoBytes(*(uint16_t*)(lookuplist + 2 + (i * sizeof(uint16_t))));
 		char* off = lookuplist + look;
@@ -58,6 +72,15 @@ void readGpos (char* c, int32_t offset, int32_t length) {
 		lt.lookupFlag = SwapTwoBytes(lt.lookupFlag);
 		lt.lookupType = SwapTwoBytes(lt.lookupType);
 		lt.subTableCount = SwapTwoBytes(lt.subTableCount);
+		uint32_t lookupTableOff = sizeof(LookupTable);
+		if (lt.lookupType == GPOS_POSITIONING_EXTENSION) {
+			char* cur_off = off + sizeof(LookupTable);
+			uint16_t format = SwapTwoBytes(*(uint16_t*)(cur_off));
+			uint16_t lookup_type = SwapTwoBytes(*(uint16_t*)(cur_off + 2));
+			uint32_t extension_offset = SwapTwoBytes(*(uint32_t*)(cur_off + 4));
+			lt.lookupType = lookup_type;
+			lookupTableOff += extension_offset;
+		}
 		switch (lt.lookupType) {
 			case GPOS_SINGLE_ADJUSTMENT:
 			break;
@@ -75,22 +98,47 @@ void readGpos (char* c, int32_t offset, int32_t length) {
 			break;
 			case GPOS_CHAINED_CONTEXTS_POSITIONING:
 				{
-					char* cur_off = off + sizeof(LookupTable);
+					char* cur_off = off + lookupTableOff;
 					uint16_t format = SwapTwoBytes(*(uint16_t*)(cur_off));
 					uint16_t coverageOffset = SwapTwoBytes(*(uint16_t*)(cur_off + 2));
 					uint16_t chainedSeqRuleCount = SwapTwoBytes(*(uint16_t*)(cur_off + 4));
+					// process the ChainedSequenceRuleSet table
 					for (size_t j = 0; j < chainedSeqRuleCount; j++) {
 						uint16_t chainedSeqRuleSetOffset = SwapTwoBytes(*(uint16_t*)(cur_off + 6 + (j * sizeof(uint16_t))));
+						uint16_t count = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset));
+						for (size_t k = 0; k < count; k++) {
+							// process the ChainedSequenceRule table
+							uint16_t chainedSeqRuleOffset = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + 2 + (k * sizeof(uint16_t))));
+							uint16_t backtrackGlyphCount = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset));
+							std::vector<uint16_t> backtrackSequence;
+							// backtrackSequence
+							for (size_t l = 0; l < backtrackGlyphCount; l++) {
+								uint16_t backtrackGlyphCount = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (l * sizeof(uint16_t))));
+								backtrackSequence.push_back(backtrackGlyphCount);
+							}
+							std::vector<uint16_t> inputSequence;
+							uint16_t inputGlyphCount = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (backtrackGlyphCount * sizeof(uint16_t))));
+							for (size_t l = 0; l < inputGlyphCount - 1; l++) {
+								inputSequence.push_back(SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (backtrackGlyphCount * sizeof(uint16_t))) + (l * sizeof(uint16_t))));
+							}
+							uint16_t lookaheadGlyphCount = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (backtrackGlyphCount * sizeof(uint16_t)) + (inputGlyphCount * sizeof(uint16_t))));
+							std::vector<uint16_t> lookaheadSequence;
+							for (size_t l = 0; l < lookaheadGlyphCount - 1; l++) {
+								lookaheadSequence.push_back(SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (backtrackGlyphCount * sizeof(uint16_t))) + (inputGlyphCount * sizeof(uint16_t)) + (l * sizeof(uint16_t))));
+							}
+							uint16_t seqLookupCount = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (backtrackGlyphCount * sizeof(uint16_t)) + (inputGlyphCount * sizeof(uint16_t)) + (lookaheadGlyphCount * sizeof(uint16_t))));
+							std::vector<SequenceLookup> seqLookupRecords;
+							// seqLookupRecords
+							for (size_t l = 0; l < seqLookupCount; l++) {
+								SequenceLookup look = (*(SequenceLookup*)(cur_off + chainedSeqRuleSetOffset + chainedSeqRuleOffset + 2 + (backtrackGlyphCount * sizeof(uint16_t)) + (inputGlyphCount * sizeof(uint16_t)) + (lookaheadGlyphCount * sizeof(uint16_t)) + (l + (sizeof(uint16_t) * 2))));
+								look.lookupListIndex = SwapTwoBytes(look.lookupListIndex);
+								look.sequenceIndex = SwapTwoBytes(look.sequenceIndex);
+								seqLookupRecords.push_back(look);
+							}
+							ChainedSequenceRule rule = { backtrackSequence, inputSequence, lookaheadSequence, seqLookupRecords};
+							chainedSeqRules.push_back(rule);
+						}
 					}
-				}
-			break;
-			case GPOS_POSITIONING_EXTENSION:
-				{
-					char* cur_off = off + sizeof(LookupTable);
-					uint16_t format = SwapTwoBytes(*(uint16_t*)(cur_off));
-					uint16_t lookup_type = SwapTwoBytes(*(uint16_t*)(cur_off + 2));
-					uint32_t extension_offset = SwapTwoBytes(*(uint32_t*)(cur_off + 4));
-					// have to figure out how to make this run
 				}
 			break;
 		}
