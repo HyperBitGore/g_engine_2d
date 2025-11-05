@@ -74,6 +74,7 @@ struct ValueRecord {
 	uint16_t xAdvDeviceOffset;
 	uint16_t yAdvDeviceOffset;
 	uint16_t flags;
+	uint16_t offset;
 };
 
 struct ChainedSequenceRule {
@@ -111,38 +112,39 @@ ValueRecord readValueRecord (char* start, uint16_t format) {
 	ValueRecord record;
 	record.flags = format;
 	uint32_t offset = 0;
-	if (record.flags & VALUE_FORMAT_X_PLACEMENT != 0) {
+	if ((record.flags & VALUE_FORMAT_X_PLACEMENT) != 0) {
 		record.xPlacement = *(int16_t*)(start + offset); 
 		offset += sizeof(int16_t);
 	}
-	if (record.flags & VALUE_FORMAT_Y_PLACEMENT != 0) {
+	if ((record.flags & VALUE_FORMAT_Y_PLACEMENT) != 0) {
 		record.yPlacement = *(int16_t*)(start + offset); 
 		offset += sizeof(int16_t);
 	}
-	if (record.flags & VALUE_FORMAT_X_ADVANCE != 0) {
+	if ((record.flags & VALUE_FORMAT_X_ADVANCE) != 0) {
 		record.xAdvance = *(int16_t*)(start + offset); 
 		offset += sizeof(int16_t);
 	}
-	if (record.flags & VALUE_FORMAT_Y_ADVANCE != 0) {
+	if ((record.flags & VALUE_FORMAT_Y_ADVANCE) != 0) {
 		record.yAdvance = *(int16_t*)(start + offset); 
 		offset += sizeof(int16_t);
 	}
-	if (record.flags & VALUE_FORMAT_X_PLACEMENT_DEVICE != 0) {
+	if ((record.flags & VALUE_FORMAT_X_PLACEMENT_DEVICE) != 0) {
 		record.xPlaDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	if (record.flags & VALUE_FORMAT_Y_PLACEMENT_DEVICE != 0) {
+	if ((record.flags & VALUE_FORMAT_Y_PLACEMENT_DEVICE) != 0) {
 		record.yPlaDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	if (record.flags & VALUE_FORMAT_X_ADVANCE_DEVICE != 0) {
+	if ((record.flags & VALUE_FORMAT_X_ADVANCE_DEVICE) != 0) {
 		record.xAdvDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	if (record.flags & VALUE_FORMAT_Y_ADVANCE_DEVICE != 0) {
+	if ((record.flags & VALUE_FORMAT_Y_ADVANCE_DEVICE) != 0) {
 		record.yAdvDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
+	record.offset = offset;
 	return record;
 }
 
@@ -198,15 +200,25 @@ void readGpos (char* c, int32_t offset, int32_t length, glyph_table* glyf_table)
 					header.coverageOffset = SwapTwoBytes(header.coverageOffset);
 					header.valueCount = SwapTwoBytes(header.valueCount);
 					header.valueFormat = SwapTwoBytes(header.valueFormat);
-					if (header.format == 1) {
-						ValueRecord record = readValueRecord(cur_off + sizeof(SinglePosFormat1), header.valueFormat);
-						// actually do smth here??
-					} else if (header.format == 2) {
-						// format 2 could be assumed, but what if extended? Better to explicitly check here
-						
-					}
 					// read the coverage table
 					std::vector<uint16_t> glyphs = readCoverageTable(cur_off + header.coverageOffset);
+					if (header.format == 1) {
+						ValueRecord record = readValueRecord(cur_off + sizeof(SinglePosFormat1), header.valueFormat);
+						// adjust the glyph positioning
+						for (auto& i : glyphs) {
+
+						} 
+					} else if (header.format == 2) {
+						// format 2 could be assumed, but what if extended? Better to explicitly check here
+						uint32_t offset = 0;
+						for (size_t i = 0; i < header.valueCount; i++) {
+							ValueRecord record = readValueRecord(cur_off + sizeof(SinglePosFormat2) + (offset), header.valueFormat);
+							offset += record.offset;
+							for (auto& i : glyphs) {
+								
+							}
+						}
+					}
 				}
 			break;
 			case GPOS_PAIR_ADJUSTMENT:
