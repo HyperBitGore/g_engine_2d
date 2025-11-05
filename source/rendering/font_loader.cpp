@@ -3,6 +3,15 @@
 #include <fstream>
 #include <sstream>
 
+#define VALUE_FORMAT_X_PLACEMENT 0x0001
+#define VALUE_FORMAT_Y_PLACEMENT 0x0002
+#define VALUE_FORMAT_X_ADVANCE 0x0004
+#define VALUE_FORMAT_Y_ADVANCE 0x0008
+#define VALUE_FORMAT_X_PLACEMENT_DEVICE 0x0010
+#define VALUE_FORMAT_Y_PLACEMENT_DEVICE 0x0020
+#define VALUE_FORMAT_X_ADVANCE_DEVICE 0x0040
+#define VALUE_FORMAT_Y_ADVANCE_DEVICE 0x0080
+
 // don't need original version since can just ignore the featureVariationsOffset when 1.0
 PREVENT_PACKING_STRUCT gpos_1_1 {
 	uint16_t majorVersion;
@@ -33,6 +42,40 @@ PREVENT_PACKING_STRUCT SequenceLookup {
 };
 END_PACKING_STRUCT
 
+PREVENT_PACKING_STRUCT SinglePosFormat1 {
+	uint16_t format;
+	uint16_t coverageOffset;
+	uint16_t valueFormat;
+};
+END_PACKING_STRUCT
+
+PREVENT_PACKING_STRUCT SinglePosFormat2 {
+	uint16_t format;
+	uint16_t coverageOffset;
+	uint16_t valueFormat;
+	uint16_t valueCount;
+};
+END_PACKING_STRUCT
+
+PREVENT_PACKING_STRUCT RangeRecord {
+	uint16_t startGlyphID;
+	uint16_t endGlyphID;
+	uint16_t startCoverageIndex;
+};
+END_PACKING_STRUCT
+
+struct ValueRecord {
+	int16_t xPlacement;
+	int16_t yPlacement;
+	int16_t xAdvance;
+	int16_t yAdvance;
+	uint16_t xPlaDeviceOffset;
+	uint16_t yPlaDeviceOffset;
+	uint16_t xAdvDeviceOffset;
+	uint16_t yAdvDeviceOffset;
+	uint16_t flags;
+};
+
 struct ChainedSequenceRule {
 	std::vector<uint16_t> backtrackSequence;
 	std::vector<uint16_t> inputSequence;
@@ -40,8 +83,73 @@ struct ChainedSequenceRule {
 	std::vector<SequenceLookup> seqLookupRecords;
 };
 
+std::vector<uint16_t> readCoverageTable (char* start) {
+	std::vector<uint16_t> glyphs;
+	uint16_t format = SwapTwoBytes(*(uint16_t*)(start));
+	uint16_t count = SwapTwoBytes(*(uint16_t*)(start + 2)); // either glyph count or range count
+	if (format == 1) {
+		for (size_t i = 0; i < count; i++) {
+			uint16_t glyf = SwapTwoBytes(*(uint16_t*)(start + 4 + (i * sizeof(uint16_t))));
+			glyphs.push_back(glyf);
+		}
+	} else if (format == 2) {
+		for (size_t i = 0; i < count; i++) {
+			RangeRecord record = *(RangeRecord*)(start + 4 + (i * sizeof(RangeRecord)));
+			record.endGlyphID = SwapTwoBytes(record.endGlyphID);
+			record.startCoverageIndex = SwapTwoBytes(record.startCoverageIndex);
+			record.startGlyphID = SwapTwoBytes(record.startGlyphID);
+			for (uint16_t j = record.startGlyphID; j <= record.endGlyphID; j++) {
+				glyphs.push_back(j);
+			}
+		}
+	}
+
+	return glyphs;
+}
+
+ValueRecord readValueRecord (char* start, uint16_t format) {
+	ValueRecord record;
+	record.flags = format;
+	uint32_t offset = 0;
+	if (record.flags & VALUE_FORMAT_X_PLACEMENT != 0) {
+		record.xPlacement = *(int16_t*)(start + offset); 
+		offset += sizeof(int16_t);
+	}
+	if (record.flags & VALUE_FORMAT_Y_PLACEMENT != 0) {
+		record.yPlacement = *(int16_t*)(start + offset); 
+		offset += sizeof(int16_t);
+	}
+	if (record.flags & VALUE_FORMAT_X_ADVANCE != 0) {
+		record.xAdvance = *(int16_t*)(start + offset); 
+		offset += sizeof(int16_t);
+	}
+	if (record.flags & VALUE_FORMAT_Y_ADVANCE != 0) {
+		record.yAdvance = *(int16_t*)(start + offset); 
+		offset += sizeof(int16_t);
+	}
+	if (record.flags & VALUE_FORMAT_X_PLACEMENT_DEVICE != 0) {
+		record.xPlaDeviceOffset = *(uint16_t*)(start + offset); 
+		offset += sizeof(uint16_t);
+	}
+	if (record.flags & VALUE_FORMAT_Y_PLACEMENT_DEVICE != 0) {
+		record.yPlaDeviceOffset = *(uint16_t*)(start + offset); 
+		offset += sizeof(uint16_t);
+	}
+	if (record.flags & VALUE_FORMAT_X_ADVANCE_DEVICE != 0) {
+		record.xAdvDeviceOffset = *(uint16_t*)(start + offset); 
+		offset += sizeof(uint16_t);
+	}
+	if (record.flags & VALUE_FORMAT_Y_ADVANCE_DEVICE != 0) {
+		record.yAdvDeviceOffset = *(uint16_t*)(start + offset); 
+		offset += sizeof(uint16_t);
+	}
+	return record;
+}
+
 // https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
-void readGpos (char* c, int32_t offset, int32_t length) {
+// should just directly modify glyf data, instead of returning anything
+// would be easier tbh
+void readGpos (char* c, int32_t offset, int32_t length, glyph_table* glyf_table) {
 	char* t = c + offset;
 	gpos_1_1 gposheader = *(gpos_1_1*)(t);
 	gposheader.majorVersion = SwapTwoBytes(gposheader.majorVersion);
@@ -83,6 +191,23 @@ void readGpos (char* c, int32_t offset, int32_t length) {
 		}
 		switch (lt.lookupType) {
 			case GPOS_SINGLE_ADJUSTMENT:
+				{
+					char* cur_off = off + lookupTableOff;
+					SinglePosFormat2 header = (*(SinglePosFormat2*)(cur_off));
+					header.format = SwapTwoBytes(header.format);
+					header.coverageOffset = SwapTwoBytes(header.coverageOffset);
+					header.valueCount = SwapTwoBytes(header.valueCount);
+					header.valueFormat = SwapTwoBytes(header.valueFormat);
+					if (header.format == 1) {
+						ValueRecord record = readValueRecord(cur_off + sizeof(SinglePosFormat1), header.valueFormat);
+						// actually do smth here??
+					} else if (header.format == 2) {
+						// format 2 could be assumed, but what if extended? Better to explicitly check here
+						
+					}
+					// read the coverage table
+					std::vector<uint16_t> glyphs = readCoverageTable(cur_off + header.coverageOffset);
+				}
 			break;
 			case GPOS_PAIR_ADJUSTMENT:
 			break;
@@ -272,7 +397,7 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
     tab = findTable("vhea", directory);
     tab = findTable("GPOS", directory);
 	if (tab) {
-		readGpos(c, tab->offset, tab->length);
+		readGpos(c, tab->offset, tab->length, &g_table);
 	}
     tab = findTable("gdef", directory);
     tab = findTable("kern", directory);
