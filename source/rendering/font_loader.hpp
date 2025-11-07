@@ -1,4 +1,5 @@
 #pragma once
+#include "../file_loading/file_reader.hpp"
 #include <GL/gl.h>
 #include <cstdint>
 #include <string>
@@ -113,40 +114,27 @@ struct cmap {
 
 
 //have to convert these to little endian( I don't know how these macros work but they do so fuck it)
-void read_offset_subtable(char* c, off_subtable* table){
-	uint32_t* t = (uint32_t*)c;
-	table->scaler_type = SwapFourBytes(*t);
-	t++;
-	uint16_t* te = (uint16_t*)t;
-	table->numTables = SwapTwoBytes(*te);
-	te++;
-	table->searchRange = SwapTwoBytes(*te);
-	te++;
-	table->entrySelector = SwapTwoBytes(*te);
-	te++;
-	table->rangeShift = SwapTwoBytes(*te);
-	te++;
-	//c = (char**)te;
+void read_offset_subtable(FileReader* fr, off_subtable* table){
+	table->scaler_type = fr->readFourBytes(true);
+	table->numTables = fr->readTwoBytes(true);
+	table->searchRange = fr->readTwoBytes(true);
+	table->entrySelector = fr->readTwoBytes(true);
+	table->rangeShift = fr->readTwoBytes(true);
 }
 
-void read_table_directory(char* c, std::vector<table_dir>& table, int tbl_size) {
-	uint32_t* t = (uint32_t*)c;
+void read_table_directory(FileReader* fr, std::vector<table_dir>& table, int tbl_size) {
 	for (int i = 0; i < tbl_size; i++) {
 		table_dir dir;
 		dir.t = "";
 		for (int j = 0; j < 4; j++) {
-			dir.t.push_back(*c);
-			c++;
+			char c = fr->readOneByte();
+			dir.t.push_back(c);
 		}
-		dir.tag = SwapFourBytes(*t);
-		t++;
-		dir.checksum = SwapFourBytes(*t);
-		t++;
-		dir.offset = SwapFourBytes(*t);
-		t++;
-		dir.length = SwapFourBytes(*t);
-		t++;
-		c += 12;
+		fr->moveHeadBack(4);
+		dir.tag = fr->readFourBytes(true);
+		dir.checksum = fr->readFourBytes(true);
+		dir.offset = fr->readFourBytes(true);
+		dir.length = fr->readFourBytes(true);
 		table.push_back(dir);
 	}
 }
@@ -525,49 +513,30 @@ struct TTFHeader {
 
 
 
-TTFHeader readHead(char* c, int offset, int length) {
+TTFHeader readHead(FileReader* fr, int offset, int length) {
 	TTFHeader head;
-	char* m = c + offset;
-	uint32_t* u = (uint32_t*)m;
-	head.version = SwapFourBytes(*u); //can't swap the bytes on a double for some reason
-	u++;
-	head.FontRevision = SwapFourBytes(*u); //values will be wrong for the top two since supposed to be fixed
-	u++;
-	head.checkSumAdjustment = SwapFourBytes(*u);
-	u++;
-	head.magicNumber = SwapFourBytes(*u);
-	u++;
-	uint16_t* t = (uint16_t*)u;
-	head.flags = *t; //don't swap this since the bits need to be the same
-	t++;
-	head.uintsPerEm = SwapTwoBytes(*t);
-	t++;
-	time_t* p = (time_t*)t;
+	fr->setHead(offset);
+	head.version = fr->readFourBytes(true); //can't swap the bytes on a double for some reason
+	head.FontRevision = fr->readFourBytes(true); //values will be wrong for the top two since supposed to be fixed
+	head.checkSumAdjustment = fr->readFourBytes(true);
+	head.magicNumber = fr->readFourBytes(true);
+	head.flags = fr->readTwoBytes(false); //don't swap this since the bits need to be the same
+	head.uintsPerEm = fr->readTwoBytes(true);
+	time_t* p = (time_t*)fr->getHead();
 	head.created = SwapEightBytes(*p);
-	p++;
+	fr->moveHeadForward(sizeof(time_t));
+	p = (time_t*)fr->getHead();
 	head.modified = SwapEightBytes(*p);
-	p++;
-	short* s = (short*)p;
-	head.xMin = SwapTwoBytes(*s);
-	s++;
-	head.yMin = SwapTwoBytes(*s);
-	s++;
-	head.xMax = SwapTwoBytes(*s);
-	s++;
-	head.yMax = SwapTwoBytes(*s);
-	s++;
-	t = (uint16_t*)s;
-	head.macStyle = *t; //don't swap cause need same bits for flags
-	t++;
-	head.lowestRecPPEM = SwapTwoBytes(*t);
-	t++;
-	s = (short*)t;
-	head.FontDirectionHint = SwapTwoBytes(*s); 
-	s++;
-	head.indexToLocFormat = SwapTwoBytes(*s);
-	s++;
-	head.glyphDataFormat = SwapTwoBytes(*s);
-	s++;
+	fr->moveHeadForward(sizeof(time_t));
+	head.xMin = fr->readTwoBytes(true);
+	head.yMin = fr->readTwoBytes(true);
+	head.xMax = fr->readTwoBytes(true);
+	head.yMax = fr->readTwoBytes(true);
+	head.macStyle = fr->readTwoBytes(false); //don't swap cause need same bits for flags
+	head.lowestRecPPEM = fr->readTwoBytes(true);
+	head.FontDirectionHint = fr->readTwoBytes(true);; 
+	head.indexToLocFormat =fr->readTwoBytes(true);;
+	head.glyphDataFormat = fr->readTwoBytes(true);;
 	return head;
 }
 
@@ -672,6 +641,8 @@ struct glyf {
 
 struct simp_glyf : glyf {
 	uint16_t instructionLength;
+	int16_t xPos = 0;
+	int16_t yPos = 0;
 	std::vector<uint8_t> instructions; 
 	std::vector<uint8_t> flags;
 	std::vector<short> xCoords; //apparently this can also be a uint8_t but we'll see

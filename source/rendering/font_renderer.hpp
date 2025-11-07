@@ -28,6 +28,8 @@ namespace gore {
 		int16_t yMin;
 		int16_t xMax;
 		int16_t xMin;
+		int16_t xPos = 0;
+		int16_t yPos = 0;
 		uint16_t advanceWidth;
 		int16_t lsb; //left side bearing
 	};

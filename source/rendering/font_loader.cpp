@@ -1,5 +1,6 @@
 #include "font_renderer.hpp"
 #include "font_loader.hpp"
+#include <cstdint>
 #include <fstream>
 #include <sstream>
 
@@ -64,18 +65,6 @@ PREVENT_PACKING_STRUCT RangeRecord {
 };
 END_PACKING_STRUCT
 
-struct ValueRecord {
-	int16_t xPlacement;
-	int16_t yPlacement;
-	int16_t xAdvance;
-	int16_t yAdvance;
-	uint16_t xPlaDeviceOffset;
-	uint16_t yPlaDeviceOffset;
-	uint16_t xAdvDeviceOffset;
-	uint16_t yAdvDeviceOffset;
-	uint16_t flags;
-	uint16_t offset;
-};
 
 struct ChainedSequenceRule {
 	std::vector<uint16_t> backtrackSequence;
@@ -108,53 +97,59 @@ std::vector<uint16_t> readCoverageTable (char* start) {
 	return glyphs;
 }
 
-ValueRecord readValueRecord (char* start, uint16_t format, glyph_table* glyf_table, std::vector<uint16_t> glyphs) {
-	ValueRecord record;
-	record.flags = format;
+uint32_t readValueRecord (char* start, uint16_t format, glyph_table* glyf_table, std::vector<uint16_t> glyphs) {
 	uint32_t offset = 0;
-	if ((record.flags & VALUE_FORMAT_X_PLACEMENT) != 0) {
-		record.xPlacement = *(int16_t*)(start + offset);
+	if ((format & VALUE_FORMAT_X_PLACEMENT) != 0) {
+		int16_t xPlacement = SwapTwoBytes(*(int16_t*)(start + offset));
 		for (auto& i : glyphs) {
 			for (auto& j : glyf_table->simple_glyphs) {
 				if (i == j.c) {
 					for (size_t k = 0; k < j.xCoords.size(); k++) {
-						j.xCoords[k] += record.xPlacement;
+						j.xPos += xPlacement;
 					}
 				}
 			}
 		}
 		offset += sizeof(int16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_Y_PLACEMENT) != 0) {
-		record.yPlacement = *(int16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_Y_PLACEMENT) != 0) {
+		int16_t yPlacement = SwapTwoBytes(*(int16_t*)(start + offset)); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+					for (size_t k = 0; k < j.xCoords.size(); k++) {
+						j.yPos += yPlacement;
+					}
+				}
+			}
+		}
 		offset += sizeof(int16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_X_ADVANCE) != 0) {
-		record.xAdvance = *(int16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_X_ADVANCE) != 0) {
+		int16_t xAdvance = *(int16_t*)(start + offset); 
 		offset += sizeof(int16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_Y_ADVANCE) != 0) {
-		record.yAdvance = *(int16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_Y_ADVANCE) != 0) {
+		int16_t yAdvance = *(int16_t*)(start + offset); 
 		offset += sizeof(int16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_X_PLACEMENT_DEVICE) != 0) {
-		record.xPlaDeviceOffset = *(uint16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_X_PLACEMENT_DEVICE) != 0) {
+		int16_t xPlaDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_Y_PLACEMENT_DEVICE) != 0) {
-		record.yPlaDeviceOffset = *(uint16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_Y_PLACEMENT_DEVICE) != 0) {
+		int16_t yPlaDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_X_ADVANCE_DEVICE) != 0) {
-		record.xAdvDeviceOffset = *(uint16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_X_ADVANCE_DEVICE) != 0) {
+		int16_t xAdvDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	if ((record.flags & VALUE_FORMAT_Y_ADVANCE_DEVICE) != 0) {
-		record.yAdvDeviceOffset = *(uint16_t*)(start + offset); 
+	if ((format & VALUE_FORMAT_Y_ADVANCE_DEVICE) != 0) {
+		int16_t yAdvDeviceOffset = *(uint16_t*)(start + offset); 
 		offset += sizeof(uint16_t);
 	}
-	record.offset = offset;
-	return record;
+	return offset;
 }
 
 // https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
@@ -215,14 +210,16 @@ void readGpos (char* c, int32_t offset, int32_t length, glyph_table* glyf_table)
 						// read the coverage table
 						std::vector<uint16_t> glyphs = readCoverageTable(cur_off + header.coverageOffset);
 						if (header.format == 1) {
-							ValueRecord record = readValueRecord(cur_off + sizeof(SinglePosFormat1), header.valueFormat, glyf_table, glyphs);
+							uint32_t offset = readValueRecord(cur_off + sizeof(SinglePosFormat1), header.valueFormat, glyf_table, glyphs);
+							cOff += offset;
 						} else if (header.format == 2) {
 							// format 2 could be assumed, but what if extended? Better to explicitly check here
 							uint32_t offset = 0;
 							for (size_t i = 0; i < header.valueCount; i++) {
-								ValueRecord record = readValueRecord(cur_off + sizeof(SinglePosFormat2) + (offset), header.valueFormat, glyf_table, glyphs);
-								offset += record.offset;
+								int16_t recOffset = readValueRecord(cur_off + sizeof(SinglePosFormat2) + (offset), header.valueFormat, glyf_table, glyphs);
+								offset += recOffset;
 							}
+							cOff += offset;
 						}
 					}
 				break;
@@ -392,30 +389,32 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 	}
 }
 // issue is overlapping lines and gaps, that creates the line artifacts with the winding rasterization
-void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start, uint16_t end) {
+void readDirectorys(Font_dir* directory, gore::Font* f, FileReader* fr, uint16_t start, uint16_t end) {
 	//getting directorys in order we need them
 	cmap c_map;
 	TTFHeader header;
 	std::vector<loca> locas;
 	glyph_table g_table;
 	table_dir* tab = nullptr;
+	fr->resetHead();
 	tab = findTable("cmap", directory);
-	c_map = readCmap(c, tab->offset, tab->length, start, end);
+	c_map = readCmap(fr->getHead(), tab->offset, tab->length, start, end);
 	tab = findTable("head", directory);
-	header = readHead(c, tab->offset, tab->length);
+	header = readHead(fr, tab->offset, tab->length);
+	fr->resetHead();
 	tab = findTable("loca", directory);
-	locas = readLoca(c, tab->offset, tab->length, header.indexToLocFormat, &c_map);
+	locas = readLoca(fr->getHead(), tab->offset, tab->length, header.indexToLocFormat, &c_map);
 	tab = findTable("hhea", directory);
-	hhea_table hhea = readHheaTable(c, tab->offset, tab->length);
+	hhea_table hhea = readHheaTable(fr->getHead(), tab->offset, tab->length);
     tab = findTable("hmtx", directory);
-	hmtx_table hmtx = readHmtxTable(c, tab->offset, tab->length, hhea.numberOfHMetrics, locas.size());
+	hmtx_table hmtx = readHmtxTable(fr->getHead(), tab->offset, tab->length, hhea.numberOfHMetrics, locas.size());
 	tab = findTable("glyf", directory);
-	g_table = readGlyfs(c, tab->offset, tab->length, locas);
+	g_table = readGlyfs(fr->getHead(), tab->offset, tab->length, locas);
     tab = findTable("vmtx", directory);
     tab = findTable("vhea", directory);
     tab = findTable("GPOS", directory);
 	if (tab) {
-		readGpos(c, tab->offset, tab->length, &g_table);
+		readGpos(fr->getHead(), tab->offset, tab->length, &g_table);
 	}
     tab = findTable("gdef", directory);
     tab = findTable("kern", directory);
@@ -440,30 +439,16 @@ void readDirectorys(Font_dir* directory, gore::Font* f, char* c, uint16_t start,
 //big endian so characters will be reversed to me
 //start and end variables are the start of characters you want to load and end is the last character to load
 gore::Font gore::FontRenderer::loadFont(std::string file, uint16_t start, uint16_t end) {
-	std::ifstream f;
-	f.open(file.c_str(), std::ios::binary);
-	if (!f.is_open()) {
-		std::cout << "Failed to open font file: " << file << std::endl;
-		return gore::Font();
-	}
-	//read the file into memory
-	std::stringstream stream;
-	stream << f.rdbuf();
-	std::string st = stream.str();
-	char* c = (char*)st.c_str();
-	f.close();
-	size_t size = st.size();
+	FileReader fr(file);
 	//read the gore::Font directory
 	Font_dir directory;
-	read_offset_subtable(c, &directory.off_sub);
-	c += 12;
-	read_table_directory(c,  directory.table, directory.off_sub.numTables);
-	c = (char*)st.c_str(); //reset to begining to get offset easier
+	read_offset_subtable(&fr, &directory.off_sub);
+	read_table_directory(&fr,  directory.table, directory.off_sub.numTables);
 	//now we read all of the directorys we need to
 	gore::Font Font;
 	Font.name = file;
 	Font.overlap_simple = false;
-	readDirectorys(&directory, &Font, c, start, end);
+	readDirectorys(&directory, &Font, &fr, start, end);
 
 	return Font;
 }
