@@ -373,25 +373,19 @@ void readFormat12(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 
 //https://developer.apple.com/gore::Fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
 //https://learn.microsoft.com/en-us/typography/opentype/spec/cmap
-cmap readCmap(char* c, int offset, int length, uint16_t start, uint16_t end) {
+cmap readCmap(FileReader* fr, int offset, int length, uint16_t start, uint16_t end) {
 	cmap map;
-	char* m = c + offset;
-	uint16_t* t = (uint16_t*)m;
-	map.version = SwapTwoBytes(*t);
-	t++; //skipping version cause I don't care
-	map.numTables = SwapTwoBytes(*t);
-	t++;
+	fr->moveHeadForward(offset);
+	char* m = fr->getHead();
+	uint32_t start_off = fr->getOffset();
+	map.version = fr->readTwoBytes(true);
+	map.numTables = fr->readTwoBytes(true);
 	//now we read the subtables
 	for (int i = 0; i < (int)map.numTables; i++) {
 		cmap_table table;
-		table.platformID = SwapTwoBytes(*t);
-		t++;
-		table.platformSpecificID = SwapTwoBytes(*t);
-		t++;
-		uint32_t* te = (uint32_t*)t;
-		table.offset = SwapFourBytes(*te);
-		te++;
-		t = (uint16_t*)te;
+		table.platformID = fr->readTwoBytes(true);
+		table.platformSpecificID = fr->readTwoBytes(true);
+		table.offset = fr->readFourBytes(true);
 		map.tables.push_back(table); //offset is from start of cmap
 		int format = (m + map.tables[i].offset)[0] << 8 | (m + map.tables[i].offset)[1];
 		switch (format) {
@@ -455,8 +449,8 @@ inline uint32_t readLoca32(char* s, uint16_t index) {
 	return SwapFourBytes(*d);
 }
 
-std::vector<loca> readLoca(char* c, int offset, int length, uint16_t format, cmap* map) {
-	char* m = c + offset;
+std::vector<loca> readLoca(FileReader* fr, int offset, int length, uint16_t format, cmap* map) {
+	fr->moveHeadForward(offset);
 	std::vector<loca> locas;
 	int index = 0;
 	for (size_t i = 0; i < map->tables.size(); i++) {
@@ -470,7 +464,7 @@ std::vector<loca> readLoca(char* c, int offset, int length, uint16_t format, cma
 		for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
 			loca l;
 			l.c = map->tables[index].indexs[i].c;
-			l.offset = readLoca16(m, map->tables[index].indexs[i].index);
+			l.offset = readLoca16(fr->getHead(), map->tables[index].indexs[i].index);
 			locas.push_back(l);
 		}
 	}
@@ -478,7 +472,7 @@ std::vector<loca> readLoca(char* c, int offset, int length, uint16_t format, cma
 		for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
 			loca l;
 			l.c = (map->tables[index].indexs[i].c);
-			l.offset = readLoca32(m, map->tables[index].indexs[i].index);
+			l.offset = readLoca32(fr->getHead(), map->tables[index].indexs[i].index);
 			locas.push_back(l);
 		}
 	}
@@ -558,39 +552,24 @@ struct hhea_table {
 	uint16_t numberOfHMetrics; //number of hMetric entries in 'hmtx' table
 };
 
-hhea_table readHheaTable(char* c, int offset, int length) {
+hhea_table readHheaTable(FileReader* fr, int offset, int length) {
 	hhea_table h;
-	char* m = c + offset;
-	int16_t* t = (int16_t*)m;
-	h.majorVersion = SwapTwoBytes(*t);
-	t++;
-	h.minorVersion = SwapTwoBytes(*t);
-	t++;
-	h.ascender = SwapTwoBytes(*t);
-	t++;
-	h.descender = SwapTwoBytes(*t);
-	t++;
-	h.lineGap = SwapTwoBytes(*t);
-	t++;
-	h.advanceWidthMax = SwapTwoBytes(*t);
-	t++;
-	h.minLeftSideBearing = SwapTwoBytes(*t);
-	t++;
-	h.minRightSideBearing = SwapTwoBytes(*t);
-	t++;
-	h.xMaxExtent = SwapTwoBytes(*t);
-	t++;
-	h.caretSlopeRise = SwapTwoBytes(*t);
-	t++;
-	h.caretSlopeRun = SwapTwoBytes(*t);
-	t++;
-	h.caretOffset = SwapTwoBytes(*t);
-	t++;
-	t += 4; //skipping reserved
-	h.metricDataFormat = SwapTwoBytes(*t);
-	t++;
-	h.numberOfHMetrics = SwapTwoBytes(*t);
-	t++;
+	fr->moveHeadForward(offset);
+	h.majorVersion = fr->readTwoBytes(true);
+	h.minorVersion = fr->readTwoBytes(true);
+	h.ascender = fr->readTwoBytes(true);
+	h.descender = fr->readTwoBytes(true);
+	h.lineGap = fr->readTwoBytes(true);
+	h.advanceWidthMax = fr->readTwoBytes(true);
+	h.minLeftSideBearing = fr->readTwoBytes(true);
+	h.minRightSideBearing = fr->readTwoBytes(true);
+	h.xMaxExtent = fr->readTwoBytes(true);
+	h.caretSlopeRise = fr->readTwoBytes(true);
+	h.caretSlopeRun = fr->readTwoBytes(true);
+	h.caretOffset = fr->readTwoBytes(true);
+	fr->moveHeadForward(4 * sizeof(uint16_t)); // skipping reserved
+	h.metricDataFormat = fr->readTwoBytes(true);
+	h.numberOfHMetrics = fr->readTwoBytes(true);
 
 	return h;
 }
@@ -605,23 +584,18 @@ struct hmtx_table {
 	std::vector<int16_t> leftSideBearings; //for glyphs that have same width as previous glyph
 };
 
-hmtx_table readHmtxTable(char* c, int offset, int length, uint16_t numHMetrics, size_t numGlyphs) {
+hmtx_table readHmtxTable(FileReader* fr, int offset, int length, uint16_t numHMetrics, size_t numGlyphs) {
 	hmtx_table h;
-	char* m = c + offset;
-	uint16_t* t = (uint16_t*)m;
+	fr->moveHeadForward(offset);
 	for (size_t i = 0; i < numHMetrics; i++) {
 		long_hor_metric hm;
-		hm.advanceWidth = SwapTwoBytes(*t);
-		t++;
-		hm.lsb = SwapTwoBytes(*t);
-		t++;
+		hm.advanceWidth = fr->readTwoBytes(true);
+		hm.lsb = fr->readTwoBytes(true);
 		h.hMetrics.push_back(hm);
 	}
 	//now we read the left side bearings
-	int16_t* s = (int16_t*)t;
 	for (size_t i = numHMetrics; i < numGlyphs; i++) {
-		h.leftSideBearings.push_back(SwapTwoBytes(*s));
-		s++;
+		h.leftSideBearings.push_back(fr->readTwoBytes(true));
 	}
 	return h;
 }
@@ -662,23 +636,18 @@ struct glyph_table {
 	bool overlap_simple = false;
 };
 // read glyf table
-glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) {
+glyph_table readGlyfs(FileReader* fr, int offset, int length, std::vector<loca> locas) {
 	glyph_table table;
 	for (size_t i = 0; i < locas.size(); i++) {
-		char* m = c + offset + locas[i].offset;
-		short* s = (short*)m;
+		fr->resetHead();
+		fr->moveHeadForward(offset + locas[i].offset);
 		glyf g;
 		g.c = locas[i].c;
-		g.numberOfContours = SwapTwoBytes(*s);
-		s++;
-		g.xMin = SwapTwoBytes(*s);
-		s++;
-		g.yMin = SwapTwoBytes(*s);
-		s++;
-		g.xMax = SwapTwoBytes(*s);
-		s++;
-		g.yMax = SwapTwoBytes(*s);
-		s++;
+		g.numberOfContours = fr->readTwoBytes(true);
+		g.xMin = fr->readTwoBytes(true);
+		g.yMin = fr->readTwoBytes(true);
+		g.xMax = fr->readTwoBytes(true);
+		g.yMax = fr->readTwoBytes(true);
 		if (g.numberOfContours >= 0) {
 			//simple glyph
 			simp_glyf sg;
@@ -689,37 +658,31 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			sg.yMax = g.yMax;
 			sg.c = g.c;
 			//now we read endpts of countours
-			uint16_t* t = (uint16_t*)s;
 			for (int j = 0; j < sg.numberOfContours; j++) {
-				sg.endPtsOfCountours.push_back(SwapTwoBytes(*t));
-				t++;
+				sg.endPtsOfCountours.push_back(fr->readTwoBytes(true));
 			}
 			//instructions now, can't believe I forgot to swap this smh, like an hour wasted 
-			sg.instructionLength = SwapTwoBytes(*t);
-			t++;
-			uint8_t* d = (uint8_t*)t;
+			sg.instructionLength = fr->readTwoBytes(true);
 			//don't have to swap 
 			for (int j = 0; j < sg.instructionLength; j++) {
-				sg.instructions.push_back(*d);
-				d++;
+				sg.instructions.push_back(fr->readOneByte());
 			}
 			//now flags
 			int last_index = sg.endPtsOfCountours[sg.numberOfContours - 1];
 			for (int j = 0; j < (last_index + 1); j++) {
+				uint8_t flag = fr->readOneByte();
 				if (j == 0) {
-					if (((*d) & OVERLAP_SIMPLE) != 0) {
+					if ((flag & OVERLAP_SIMPLE) != 0) {
 						table.overlap_simple = true;
 					}
 				}
-				sg.flags.push_back(*d);
-				d++;
+				sg.flags.push_back(flag);
 				if (((sg.flags[j] & REPEAT_FLAG) != 0)) {
-					uint8_t repeat_count = *d;
+					uint8_t repeat_count = fr->readOneByte();
 					while (repeat_count-- > 0) {
 						j++;
 						sg.flags.push_back(sg.flags[j - 1]);
 					}
-					d++;
 				}
 			}
 			//have to swap these
@@ -727,15 +690,13 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			//xcoords
 			short prev_coord = 0;
 			short cur_coord = 0;
-			s = (short*)d;
 			for (int j = 0; j < (last_index + 1); j++) {
 				//fuck ur combined flag bitch
 				//int flag_combined = ((getnthBit(sg.flags[j], 1) << 1) | (getnthBit(sg.flags[j], 4)));
 				bool dor = false;
 				if ((sg.flags[j] & X_SHORT_VECTOR) != 0) {
 					//one byte
-					uint8_t temp = *d;
-					d++;
+					uint8_t temp = fr->readOneByte();
 					short out = temp;
 					if ((sg.flags[j] & X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) != 16) {
 						out *= -1;
@@ -750,9 +711,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 						//dor = true;
 					}
 					else {
-						short* ss = (short*)d;
-						short out = SwapTwoBytes(*ss);
-						d += 2;
+						short out = fr->readTwoBytes(true);
 						//signed 16 bit delta vector, ie change in x
 						cur_coord = out + prev_coord;
 
@@ -771,8 +730,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 				bool dor = false;
 				if ((sg.flags[j] & Y_SHORT_VECTOR) != 0) {
 					//one byte
-					uint8_t temp = *d;
-					d++;
+					uint8_t temp = fr->readOneByte();
 					short out = temp;
 					if ((sg.flags[j] & Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) != 32) {
 						out *= -1;
@@ -787,9 +745,7 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 						//dor = true;
 					}
 					else {
-						short* ss = (short*)d;
-						short out = SwapTwoBytes(*ss);
-						d += 2;
+						short out = fr->readTwoBytes(true);
 						//signed 16 bit delta vector, ie change in x
 						cur_coord = out + prev_coord;
 
@@ -808,10 +764,8 @@ glyph_table readGlyfs(char* c, int offset, int length, std::vector<loca> locas) 
 			glyf g;
 			uint16_t flags;
 			do {
-				flags = SwapTwoBytes(*s);
-				s++;
-				uint16_t glyphIndex = SwapTwoBytes(*s);
-				s++;
+				flags = fr->readTwoBytes(true);
+				uint16_t glyphIndex = fr->readTwoBytes(true);
 				if (flags & ARG_1_AND_2_ARE_WORDS) {
 
 				} else {

@@ -23,6 +23,7 @@ public:
     void setHead (uint32_t n);
     uint32_t fileSize ();
     char* getHead();
+    uint32_t getOffset();
 
     uint32_t readFourBytes (bool big_endian);
     uint16_t readTwoBytes (bool big_endian);

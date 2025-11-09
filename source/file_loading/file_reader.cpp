@@ -63,6 +63,9 @@ uint32_t FileReader::fileSize () {
 char* FileReader::getHead() {
     return (this->data.data()) + this->offset;
 }
+uint32_t FileReader::getOffset () {
+    return this->offset;
+}
 
 uint32_t FileReader::readFourBytes (bool big_endian) {
     if (this->offset >= this->size) {

@@ -127,26 +127,68 @@ uint32_t readValueRecord (char* start, uint16_t format, glyph_table* glyf_table,
 	}
 	if ((format & VALUE_FORMAT_X_ADVANCE) != 0) {
 		int16_t xAdvance = *(int16_t*)(start + offset); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+
+				}
+			}
+		}
 		offset += sizeof(int16_t);
 	}
 	if ((format & VALUE_FORMAT_Y_ADVANCE) != 0) {
 		int16_t yAdvance = *(int16_t*)(start + offset); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+					
+				}
+			}
+		}
 		offset += sizeof(int16_t);
 	}
 	if ((format & VALUE_FORMAT_X_PLACEMENT_DEVICE) != 0) {
 		int16_t xPlaDeviceOffset = *(uint16_t*)(start + offset); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+					
+				}
+			}
+		}
 		offset += sizeof(uint16_t);
 	}
 	if ((format & VALUE_FORMAT_Y_PLACEMENT_DEVICE) != 0) {
 		int16_t yPlaDeviceOffset = *(uint16_t*)(start + offset); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+					
+				}
+			}
+		}
 		offset += sizeof(uint16_t);
 	}
 	if ((format & VALUE_FORMAT_X_ADVANCE_DEVICE) != 0) {
 		int16_t xAdvDeviceOffset = *(uint16_t*)(start + offset); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+					
+				}
+			}
+		}
 		offset += sizeof(uint16_t);
 	}
 	if ((format & VALUE_FORMAT_Y_ADVANCE_DEVICE) != 0) {
 		int16_t yAdvDeviceOffset = *(uint16_t*)(start + offset); 
+		for (auto& i : glyphs) {
+			for (auto& j : glyf_table->simple_glyphs) {
+				if (i == j.c) {
+					
+				}
+			}
+		}
 		offset += sizeof(uint16_t);
 	}
 	return offset;
@@ -155,9 +197,10 @@ uint32_t readValueRecord (char* start, uint16_t format, glyph_table* glyf_table,
 // https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
 // should just directly modify glyf data, instead of returning anything
 // would be easier tbh
-void readGpos (char* c, int32_t offset, int32_t length, glyph_table* glyf_table) {
-	char* t = c + offset;
-	gpos_1_1 gposheader = *(gpos_1_1*)(t);
+void readGpos (FileReader* fr, int32_t offset, int32_t length, glyph_table* glyf_table) {
+	fr->moveHeadForward(offset);
+	uint32_t start_offset = fr->getOffset();
+	gpos_1_1 gposheader = *(gpos_1_1*)(fr->getHead());
 	gposheader.majorVersion = SwapTwoBytes(gposheader.majorVersion);
 	gposheader.minorVersion = SwapTwoBytes(gposheader.minorVersion);
 	gposheader.scriptListOffset = SwapTwoBytes(gposheader.scriptListOffset);
@@ -166,83 +209,98 @@ void readGpos (char* c, int32_t offset, int32_t length, glyph_table* glyf_table)
 	gposheader.featureVariationsOffset = SwapFourBytes(gposheader.featureVariationsOffset);
 
 	// parsing feature list
-	char* featurelist = t + gposheader.featureListOffset;
-	uint16_t featureCount = SwapTwoBytes(*(uint16_t*)(featurelist));
+	fr->moveHeadForward(gposheader.featureListOffset);
+	uint16_t featureCount = fr->readTwoBytes(true);
 	std::vector<FeatureRecord> feature_records;
 	for (size_t i = 0; i < featureCount; i++) {
-		FeatureRecord fr = *(FeatureRecord*)(featurelist + 2 + (i * sizeof(FeatureRecord)));
-		fr.featureTag = SwapFourBytes(fr.featureTag);
-		fr.featureOffset = SwapTwoBytes(fr.featureOffset);
-		feature_records.push_back(fr);
+		FeatureRecord feature_record = *(FeatureRecord*)(fr->getHead());
+		feature_record.featureTag = SwapFourBytes(feature_record.featureTag);
+		feature_record.featureOffset = SwapTwoBytes(feature_record.featureOffset);
+		feature_records.push_back(feature_record);
+		fr->moveHeadForward(sizeof(FeatureRecord));
 	}
 	// parsing lookup list
-	char* lookuplist = t + gposheader.lookupListOffset;
-	uint16_t lookup_count = SwapTwoBytes(*(uint16_t*)(lookuplist));
+	fr->setHead(start_offset);
+	fr->moveHeadForward(gposheader.lookupListOffset);
+	uint32_t start_lookup_table = fr->getOffset();
+	uint16_t lookup_count = fr->readTwoBytes(true);
 	std::vector<ChainedSequenceRule> chainedSeqRules;
+	std::vector<uint16_t> looktable_offsets;
 	for (size_t i = 0; i < lookup_count; i++) {
-		uint16_t look = SwapTwoBytes(*(uint16_t*)(lookuplist + 2 + (i * sizeof(uint16_t))));
-		char* off = lookuplist + look;
-		LookupTable lt = *(LookupTable*)(off);
+		uint16_t lookup_offset = fr->readTwoBytes(true);
+		looktable_offsets.push_back(lookup_offset);
+	}
+	for (auto& lookup_offset : looktable_offsets) {
+		fr->setHead(start_lookup_table);
+		fr->moveHeadForward(lookup_offset);
+		LookupTable lt = *(LookupTable*)(fr->getHead());
 		lt.lookupFlag = SwapTwoBytes(lt.lookupFlag);
 		lt.lookupType = SwapTwoBytes(lt.lookupType);
 		lt.subTableCount = SwapTwoBytes(lt.subTableCount);
-		uint32_t lookupTableOff = sizeof(LookupTable);
-		uint32_t cOff = lookupTableOff;
+		std::vector<uint16_t> subtableOffsets;
+		fr->moveHeadForward(sizeof(LookupTable));
 		for (size_t j = 0; j < lt.subTableCount; j++) {
+			// read subtable offsets
+			subtableOffsets.push_back(fr->readTwoBytes(true));
+		}
+		for (size_t j = 0; j < subtableOffsets.size(); j++) {
+			fr->setHead(start_lookup_table);
+			fr->moveHeadForward(lookup_offset);
+			fr->moveHeadForward(subtableOffsets[j]);
 			if (lt.lookupType == GPOS_POSITIONING_EXTENSION) {
-				char* cur_off = off + lookupTableOff;
-				uint16_t format = SwapTwoBytes(*(uint16_t*)(cur_off));
-				uint16_t lookup_type = SwapTwoBytes(*(uint16_t*)(cur_off + 2));
-				uint32_t extension_offset = ((*(uint32_t*)(cur_off + 4)));
-				extension_offset = SwapFourBytes(extension_offset);
+				uint16_t format = fr->readTwoBytes(true);
+				uint16_t lookup_type = fr->readTwoBytes(true);
+				uint32_t extension_offset = fr->readFourBytes(true);
 				lt.lookupType = lookup_type;
-				lookupTableOff += extension_offset;
+				fr->moveHeadForward(extension_offset - 8);
 			}
 			switch (lt.lookupType) {
 				case GPOS_SINGLE_ADJUSTMENT:
 					{
-						char* cur_off = off + lookupTableOff;
-						SinglePosFormat2 header = (*(SinglePosFormat2*)(cur_off));
+						SinglePosFormat2 header = (*(SinglePosFormat2*)(fr->getHead()));
 						header.format = SwapTwoBytes(header.format);
 						header.coverageOffset = SwapTwoBytes(header.coverageOffset);
 						header.valueCount = SwapTwoBytes(header.valueCount);
 						header.valueFormat = SwapTwoBytes(header.valueFormat);
 						// read the coverage table
-						std::vector<uint16_t> glyphs = readCoverageTable(cur_off + header.coverageOffset);
+						std::vector<uint16_t> glyphs = readCoverageTable(fr->getHead() + header.coverageOffset);
 						if (header.format == 1) {
-							uint32_t offset = readValueRecord(cur_off + sizeof(SinglePosFormat1), header.valueFormat, glyf_table, glyphs);
-							cOff += offset;
+							uint32_t offset = readValueRecord(fr->getHead() + sizeof(SinglePosFormat1), header.valueFormat, glyf_table, glyphs);
 						} else if (header.format == 2) {
 							// format 2 could be assumed, but what if extended? Better to explicitly check here
 							uint32_t offset = 0;
 							for (size_t i = 0; i < header.valueCount; i++) {
-								int16_t recOffset = readValueRecord(cur_off + sizeof(SinglePosFormat2) + (offset), header.valueFormat, glyf_table, glyphs);
+								int16_t recOffset = readValueRecord(fr->getHead() + sizeof(SinglePosFormat2) + (offset), header.valueFormat, glyf_table, glyphs);
 								offset += recOffset;
 							}
-							cOff += offset;
 						}
 					}
 				break;
 				case GPOS_PAIR_ADJUSTMENT:
+					// not supporting this yet
 				break;
 				case GPOS_CURSIVE_ATTACHMENT:
+					// not supporting this yet
 				break;
 				case GPOS_MARK_TO_BASE_ATTACHMENT:
+					// not supporting this yet
 				break;
 				case GPOS_MARK_TO_LIGATURE_ATTACHMENT:
+					// not supporting this yet
 				break;
 				case GPOS_MARK_TO_MARK_ATTACHMENT:
+					// not supporting this yet
 				break;
 				case GPOS_CONTEXTUAL_POSITIONING:
+					// not supporting this yet
 				break;
 				case GPOS_CHAINED_CONTEXTS_POSITIONING:
 					{
-						char* cur_off = off + lookupTableOff;
-						uint16_t format = SwapTwoBytes(*(uint16_t*)(cur_off));
-						uint16_t coverageOffset = SwapTwoBytes(*(uint16_t*)(cur_off + 2));
-						uint16_t chainedSeqRuleCount = SwapTwoBytes(*(uint16_t*)(cur_off + 4));
+						uint16_t format = fr->readTwoBytes(true);
+						uint16_t coverageOffset = fr->readTwoBytes(true);
+						uint16_t chainedSeqRuleCount = fr->readTwoBytes(true);
 						// process the ChainedSequenceRuleSet table
-						for (size_t j = 0; j < chainedSeqRuleCount; j++) {
+						/*for (size_t j = 0; j < chainedSeqRuleCount; j++) {
 							uint16_t chainedSeqRuleSetOffset = SwapTwoBytes(*(uint16_t*)(cur_off + 6 + (j * sizeof(uint16_t))));
 							uint16_t count = SwapTwoBytes(*(uint16_t*)(cur_off + chainedSeqRuleSetOffset));
 							for (size_t k = 0; k < count; k++) {
@@ -277,12 +335,13 @@ void readGpos (char* c, int32_t offset, int32_t length, glyph_table* glyf_table)
 								ChainedSequenceRule rule = { backtrackSequence, inputSequence, lookaheadSequence, seqLookupRecords};
 								chainedSeqRules.push_back(rule);
 							}
-						}
+						}*/
 					}
 				break;
 			}
 		}
 	}
+	// not gonna do these tbh
 	// parsing the script list
 
 	// feature variations table
@@ -398,23 +457,29 @@ void readDirectorys(Font_dir* directory, gore::Font* f, FileReader* fr, uint16_t
 	table_dir* tab = nullptr;
 	fr->resetHead();
 	tab = findTable("cmap", directory);
-	c_map = readCmap(fr->getHead(), tab->offset, tab->length, start, end);
+	c_map = readCmap(fr, tab->offset, tab->length, start, end);
+	fr->resetHead();
 	tab = findTable("head", directory);
 	header = readHead(fr, tab->offset, tab->length);
 	fr->resetHead();
 	tab = findTable("loca", directory);
-	locas = readLoca(fr->getHead(), tab->offset, tab->length, header.indexToLocFormat, &c_map);
+	locas = readLoca(fr, tab->offset, tab->length, header.indexToLocFormat, &c_map);
+	fr->resetHead();
 	tab = findTable("hhea", directory);
-	hhea_table hhea = readHheaTable(fr->getHead(), tab->offset, tab->length);
+	hhea_table hhea = readHheaTable(fr, tab->offset, tab->length);
+	fr->resetHead();
     tab = findTable("hmtx", directory);
-	hmtx_table hmtx = readHmtxTable(fr->getHead(), tab->offset, tab->length, hhea.numberOfHMetrics, locas.size());
+	hmtx_table hmtx = readHmtxTable(fr, tab->offset, tab->length, hhea.numberOfHMetrics, locas.size());
+	fr->resetHead();
 	tab = findTable("glyf", directory);
-	g_table = readGlyfs(fr->getHead(), tab->offset, tab->length, locas);
+	g_table = readGlyfs(fr, tab->offset, tab->length, locas);
+	fr->resetHead();
     tab = findTable("vmtx", directory);
     tab = findTable("vhea", directory);
     tab = findTable("GPOS", directory);
 	if (tab) {
-		readGpos(fr->getHead(), tab->offset, tab->length, &g_table);
+		readGpos(fr, tab->offset, tab->length, &g_table);
+		fr->resetHead();
 	}
     tab = findTable("gdef", directory);
     tab = findTable("kern", directory);
