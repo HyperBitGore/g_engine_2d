@@ -28,7 +28,7 @@ IMG atlas_test;
 IMG bmptest;
 IMG blank_test;
 IMG conversion_test;
-ImageAtlas atlas = ImageAtlas(400, 400, 4);
+ImageAtlas atlas = ImageAtlas(400, 400, 4, 256);
 gore::Font f_test;
 gore::Font open_sans;
 
@@ -342,8 +342,8 @@ int main() {
 	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
 	imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = font_r.loadFont("resources/EnvyCodeR.ttf", 32, 127);
-	open_sans = font_r.loadFont("resources/OpenSans-Regular.ttf", 32, 127);
+	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 32, 127);
+	open_sans =  gore::FontLoader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
 
 	//testing font rasterizing
 	font_r.rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335);

@@ -7,7 +7,7 @@ IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	img->h = h;
 	img->w = w;
 	img->bytes_per_pixel = bytes_per_pixel;
-	img->data = (unsigned char*)std::malloc((w * bytes_per_pixel) * h); //pixel is four bytes so w*4 is the stride
+	img->data = new uint8_t[(w * bytes_per_pixel) * h];
 	std::memset(img->data, 0, (w * bytes_per_pixel) * h);
 	img->size = (w * bytes_per_pixel * h);
 	return img;
@@ -60,6 +60,9 @@ void imageloader::setPixel(IMG img, int x, int y, uint8_t r) {
 
 
 void imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes) {
+	if (x >= img->w || y >= img->h) {
+		return;
+	}
 	size_t row = y * (img->w * bytes);
 	size_t col = x * bytes;
 	int shift = (bytes * 8) - 8;

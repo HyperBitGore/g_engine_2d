@@ -8,7 +8,7 @@
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
 // https://github.com/GreenLightning/gpu-font-rendering#method
-gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
+IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	int32_t new_ptsize = ptsize;
@@ -27,13 +27,12 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 		lines.push_back(l);
 	}
 
-	RasterGlyph r_g;
-	r_g.c = g->c;
+	IMG r_g;
 	float miny = g->yMin * scale_factor;
 	int w = new_ptsize; //have to add abs minx to width so we can fit glyphs that go below left side bearing
 	int h = new_ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
-	r_g.data = imageloader::createBlank(w, h, 4);
-	imageloader::createTexture(r_g.data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+	r_g = imageloader::createBlank(w, h, 4);
+	imageloader::createTexture(r_g, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	if (miny < 0) {
 		for (size_t i = 0; i < lines.size(); i++) {
@@ -83,16 +82,16 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 				}
 			}
 			if (winding != 0) {
-				imageloader::setPixelRaw(r_g.data, x, y, color, 4);
+				imageloader::setPixelRaw(r_g, x, y, color, 4);
 			}
 		}
 	}
 	//flipping the current rows
 	for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
 		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
-		std::memcpy(c1, r_g.data->data + (y1 * (w * 4)), w * 4);
-		unsigned char* c2 = r_g.data->data + (y2 * (w * 4));
-		std::memcpy(r_g.data->data + (y1 * (w * 4)), c2, w * 4);
+		std::memcpy(c1, r_g->data + (y1 * (w * 4)), w * 4);
+		unsigned char* c2 = r_g->data + (y2 * (w * 4));
+		std::memcpy(r_g->data + (y1 * (w * 4)), c2, w * 4);
 		std::memcpy(c2, c1, w * 4);
 		std::free(c1);
 	}
@@ -101,21 +100,17 @@ gore::RasterGlyph gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t co
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
 void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color) {
 	Font->ptsize = ptsize;
+	uint32_t w = ptsize * (Font->glyphs.size() / 10);
+	uint32_t h = w;
+	Font->atlas = ImageAtlas(w*(Font->glyphs.size() / 10), h*(Font->glyphs.size()/10), 4, Font->glyphs.size());
+	imageloader::createTexture(Font->atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
-		Font->r_glyphs.push_back(rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font));
-		imageloader::updateIMG(Font->r_glyphs[Font->r_glyphs.size() - 1].data);
-		//imageloader::createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
-		//createTexture(gore::Font->r_glyphs[gore::Font->r_glyphs.size() - 1].data, GL_RGBA8, GL_RGBA);
+		IMG rg = rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
+		std::string name = "";
+		name.push_back(Font->glyphs[i].c);
+		Font->atlas.addImage(rg, name);
+		imageloader::updateIMG(Font->atlas.getImg());
 	}
-}
-
-int findFontCharRaster(gore::Font* f, uint16_t c) {
-	for (size_t i = 0; i < f->r_glyphs.size(); i++) {
-		if (f->r_glyphs[i].c == c) {
-			return i;
-		}
-	}
-	return 0;
 }
 int findFontChar(gore::Font* f, uint16_t c) {
 	for (size_t i = 0; i < f->glyphs.size(); i++) {
@@ -127,7 +122,7 @@ int findFontChar(gore::Font* f, uint16_t c) {
 }
 
 void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
-	if (Font->r_glyphs.size() <= 0) {
+	if (Font->atlas.getImg() == nullptr) {
 		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
 	}
@@ -137,23 +132,30 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 	float scale = (float)Font->ptsize / ((float)Font->ptsize / (float)ptsize);
 	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
 	for (size_t i = 0; i < text.size(); i++) {
-		int index = findFontCharRaster(Font, text[i]);
+		int index = findFontChar(Font, text[i]);
 		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
+		float lsb_pixels = (float)Font->glyphs[index].lsb * scale_factor;
 		if (text[i] >= 33) {
 			float tempy = y1;
-			if (Font->ptsize < Font->r_glyphs[index].data->h) {
-				int dif = Font->r_glyphs[index].data->h - Font->ptsize;
+			x1 += lsb_pixels;
+			std::string name = "";
+			name.push_back(Font->glyphs[index].c);
+			vec4 uv = Font->atlas.getImagePos(name, true);
+			if (Font->ptsize < uv.w) {
+				int dif = uv.w - Font->ptsize;
 				float diff = (float)dif * scale_factor;
 				tempy += diff;
 			}
-			img_r->drawImage(Font->r_glyphs[index].data, {x1, tempy}, {scale, scale});
-			//addImageCall( x1, y1, scale, scale);
-			//bindImg(gore::Font->r_glyphs[index].data);
-			//renderImgs(true);
+			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
+		}
+		// this shows something wrong with actual data I am loading, looking at glyph in fontdrop the numbers are off for opensans
+		// might be way I am loading the glyph positions????
+		if (text[i] == 'o') {
+			std::cout << "too low\n";
 		}
 		x1 += adv_pixels;
 	}
-	
+	img_r->drawBuffer(Font->atlas.getImg());
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
@@ -167,8 +169,10 @@ void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, f
 	for (size_t i = 0; i < text.size(); i++) {
 		int index = findFontChar(Font, text[i]);
 		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
+		float lsb_pixels = (float)Font->glyphs[index].lsb * scale_factor;
 		if (text[i] >= 33) {
 			//draw the glyph
+			x1 += lsb_pixels;
 			for (size_t j = 0; j < Font->glyphs[index].contours.size(); j++) {
 				Line l = Font->glyphs[index].contours[j];
 				//converting line points to ptsize

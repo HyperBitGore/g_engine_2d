@@ -35,13 +35,13 @@ private:
 		Member* next;
 	};
 	typedef Member* Memb;
-	Memb* buckets;
+	Memb* buckets = nullptr;
 	int imageHash(std::string name) {
         int tot = 0;
         for(size_t i = 0; i < name.size(); i++){
             tot += name[i];
         }
-		return tot % 256;
+		return tot % max_images;
 	}
 	void insert(std::string name, IMG img, vec2 point){
 		int hash = imageHash(name);
@@ -72,12 +72,25 @@ private:
 		}
 		return cur;
 	}
-	IMG img;
-	unsigned int max_images;
-
+	IMG img = nullptr;
+	uint32_t max_images = 0;
+	vec2 start_pos = {0, 0};
+	friend void swap (ImageAtlas& a, ImageAtlas& b) {
+		std::swap(a.img, b.img);
+		std::swap(a.buckets, b.buckets);
+		std::swap(a.max_images, b.max_images);
+	}
 public:
-	ImageAtlas(int w, int h, int bytes_per_pixel);
+	ImageAtlas();
+	ImageAtlas(int w, int h, int bytes_per_pixel, uint32_t max_images);
+	// copy
+	ImageAtlas (const ImageAtlas& atlas);
+	//move
+	ImageAtlas (ImageAtlas&& atlas);
 	~ImageAtlas();
+	// operators
+	ImageAtlas& operator=(const ImageAtlas& atlas);
+	ImageAtlas& operator=(ImageAtlas&& atlas);
 	void addImage(IMG img, std::string name);
 	void addImage(std::string path, IMG_TYPE type, std::string name);
 	vec4 getImagePos(std::string name, bool normalize = false);
