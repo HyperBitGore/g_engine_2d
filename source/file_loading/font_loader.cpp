@@ -380,6 +380,7 @@ void readFormat12(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 cmap readCmap(FileReader* fr, int offset, int length, uint16_t start, uint16_t end) {
 	cmap map;
 	fr->moveHeadForward(offset);
+    uint32_t start_offset = fr->getOffset();
 	char* m = fr->getHead();
 	uint32_t start_off = fr->getOffset();
 	map.version = fr->readTwoBytes(true);
@@ -391,32 +392,36 @@ cmap readCmap(FileReader* fr, int offset, int length, uint16_t start, uint16_t e
 		table.platformSpecificID = fr->readTwoBytes(true);
 		table.offset = fr->readFourBytes(true);
 		map.tables.push_back(table); //offset is from start of cmap
-		int format = (m + map.tables[i].offset)[0] << 8 | (m + map.tables[i].offset)[1];
+    }
+    for (auto& i : map.tables) {
+        fr->setHead(start_offset);
+        fr->moveHeadForward(i.offset);
+        uint16_t format = fr->readTwoBytes(true);
 		switch (format) {
 		case 4:
 			//most common
-			readFormat4(m, &map.tables[i], start, end);
+			readFormat4(m, &i, start, end);
 			break;
 		case 0:
-			readFormat0(m, &map.tables[i], start, end);
+			readFormat0(m, &i, start, end);
 			break;
 		case 2:
 			std::cout << "Unsupported cmap format; Format 2;" << std::endl;
 			//readFormat2(m, &map.tables[i], start, end);
 			break;
 		case 6:
-			readFormat6(m, &map.tables[i], start, end);
+			readFormat6(m, &i, start, end);
 			break;
 		case 8:
 			std::cout << "Unsupported cmap format; Format 8;" << std::endl;
 			//readFormat8(m, &map.tables[i], start, end);
 			break;
 		case 10:
-			readFormat10(m, &map.tables[i], start, end);
+			readFormat10(m, &i, start, end);
 			break;
 		case 12:
 			//most common
-			readFormat12(m, &map.tables[i], start, end);
+			readFormat12(m, &i, start, end);
 			break;
 		case 13:
 			//not doing this cause it is not needed
