@@ -28,8 +28,14 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 	}
 
 	IMG r_g;
+	if (g->c == 'W') {
+		std::cout << "end\n";
+	}
 	float miny = g->yMin * scale_factor;
-	int w = new_ptsize; //have to add abs minx to width so we can fit glyphs that go below left side bearing
+	float minx = g->xMin * scale_factor;
+	float lsbx = g->lsb * scale_factor;
+	// need to fix this warping ts out of images
+	int w = new_ptsize + abs((int)lsbx) + abs((int)g->rsb); //have to add abs minx to width so we can fit glyphs that go below left side bearing
 	int h = new_ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
 	r_g = imageloader::createBlank(w, h, 4);
 	imageloader::createTexture(r_g, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -40,17 +46,7 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 			lines[i].p2.y += std::abs(miny);
 		}
 	}
-	// winding
-	float minx = (lines[0].p1.x < lines[0].p2.x) ? lines[0].p1.x : lines[0].p2.x;
-	for (auto& i : lines) {
-		if (i.p1.x < minx) {
-			minx = i.p1.x;
-		}
-		if (i.p2.x < minx) {
-			minx = i.p2.x;
-		}
-	}
-	uint32_t rminx = (uint32_t)roundf(minx) - 1;
+	// non-zero winding rule btw
 	for (uint32_t y = 0; y < h; y++) {
 		for (uint32_t x = 0; x < w; x++) {
 			vec2 origin = { x + 0.0f, y + 0.0f };
@@ -108,6 +104,8 @@ void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dp
 		IMG rg = rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
 		std::string name = "";
 		name.push_back(Font->glyphs[i].c);
+		Font->rastered.push_back(rg);
+		imageloader::updateIMG(rg);
 		Font->atlas.addImage(rg, name);
 	}
 	imageloader::updateIMG(Font->atlas.getImg());
@@ -146,11 +144,12 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 				float diff = (float)dif * scale_factor;
 				tempy += diff;
 			}
-			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
+			img_r->drawImage(Font->rastered[index], {x1, tempy}, {scale, scale});
+			//img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
 		}
 		x1 += adv_pixels;
 	}
-	img_r->drawBuffer(Font->atlas.getImg());
+	//img_r->drawBuffer(Font->atlas.getImg());
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880

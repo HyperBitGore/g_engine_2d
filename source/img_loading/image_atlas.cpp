@@ -106,7 +106,7 @@ bool ImageAtlas::checkCollision(Point p1, Point dim1, Point p2, Point dim2){
 }
 
 bool ImageAtlas::spotEmpty(Point p, Point dim){
-    if (p.x + dim.x > this->img->w || p.y + dim.y > this->img->h) {
+    if (p.x + dim.x > this->img->w || p.y + dim.y > this->img->h || p.x >= this->img->w || p.y >= this->img->h) {
         return false;
     }
     for(int i = 0; i < max_images; i++){
@@ -143,25 +143,15 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
             img->data = new_data;
         }
     }
-    /*Point c = {-1, -1};
-    while(c.x == -1) {
-        c = findEmpty({0, 0}, {(int)n_img->w, (int)n_img->h});
-        if(c.x == -1){
-            uint8_t* new_data = new uint8_t[(img->w * img->bytes_per_pixel) * (img->h + 200)];
-            std::memcpy(new_data, img->data, img->size);
-            img->size = (img->w * img->bytes_per_pixel) * (img->h + 200);
-            img->h += 200;
-            img->data = new_data;
-        }
-    }*/
     // probably convert this to memcpy
     for (size_t y = 0; y < n_img->h; y++) {
+        //std::memcpy(img->data + ((int)start_pos.y * (img->bytes_per_pixel * (int)start_pos.x )), n_img + (y * (n_img->bytes_per_pixel)), y * (n_img->bytes_per_pixel));
         for (size_t x = 0; x < n_img->w; x++) {
             uint32_t col = (uint32_t)imageloader::getPixel(n_img, x, y, img->bytes_per_pixel);
             imageloader::setPixelRaw(img, start_pos.x + x, start_pos.y + y, col, 4);
         }
     }
-    // start_pos.x += n_img->w;
+    start_pos.x += n_img->w;
     insert(name, n_img, {(float)start_pos.x, (float)start_pos.y});
 }
 
