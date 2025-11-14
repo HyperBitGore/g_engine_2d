@@ -109,8 +109,8 @@ void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dp
 		std::string name = "";
 		name.push_back(Font->glyphs[i].c);
 		Font->atlas.addImage(rg, name);
-		imageloader::updateIMG(Font->atlas.getImg());
 	}
+	imageloader::updateIMG(Font->atlas.getImg());
 }
 int findFontChar(gore::Font* f, uint16_t c) {
 	for (size_t i = 0; i < f->glyphs.size(); i++) {

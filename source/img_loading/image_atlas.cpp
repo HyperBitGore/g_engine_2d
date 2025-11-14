@@ -124,17 +124,6 @@ bool ImageAtlas::spotEmpty(Point p, Point dim){
 // should do this
 // only need to look up if y is fine, the x position should be set based on previous insert
 
-Point ImageAtlas::findEmpty(Point start, Point dim){
-    for(int y = start.y; y < img->h; y++){
-        for(int x = start.x; x < img->w; x++){
-            if(spotEmpty({x, y}, dim)){
-               return {x, y}; 
-            }
-        }
-    }
-    return {-1, -1};
-}
-
 //have to make sure the n_img is the same format as the atlas
 void ImageAtlas::addImage(IMG n_img, std::string name) {
     if (n_img->bytes_per_pixel != img->bytes_per_pixel) {
@@ -172,7 +161,7 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
             imageloader::setPixelRaw(img, start_pos.x + x, start_pos.y + y, col, 4);
         }
     }
-    
+    // start_pos.x += n_img->w;
     insert(name, n_img, {(float)start_pos.x, (float)start_pos.y});
 }
 

@@ -45,6 +45,12 @@ FileReader::FileReader(const FileReader&& f) {
     std::move(f.data.begin(), f.data.end(), this->data.begin());
 }
 
+FileReader::FileReader(void* data, size_t size) {
+    this->data = std::string((char*)data, size);
+    this->offset = 0;
+    this->size = size;
+}
+
 void FileReader::moveHeadBack (uint32_t n) {
     offset -= n;
 }

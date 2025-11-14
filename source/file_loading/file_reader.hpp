@@ -16,6 +16,8 @@ public:
     FileReader(const FileReader& f);
     // move
     FileReader(const FileReader&& f);
+    // wrap raw data
+    FileReader(void* data, size_t size);
 
     void moveHeadBack (uint32_t n);
     void moveHeadForward (uint32_t n);
