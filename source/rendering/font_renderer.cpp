@@ -148,11 +148,6 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 			}
 			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
 		}
-		// this shows something wrong with actual data I am loading, looking at glyph in fontdrop the numbers are off for opensans
-		// might be way I am loading the glyph positions????
-		if (text[i] == 'o') {
-			std::cout << "too low\n";
-		}
 		x1 += adv_pixels;
 	}
 	img_r->drawBuffer(Font->atlas.getImg());

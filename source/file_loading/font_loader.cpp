@@ -443,6 +443,7 @@ cmap readCmap(FileReader* fr, int offset, int length, uint16_t start, uint16_t e
 struct loca {
 	uint16_t c;
 	uint32_t offset;
+	uint16_t index;
 };
 
 
@@ -468,22 +469,12 @@ std::vector<loca> readLoca(FileReader* fr, int offset, int length, uint16_t form
 			break;
 		}
 	}
-
-	if (format == 0) {
-		for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
-			loca l;
-			l.c = map->tables[index].indexs[i].c;
-			l.offset = readLoca16(fr->getHead(), map->tables[index].indexs[i].index);
-			locas.push_back(l);
-		}
-	}
-	else {
-		for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
-			loca l;
-			l.c = (map->tables[index].indexs[i].c);
-			l.offset = readLoca32(fr->getHead(), map->tables[index].indexs[i].index);
-			locas.push_back(l);
-		}
+	for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
+		loca l;
+		l.c = map->tables[index].indexs[i].c;
+		l.index = map->tables[index].indexs[i].index;
+		l.offset = (format == 0) ? (readLoca16(fr->getHead(), map->tables[index].indexs[i].index)) : (readLoca32(fr->getHead(), map->tables[index].indexs[i].index));
+		locas.push_back(l);
 	}
 	return locas;
 }
@@ -618,6 +609,7 @@ struct glyf {
 	short yMin;
 	short xMax;
 	short yMax;
+	uint16_t glyf_index;
 };
 
 
@@ -657,6 +649,7 @@ glyph_table readGlyfs(FileReader* fr, int offset, int length, std::vector<loca> 
 		g.yMin = fr->readTwoBytes(true);
 		g.xMax = fr->readTwoBytes(true);
 		g.yMax = fr->readTwoBytes(true);
+		g.glyf_index = locas[i].index;
 		if (g.numberOfContours >= 0) {
 			//simple glyph
 			simp_glyf sg;
@@ -666,6 +659,7 @@ glyph_table readGlyfs(FileReader* fr, int offset, int length, std::vector<loca> 
 			sg.xMax = g.xMax;
 			sg.yMax = g.yMax;
 			sg.c = g.c;
+			sg.glyf_index = g.glyf_index;
 			//now we read endpts of countours
 			for (int j = 0; j < sg.numberOfContours; j++) {
 				sg.endPtsOfCountours.push_back(fr->readTwoBytes(true));
@@ -1226,8 +1220,8 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 		g.yMax = i.yMax;
 		g.yMin = i.yMin;
 		g.xMin = i.xMin;
-		g.advanceWidth = hmtx->hMetrics[i.c].advanceWidth;
-		g.lsb = hmtx->hMetrics[i.c].lsb;
+		g.advanceWidth = hmtx->hMetrics[i.glyf_index].advanceWidth;
+		g.lsb = hmtx->hMetrics[i.glyf_index].lsb;
         g.rsb = g.advanceWidth - (g.lsb + g.xMax - g.xMin);
 		int32_t k = 0;
 		std::vector<vec2> points;
