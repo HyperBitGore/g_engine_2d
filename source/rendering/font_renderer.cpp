@@ -1,6 +1,7 @@
 #include "font_renderer.hpp"
 #include "font_renderer_shader.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 
 //https://www.youtube.com/watch?v=4bIsntTiKfM
@@ -16,6 +17,12 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 		new_ptsize *= 2;
 	}
 	float scale_factor = (new_ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
+	float miny = g->yMin * scale_factor;
+	float maxy = g->yMax * scale_factor;
+	float minx = g->xMin * scale_factor;
+	float maxx = g->xMax * scale_factor;
+	float lsbx = g->lsb * scale_factor;
+	float rsbx = g->rsb * scale_factor;
 	for (size_t i = 0; i < g->contours.size(); i++) {
 		Line l = g->contours[i];
 		l.p1.x = l.p1.x * scale_factor;
@@ -28,15 +35,16 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 	}
 
 	IMG r_g;
-	if (g->c == 'W') {
-		std::cout << "end\n";
-	}
-	float miny = g->yMin * scale_factor;
-	float minx = g->xMin * scale_factor;
-	float lsbx = g->lsb * scale_factor;
 	// need to fix this warping ts out of images
-	int w = new_ptsize + abs((int)lsbx) + abs((int)g->rsb); //have to add abs minx to width so we can fit glyphs that go below left side bearing
-	int h = new_ptsize + abs((int)miny); //have to add abs miny to height so we can fit glyphs that go below baseline
+	int w = new_ptsize;
+	if (maxx > new_ptsize) {
+		w += std::ceil(maxx - new_ptsize) + 1;
+	}
+	int h = new_ptsize; //have to add abs miny to height so we can fit glyphs that go below baseline
+	if (miny < 0) {
+		h += abs((int)miny);
+		g->y_offset = (h) - ptsize;
+	}
 	r_g = imageloader::createBlank(w, h, 4);
 	imageloader::createTexture(r_g, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
@@ -134,7 +142,7 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
 		float lsb_pixels = (float)Font->glyphs[index].lsb * scale_factor;
 		if (text[i] >= 33) {
-			float tempy = y1;
+			float tempy = y1 + (Font->glyphs[index].y_offset * scale_factor);
 			x1 += lsb_pixels;
 			std::string name = "";
 			name.push_back(Font->glyphs[index].c);
@@ -144,12 +152,11 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 				float diff = (float)dif * scale_factor;
 				tempy += diff;
 			}
-			img_r->drawImage(Font->rastered[index], {x1, tempy}, {scale, scale});
-			//img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
+			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
 		}
 		x1 += adv_pixels;
 	}
-	//img_r->drawBuffer(Font->atlas.getImg());
+	img_r->drawBuffer(Font->atlas.getImg());
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880

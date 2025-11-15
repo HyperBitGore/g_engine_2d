@@ -18,6 +18,7 @@ namespace gore {
 		uint16_t advanceWidth;
 		int16_t lsb; //left side bearing
         int16_t rsb; // derived, we calculate this
+		int y_offset = -1;
 	};
     
     class Font {

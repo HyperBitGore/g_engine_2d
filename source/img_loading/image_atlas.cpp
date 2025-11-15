@@ -151,8 +151,8 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
             imageloader::setPixelRaw(img, start_pos.x + x, start_pos.y + y, col, 4);
         }
     }
-    start_pos.x += n_img->w;
     insert(name, n_img, {(float)start_pos.x, (float)start_pos.y});
+    start_pos.x += n_img->w;
 }
 
 void ImageAtlas::addImage(std::string path, IMG_TYPE type, std::string name){
