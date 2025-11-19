@@ -236,6 +236,7 @@ void renderFunction() {
 	font_r.drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
 	font_r.drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
 	font_r.drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
+	font_r.drawText("\x7E!\x7F", &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
 	font_r.drawRasterText(&open_sans, &img_r, "o", 300.0f, 850.0f, 128, eng2.getDPI());
 	font_r.drawRasterText(&open_sans, &img_r, "WMabcdefghijklmnopqrstuvwxzy0123456789,;'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }
@@ -342,12 +343,12 @@ int main() {
 	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
 	imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 32, 127);
+	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 0, 730);
 	open_sans =  gore::FontLoader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
 
 	//testing font rasterizing
-	font_r.rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335);
-	font_r.rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335);
+	font_r.rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335, 32, 127);
+	font_r.rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335, 32, 127);
 	blank_test = imageloader::createBlank(100, 100, 4);
 	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {

@@ -102,19 +102,22 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 	return r_g;
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
-void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color) {
+void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end) {
 	Font->ptsize = ptsize;
-	uint32_t w = ptsize * (Font->glyphs.size() / 10);
+	uint32_t w = ptsize * 20;
 	uint32_t h = w;
-	Font->atlas = ImageAtlas(w*(Font->glyphs.size() / 10), h*(Font->glyphs.size()/10), 4, Font->glyphs.size());
+	Font->atlas = ImageAtlas(w, h, 4, Font->glyphs.size());
+	std::cout << "Creating atlas for font " << Font->name << " with dimensions " << w << "x" << h << " and max images " << Font->glyphs.size() << std::endl;
 	imageloader::createTexture(Font->atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
-		IMG rg = rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
-		std::string name = "";
-		name.push_back(Font->glyphs[i].c);
-		Font->rastered.push_back(rg);
-		imageloader::updateIMG(rg);
-		Font->atlas.addImage(rg, name);
+		if (Font->glyphs[i].c >= start && Font->glyphs[i].c <= end) {
+			IMG rg = rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
+			std::string name = "";
+			name.push_back(Font->glyphs[i].c);
+			Font->rastered.push_back(rg);
+			imageloader::updateIMG(rg);
+			Font->atlas.addImage(rg, name);
+		}
 	}
 	imageloader::updateIMG(Font->atlas.getImg());
 }
@@ -152,11 +155,12 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 				float diff = (float)dif * scale_factor;
 				tempy += diff;
 			}
-			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
+			img_r->drawImage(Font->rastered[index], {x1, tempy}, {scale, scale});
+			//img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
 		}
 		x1 += adv_pixels;
 	}
-	img_r->drawBuffer(Font->atlas.getImg());
+	//img_r->drawBuffer(Font->atlas.getImg());
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880

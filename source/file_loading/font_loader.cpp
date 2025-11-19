@@ -16,11 +16,14 @@
 
 // compound glyf flags
 #define ARG_1_AND_2_ARE_WORDS 0x0001
-#define MORE_COMPONENTS 0x0020
+#define ARGS_ARE_XY_VALUES 0x0002
+#define ROUND_XY_TO_GRID 0x0004
 #define WE_HAVE_A_SCALE 0x0008
+#define MORE_COMPONENTS 0x0020
 #define WE_HAVE_AN_X_AND_Y_SCALE 0x0040
 #define WE_HAVE_A_TWO_BY_TWO 0x0080
 #define WE_HAVE_INSTRUCTIONS 0x0100
+#define USE_MY_METRICS 0x0200
 // simple glyf flags
 #define ON_CURVE_POINT 0x01
 #define X_SHORT_VECTOR 0x02
@@ -626,7 +629,18 @@ struct simp_glyf : glyf {
 };
 //for later use
 struct comp_glyf : glyf {
-
+	struct Component {
+				uint16_t flags;
+				uint16_t glyphIndex;
+				uint32_t arg1;
+				uint32_t arg2;
+				int16_t scale;
+				int16_t xscale;
+				int16_t yscale;
+				int16_t scale01;
+				int16_t scale10;
+	};
+	std::vector<Component> components;
 };
 
 
@@ -763,28 +777,43 @@ glyph_table readGlyfs(FileReader* fr, int offset, int length, std::vector<loca> 
 		}
 		else {
 			// https://learn.microsoft.com/en-us/typography/opentype/spec/glyf
-			//compound glyph do nothing for now
-			glyf g;
+			comp_glyf cg;
 			uint16_t flags;
+			cg.c = g.c;
+			cg.xMin = g.xMin;
+			cg.yMin = g.yMin;
+			cg.xMax = g.xMax;
+			cg.yMax = g.yMax;
+			cg.glyf_index = g.glyf_index;
 			do {
 				flags = fr->readTwoBytes(true);
-				uint16_t glyphIndex = fr->readTwoBytes(true);
+				comp_glyf::Component component;
+				component.flags = flags;
+				component.glyphIndex = fr->readTwoBytes(true);
 				if (flags & ARG_1_AND_2_ARE_WORDS) {
-
+					component.arg1 = fr->readTwoBytes(true);
+					component.arg2 = fr->readTwoBytes(true);
 				} else {
-
+					component.arg1 = fr->readOneByte();
+					component.arg2 = fr->readOneByte();
 				}
 				if ( flags & WE_HAVE_A_SCALE ) {
-					
+					component.scale = fr->readTwoBytes(true);
 				} else if ( flags & WE_HAVE_AN_X_AND_Y_SCALE ) {
-					
+					component.xscale = fr->readTwoBytes(true);
+					component.yscale = fr->readTwoBytes(true);
 				} else if ( flags & WE_HAVE_A_TWO_BY_TWO ) {
-					
+					component.xscale = fr->readTwoBytes(true);
+					component.scale01 = fr->readTwoBytes(true);
+					component.scale10 = fr->readTwoBytes(true);
+					component.yscale = fr->readTwoBytes(true);
 				}
+				cg.components.push_back(component);
 			} while (flags & MORE_COMPONENTS);
 			if (flags & WE_HAVE_INSTRUCTIONS) {
 				
 			}
+			table.compound_glyphs.push_back(cg);
 		}
 
 	}
@@ -1244,6 +1273,80 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 		}
 		f->glyphs.push_back(g);
 	}
+	for (auto& i : g_table->compound_glyphs) {
+		//compound glyphs not supported yet
+		gore::Glyph cg;
+		cg.c = i.c;
+		cg.xMax = i.xMax;
+		cg.yMax = i.yMax;
+		cg.yMin = i.yMin;
+		cg.xMin = i.xMin;
+		cg.advanceWidth = hmtx->hMetrics[i.glyf_index].advanceWidth;
+		cg.lsb = hmtx->hMetrics[i.glyf_index].lsb;
+        cg.rsb = cg.advanceWidth - (cg.lsb + cg.xMax - cg.xMin);
+		for (auto& j : i.components) {
+			uint32_t glyph_index = j.glyphIndex;
+			if (j.flags & USE_MY_METRICS) {
+				cg.advanceWidth = hmtx->hMetrics[glyph_index].advanceWidth;
+				cg.lsb = hmtx->hMetrics[glyph_index].lsb;
+				cg.rsb = cg.advanceWidth - (cg.lsb + cg.xMax - cg.xMin);
+			}
+			for (size_t k = 0; k < g_table->simple_glyphs.size(); k++) {
+				if (g_table->simple_glyphs[k].glyf_index == glyph_index) {
+					glyph_index = g_table->simple_glyphs[k].c;
+					break;
+				}
+			}
+			if (glyph_index == j.glyphIndex) {
+				//couldn't find simple glyph, skipping
+				std::cout << "Couldn't find simple glyph for compound glyph index " << j.glyphIndex << std::endl;
+				continue;
+			}
+			for (auto& g : f->glyphs) {
+				if (g.c == glyph_index) {
+					gore::Glyph g_copy = g;
+					for (size_t t = 0; t < g_copy.contours.size(); t++) {
+						float scale01 = 0.0f;
+						float scale10 = 0.0f;
+						float xscale = 1.0f;
+						float yscale = 1.0f;
+						if (j.flags & WE_HAVE_A_SCALE) {
+							float scale = j.scale / 16384.0f;
+							xscale = scale;
+							yscale = scale;
+						} else if (j.flags & WE_HAVE_AN_X_AND_Y_SCALE) {
+							xscale = j.xscale / 16384.0f;
+							yscale = j.yscale / 16384.0f;
+						} else if (j.flags & WE_HAVE_A_TWO_BY_TWO) {
+							xscale = j.xscale / 16384.0f;
+							scale01 = j.scale01 / 16384.0f;
+							scale10 = j.scale10 / 16384.0f;
+							yscale = j.yscale / 16384.0f;
+						}
+						
+						if ((j.flags & (ARGS_ARE_XY_VALUES))) {
+							g_copy.contours[t].p1.x = g_copy.contours[t].p1.x * xscale + g_copy.contours[t].p1.y * scale10 + j.arg1;
+							g_copy.contours[t].p1.y = g_copy.contours[t].p1.x * scale01 + g_copy.contours[t].p1.y * yscale + j.arg2;
+							g_copy.contours[t].p2.x = g_copy.contours[t].p2.x * xscale + g_copy.contours[t].p2.y * scale10 + j.arg1;
+							g_copy.contours[t].p2.y = g_copy.contours[t].p2.x * scale01 + g_copy.contours[t].p2.y * yscale + j.arg2;
+							if (j.flags & ROUND_XY_TO_GRID) {
+								g_copy.contours[t].p1.x = roundf(g_copy.contours[t].p1.x);
+								g_copy.contours[t].p1.y = roundf(g_copy.contours[t].p1.y);
+								g_copy.contours[t].p2.x = roundf(g_copy.contours[t].p2.x);
+								g_copy.contours[t].p2.y = roundf(g_copy.contours[t].p2.y);
+							}
+						} else {
+							//args are points, first arg is parent point, second is child point
+							std::cout << "Compound glyph point args not supported yet." << std::endl;
+						}
+						cg.contours.push_back(g_copy.contours[t]);
+					}
+					break;
+				}
+			}
+		}
+		f->glyphs.push_back(cg);
+	}
 }
 // issue is overlapping lines and gaps, that creates the line artifacts with the winding rasterization
 void readDirectorys(Font_dir* directory, gore::Font* f, FileReader* fr, uint16_t start, uint16_t end) {
@@ -1311,6 +1414,6 @@ gore::Font gore::FontLoader::loadFont(std::string file, uint16_t start, uint16_t
 	Font.name = file;
 	Font.overlap_simple = false;
 	readDirectorys(&directory, &Font, &fr, start, end);
-
+	std::cout << "Loaded font: " << file << " with " << Font.glyphs.size() << " glyphs." << std::endl;
 	return Font;
 }

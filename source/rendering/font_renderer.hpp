@@ -18,7 +18,7 @@ namespace gore {
 		//font drawing
 		void drawText(std::string text, gore::Font* font, float x, float y, int ptsize, uint32_t dpi);
 		IMG rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font);
-		void rasterizeFont(gore::Font* font, int ptsize, uint32_t dpi, uint32_t color);
+		void rasterizeFont(gore::Font* font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end);
 		void drawRasterText(gore::Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
 		// for width and height
 		void setDimensions (uint32_t width, int32_t height);
