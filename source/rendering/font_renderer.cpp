@@ -3,6 +3,23 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <string>
+
+
+std::u16string gore::FontRenderer::convertToU16String (std::string str) {
+	std::u16string wide_str;
+	for (size_t i = 0; i < str.size(); i++) {
+		uint8_t c = str[i];
+		if (c <= 127) {
+			wide_str.push_back(str[i]);
+		} else {
+			throw std::runtime_error("Non-ASCII character encountered");
+			
+		}
+	}
+
+	return wide_str;
+}
 
 //https://www.youtube.com/watch?v=4bIsntTiKfM
 //coding math is the goat
@@ -130,7 +147,7 @@ int findFontChar(gore::Font* f, uint16_t c) {
 	return 0;
 }
 
-void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
+void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
 	if (Font->atlas.getImg() == nullptr) {
 		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
@@ -162,12 +179,16 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 	}
 	//img_r->drawBuffer(Font->atlas.getImg());
 }
+
+void gore::FontRenderer::drawRasterText(gore::Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
+	drawRasterText(font, img_r, convertToU16String(text), x, y, ptsize, dpi);
+}
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
 //cutout memory inefficient parts of glyph like points
 // have to use LSB LMAO
-void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, float y, int ptsize, uint32_t dpi) {
+void gore::FontRenderer::drawText(std::u16string text, gore::Font* Font, float x, float y, int ptsize, uint32_t dpi) {
 	float x1 = x;
 	float y1 = y;
 	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
@@ -207,9 +228,12 @@ void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, f
     glDrawArrays_g(GL_LINES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
     glBindVertexArray_g(0);
-   glDisable(GL_LINE_SMOOTH);
+   	glDisable(GL_LINE_SMOOTH);
 }
 
+void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, float y, int ptsize, uint32_t dpi) {
+	drawText(convertToU16String(text), Font, x, y, ptsize, dpi);
+}
 
 gore::FontRenderer::FontRenderer(uint32_t w, uint32_t h) {
 	this->width = w;

@@ -3,6 +3,7 @@
 #include "../source/util/matrix.hpp"
 #include <bitset>
 #include <cstdint>
+#include <string>
 
 uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
@@ -236,9 +237,11 @@ void renderFunction() {
 	font_r.drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
 	font_r.drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
 	font_r.drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
-	font_r.drawText("\x7E!\x7F", &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
-	font_r.drawRasterText(&open_sans, &img_r, "o", 300.0f, 850.0f, 128, eng2.getDPI());
-	font_r.drawRasterText(&open_sans, &img_r, "WMabcdefghijklmnopqrstuvwxzy0123456789,;'\"", 400.0f, 800.0f, 48, eng2.getDPI());
+	const char test_str[] = {'\x7E', '!', '\x7F', (char)200};
+	std::u16string test_str2 = {0xC8, 0x7E, 0x21, 0x10A, 0xFFFF, 0x2DC, 0x144};
+	font_r.drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
+	font_r.drawRasterText(&open_sans, &img_r, "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
+	font_r.drawRasterText(&open_sans, &img_r, "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }
 
 int nthBit(int number, int n) {
@@ -343,7 +346,7 @@ int main() {
 	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
 	imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 0, 730);
+	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 0, 735);
 	open_sans =  gore::FontLoader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
 
 	//testing font rasterizing
