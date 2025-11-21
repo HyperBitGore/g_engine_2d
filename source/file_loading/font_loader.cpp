@@ -1,5 +1,7 @@
 #include "font_loader.hpp"
 #include "file_reader.hpp"
+#include <cstdint>
+#include <stdexcept>
 
 #define SwapTwoBytes(data) \
 ( (((data) >> 8) & 0x00FF) | (((data) << 8) & 0xFF00) ) 
@@ -162,26 +164,18 @@ struct format4 {
 	std::vector<uint16_t> glyphIndexArray;
 };
 int get_glyph_index_format4(uint16_t c, format4* f, uint16_t* idRangeStart) {
-	int index = -1;
 	for (int i = 0; i < f->segCountX2 / 2; i++) {
-		if (f->endcode[i] > c) {
-			index = i;
-			break;
-		}
-	}
-	if (index == -1) {
-		return 0;
-	}
-	if (f->startCode[index] < c) {
-		uint16_t* ptr = nullptr;
-		if (f->idRangeOffset[index] != 0) {
-			ptr = idRangeStart + index + f->idRangeOffset[index] / 2;
-			ptr += c - f->startCode[index];
-			if (SwapTwoBytes(*ptr) == 0) { return 0; }
-			return SwapTwoBytes(*ptr) + f->idDelta[index];
-		}
-		else {
-			return c + f->idDelta[index];
+		if (f->endcode[i] >= c && f->startCode[i] <= c) {
+			uint16_t* ptr = nullptr;
+			if (f->idRangeOffset[i] != 0) {
+				ptr = idRangeStart + i + f->idRangeOffset[i] / 2;
+				ptr += c - f->startCode[i];
+				if (SwapTwoBytes(*ptr) == 0) { return 0; }
+				return (SwapTwoBytes(*ptr) + f->idDelta[i]) % 65536;
+			}
+			else {
+				return (c + f->idDelta[i]) % 65536;
+			}
 		}
 	}
 
@@ -240,7 +234,10 @@ void readFormat4(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	//now we read all of the character codes, change back to 32
 	uint16_t start1 = start;
 	for (; start1 <= end; start1++) {
-		table->indexs.push_back({ get_glyph_index_format4(start1, &form, idRangeStart), start1 });
+		//uint32_t index = get_glyph_index_format4_not_shit_poop(start1, &form, (char*)idRangeStart);
+		uint32_t index = get_glyph_index_format4(start1, &form, idRangeStart);
+		table->indexs.push_back({(int32_t)index, start1});
+		//table->indexs.push_back({ get_glyph_index_format4(start1, &form, idRangeStart), start1 });
 	}
 	//std::cout << table->indexs[0].c << " : " << table->indexs[0].index << "\n";
 }
@@ -289,7 +286,7 @@ void readFormat6(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 	//now we read the glyphidarray
 	std::vector<uint16_t> glyphidarray;
 	for (uint16_t i = 0; i < entrycount; i++) {
-		glyphidarray.push_back(*(f + i));
+		glyphidarray.push_back(SwapTwoBytes(*(f + i)));
 	}
 
 	//outputting to the table
@@ -467,10 +464,13 @@ std::vector<loca> readLoca(FileReader* fr, int offset, int length, uint16_t form
 	std::vector<loca> locas;
 	int index = 0;
 	for (size_t i = 0; i < map->tables.size(); i++) {
-		if (map->tables[i].platformSpecificID == 3) {
+		if (map->tables[i].platformID == 0) {
 			index = (int)i;
 			break;
 		}
+	}
+	if (map->tables[index].platformSpecificID != 3) {
+		throw std::runtime_error("Possibly unsupported font file, can cause unknown/unsafe behavior, wrap font load in catch if you want to use!");
 	}
 	for (size_t i = 0; i < map->tables[index].indexs.size(); i++) {
 		loca l;
@@ -784,7 +784,8 @@ glyph_table readGlyfs(FileReader* fr, int offset, int length, std::vector<loca> 
 			cg.yMin = g.yMin;
 			cg.xMax = g.xMax;
 			cg.yMax = g.yMax;
-			cg.glyf_index = g.glyf_index;
+			cg.glyf_index = 0;
+			g.numberOfContours = -1;
 			do {
 				flags = fr->readTwoBytes(true);
 				comp_glyf::Component component;

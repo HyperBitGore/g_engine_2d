@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <string>
-
+#include <chrono>
 
 std::u16string gore::FontRenderer::convertToU16String (std::string str) {
 	std::u16string wide_str;
@@ -126,6 +126,7 @@ void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dp
 	Font->atlas = ImageAtlas(w, h, 4, Font->glyphs.size());
 	std::cout << "Creating atlas for font " << Font->name << " with dimensions " << w << "x" << h << " and max images " << Font->glyphs.size() << std::endl;
 	imageloader::createTexture(Font->atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+	auto startTimer = std::chrono::high_resolution_clock::now();
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
 		if (Font->glyphs[i].c >= start && Font->glyphs[i].c <= end) {
 			IMG rg = rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
@@ -136,6 +137,9 @@ void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dp
 			Font->atlas.addImage(rg, name);
 		}
 	}
+	auto endTimer = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
+	std::cout << "Elapsed: " << duration << " ms" << std::endl;
 	imageloader::updateIMG(Font->atlas.getImg());
 }
 int findFontChar(gore::Font* f, uint16_t c) {
