@@ -93,6 +93,24 @@ public:
 	ImageAtlas& operator=(ImageAtlas&& atlas);
 	void addImage(IMG img, std::string name);
 	void addImage(std::string path, IMG_TYPE type, std::string name);
+	vec2 getNextImagePos (uint32_t w, uint32_t h);
+	void insert(std::string name, uint32_t w, uint32_t h, vec2 point){
+		int hash = imageHash(name);
+		Memb m = new Member;
+		m->p_and_d = {point.x, point.y, (float)w, (float)h};
+		m->name = name;
+		m->next = nullptr;
+		if(buckets[hash] != nullptr){
+			Memb cur = buckets[hash];
+			while(cur->next != nullptr){
+				cur = cur->next;
+			}
+			cur->next = m;
+		}else{
+			buckets[hash] = m;
+		}
+
+	}
 	vec4 getImagePos(std::string name, bool normalize = false);
 	IMG getImg();
 };

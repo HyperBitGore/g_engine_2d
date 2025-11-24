@@ -121,6 +121,27 @@ bool ImageAtlas::spotEmpty(Point p, Point dim){
     return true;
 }
 
+vec2 ImageAtlas::getNextImagePos (uint32_t w, uint32_t h) {
+    while (!spotEmpty({(int)start_pos.x, (int)start_pos.y}, {(int)w, (int)h})) {
+        start_pos.x += 2;
+        if (start_pos.x + w > img->w) {
+            start_pos.x = 0;
+            start_pos.y += 2;
+        }
+        if (start_pos.y + h > img->h) {
+            //return start_pos;
+            IMG n_img = imageloader::createBlank(img->w, img->h + (h * 2), img->bytes_per_pixel);
+            std::memcpy(n_img->data, img->data, img->size);
+            n_img->format = img->format;
+            n_img->type = img->type;
+            delete [] img->data;
+            imageloader::createTexture(n_img, GL_RGBA8, n_img->format, n_img->type);
+            img = n_img;
+        }
+    }
+    return start_pos;
+}
+
 // should do this
 // only need to look up if y is fine, the x position should be set based on previous insert
 
@@ -129,20 +150,7 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
     if (n_img->bytes_per_pixel != img->bytes_per_pixel) {
         return;
     }
-    while (!spotEmpty({(int)start_pos.x, (int)start_pos.y}, {(int)n_img->w, (int)n_img->h})) {
-        start_pos.x += 2;
-        if (start_pos.x + n_img->w > img->w) {
-            start_pos.x = 0;
-            start_pos.y += 2;
-        }
-        if (start_pos.y + n_img->h > img->h) {
-            uint8_t* new_data = new uint8_t[(img->w * img->bytes_per_pixel) * (img->h + 200)];
-            std::memcpy(new_data, img->data, img->size);
-            img->size = (img->w * img->bytes_per_pixel) * (img->h + 200);
-            img->h += 200;
-            img->data = new_data;
-        }
-    }
+    getNextImagePos (n_img->w, n_img->h);
     // probably convert this to memcpy
     for (size_t y = 0; y < n_img->h; y++) {
         //std::memcpy(img->data + ((int)start_pos.y * (img->bytes_per_pixel * (int)start_pos.x )), n_img + (y * (n_img->bytes_per_pixel)), y * (n_img->bytes_per_pixel));
@@ -152,6 +160,7 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
         }
     }
     insert(name, n_img, {(float)start_pos.x, (float)start_pos.y});
+    imageloader::updateIMG(img);
     start_pos.x += n_img->w;
 }
 

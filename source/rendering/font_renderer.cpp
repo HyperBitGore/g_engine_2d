@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdint>
 #include <string>
-#include <chrono>
 
 std::u16string gore::FontRenderer::convertToU16String (std::string str) {
 	std::u16string wide_str;
@@ -26,7 +25,7 @@ std::u16string gore::FontRenderer::convertToU16String (std::string str) {
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
 // https://github.com/GreenLightning/gpu-font-rendering#method
-IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
+void gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
 	//have to scale glyph contour points
 	std::vector<Line> lines;
 	int32_t new_ptsize = ptsize;
@@ -51,7 +50,6 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 		lines.push_back(l);
 	}
 
-	IMG r_g;
 	// need to fix this warping ts out of images
 	int w = new_ptsize;
 	if (maxx > new_ptsize) {
@@ -62,8 +60,6 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 		h += abs((int)miny);
 		g->y_offset = (h) - ptsize;
 	}
-	r_g = imageloader::createBlank(w, h, 4);
-	imageloader::createTexture(r_g, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	//https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 	if (miny < 0) {
 		for (size_t i = 0; i < lines.size(); i++) {
@@ -71,6 +67,7 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 			lines[i].p2.y += std::abs(miny);
 		}
 	}
+	vec2 atlas_pos = Font->atlas.getNextImagePos(w, h);
 	// non-zero winding rule btw
 	for (uint32_t y = 0; y < h; y++) {
 		for (uint32_t x = 0; x < w; x++) {
@@ -103,20 +100,16 @@ IMG gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsiz
 				}
 			}
 			if (winding != 0) {
-				imageloader::setPixelRaw(r_g, x, y, color, 4);
+				uint32_t r_x = atlas_pos.x + x;
+				uint32_t r_y = atlas_pos.y + (h - y);
+
+				imageloader::setPixelRaw(Font->atlas.getImg(), r_x, r_y, color, 4);
 			}
 		}
 	}
-	//flipping the current rows
-	for (int y1 = 0, y2 = h - 1; y1 <= y2; y1++, y2--) {
-		unsigned char* c1 = (unsigned char*)std::malloc(w * 4);
-		std::memcpy(c1, r_g->data + (y1 * (w * 4)), w * 4);
-		unsigned char* c2 = r_g->data + (y2 * (w * 4));
-		std::memcpy(r_g->data + (y1 * (w * 4)), c2, w * 4);
-		std::memcpy(c2, c1, w * 4);
-		std::free(c1);
-	}
-	return r_g;
+	std::string name = "";
+	name.push_back(g->c);
+	Font->atlas.insert(name, w, h, atlas_pos);
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
 void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end) {
@@ -126,20 +119,11 @@ void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dp
 	Font->atlas = ImageAtlas(w, h, 4, Font->glyphs.size());
 	std::cout << "Creating atlas for font " << Font->name << " with dimensions " << w << "x" << h << " and max images " << Font->glyphs.size() << std::endl;
 	imageloader::createTexture(Font->atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-	auto startTimer = std::chrono::high_resolution_clock::now();
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
 		if (Font->glyphs[i].c >= start && Font->glyphs[i].c <= end) {
-			IMG rg = rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
-			std::string name = "";
-			name.push_back(Font->glyphs[i].c);
-			Font->rastered.push_back(rg);
-			imageloader::updateIMG(rg);
-			Font->atlas.addImage(rg, name);
+			rasterizeGlyph(&Font->glyphs[i], color, ptsize, dpi, Font);
 		}
 	}
-	auto endTimer = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
-	std::cout << "Elapsed: " << duration << " ms" << std::endl;
 	imageloader::updateIMG(Font->atlas.getImg());
 }
 int findFontChar(gore::Font* f, uint16_t c) {
@@ -176,12 +160,11 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 				float diff = (float)dif * scale_factor;
 				tempy += diff;
 			}
-			img_r->drawImage(Font->rastered[index], {x1, tempy}, {scale, scale});
-			//img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
+			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
 		}
 		x1 += adv_pixels;
 	}
-	//img_r->drawBuffer(Font->atlas.getImg());
+	img_r->drawBuffer(Font->atlas.getImg());
 }
 
 void gore::FontRenderer::drawRasterText(gore::Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
