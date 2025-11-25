@@ -239,6 +239,25 @@ gore::FontRenderer::FontRenderer(uint32_t w, uint32_t h) {
     font_shader.setuniform("projection", 1, true, ortho);
 }
 
+gore::FontRenderer::FontRenderer (const gore::FontRenderer& f) {
+	this->width = f.width;
+	this->height = f.height;
+	Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+	vertexs.reserve(1000);
+	std::copy(f.vertexs.begin(), f.vertexs.end(), vertexs.begin());
+    this->allocated = f.allocated;
+    glGenBuffers_g(1, &vertex_buffer);
+	font_shader.compile(vertexShaderSourceFont, fragmentShaderSourceFont);
+    font_shader.bind();
+    glGenVertexArrays_g(1, &font_vao);
+    glBindVertexArray_g(font_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    font_shader.setuniform("projection", 1, true, ortho);
+}
+
+
 void gore::FontRenderer::setDimensions (uint32_t width, int32_t height) {
 	Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
 	font_shader.bind();

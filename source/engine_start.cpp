@@ -1,5 +1,9 @@
 #include "g_engine_2d.hpp"
+#include "rendering/font_renderer.hpp"
+#include "rendering/image_renderer.hpp"
+#include "rendering/primitive_renderer.hpp"
 #include "util/shader.hpp"
+#include <memory>
 
 #if defined (__unix__)
 int myXIOErrorHandler(Display *dpy) {
@@ -10,7 +14,7 @@ int myXIOErrorHandler(Display *dpy) {
 #endif
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
+EngineNewGL::EngineNewGL(const char* window_name, int width, int height, uint8_t component_mask) {
 	#if defined(_WIN32)
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
@@ -237,7 +241,18 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height) {
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
 	std::cout << "Texture Units on this machine: " << texture_units << "\n";
 	//start modern opengl needed stuff like shaders and vertex buffers
-
+	if (component_mask & PRIMITIVE_COMPONENT) {
+		this->prim_r = std::make_unique<PrimitiveRenderer>(width, height);
+	}
+	if (component_mask & IMAGE_COMPONENT) {
+		this->img_r = std::make_unique<imagerenderer>(width, height);
+	}
+	if (component_mask & GRAYSCALE_COMPONENT) {
+		this->gray_r = std::make_unique<grayscalerenderer>(width, height);
+	}
+	if (component_mask & FONT_COMPONENT) {
+		this->font_r = std::make_unique<gore::FontRenderer>(width, height);
+	}
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);
 	#endif

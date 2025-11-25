@@ -1,4 +1,5 @@
 #include "image_renderer.hpp"
+#include "image_renderer_shader.hpp"
 
 void imagerenderer::addImageVertex(vec2 pos, vec2 dim){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex
@@ -138,36 +139,9 @@ void imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
 }
 
 imagerenderer::imagerenderer(size_t w, size_t h) {
-    const char* vertex_shader = "#version 450 core\n"
-        "\n"
-        "layout(location = 0) in vec2 pos;\n"
-        "layout(location = 1) in vec2 uv;\n"
-        "layout(location = 2) in float ang;\n"
-        "layout(location = 3) in vec2 rot_p;\n"
-        "uniform mat4 projection;\n"
-        "out vec2 tex_coord;\n"
-        "void main(){\n"
-        "    //doing the rotation before conversion causes warpage\n"
-        "    vec2 p = (projection * vec4(pos.x, pos.y, 0.0, 1.0)).xy;\n"
-        "    vec2 rot = (projection * vec4(rot_p.x, rot_p.y, 0.0, 1.0)).xy;\n"
-        "    vec2 pre = p - rot;\n"
-        "    pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
-        "    pre = pre + rot;\n"
-        "    p = pre;\n"
-        "    tex_coord = uv;\n"
-        "    gl_Position = vec4(p.x, p.y, 0.0, 1.0);\n"
-        "}\n"
-        "";
-    const char* fragment_shader = "#version 450 core\n"
-        "out vec4 color;\n"
-        "in vec2 tex_coord;\n"
-        "uniform sampler2D mtexture;\n"
-        "void main(){\n"
-        "    color = texture(mtexture, tex_coord);\n"
-        "}";
     allocated = 0;
     //shader.compile(std::string("img.vs"), std::string("img.fs"));
-    shader.compile(vertex_shader, fragment_shader);
+    shader.compile(vertex_shader_image, fragment_shader_image);
     glGenVertexArrays_g(1, &vao);
     glGenBuffers_g(1, &vertex_buffer);
     glBindVertexArray_g(vao);
@@ -188,6 +162,31 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
     shader.setuniform("mtexture", (GLuint)0);
 }
 
+imagerenderer::imagerenderer(const imagerenderer& img) {
+    this->allocated = img.allocated;
+    //shader.compile(std::string("img.vs"), std::string("img.fs"));
+    shader.compile(vertex_shader_image, fragment_shader_image);
+    glGenVertexArrays_g(1, &vao);
+    glGenBuffers_g(1, &vertex_buffer);
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray_g(1);
+    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray_g(2);
+    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray_g(3);
+    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    shader.bind();
+    this->width = img.width;
+    this->height = img.height;
+    std::copy(img.vertexs.begin(), img.vertexs.end(), this->vertexs.begin());
+    Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+    shader.setuniform("projection", 1, true, ortho);
+    shader.setuniform("mtexture", (GLuint)0);
+}
+
 
 void imagerenderer::setDimensions (uint32_t width, uint32_t height) {
     shader.bind();
@@ -198,41 +197,8 @@ void imagerenderer::setDimensions (uint32_t width, uint32_t height) {
 }
 
 grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
-    const char* vertex_shader = "#version 450 core\n"
-        "\n"
-        "layout(location = 0) in vec2 pos;\n"
-        "layout(location = 1) in vec2 uv;\n"
-        "layout(location = 2) in float ang;\n"
-        "layout(location = 3) in vec2 rot_p;\n"
-        "uniform mat4 projection;\n"
-        "out vec2 tex_coord;\n"
-        "void main(){\n"
-        "    //doing the rotation before conversion causes warpage\n"
-        "    vec2 p = (projection * vec4(pos.x, pos.y, 0.0, 1.0)).xy;\n"
-        "    vec2 rot = (projection * vec4(rot_p.x, rot_p.y, 0.0, 1.0)).xy;\n"
-        "    vec2 pre = p - rot;\n"
-        "    pre = vec2(pre.x*cos(ang)-pre.y*sin(ang), pre.y*cos(ang) + pre.x*sin(ang));\n"
-        "    pre = pre + rot;\n"
-        "    p = pre;\n"
-        "    tex_coord = uv;\n"
-        "    gl_Position = vec4(p.x, p.y, 0.0, 1.0);\n"
-        "}\n"
-        "";
-    const char* fragment_shader = "#version 450 core\n"
-        "out vec4 color;\n"
-        "in vec2 tex_coord;\n"
-        "uniform sampler2D mtexture;\n"
-        "uniform bool withAlpha;"
-        "void main(){\n"
-        "    vec4 texcolor = texture(mtexture, tex_coord);\n"
-        "    if(withAlpha) {\n"
-        "      color = vec4(texcolor.r, texcolor.r, texcolor.r, texcolor.g);\n"
-        "    } else {\n"
-        "    color = vec4(texcolor.r, texcolor.r, texcolor.r, texcolor.a);\n"
-        "    }\n"
-        "}";
     allocated = 0;
-    shader.compile(vertex_shader, fragment_shader);
+    shader.compile(vertex_shader_grayscale, fragment_shader_grayscale);
     glGenVertexArrays_g(1, &vao);
     glGenBuffers_g(1, &vertex_buffer);
     glBindVertexArray_g(vao);
@@ -247,6 +213,32 @@ grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
     Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
+    shader.setuniform("projection", 1, true, ortho);
+    shader.setuniform("mtexture", (GLuint)0);
+    shader.setuniform("withAlpha", false);
+}
+
+
+grayscalerenderer::grayscalerenderer(const grayscalerenderer& gsr) {
+    allocated = 0;
+    shader.compile(vertex_shader_grayscale, fragment_shader_grayscale);
+    glGenVertexArrays_g(1, &vao);
+    glGenBuffers_g(1, &vertex_buffer);
+    glBindVertexArray_g(vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray_g(1);
+    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray_g(2);
+    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray_g(3);
+    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    shader.bind();
+    this->width = gsr.width;
+    this->height = gsr.height;
+    std::copy(gsr.vertexs.begin(), gsr.vertexs.end(), this->vertexs.begin());
+    Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);

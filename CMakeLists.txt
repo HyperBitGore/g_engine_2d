@@ -12,7 +12,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(g_engine source/g_engine_2d.hpp source/audio/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/rendering/font_renderer.cpp 
 source/function_loader.cpp source/gl_defines.hpp source/util/hashmap.hpp source/img_loading/image_loader.cpp source/input.cpp source/util/matrix.cpp source/util/matrix.hpp source/util/shader.cpp source/window.cpp example/example.cpp source/audio/audio.hpp source/backend.hpp source/util/vector.cpp 
-source/util/vector.hpp source/rendering/primitive_renderer.cpp source/rendering/image_renderer.cpp source/img_loading/image_atlas.cpp source/img_loading/bmp_loader.cpp source/util/shader.hpp source/img_loading/image_loader.hpp source/rendering/image_renderer.hpp
+source/util/vector.hpp source/rendering/primitive_renderer.cpp source/rendering/primitive_renderer_shader.hpp source/rendering/image_renderer.cpp source/img_loading/image_atlas.cpp source/img_loading/bmp_loader.cpp source/util/shader.hpp source/img_loading/image_loader.hpp source/rendering/image_renderer.hpp
+source/rendering/image_renderer_shader.hpp
 source/rendering/primitive_renderer.hpp source/rendering/font_renderer.hpp source/file_loading/font_loader.cpp source/file_loading/font_loader.hpp source/img_loading/png_loader.cpp
 source/img_loading/common.hpp source/img_loading/inflate.hpp source/file_loading/file_reader.hpp source/file_loading/file_reader.cpp
 )

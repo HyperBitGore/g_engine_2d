@@ -35,6 +35,8 @@ private:
 public:
 	//use to initialize shaders
 	PrimitiveRenderer(GLuint sw, GLuint sh);
+	// copy
+	PrimitiveRenderer(const PrimitiveRenderer& p);
 	//sets color for drawing
 	void setColor(vec4 color);
 	//triangles

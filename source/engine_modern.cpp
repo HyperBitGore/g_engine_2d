@@ -1,4 +1,5 @@
 #include "g_engine_2d.hpp"
+#include <cstdint>
 
 bool EngineNewGL::getKeyDown(uint32_t key) {
 	return in->GetKeyDown(key);
@@ -113,4 +114,23 @@ void EngineNewGL::toggleMouseHide() {
 
 uint32_t EngineNewGL::getDPI() {
 	return wind->getDPI();
+}
+
+void EngineNewGL::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
+	std::function<void(uint32_t, uint32_t)> f = [this, &func](uint32_t w, uint32_t h) {
+		if (prim_r) {
+			prim_r->setDimensions(w, h);
+		}
+		if (img_r) {
+			img_r->setDimensions(w, h);
+		}
+		if (gray_r) {
+			gray_r->setDimensions(w, h);
+		}
+		if (font_r) {
+			font_r->setDimensions(w, h);
+		}
+		func(w, h);
+	};
+	wind->setWindowResize(f);
 }

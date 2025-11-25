@@ -1,5 +1,13 @@
 #pragma once
 #include "rendering/font_renderer.hpp"
+#include "rendering/image_renderer.hpp"
+#include "rendering/primitive_renderer.hpp"
+#include <memory>
+#define PRIMITIVE_COMPONENT 0x1
+#define IMAGE_COMPONENT 0x2
+#define FONT_COMPONENT 0x4
+#define GRAYSCALE_COMPONENT 0x8
+
 
 //add 3d support
 //add 3d line rendering
@@ -42,16 +50,47 @@ private:
 	GLXContext ctx;
 	#endif
 public:
+	// rendering backends
+	std::unique_ptr<PrimitiveRenderer> prim_r = nullptr;
+	std::unique_ptr<imagerenderer> img_r = nullptr;
+	std::unique_ptr<gore::FontRenderer> font_r = nullptr;
+	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
 	// parts is a bitmask which tells us what to load
-	EngineNewGL(const char* window_name, int width, int height);
+	EngineNewGL(const char* window_name, int width, int height, uint8_t component_mask);
 
 	//move constructor
 	EngineNewGL(EngineNewGL&& o) {
-		
+		this->prim_r = std::move(o.prim_r);
+		this->img_r = std::move(o.img_r);
+		this->font_r = std::move(o.font_r);
+		this->gray_r = std::move(o.gray_r);
+		//this->ap = std::move(o.ap);
+		this->wind = o.wind;
+		this->in = o.in;
+		this->renderFund = o.renderFund;
+		this->draw_color = o.draw_color;
+		this->clear_color = o.clear_color;
+		#if defined (__unix__)
+		this->display = o.display;
+		this->ctx = o.ctx;
+		#endif
 	}
-	//copy constructor
+	//copy constructor, probably not accurate to what behavior we would want out of a copy constructor
 	EngineNewGL(const EngineNewGL& o) {
-
+		this->prim_r = std::make_unique<PrimitiveRenderer>(*o.prim_r);
+		this->img_r = std::make_unique<imagerenderer>(*o.img_r);
+		this->font_r = std::make_unique<gore::FontRenderer>(*o.font_r);
+		this->gray_r = std::make_unique<grayscalerenderer>(*o.gray_r);
+		//this->ap = o.ap;
+		this->wind = o.wind;
+		this->in = o.in;
+		this->renderFund = o.renderFund;
+		this->draw_color = o.draw_color;
+		this->clear_color = o.clear_color;
+		#if defined (__unix__)
+		this->display = o.display;
+		this->ctx = o.ctx;
+		#endif
 	}
 	~EngineNewGL () {
 		#if defined (__unix__)
@@ -66,9 +105,7 @@ public:
 		renderFund = func;
 	}
 	// sets the window resize user function
-	void setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
-		wind->setWindowResize(func);
-	}
+	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 	//updates the window
 	bool updateWindow();
 	

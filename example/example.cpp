@@ -7,11 +7,7 @@
 
 uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
-EngineNewGL eng2("Test Window", 640, 480);
-PrimitiveRenderer prim_r(640, 480);
-imagerenderer img_r(640, 480);
-grayscalerenderer gsc_r(640, 480);
-gore::FontRenderer font_r(640, 480);
+EngineNewGL eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT);
 DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
 AudioPlayer ap(4);
 Audio aud;
@@ -159,30 +155,30 @@ void renderFunction() {
 		}
 	}
 	dr.bind();
-	prim_r.setColor({1.0f, 0.5f, 0.0f, 1.0f});
-	prim_r.drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
-	prim_r.drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
-	prim_r.addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
-	prim_r.addTriangle({300.0f, 80.0f}, {320.0f, 100.0f}, {340.0f, 80.0f});
-	prim_r.addTriangle({300.0f, 60.0f}, {320.0f, 80.0f}, {340.0f, 60.0f});
-	prim_r.addTriangle({0.0f, 0.0f}, {20.0f, 20.0f}, {40.0f, 0.0f});
-	prim_r.addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
-	prim_r.drawBufferTriangle();
+	eng2.prim_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
+	eng2.prim_r->drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
+	eng2.prim_r->drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
+	eng2.prim_r->addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
+	eng2.prim_r->addTriangle({300.0f, 80.0f}, {320.0f, 100.0f}, {340.0f, 80.0f});
+	eng2.prim_r->addTriangle({300.0f, 60.0f}, {320.0f, 80.0f}, {340.0f, 60.0f});
+	eng2.prim_r->addTriangle({0.0f, 0.0f}, {20.0f, 20.0f}, {40.0f, 0.0f});
+	eng2.prim_r->addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
+	eng2.prim_r->drawBufferTriangle();
 	
-	prim_r.setColor({0.5f, 0.3f, 0.1f, 1.0f});
-	prim_r.drawQuad({pos, 10.0f}, 60.0f, 60.0f);
-	prim_r.setColor({0.0f, 1.0f, 0.5f, 0.0f});
-	prim_r.drawPoint({50.0f, 300.0f});
+	eng2.prim_r->setColor({0.5f, 0.3f, 0.1f, 1.0f});
+	eng2.prim_r->drawQuad({pos, 10.0f}, 60.0f, 60.0f);
+	eng2.prim_r->setColor({0.0f, 1.0f, 0.5f, 0.0f});
+	eng2.prim_r->drawPoint({50.0f, 300.0f});
 	for (float y = 0.0f; y <= 300.0f; y += 0.1f) {
-		prim_r.addPoint({70.0f, y});
+		eng2.prim_r->addPoint({70.0f, y});
 	}
-	prim_r.drawBufferPoint();
-	prim_r.setColor({0.0f, 0.2f, 1.0f, 1.0f});
-	prim_r.drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
-	prim_r.setColor({1.0f, 0.2f, 0.5f, 1.0f});
-	prim_r.circle({500.0f, 50.0f}, 50.0f);
-	prim_r.quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
-	prim_r.drawBufferLine();
+	eng2.prim_r->drawBufferPoint();
+	eng2.prim_r->setColor({0.0f, 0.2f, 1.0f, 1.0f});
+	eng2.prim_r->drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
+	eng2.prim_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
+	eng2.prim_r->circle({500.0f, 50.0f}, 50.0f);
+	eng2.prim_r->quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
+	eng2.prim_r->drawBufferLine();
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -196,21 +192,21 @@ void renderFunction() {
 	float r = float(ang) * (float)M_PI / (float)180.0;
 	float r_r = float(r_ang) * (float)M_PI / (float)180.0;
 	eng2.enable(GL_BLEND);
-	img_r.drawImage(imgtest, {300.0f, 200.0f}, {100.0f, 100.0f});
-	img_r.drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
-	img_r.drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
-	img_r.drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
-	img_r.drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
-	img_r.drawImage(conversion_test, {560.0f, 200.0f}, {100.0f, 100.0f});
-	gsc_r.drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
-	gsc_r.setWithAlpha(true);
-	gsc_r.drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
-	gsc_r.setWithAlpha(false);
+	eng2.img_r->drawImage(imgtest, {300.0f, 200.0f}, {100.0f, 100.0f});
+	eng2.img_r->drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
+	eng2.img_r->drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
+	eng2.img_r->drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
+	eng2.img_r->drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
+	eng2.img_r->drawImage(conversion_test, {560.0f, 200.0f}, {100.0f, 100.0f});
+	eng2.gray_r->drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
+	eng2.gray_r->setWithAlpha(true);
+	eng2.gray_r->drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
+	eng2.gray_r->setWithAlpha(false);
 	vec4 pos = atlas.getImagePos("atlas_test", true);
-	img_r.addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
+	eng2.img_r->addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
 	pos = atlas.getImagePos("enem2", true);
-	img_r.addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
-	img_r.drawBuffer(atlas.getImg());
+	eng2.img_r->addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
+	eng2.img_r->drawBuffer(atlas.getImg());
 	// img_r.drawImage(imgtest, {0.0f, 0.0f}, {300.0f, 300.0f});
 	// img_r.drawImage(imgtest_bmp, {300.0f, 0.0f}, {300.0f, 300.0f});
 	eng2.disable(GL_BLEND);
@@ -224,24 +220,24 @@ void renderFunction() {
 		invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 		// img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}else{
-		img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
+		eng2.img_r->drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}
 	eng2.enable(GL_BLEND);
-	img_r.drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
+	eng2.img_r->drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
-	font_r.drawRasterText(&f_test, &img_r, "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
-	font_r.drawRasterText(&f_test, &img_r, "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
-	font_r.drawRasterText(&open_sans, &img_r, "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
-	font_r.drawRasterText(&open_sans, &img_r, "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
+	eng2.font_r->drawRasterText(&f_test, eng2.img_r.get(), "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
+	eng2.font_r->drawRasterText(&f_test, eng2.img_r.get(), "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
+	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
+	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
 	eng2.disable(GL_BLEND);
-	font_r.drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
-	font_r.drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
-	font_r.drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
+	eng2.font_r->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
+	eng2.font_r->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
+	eng2.font_r->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
 	const char test_str[] = {'\x7E', '!', '\x7F', (char)200};
 	std::u16string test_str2 = {0xC8, 0x7E, 0x21, 0x10A, 0xFFFF, 0x2DC, 0x144};
-	font_r.drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
-	font_r.drawRasterText(&open_sans, &img_r, "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
-	font_r.drawRasterText(&open_sans, &img_r, "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
+	eng2.font_r->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
+	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
+	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }
 
 int nthBit(int number, int n) {
@@ -249,10 +245,6 @@ int nthBit(int number, int n) {
 }
 
 void windowResize (uint32_t width, uint32_t height) {
-	prim_r.setDimensions(width, height);
-	img_r.setDimensions(width, height);
-	gsc_r.setDimensions(width, height);
-	font_r.setDimensions(width, height);
 	dr.resize(width, height);
 	globalWidth = width;
 	globalHeight = height;
@@ -350,8 +342,8 @@ int main() {
 	open_sans =  gore::FontLoader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
 
 	//testing font rasterizing
-	font_r.rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335, 32, 127);
-	font_r.rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335, 32, 127);
+	eng2.font_r->rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335, 32, 127);
+	eng2.font_r->rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335, 32, 127);
 	blank_test = imageloader::createBlank(100, 100, 4);
 	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {

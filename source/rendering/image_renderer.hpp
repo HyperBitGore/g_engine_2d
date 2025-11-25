@@ -22,11 +22,13 @@ protected:
 	GLuint vertex_buffer;
 	GLuint allocated;
 	uint32_t width, height;
-	imagerenderer() {
+	imagerenderer () {
 
 	}
 public:
 	imagerenderer(size_t w, size_t h);
+	// copy
+	imagerenderer(const imagerenderer& img);
 	void addImageVertex(vec2 pos, vec2 dimensions);
 	void addImageVertex(vec2 pos, vec2 dimensions, float rot);
 	void addImageVertex(vec2 pos, vec2 dimensions, vec4 uvs, float rot);
@@ -44,6 +46,8 @@ public:
 class grayscalerenderer : public imagerenderer {
 	public:
 	grayscalerenderer(size_t w, size_t h);
+	// copy
+	grayscalerenderer(const grayscalerenderer& gsr);
 	void setWithAlpha(bool withAlpha) {
 		shader.bind();
 		shader.setuniform("withAlpha", withAlpha);

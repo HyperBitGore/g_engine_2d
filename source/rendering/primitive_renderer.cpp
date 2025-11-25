@@ -1,5 +1,6 @@
 #include "primitive_renderer.hpp"
 #include "../util/matrix.hpp"
+#include "primitive_renderer_shader.hpp"
 
 void PrimitiveRenderer::setColor(vec4 color){
     triangle_shader.setuniform("set_color", color);
@@ -223,52 +224,6 @@ void PrimitiveRenderer::circle(vec2 p, float r){
 
 PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
     Matrix ortho = Matrix::calculateOrtho(sw, sh, sw, sh);
-    const char* triangle_vertex ="#version 450 core\n"
-        "\n"
-        "layout(location = 0) in vec2 pos;\n"
-        "uniform mat4 projection;\n"
-        "\n"
-        "void main(){\n"
-        "    gl_Position = projection * vec4(pos.x, pos.y, 0.0, 1.0);\n"
-        "}\n"
-        "";
-    const char* triangle_fragment = "#version 450 core\n"
-        "out vec4 color;\n"
-        "uniform vec4 set_color;\n"
-        "void main(){\n"
-        "    color = set_color;\n"
-        "}";
-    const char* point_vertex = "#version 450 core\n"
-        "\n"
-        "layout(location = 0) in vec2 pos;\n"
-        "uniform mat4 projection;\n"
-        "uniform float point_size;\n"
-        "\n"
-        "void main(){\n"
-        "    gl_Position = projection * vec4(pos.x, pos.y, 0.0, 1.0);\n"
-        "    gl_PointSize = point_size;\n"
-        "}\n"
-        "";
-    const char* point_fragment = "#version 450 core\n"
-        "out vec4 color;\n"
-        "uniform vec4 set_color;\n"
-        "void main(){\n"
-        "    color = set_color;\n"
-        "}";
-    const char* line_vertex = "#version 450 core\n"
-        "\n"
-        "layout(location = 0) in vec2 pos;\n"
-        "uniform mat4 projection;\n"
-        "void main(){\n"
-        "    gl_Position = projection * vec4(pos.x, pos.y, 0.0, 1.0);\n"
-        "}\n"
-        "";
-    const char* line_fragment = "#version 450 core\n"
-        "out vec4 color;\n"
-        "uniform vec4 set_color;\n"
-        "void main(){\n"
-        "    color = set_color;\n"
-        "}";
     vertexs.reserve(1000);
     allocated = 1;
     glGenBuffers_g(1, &vertex_buffer);
@@ -304,7 +259,44 @@ PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
     this->width = sw;
     this->height = sh;
 }
+PrimitiveRenderer::PrimitiveRenderer(const PrimitiveRenderer& p) {
+    this->width = p.width;
+    this->height = p.height;
+    Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+    vertexs.reserve(1000);
+    std::copy(p.vertexs.begin(), p.vertexs.end(), vertexs.begin());
+    this->allocated = p.allocated;
+    glGenBuffers_g(1, &vertex_buffer);
+    triangle_shader.compile(triangle_vertex, triangle_fragment);
+    triangle_shader.bind();
+    triangle_shader.setuniform("projection", 1, true, ortho);
+    glGenVertexArrays_g(1, &triangle_vao);
+    glBindVertexArray_g(triangle_vao);
+    //bind buffers per vertexatrribarray,if you don't bind buffers, attribarrays break
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    
+    point_shader.compile(point_vertex, point_fragment);
+    point_shader.bind();
+    glGenVertexArrays_g(1, &point_vao);
+    glBindVertexArray_g(point_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    point_shader.setuniform("point_size", 1.0f);
+    point_shader.setuniform("projection", 1, true, ortho);
 
+    line_shader.compile(line_vertex, line_fragment);
+    line_shader.bind();
+    glGenVertexArrays_g(1, &line_vao);
+    glBindVertexArray_g(line_vao);
+    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray_g(0);
+    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    line_shader.setuniform("projection", 1, true, ortho);
+    setLineWidth(1.0f);
+}
 
 void PrimitiveRenderer::setDimensions (uint32_t width, int32_t height) {
     Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);

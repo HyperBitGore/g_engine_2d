@@ -16,6 +16,8 @@ namespace gore {
 		uint32_t width, height;
 		public:
 		FontRenderer(uint32_t w, uint32_t h);
+		// copy
+		FontRenderer (const FontRenderer& f);
 		//font drawing
 		void drawText(std::string text, gore::Font* font, float x, float y, int ptsize, uint32_t dpi);
 		void drawText(std::u16string text, gore::Font* font, float x, float y, int ptsize, uint32_t dpi);
