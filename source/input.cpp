@@ -2,7 +2,7 @@
 
 
 
-void Input::setLastState() {
+void gore::input::setLastState() {
 	memcpy(last_state, keys, keys_size);
 	#if defined(__unix__)
 	last_lstate = cur_lstate;
@@ -12,7 +12,7 @@ void Input::setLastState() {
 }
 //input functions
 //probably switch to GetKeyboardState, so easier to use getKeyReleased
-bool Input::getState() {
+bool gore::input::getState() {
 	setLastState();
 	#if defined(_WIN32)
 	bool success = GetKeyboardState((PBYTE)keys);
@@ -49,7 +49,7 @@ bool Input::getState() {
 }
 
 
-bool Input::GetKeyDown(uint32_t key) {
+bool gore::input::GetKeyDown(uint32_t key) {
 	#if defined(__unix__)
 	switch (key) {
 		case g_MouseLeft:
@@ -65,7 +65,7 @@ bool Input::GetKeyDown(uint32_t key) {
 	}
 	return false;
 }
-bool Input::GetKeyReleased(uint32_t key) {
+bool gore::input::GetKeyReleased(uint32_t key) {
 	#if defined (__unix__)
 	switch (key) {
 		case g_MouseLeft:
@@ -83,6 +83,6 @@ bool Input::GetKeyReleased(uint32_t key) {
 }
 
 
-void Input::updateState() {
+void gore::input::updateState() {
 	getState();
 }

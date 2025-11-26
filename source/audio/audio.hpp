@@ -20,12 +20,14 @@
 #include <alloca.h>
 #endif
 
+namespace gore {
+
 enum class WavBytes {
 	BYTE8 = 1, BYTE16 = 2, BYTE24 = 3, BYTE32 = 4, FLOAT = 5, BYTE24PACKED = 6
 };
 
 //PCM data
-struct Sound {
+struct sound {
 public:
 	std::string name; //file name
 	uint8_t channels; //number of channels
@@ -34,7 +36,7 @@ public:
 	size_t size; //in bytes
 	WavBytes byteFormat = WavBytes::BYTE8;
 	char* data = nullptr; //actual wave form data
-	Sound (std::string name, uint8_t channels, int framesize, int blockalign, size_t size, WavBytes byteFormat) {
+	sound (std::string name, uint8_t channels, int framesize, int blockalign, size_t size, WavBytes byteFormat) {
 		this->name = name;
 		this->channels = channels;
 		this->framesize = framesize;
@@ -43,11 +45,11 @@ public:
 		this->byteFormat = byteFormat;
 		this->data = new char[this->size];
 	}
-	~Sound() {
+	~sound() {
 		delete[] data;
 	}
 	// copy constructor
-	Sound(const Sound& s) {
+	sound(const sound& s) {
 		this->name = s.name;
 		this->channels = s.channels;
 		this->framesize = s.framesize;
@@ -58,7 +60,7 @@ public:
 		std::memcpy(this->data, s.data, this->size);
 	}
 	// move constructor
-	Sound(const Sound&& s) {
+	sound(const sound&& s) {
 		this->name = s.name;
 		this->channels = s.channels;
 		this->framesize = s.framesize;
@@ -67,16 +69,16 @@ public:
 		this->byteFormat = s.byteFormat;
 		this->data = std::move(s.data);
 	}
-	Sound& operator=(const Sound& s) {
-		return *this = Sound(s);
+	sound& operator=(const sound& s) {
+		return *this = sound(s);
 	}
-	Sound& operator=(const Sound&& s) {
-		return *this = Sound(s);
+	sound& operator=(const sound&& s) {
+		return *this = sound(s);
 	}
 };
-typedef Sound* Audio;
+typedef sound* audio;
 
-class AudioStream {
+class audiostream {
 private:
 	struct SoundP {
 	private:
@@ -134,11 +136,11 @@ private:
 	bool play = true;
 	bool fs = false;
 public:
-	~AudioStream();
-	AudioStream();
+	~audiostream();
+	audiostream();
 
 	void playStream();
-	void playFile(Audio file);
+	void playFile(audio file);
 	void streamFile(std::string file);
 	void pause();
 	void start();
@@ -154,10 +156,10 @@ public:
 
 // need to fix audio data converion
 //	-switch to using a single function instead of big switch
-class AudioPlayer {
+class audioplayer {
 private:
 	struct PAudio {
-		Audio aud;
+		audio aud;
 		size_t stream;
 	};
 	struct FStream {
@@ -174,7 +176,7 @@ private:
 
 	std::vector<PAudio> sound_files;
 	std::vector<FStream> stream_files;
-	std::vector<AudioStream*> streams;
+	std::vector<audiostream*> streams;
 	std::vector<AudioCommand> commands;
 
 	std::thread rend_thread;
@@ -182,29 +184,31 @@ private:
 	bool run = true;
 	void _RenderThread();
 public:
-	AudioPlayer() = delete;
-	AudioPlayer(size_t n_streams);
-	~AudioPlayer();
+	audioplayer() = delete;
+	audioplayer(size_t n_streams);
+	~audioplayer();
 	// copy
-	AudioPlayer(const AudioPlayer& a) = delete;
-	AudioPlayer& operator=(const AudioPlayer& a) = delete;
+	audioplayer(const audioplayer& a) = delete;
+	audioplayer& operator=(const audioplayer& a) = delete;
 	//move
-	AudioPlayer(const AudioPlayer&& a) = delete;
-	AudioPlayer& operator=(const AudioPlayer&& a) = delete;
+	audioplayer(const audioplayer&& a) = delete;
+	audioplayer& operator=(const audioplayer&& a) = delete;
 
 
-	Audio loadWavFile(std::string file);
+	audio loadWavFile(std::string file);
 
 	void playFile(std::string path, size_t stream);
-	void playFile(Audio file, size_t stream);
+	void playFile(audio file, size_t stream);
 	void pause(size_t stream);
 	void start(size_t stream);
 	void clear(size_t stream);
 	void end();
 
 	//done
-	Audio generateSin(size_t length, float freq, size_t sample_rate);
-	Audio generateSquare(size_t length, float freq, size_t sample_rate);
-	Audio generateTriangle(size_t length, float freq, size_t sample_rate);
-	Audio generateSawtooth(size_t length, float freq, size_t sample_rate);
+	audio generateSin(size_t length, float freq, size_t sample_rate);
+	audio generateSquare(size_t length, float freq, size_t sample_rate);
+	audio generateTriangle(size_t length, float freq, size_t sample_rate);
+	audio generateSawtooth(size_t length, float freq, size_t sample_rate);
 };
+
+}

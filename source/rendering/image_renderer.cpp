@@ -1,7 +1,7 @@
 #include "image_renderer.hpp"
 #include "image_renderer_shader.hpp"
 
-void imagerenderer::addImageVertex(vec2 pos, vec2 dim){
+void gore::imagerenderer::addImageVertex(vec2 pos, vec2 dim){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, 0.0f, pos.x, pos.y}); //first triangle tip vertex
@@ -11,7 +11,7 @@ void imagerenderer::addImageVertex(vec2 pos, vec2 dim){
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y});
 }
 
-void imagerenderer::addImageVertex(vec2 pos, vec2 dim, float rot){
+void gore::imagerenderer::addImageVertex(vec2 pos, vec2 dim, float rot){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, rot, pos.x, pos.y}); //first triangle tip vertex
@@ -21,7 +21,7 @@ void imagerenderer::addImageVertex(vec2 pos, vec2 dim, float rot){
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y});
 }
 //first two x,y in uv is starting position in image and z, w are width and height for the uvs
-void imagerenderer::addImageVertex(vec2 pos, vec2 dim, vec4 uvs, float rot){
+void gore::imagerenderer::addImageVertex(vec2 pos, vec2 dim, vec4 uvs, float rot){
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, rot, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,rot, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y}); //first triangle tip vertex
@@ -32,7 +32,7 @@ void imagerenderer::addImageVertex(vec2 pos, vec2 dim, vec4 uvs, float rot){
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y, rot, pos.x, pos.y}); //top righjt
 }
 
-void imagerenderer::drawBuffer(IMG img){
+void gore::imagerenderer::drawBuffer(IMG img){
     glActiveTexture_g(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, img->tex);
     shader.bind();
@@ -51,7 +51,7 @@ void imagerenderer::drawBuffer(IMG img){
     vertexs.clear();
 }
 
-void imagerenderer::drawBuffer(GLuint texture){
+void gore::imagerenderer::drawBuffer(GLuint texture){
     glActiveTexture_g(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     shader.bind();
@@ -70,7 +70,7 @@ void imagerenderer::drawBuffer(GLuint texture){
     vertexs.clear();
 }
 
-void imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim){
+void gore::imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, 0.0f, pos.x, pos.y}); //first triangle tip vertex
@@ -80,7 +80,7 @@ void imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim){
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y});
     drawBuffer(texture);
 }
-void imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
+void gore::imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //first triangle tip vertex
@@ -92,7 +92,7 @@ void imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
     drawBuffer(texture);
 }
 
-void imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim){
+void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f, 0.0f, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, 0.0f, pos.x, pos.y}); //first triangle tip vertex
@@ -103,7 +103,7 @@ void imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim){
     drawBuffer(img);
 }
 
-void imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
+void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y}); //first triangle tip vertex
@@ -115,7 +115,7 @@ void imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
     drawBuffer(img);
 }
 
-void imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim, float rot){
+void gore::imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim, float rot){
       vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, rot, pos.x, pos.y}); //first triangle tip vertex
@@ -127,7 +127,7 @@ void imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim, float
     drawBuffer(texture);
 }
 
-void imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
+void gore::imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, rot, pos.x, pos.y}); //first triangle tip vertex
@@ -138,7 +138,7 @@ void imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
     drawBuffer(img);
 }
 
-imagerenderer::imagerenderer(size_t w, size_t h) {
+gore::imagerenderer::imagerenderer(size_t w, size_t h) {
     allocated = 0;
     //shader.compile(std::string("img.vs"), std::string("img.fs"));
     shader.compile(vertex_shader_image, fragment_shader_image);
@@ -155,14 +155,14 @@ imagerenderer::imagerenderer(size_t w, size_t h) {
     glEnableVertexAttribArray_g(3);
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
-    Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
+    matrix ortho = matrix::calculateOrtho(w, h, w, h);
     this->width = w;
     this->height = h;
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
 }
 
-imagerenderer::imagerenderer(const imagerenderer& img) {
+gore::imagerenderer::imagerenderer(const imagerenderer& img) {
     this->allocated = img.allocated;
     //shader.compile(std::string("img.vs"), std::string("img.fs"));
     shader.compile(vertex_shader_image, fragment_shader_image);
@@ -182,21 +182,21 @@ imagerenderer::imagerenderer(const imagerenderer& img) {
     this->width = img.width;
     this->height = img.height;
     std::copy(img.vertexs.begin(), img.vertexs.end(), this->vertexs.begin());
-    Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+    matrix ortho = matrix::calculateOrtho(this->width, this->height, this->width, this->height);
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
 }
 
 
-void imagerenderer::setDimensions (uint32_t width, uint32_t height) {
+void gore::imagerenderer::setDimensions (uint32_t width, uint32_t height) {
     shader.bind();
-    Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
+    matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
     shader.setuniform("projection", 1, true, ortho);
     this->width = width;
     this->height = height;
 }
 
-grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
+gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     allocated = 0;
     shader.compile(vertex_shader_grayscale, fragment_shader_grayscale);
     glGenVertexArrays_g(1, &vao);
@@ -212,14 +212,14 @@ grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     glEnableVertexAttribArray_g(3);
     glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
-    Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
+    matrix ortho = matrix::calculateOrtho(w, h, w, h);
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);
 }
 
 
-grayscalerenderer::grayscalerenderer(const grayscalerenderer& gsr) {
+gore::grayscalerenderer::grayscalerenderer(const grayscalerenderer& gsr) {
     allocated = 0;
     shader.compile(vertex_shader_grayscale, fragment_shader_grayscale);
     glGenVertexArrays_g(1, &vao);
@@ -238,7 +238,7 @@ grayscalerenderer::grayscalerenderer(const grayscalerenderer& gsr) {
     this->width = gsr.width;
     this->height = gsr.height;
     std::copy(gsr.vertexs.begin(), gsr.vertexs.end(), this->vertexs.begin());
-    Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+    matrix ortho = matrix::calculateOrtho(this->width, this->height, this->width, this->height);
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);

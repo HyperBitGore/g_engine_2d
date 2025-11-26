@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <stdexcept>
 
-IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
+gore::IMG gore::imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	IMG img = new g_img;
 	img->h = h;
 	img->w = w;
@@ -13,7 +13,7 @@ IMG imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
 	return img;
 }
 
-void imageloader::createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type){
+void gore::imageloader::createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type){
 	img->format = format;
 	img->type = type;
 	glGenTextures(1, &img->tex);
@@ -30,7 +30,7 @@ void imageloader::createTexture(IMG img, GLenum internalformat, GLenum format, G
 }
 
 
-void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	size_t row = y * (img->w * 4);
 	size_t col = x * 4;
 	img->data[row + col] = r;
@@ -38,7 +38,7 @@ void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t 
 	img->data[row + col + 2] = b;
 	img->data[row + col + 3] = a;
 }
-void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 	size_t row = y * (img->w * 3);
 	size_t col = x * 3;
 	img->data[row + col] = r;
@@ -46,20 +46,20 @@ void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t 
 	img->data[row + col + 2] = b;
 }
 
-void imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g) {
+void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g) {
 	size_t row = y * (img->w * 2);
 	size_t col = x * 2;
 	img->data[row + col] = r;
 	img->data[row + col + 1] = g;
 }
-void imageloader::setPixel(IMG img, int x, int y, uint8_t r) {
+void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r) {
 	size_t row = y * (img->w);
 	size_t col = x;
 	img->data[row + col] = r;
 }
 
 
-void imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes) {
+void gore::imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes) {
 	if (x >= img->w || y >= img->h) {
 		return;
 	}
@@ -72,7 +72,7 @@ void imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes) 
 	}
 }
 
-uint64_t imageloader::getPixel(IMG img, int x, int y, int bytes) {
+uint64_t gore::imageloader::getPixel(IMG img, int x, int y, int bytes) {
 	if (bytes <= 0) {
 		return 0;
 	}
@@ -87,7 +87,7 @@ uint64_t imageloader::getPixel(IMG img, int x, int y, int bytes) {
 	return out;
 }
 
-IMG imageloader::convertIMGRGBA8(IMG img) {
+gore::IMG gore::imageloader::convertIMGRGBA8(IMG img) {
 	if (img->format == GL_RGBA8) {
 		return img;
 	}

@@ -1,18 +1,18 @@
 #include "g_engine_2d.hpp"
 #include <cstdint>
 
-bool EngineNewGL::getKeyDown(uint32_t key) {
+bool gore::g_engine_2d::getKeyDown(uint32_t key) {
 	return in->GetKeyDown(key);
 }
-bool EngineNewGL::getKeyReleased(uint32_t key) {
+bool gore::g_engine_2d::getKeyReleased(uint32_t key) {
 	return in->GetKeyReleased(key);
 }
 
-void EngineNewGL::updateInputState(){
+void gore::g_engine_2d::updateInputState(){
 	in->updateState();
 }
 
-vec2 EngineNewGL::getMousePos() {
+gore::vec2 gore::g_engine_2d::getMousePos() {
 	vec2 p;
 	#if defined(_WIN32)
 	LPPOINT po = new tagPOINT;
@@ -45,13 +45,13 @@ vec2 EngineNewGL::getMousePos() {
 }
 
 //returns the frame time in seconds
-double EngineNewGL::getDelta() {
+double gore::g_engine_2d::getDelta() {
 	clock_t d = delta;
 	delta = 0;
 	return d / (double)CLOCKS_PER_SEC;
 }
 //returns number of frames in a second and the average frame time in milliseconds, every second. 
-std::pair<double, double> EngineNewGL::getFrames() {
+std::pair<double, double> gore::g_engine_2d::getFrames() {
 	if (clockToMilliseconds(delta_f) > 1000.0) { //every second
 		frameRate = (double)frames * 0.5 + frameRate * 0.5; //more stable
 		//std::cout << "Frames: " << frameRate << "\n";
@@ -67,7 +67,7 @@ std::pair<double, double> EngineNewGL::getFrames() {
 
 //utility type functions
 
-bool EngineNewGL::updateWindow() {
+bool gore::g_engine_2d::updateWindow() {
 	wind->updateWindow();
 	//UpdateWindow(wind->getHwnd());
 	if (!wind->ProcessMessage()) {
@@ -93,30 +93,30 @@ bool EngineNewGL::updateWindow() {
 }
 
 
-void EngineNewGL::enable(GLenum en){
+void gore::g_engine_2d::enable(GLenum en){
 	glEnable(en);
 }
-void EngineNewGL::disable(GLenum en){
+void gore::g_engine_2d::disable(GLenum en){
 	glDisable(en);
 }
 
-void EngineNewGL::toggleFullscreen() {
+void gore::g_engine_2d::toggleFullscreen() {
 	wind->toggleFullscreen();
 }
 
-void EngineNewGL::toggleMouseCapture(bool center) {
+void gore::g_engine_2d::toggleMouseCapture(bool center) {
 	wind->captureMouseToggle(center);
 }
 
-void EngineNewGL::toggleMouseHide() {
+void gore::g_engine_2d::toggleMouseHide() {
 	wind->mouseHideToggle();	
 }
 
-uint32_t EngineNewGL::getDPI() {
+uint32_t gore::g_engine_2d::getDPI() {
 	return wind->getDPI();
 }
 
-void EngineNewGL::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
+void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 	std::function<void(uint32_t, uint32_t)> f = [this, &func](uint32_t w, uint32_t h) {
 		if (prim_r) {
 			prim_r->setDimensions(w, h);

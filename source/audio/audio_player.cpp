@@ -16,20 +16,20 @@
                 { (punk)->Release(); (punk) = NULL; }
 
 
-uint32_t getByteSize(WavBytes org_bytes) {
+uint32_t getByteSize(gore::WavBytes org_bytes) {
 
      switch (org_bytes) {
-        case WavBytes::BYTE24:
-        case WavBytes::FLOAT:
+        case gore::WavBytes::BYTE24:
+        case gore::WavBytes::FLOAT:
             return 4;
-        case WavBytes::BYTE24PACKED:
+        case gore::WavBytes::BYTE24PACKED:
             return 3;
         default:
             return (size_t)org_bytes;
     }
 }                
 
-Audio AudioPlayer::loadWavFile(std::string file) {
+gore::audio gore::audioplayer::loadWavFile(std::string file) {
     std::ifstream f;
     f.open(file, std::ios::binary);
     std::stringstream str_st;
@@ -79,13 +79,13 @@ Audio AudioPlayer::loadWavFile(std::string file) {
     it++;
     //now we are at the pcm data
     c = (char*)it;
-    WavBytes bitformat = (WavBytes)(bitspps / 8);
+    gore::WavBytes bitformat = (gore::WavBytes)(bitspps / 8);
     if (typef == 3) {
-        bitformat = WavBytes::FLOAT;
+        bitformat = gore::WavBytes::FLOAT;
     } else if (bitspps / 8 == 3) {
-        bitformat = WavBytes::BYTE24PACKED;
+        bitformat = gore::WavBytes::BYTE24PACKED;
     }
-    Audio ad = new Sound(file, num_channels, byterate, blockalign, datasize, bitformat);
+    audio ad = new sound(file, num_channels, byterate, blockalign, datasize, bitformat);
     if (ad->data) {
         memcpy(ad->data, c, ad->size);
     }
@@ -108,7 +108,7 @@ Audio AudioPlayer::loadWavFile(std::string file) {
 
 
 //adds data to stream and checks if already playing, if already playing start again? if not playsound
-void AudioPlayer::playFile(Audio file, size_t stream) {
+void gore::audioplayer::playFile(audio file, size_t stream) {
     std::lock_guard<std::mutex> guard(mtx);
     if (stream < streams.size()) {
         PAudio sp;
@@ -118,7 +118,7 @@ void AudioPlayer::playFile(Audio file, size_t stream) {
     }
 }
 
-void AudioPlayer::playFile(std::string path, size_t stream) {
+void gore::audioplayer::playFile(std::string path, size_t stream) {
     std::lock_guard<std::mutex> guard(mtx);
     if (stream < streams.size()) {
         FStream fp;
@@ -128,21 +128,21 @@ void AudioPlayer::playFile(std::string path, size_t stream) {
    }
 }
 
-void AudioPlayer::start(size_t stream) {
+void gore::audioplayer::start(size_t stream) {
     std::lock_guard<std::mutex> guard(mtx);
     commands.push_back({ 1, stream });
 }
 
-void AudioPlayer::clear(size_t stream) {
+void gore::audioplayer::clear(size_t stream) {
     std::lock_guard<std::mutex> guard(mtx);
     commands.push_back({ 2, stream });
 }
-void AudioPlayer::pause(size_t stream) {
+void gore::audioplayer::pause(size_t stream) {
     std::lock_guard<std::mutex> guard(mtx);
     commands.push_back({ 0, stream });
 }
 
-void AudioPlayer::end() {
+void gore::audioplayer::end() {
     std::lock_guard<std::mutex> guard(mtx);
     run = false;
 }
@@ -154,8 +154,8 @@ float sgn(float x) {
 }
 
 //generates sin wave, based on length given in milliseconds
-Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("sine", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
+gore::audio gore::audioplayer::generateSin(size_t length, float freq, size_t sample_rate) {
+    audio a = new sound("sine", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), gore::WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -165,8 +165,8 @@ Audio AudioPlayer::generateSin(size_t length, float freq, size_t sample_rate) {
 	return a;
 }
 //generates square wave, based on length given in milliseconds
-Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("square", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
+gore::audio gore::audioplayer::generateSquare(size_t length, float freq, size_t sample_rate) {
+    audio a = new sound("square", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), gore::WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -176,8 +176,8 @@ Audio AudioPlayer::generateSquare(size_t length, float freq, size_t sample_rate)
     return a;
 }
 //generates triangle wave, based on length given in milliseconds
-Audio AudioPlayer::generateTriangle(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("triangle", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
+gore::audio gore::audioplayer::generateTriangle(size_t length, float freq, size_t sample_rate) {
+    audio a = new sound("triangle", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), gore::WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -191,8 +191,8 @@ float frac(float x) {
     return (x - (long)x);
 }
 
-Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rate) {
-    Audio a = new Sound("sawtooth", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), WavBytes::FLOAT);
+gore::audio gore::audioplayer::generateSawtooth(size_t length, float freq, size_t sample_rate) {
+    audio a = new sound("sawtooth", 2, (sample_rate * 32 * 2) / 8, 8, (length * (((sample_rate * 32 * 2) / 8) / 1000)), gore::WavBytes::FLOAT);
     float* ff = (float*)a->data;
     size_t sample_size = a->size / 4;
     for (size_t i = 0; i < sample_size; i++) {
@@ -202,7 +202,7 @@ Audio AudioPlayer::generateSawtooth(size_t length, float freq, size_t sample_rat
     return a;
 }
 
-void AudioPlayer::_RenderThread() {
+void gore::audioplayer::_RenderThread() {
     while (run) {
         std::lock_guard<std::mutex> guard(mtx);
         for (auto& i : sound_files) {
@@ -238,27 +238,27 @@ void AudioPlayer::_RenderThread() {
     }
 }
 
-AudioPlayer::AudioPlayer(size_t n_streams) {
+gore::audioplayer::audioplayer(size_t n_streams) {
     for (size_t i = 0; i < n_streams; i++) {
-        AudioStream* as = new AudioStream;
+        audiostream* as = new audiostream;
         streams.push_back(as);
     }
 
-    rend_thread = std::thread(&AudioPlayer::_RenderThread, this);
+    rend_thread = std::thread(&gore::audioplayer::_RenderThread, this);
 }
 
-AudioPlayer::~AudioPlayer() {
+gore::audioplayer::~audioplayer() {
     rend_thread.join();
     run = false;
     for (size_t i = 0; i < streams.size(); i++) {
-        AudioStream* as = streams[i];
+        audiostream* as = streams[i];
         streams.erase(streams.begin() + i);
         delete as;
     }
 
 }
 
-void AudioStream::playStream() {
+void gore::audiostream::playStream() {
     if (play) {
         #if defined(_WIN32)
         int32_t res = WaitForSingleObject(bufReady, 0);
@@ -353,7 +353,7 @@ void AudioStream::playStream() {
     }
 }
 
-AudioStream::AudioStream() {
+gore::audiostream::audiostream() {
     #if defined(_WIN32)
     HRESULT hr = CoInitializeEx(NULL, 0);
     if (FAILED(hr)) {
@@ -379,21 +379,21 @@ AudioStream::AudioStream() {
         case WAVE_FORMAT_PCM:
             switch (formatex->wBitsPerSample) {
                 case 8:
-                    this->format = WavBytes::BYTE8;
+                    this->format = gore::WavBytes::BYTE8;
                 break;
                 case 16:
-                    this->format = WavBytes::BYTE16;
+                    this->format = gore::WavBytes::BYTE16;
                 break;
                 case 24:
-                    this->format = WavBytes::BYTE24PACKED;
+                    this->format = gore::WavBytes::BYTE24PACKED;
                 break;
                 case 32:
-                    this->format = WavBytes::BYTE32;
+                    this->format = gore::WavBytes::BYTE32;
                 break;
             }    
         break;
         case WAVE_FORMAT_IEEE_FLOAT:
-            this->format = WavBytes::FLOAT;
+            this->format = gore::WavBytes::FLOAT;
         break;
         case WAVE_FORMAT_EXTENSIBLE:
             {
@@ -401,15 +401,15 @@ AudioStream::AudioStream() {
                 if (ex->SubFormat == KSDATAFORMAT_SUBTYPE_PCM) {
                     if (ex->Samples.wValidBitsPerSample != formatex->wBitsPerSample) {
                         if (ex->Samples.wValidBitsPerSample == 24 && formatex->wBitsPerSample == 32) {
-                            this->format = WavBytes::BYTE24;
+                            this->format = gore::WavBytes::BYTE24;
                         } else {
                             throw std::runtime_error("Unsupported sound hardware!");
                         }
                     } else {
-                        this->format = (WavBytes)(formatex->wBitsPerSample/8);
+                        this->format = (gore::WavBytes)(formatex->wBitsPerSample/8);
                     }
                 } else if (ex->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
-                     this->format = WavBytes::FLOAT;
+                     this->format = gore::WavBytes::FLOAT;
                 }
 
             }
@@ -495,28 +495,28 @@ AudioStream::AudioStream() {
     switch (format) {
         break;
         case SND_PCM_FORMAT_S16_LE:
-            this->format = WavBytes::BYTE16;
+            this->format = gore::WavBytes::BYTE16;
             buffer = (uint8_t*)new char[frames * 2 * getByteSize(this->format)];
             buffer_size = frames * 2 * getByteSize(this->format);
         break;
         case SND_PCM_FORMAT_S24_LE:
             // s24 is padded
-            this->format = WavBytes::BYTE24;
+            this->format = gore::WavBytes::BYTE24;
             buffer = (uint8_t*)new char[frames * 2 * getByteSize(this->format)];
             buffer_size = frames * 2 * getByteSize(this->format);
         break;
         case SND_PCM_FORMAT_FLOAT_LE:
-            this->format = WavBytes::FLOAT;
+            this->format = gore::WavBytes::FLOAT;
             buffer = (uint8_t*)new char[frames * 2 * getByteSize(this->format)];
             buffer_size = frames * 2 * getByteSize(this->format);
         break;
         case SND_PCM_FORMAT_S32_LE:
-            this->format = WavBytes::BYTE32;
+            this->format = gore::WavBytes::BYTE32;
             buffer = (uint8_t*)new char[frames * 2 * getByteSize(this->format)];
             buffer_size = frames * 2 * getByteSize(this->format);
         break;
         default:
-            this->format = WavBytes::BYTE8;
+            this->format = gore::WavBytes::BYTE8;
             buffer = (uint8_t*)new char[frames * 2 * getByteSize(this->format)];
             buffer_size = frames * 2 * getByteSize(this->format);
         break;
@@ -528,7 +528,7 @@ AudioStream::AudioStream() {
     play = false;
     #endif
 }
-AudioStream::~AudioStream() {
+gore::audiostream::~audiostream() {
     #if defined(_WIN32)
     CoTaskMemFree(formatex);
     SAFE_RELEASE(penum);
@@ -544,7 +544,7 @@ AudioStream::~AudioStream() {
     #endif
 }
 
-void AudioStream::playFile(Audio file) {
+void gore::audiostream::playFile(audio file) {
     SoundP sp;
     sp.blockalign = file->blockalign;
     sp.data = file->data;
@@ -552,11 +552,11 @@ void AudioStream::playFile(Audio file) {
     sp.byteFormat = file->byteFormat;
     sound_files.push_back(sp);
 }
-void AudioStream::streamFile(std::string file) {
+void gore::audiostream::streamFile(std::string file) {
     std::shared_ptr<FileStream> fs = std::make_shared<FileStream>(file);
     stream_files.push_back(fs);
 }
-void AudioStream::pause() {
+void gore::audiostream::pause() {
     play = false;
     #if defined(__unix__)
     snd_pcm_drain(pcm_handle);
@@ -565,7 +565,7 @@ void AudioStream::pause() {
     client->Stop();
     #endif
 }
-void AudioStream::start() {
+void gore::audiostream::start() {
     play = true;
     #if defined(__unix__)
     snd_pcm_start(pcm_handle);
@@ -574,7 +574,7 @@ void AudioStream::start() {
     client->Start();
     #endif
 }
-void AudioStream::reset() {
+void gore::audiostream::reset() {
     #if defined(__unix__)
     snd_pcm_drop(pcm_handle);
     snd_pcm_prepare(pcm_handle);
@@ -591,19 +591,19 @@ void AudioStream::reset() {
 //https://gist.github.com/endolith/e8597a58bcd11a6462f33fa8eb75c43d
 //https://ccrma.stanford.edu/courses/422-winter-2014/projects/WaveFormat/
 
-std::pair<float, float> calculateRange (WavBytes org_bytes) {
+std::pair<float, float> calculateRange (gore::WavBytes org_bytes) {
     float orignalRangeLow, orignalRangeHigh;
     size_t origBytes = getByteSize(org_bytes);
     size_t bits = ((size_t)origBytes) * 8;
-    if (org_bytes == WavBytes::BYTE24) {
+    if (org_bytes == gore::WavBytes::BYTE24) {
         bits = 24;
     }
     switch (org_bytes) {
-        case WavBytes::BYTE8:
+        case gore::WavBytes::BYTE8:
             orignalRangeLow = 0.0f;
             orignalRangeHigh = 255.0f;
         break;
-        case WavBytes::FLOAT:
+        case gore::WavBytes::FLOAT:
             orignalRangeLow = -1.0f;
             orignalRangeHigh = 1.0f;
         break;
@@ -625,7 +625,7 @@ float convertRange(float n, float OldMin, float OldMax, float NewMin, float NewM
 }
 
 
-void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, WavBytes org_bytes, WavBytes new_bytes) {
+void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, gore::WavBytes org_bytes, gore::WavBytes new_bytes) {
     size_t origBytes = getByteSize(org_bytes);
     size_t newBytes = getByteSize(new_bytes);
     std::pair<float, float> originalRange = calculateRange(org_bytes);
@@ -651,16 +651,16 @@ void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, WavBytes o
         }
         float tf;
         // convert the value to a float
-        if (org_bytes == WavBytes::FLOAT) {
+        if (org_bytes == gore::WavBytes::FLOAT) {
             std::memcpy(&tf, &orgValue, sizeof(float));
         } else {
             tf = orgValue;
         }
         float out = convertRange(tf, originalRange.first, originalRange.second, newRange.first, newRange.second);
         int32_t castOut = roundf(out);
-        if (new_bytes == WavBytes::FLOAT) {
+        if (new_bytes == gore::WavBytes::FLOAT) {
             std::memcpy(&castOut, &out, sizeof(float));
-        } else if (new_bytes == WavBytes::BYTE24) {
+        } else if (new_bytes == gore::WavBytes::BYTE24) {
             // padded 24 bits drop the msb
             castOut = castOut & 0x00ffffff;
         }
@@ -669,7 +669,7 @@ void convertBits (char* mem, size_t size, char* n_mem, size_t n_size, WavBytes o
     }
 }
 
-void* AudioStream::translate(void* mem, size_t size, size_t* n_size, WavBytes org_bytes, WavBytes new_bytes) {
+void* gore::audiostream::translate(void* mem, size_t size, size_t* n_size, gore::WavBytes org_bytes, gore::WavBytes new_bytes) {
     //return nullptr;
     void* mem2;
     uint32_t original_byte_size = getByteSize(org_bytes);
@@ -678,7 +678,7 @@ void* AudioStream::translate(void* mem, size_t size, size_t* n_size, WavBytes or
         return nullptr;
     }
     else if (original_byte_size > new_byte_size) {
-        if (new_bytes == WavBytes::BYTE8) {
+        if (new_bytes == gore::WavBytes::BYTE8) {
             *n_size = size / original_byte_size;
         } else {
             *n_size = size / new_byte_size;
@@ -703,7 +703,7 @@ void* AudioStream::translate(void* mem, size_t size, size_t* n_size, WavBytes or
 
 
 
-AudioStream::FileStream::FileStream(std::string file) {
+gore::audiostream::FileStream::FileStream(std::string file) {
     fi.open(file, std::ios::binary);
     if (fi) {
         this->file = file;
@@ -722,11 +722,11 @@ AudioStream::FileStream::FileStream(std::string file) {
         pos += 2;
         // read the bits per sample
         fi.read((char*)&bl, 2);
-        this->byteFormat = (WavBytes)(bl / 8);
+        this->byteFormat = (gore::WavBytes)(bl / 8);
         if (format == 3) {
-             this->byteFormat = WavBytes::FLOAT;
+             this->byteFormat = gore::WavBytes::FLOAT;
         } else if (bl / 8 == 3) {
-             this->byteFormat = WavBytes::BYTE24PACKED;
+             this->byteFormat = gore::WavBytes::BYTE24PACKED;
         }
         pos += 2;
         //now find the data section
@@ -736,10 +736,10 @@ AudioStream::FileStream::FileStream(std::string file) {
         pos += 4;
     }
 }
-AudioStream::FileStream::~FileStream() {
+gore::audiostream::FileStream::~FileStream() {
     fi.close();
 }
-bool AudioStream::FileStream::writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits) {
+bool gore::audiostream::FileStream::writeData(uint8_t* dat, size_t n, size_t buffer_size, gore::WavBytes bits) {
     if (n_write) {
         return false;
     }
@@ -767,7 +767,7 @@ bool AudioStream::FileStream::writeData(uint8_t* dat, size_t n, size_t buffer_si
     }
     return true;
 }
-bool AudioStream::FileStream::strMatch(std::string str) {
+bool gore::audiostream::FileStream::strMatch(std::string str) {
     size_t i = 0;
     char c;
     while (true) {
@@ -789,7 +789,7 @@ bool AudioStream::FileStream::strMatch(std::string str) {
     return false;
 }
 
-bool AudioStream::SoundP::writeData(uint8_t* dat, size_t n, size_t buffer_size, WavBytes bits) {
+bool gore::audiostream::SoundP::writeData(uint8_t* dat, size_t n, size_t buffer_size, gore::WavBytes bits) {
     if (n_write || pos >= size) {
         return false;
     }

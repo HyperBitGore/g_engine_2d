@@ -4,7 +4,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #endif
-
+namespace gore {
 //convert all data allocation to new so we can delete it in destructor
 struct g_img {
 	unsigned char* data;
@@ -26,7 +26,7 @@ enum class IMG_TYPE {BMP, PNG};
 
 //store a bunch of images which you can stich together
 //adding an image stiches it into the image
-class ImageAtlas {
+class imageatlas {
 private:
 	struct Member{
 		//point and dimensions
@@ -75,22 +75,22 @@ private:
 	IMG img = nullptr;
 	uint32_t max_images = 0;
 	vec2 start_pos = {0, 0};
-	friend void swap (ImageAtlas& a, ImageAtlas& b) {
+	friend void swap (imageatlas& a, imageatlas& b) {
 		std::swap(a.img, b.img);
 		std::swap(a.buckets, b.buckets);
 		std::swap(a.max_images, b.max_images);
 	}
 public:
-	ImageAtlas();
-	ImageAtlas(int w, int h, int bytes_per_pixel, uint32_t max_images);
+	imageatlas();
+	imageatlas(int w, int h, int bytes_per_pixel, uint32_t max_images);
 	// copy
-	ImageAtlas (const ImageAtlas& atlas);
+	imageatlas (const imageatlas& atlas);
 	//move
-	ImageAtlas (ImageAtlas&& atlas);
-	~ImageAtlas();
+	imageatlas (imageatlas&& atlas);
+	~imageatlas();
 	// operators
-	ImageAtlas& operator=(const ImageAtlas& atlas);
-	ImageAtlas& operator=(ImageAtlas&& atlas);
+	imageatlas& operator=(const imageatlas& atlas);
+	imageatlas& operator=(imageatlas&& atlas);
 	void addImage(IMG img, std::string name);
 	void addImage(std::string path, IMG_TYPE type, std::string name);
 	vec2 getNextImagePos (uint32_t w, uint32_t h);
@@ -139,3 +139,4 @@ class imageloader{
 
 	static uint64_t getPixel(IMG img, int x, int y, int bytes);
 };
+}

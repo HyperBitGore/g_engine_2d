@@ -2,18 +2,18 @@
 #include "../util/matrix.hpp"
 #include "primitive_renderer_shader.hpp"
 
-void PrimitiveRenderer::setColor(vec4 color){
+void gore::primitiverenderer::setColor(vec4 color){
     triangle_shader.setuniform("set_color", color);
     point_shader.setuniform("set_color", color);
 }
 
 //triangles
-void PrimitiveRenderer::addTriangle(vec2 v1, vec2 v2, vec2 v3){
+void gore::primitiverenderer::addTriangle(vec2 v1, vec2 v2, vec2 v3){
     vertexs.push_back(v1);
     vertexs.push_back(v2);
     vertexs.push_back(v3);
 }
-void PrimitiveRenderer::drawTriangle(vec2 v1, vec2 v2, vec2 v3){
+void gore::primitiverenderer::drawTriangle(vec2 v1, vec2 v2, vec2 v3){
     vertexs.push_back(v1);
     vertexs.push_back(v2);
     vertexs.push_back(v3);
@@ -30,7 +30,7 @@ void PrimitiveRenderer::drawTriangle(vec2 v1, vec2 v2, vec2 v3){
     vertexs.clear();
     glBindVertexArray_g(0);
 }
-void PrimitiveRenderer::drawBufferTriangle(){
+void gore::primitiverenderer::drawBufferTriangle(){
     triangle_shader.bind();
     glBindVertexArray_g(triangle_vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
@@ -45,7 +45,7 @@ void PrimitiveRenderer::drawBufferTriangle(){
     glBindVertexArray_g(0);
 }
 //quads
-void PrimitiveRenderer::addQuad(vec2 pos, float w, float h){
+void gore::primitiverenderer::addQuad(vec2 pos, float w, float h){
     vertexs.push_back({pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + w, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + h}); //first triangle tip vertex
@@ -54,7 +54,7 @@ void PrimitiveRenderer::addQuad(vec2 pos, float w, float h){
     vertexs.push_back({pos.x, pos.y + h});
     vertexs.push_back({pos.x + w, pos.y});  
 }
-void PrimitiveRenderer::drawQuad(vec2 pos, float w, float h){
+void gore::primitiverenderer::drawQuad(vec2 pos, float w, float h){
     vertexs.push_back({pos.x, pos.y}); //first triangle top left vertex
     vertexs.push_back({pos.x + w, pos.y}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + h}); //first triangle tip vertex
@@ -75,7 +75,7 @@ void PrimitiveRenderer::drawQuad(vec2 pos, float w, float h){
     vertexs.clear();
     glBindVertexArray_g(0);
 }
-void PrimitiveRenderer::drawBufferQuad(){
+void gore::primitiverenderer::drawBufferQuad(){
     triangle_shader.bind();
     glBindVertexArray_g(triangle_vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
@@ -90,10 +90,10 @@ void PrimitiveRenderer::drawBufferQuad(){
     glBindVertexArray_g(0);
 }
 //points
-void PrimitiveRenderer::addPoint(vec2 p){
+void gore::primitiverenderer::addPoint(vec2 p){
     vertexs.push_back(p);
 }
-void PrimitiveRenderer::drawPoint(vec2 p){
+void gore::primitiverenderer::drawPoint(vec2 p){
     point_shader.bind();
     vertexs.push_back(p);
     glBindVertexArray_g(point_vao);
@@ -108,7 +108,7 @@ void PrimitiveRenderer::drawPoint(vec2 p){
     vertexs.clear();
     glBindVertexArray_g(0);
 }
-void PrimitiveRenderer::drawBufferPoint(){
+void gore::primitiverenderer::drawBufferPoint(){
     point_shader.bind();
     glBindVertexArray_g(point_vao);
     glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
@@ -123,11 +123,11 @@ void PrimitiveRenderer::drawBufferPoint(){
     glBindVertexArray_g(0);
 }
 //lines
-void PrimitiveRenderer::addLine(vec2 p1, vec2 p2){
+void gore::primitiverenderer::addLine(vec2 p1, vec2 p2){
     vertexs.push_back(p1);
     vertexs.push_back(p2);
 }
-void PrimitiveRenderer::drawLine(vec2 p1, vec2 p2){
+void gore::primitiverenderer::drawLine(vec2 p1, vec2 p2){
     glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     vertexs.push_back(p1);
@@ -146,7 +146,7 @@ void PrimitiveRenderer::drawLine(vec2 p1, vec2 p2){
     glBindVertexArray_g(0);
    glDisable(GL_LINE_SMOOTH);
 }
-void PrimitiveRenderer::drawBufferLine(){
+void gore::primitiverenderer::drawBufferLine(){
     glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     line_shader.bind();
@@ -164,11 +164,11 @@ void PrimitiveRenderer::drawBufferLine(){
    glDisable(GL_LINE_SMOOTH);
 }
 
-void PrimitiveRenderer::setLineWidth(float l){
+void gore::primitiverenderer::setLineWidth(float l){
      glLineWidth(l);
 }
 
-void PrimitiveRenderer::linearBezier(vec2 p1, vec2 p2){
+void gore::primitiverenderer::linearBezier(vec2 p1, vec2 p2){
     int subdiv = (int)std::abs(p1.x - p2.x) + (int)std::abs(p1.y - p2.y);
 	float step = 1.0f / (float)subdiv;
 	//passing point or not reaching it, need to re-examine how many subdiv to do
@@ -179,7 +179,7 @@ void PrimitiveRenderer::linearBezier(vec2 p1, vec2 p2){
 		vertexs.push_back({ x, y });
 	}
 }
-void PrimitiveRenderer::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv){
+void gore::primitiverenderer::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv){
     float step = 1.0f / subdiv;
 	float lx = 0, ly = 0;
 	for (int i = 0; i <= subdiv; i++) {
@@ -195,7 +195,7 @@ void PrimitiveRenderer::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv){
 		ly = y;
 	}
 }
-void PrimitiveRenderer::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv){
+void gore::primitiverenderer::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv){
     float step = 1.0f / subdiv;
 	float lx = 0, ly = 0;
 	for (int i = 0; i <= subdiv; i++) {
@@ -211,7 +211,7 @@ void PrimitiveRenderer::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subd
 		ly = y;
 	}
 }
-void PrimitiveRenderer::circle(vec2 p, float r){
+void gore::primitiverenderer::circle(vec2 p, float r){
     float x1, y1;
 	for (float ang = 0; ang < 360; ang += 0.5f) {
 		x1 = float(r * cos(ang * M_PI / 180) + p.x);
@@ -222,8 +222,8 @@ void PrimitiveRenderer::circle(vec2 p, float r){
 	}
 }
 
-PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
-    Matrix ortho = Matrix::calculateOrtho(sw, sh, sw, sh);
+gore::primitiverenderer::primitiverenderer(GLuint sw, GLuint sh) {
+    matrix ortho = matrix::calculateOrtho(sw, sh, sw, sh);
     vertexs.reserve(1000);
     allocated = 1;
     glGenBuffers_g(1, &vertex_buffer);
@@ -259,10 +259,10 @@ PrimitiveRenderer::PrimitiveRenderer(GLuint sw, GLuint sh) {
     this->width = sw;
     this->height = sh;
 }
-PrimitiveRenderer::PrimitiveRenderer(const PrimitiveRenderer& p) {
+gore::primitiverenderer::primitiverenderer(const primitiverenderer& p) {
     this->width = p.width;
     this->height = p.height;
-    Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+    matrix ortho = matrix::calculateOrtho(this->width, this->height, this->width, this->height);
     vertexs.reserve(1000);
     std::copy(p.vertexs.begin(), p.vertexs.end(), vertexs.begin());
     this->allocated = p.allocated;
@@ -298,8 +298,8 @@ PrimitiveRenderer::PrimitiveRenderer(const PrimitiveRenderer& p) {
     setLineWidth(1.0f);
 }
 
-void PrimitiveRenderer::setDimensions (uint32_t width, int32_t height) {
-    Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
+void gore::primitiverenderer::setDimensions (uint32_t width, int32_t height) {
+    matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
     triangle_shader.bind();
     triangle_shader.setuniform("projection", 1, true, ortho);
     point_shader.bind();

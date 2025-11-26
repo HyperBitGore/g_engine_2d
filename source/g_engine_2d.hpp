@@ -19,15 +19,15 @@
 
 //https://github.com/Ethan-Bierlein/SWOGLL/blob/master/SWOGLL.cpp
 //https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
-
-class EngineNewGL {
+namespace gore {
+class g_engine_2d {
 private:
 	g_window* wind;
-	Input* in;
+	input* in;
 	std::function<void()> renderFund;
 	//color constants
-	vec4 draw_color;
-	vec4 clear_color;
+	gore::vec4 draw_color;
+	gore::vec4 clear_color;
 
 	//delta time
 	clock_t delta = 0;
@@ -51,15 +51,15 @@ private:
 	#endif
 public:
 	// rendering backends
-	std::unique_ptr<PrimitiveRenderer> prim_r = nullptr;
+	std::unique_ptr<primitiverenderer> prim_r = nullptr;
 	std::unique_ptr<imagerenderer> img_r = nullptr;
-	std::unique_ptr<gore::FontRenderer> font_r = nullptr;
+	std::unique_ptr<fontrenderer> font_r = nullptr;
 	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
 	// parts is a bitmask which tells us what to load
-	EngineNewGL(const char* window_name, int width, int height, uint8_t component_mask);
+	g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask);
 
 	//move constructor
-	EngineNewGL(EngineNewGL&& o) {
+	g_engine_2d(g_engine_2d&& o) {
 		this->prim_r = std::move(o.prim_r);
 		this->img_r = std::move(o.img_r);
 		this->font_r = std::move(o.font_r);
@@ -76,10 +76,10 @@ public:
 		#endif
 	}
 	//copy constructor, probably not accurate to what behavior we would want out of a copy constructor
-	EngineNewGL(const EngineNewGL& o) {
-		this->prim_r = std::make_unique<PrimitiveRenderer>(*o.prim_r);
+	g_engine_2d(const g_engine_2d& o) {
+		this->prim_r = std::make_unique<primitiverenderer>(*o.prim_r);
 		this->img_r = std::make_unique<imagerenderer>(*o.img_r);
-		this->font_r = std::make_unique<gore::FontRenderer>(*o.font_r);
+		this->font_r = std::make_unique<fontrenderer>(*o.font_r);
 		this->gray_r = std::make_unique<grayscalerenderer>(*o.gray_r);
 		//this->ap = o.ap;
 		this->wind = o.wind;
@@ -92,7 +92,7 @@ public:
 		this->ctx = o.ctx;
 		#endif
 	}
-	~EngineNewGL () {
+	~g_engine_2d () {
 		#if defined (__unix__)
 		glXMakeCurrent(display, None, NULL);
 		glXDestroyContext(display, ctx);
@@ -173,3 +173,4 @@ public:
 	void enable(GLenum en);
 	void disable(GLenum en);
 };
+}

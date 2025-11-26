@@ -115,7 +115,7 @@ PFNGLUNIFORM4DVPROC glUniform4dv_g;
 
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_g;
 
-void EngineNewGL::loadFunctions() {
+void gore::g_engine_2d::loadFunctions() {
 	glBindBuffer_g = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
 	glGenVertexArrays_g = (PFNGLGENVERTEXARRAYSPROC)GetGLFuncAddress("glGenVertexArrays");
 	glGenBuffers_g = (PFNGLGENBUFFERSPROC)GetGLFuncAddress("glGenBuffers");

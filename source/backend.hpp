@@ -296,7 +296,7 @@
 #define g_MouseRight 0x2000ffff
 #define g_MouseMiddle 0x3000ffff
 #endif
-
+namespace gore {
 //added customizability and clean up
 class g_window {
 private:
@@ -330,7 +330,7 @@ public:
 
 
 
-class Input {
+class input {
 private:
 	#if defined(_WIN32)
 	HKL layout;
@@ -360,7 +360,7 @@ private:
 	//probably switch to GetKeyboardState, so easier to use getKeyReleased
 	bool getState();
 public:
-	Input(RAW_DISPLAY display, RAW_WINDOW wind) {
+	input(RAW_DISPLAY display, RAW_WINDOW wind) {
 		#if defined(_WIN32)
 		layout = LoadKeyboardLayoutA("00000409", KLF_ACTIVATE);
 		#endif
@@ -374,9 +374,9 @@ public:
 		this->display = display;
 		this->wind = wind;
 	}
-	Input(const Input&) = delete;
-	Input& operator =(const Input&) = delete;
-	~Input () {
+	input(const input&) = delete;
+	input& operator =(const input&) = delete;
+	~input () {
 
 	}
 	void updateState();
@@ -385,3 +385,4 @@ public:
 	bool GetKeyReleased(uint32_t key);
 
 };
+}

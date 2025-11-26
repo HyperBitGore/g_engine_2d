@@ -5,7 +5,7 @@
 //class vec3;
 //class vec4;
 
-
+namespace gore {
 template<size_t size>
 class vec {
 private:
@@ -420,4 +420,5 @@ public:
 		lhs ^= n;
 		return lhs;
 	}
+};
 };

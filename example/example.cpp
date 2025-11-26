@@ -7,27 +7,27 @@
 
 uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
-EngineNewGL eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT);
-DrawPass dr(640, 480, GL_COLOR_ATTACHMENT0);
-AudioPlayer ap(4);
-Audio aud;
-Audio s_test;
-Audio s_test2;
-Audio s_test3;
-Audio s_test4;
+gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT);
+gore::drawpass dr(640, 480, GL_COLOR_ATTACHMENT0);
+gore::audioplayer ap(4);
+gore::audio aud;
+gore::audio s_test;
+gore::audio s_test2;
+gore::audio s_test3;
+gore::audio s_test4;
 
-IMG imgtest;
-IMG imgtest_pallete;
-IMG imgtest_types;
-IMG imgtest_grayalpha;
-IMG imgtest_bmp;
-IMG atlas_test;
-IMG bmptest;
-IMG blank_test;
-IMG conversion_test;
-ImageAtlas atlas = ImageAtlas(400, 400, 4, 256);
-gore::Font f_test;
-gore::Font open_sans;
+gore::IMG imgtest;
+gore::IMG imgtest_pallete;
+gore::IMG imgtest_types;
+gore::IMG imgtest_grayalpha;
+gore::IMG imgtest_bmp;
+gore::IMG atlas_test;
+gore::IMG bmptest;
+gore::IMG blank_test;
+gore::IMG conversion_test;
+gore::imageatlas atlas = gore::imageatlas(400, 400, 4, 256);
+gore::font f_test;
+gore::font open_sans;
 
 int ang = 0;
 int r_ang = 360;
@@ -41,9 +41,9 @@ double s_cool = 0;
 bool play_it = true;
 
 //bezier testing
-vec2 bez_m = { 120.0f, 130.0f };
+gore::vec2 bez_m = { 120.0f, 130.0f };
 
-vec2 mos = { 200.0f, 300.0f };
+gore::vec2 mos = { 200.0f, 300.0f };
 
 class Invert {
 	private:
@@ -53,7 +53,7 @@ class Invert {
 		float w;
 		float h;
 	};
-	Shader shader;
+	gore::shader shader;
 	std::vector<vertex> vertexs;
 	GLuint vertex_buffer;
 	GLuint vao;
@@ -68,7 +68,7 @@ class Invert {
 		shader.setuniform("screen", width, height);
 		shader.setuniform("mtexture", (GLuint)0);
 	}
-	void drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dim, gore::vec4 uvs){
 		vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y}); //first triangle top left vertex
 		vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y}); //first triangel top right
 		vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w}); //first triangle tip vertex
@@ -202,7 +202,7 @@ void renderFunction() {
 	eng2.gray_r->setWithAlpha(true);
 	eng2.gray_r->drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
 	eng2.gray_r->setWithAlpha(false);
-	vec4 pos = atlas.getImagePos("atlas_test", true);
+	gore::vec4 pos = atlas.getImagePos("atlas_test", true);
 	eng2.img_r->addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
 	pos = atlas.getImagePos("enem2", true);
 	eng2.img_r->addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
@@ -255,13 +255,13 @@ void windowResize (uint32_t width, uint32_t height) {
 // issue is the image renderer not mapping correctly!
 int main() {
 	eng2.setWindowResize(windowResize);
-	Line l11({0.0f, 1.0f}, {10.0f, 8.0f});
+	gore::line l11({0.0f, 1.0f}, {10.0f, 8.0f});
 	l11.p1.x = 1.0f;
 	l11.p2.x = 11.0f;
-	Matrix matrice(3, 3);
-	Matrix matrice2(3, 3);
-	Matrix matrice3(3, 3);
-	Matrix matrice4(3, 3);
+	gore::matrix matrice(3, 3);
+	gore::matrix matrice2(3, 3);
+	gore::matrix matrice3(3, 3);
+	gore::matrix matrice4(3, 3);
 	matrice4.setrow(0, 2.0f);
 	matrice3.setrow(0, 2.0f);
 	matrice[1][0] = 1.0f;
@@ -295,7 +295,7 @@ int main() {
 	matrice -= matrice2;
 	std::cout << matrice2.to_string() << "\n";
 	std::cout << matrice.to_string() << "\n";
-	Matrix matrice5(3, 3);
+	gore::matrix matrice5(3, 3);
 	matrice5.setrow(0, 2.0f);
 	matrice5.setrow(1, 3.0f);
 	matrice5[2][0] = 1.0f;
@@ -313,30 +313,30 @@ int main() {
 	for (size_t i = 0; i < 100; i++) {
 		//ap.playFile(s_test3, 3);
 	}
-	bmptest = imageloader::loadBMP("resources/test1.bmp");
-	std::cout << imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
-	imgtest_types = imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale16.png");
-	imgtest_pallete = imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png");
-	imgtest_grayalpha = imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscalealpha.png");
-	imgtest = imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
-	imgtest_bmp = imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
-	atlas_test = imageloader::loadPNG("resources/test.png");
-	conversion_test = imageloader::convertIMGRGBA8(imgtest_types);
-	imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+	bmptest = gore::imageloader::loadBMP("resources/test1.bmp");
+	std::cout << gore::imageloader::getPixel(bmptest, 0, 1, 3) << " color at bmp\n";
+	imgtest_types = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale16.png");
+	imgtest_pallete = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png");
+	imgtest_grayalpha = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscalealpha.png");
+	imgtest = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
+	imgtest_bmp = gore::imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
+	atlas_test = gore::imageloader::loadPNG("resources/test.png");
+	conversion_test = gore::imageloader::convertIMGRGBA8(imgtest_types);
+	gore::imageloader::createTexture(atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	atlas.addImage(atlas_test, "atlas_test");
 	atlas.addImage(imgtest, "img_test");
-	atlas.addImage("resources/enem2_1.png", IMG_TYPE::PNG, "enem2");
+	atlas.addImage("resources/enem2_1.png", gore::IMG_TYPE::PNG, "enem2");
 
 	//adding bmp to atlas, don't need width and height
 	//atlas.addImage("resources/test1.bmp", IMG_TYPE::BMP, 0, 0, "test1");
 
-	imageloader::updateIMG(atlas.getImg());
+	gore::imageloader::updateIMG(atlas.getImg());
 	for (int x = 0; x < 100; x++) {
-		imageloader::setPixelRaw(imgtest, x, 1, (uint32_t)0xff0000, imgtest->bytes_per_pixel);
+		gore::imageloader::setPixelRaw(imgtest, x, 1, (uint32_t)0xff0000, imgtest->bytes_per_pixel);
 	}
-	std::cout << imageloader::getPixel(imgtest, 0, 100, 4) << "\n";
-	std::cout << imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
-	imageloader::updateIMG(imgtest);
+	std::cout << gore::imageloader::getPixel(imgtest, 0, 100, 4) << "\n";
+	std::cout << gore::imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
+	gore::imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
 	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 0, 735);
 	open_sans =  gore::FontLoader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
@@ -344,14 +344,14 @@ int main() {
 	//testing font rasterizing
 	eng2.font_r->rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335, 32, 127);
 	eng2.font_r->rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335, 32, 127);
-	blank_test = imageloader::createBlank(100, 100, 4);
-	imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+	blank_test = gore::imageloader::createBlank(100, 100, 4);
+	gore::imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {
 		for(int j = 0; j < 100; j++){
-			imageloader::setPixelRaw(blank_test, j, i, 4278190335, 4);
+			gore::imageloader::setPixelRaw(blank_test, j, i, 4278190335, 4);
 		}
 	}
-	imageloader::updateIMG(blank_test);
+	gore::imageloader::updateIMG(blank_test);
 
 
 	std::bitset<32> x(10);

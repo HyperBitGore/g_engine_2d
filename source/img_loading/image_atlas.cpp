@@ -1,14 +1,14 @@
 #include "image_loader.hpp"
 
 
-ImageAtlas::ImageAtlas () {
+gore::imageatlas::imageatlas () {
     buckets = nullptr;
     img = nullptr;
     max_images = 0;
 }
 
 //need to create an image 
-ImageAtlas::ImageAtlas(int w, int h, int bytes_per_pixel, uint32_t max_images) {
+gore::imageatlas::imageatlas(int w, int h, int bytes_per_pixel, uint32_t max_images) {
     //images.setHashFunction(imageHash);
 
     //std::cout << "Colliding: " << checkCollision({10, 10}, {20, 20}, {10, 20}, {10, 10}) << "\n";
@@ -20,7 +20,7 @@ ImageAtlas::ImageAtlas(int w, int h, int bytes_per_pixel, uint32_t max_images) {
     img = imageloader::createBlank(w, h, bytes_per_pixel);
 }
 
-ImageAtlas::ImageAtlas (const ImageAtlas& atlas) {
+gore::imageatlas::imageatlas (const imageatlas& atlas) {
     if (this->buckets) {
         for(int i = 0; i < max_images; i++){
             Memb cur = buckets[i];
@@ -58,7 +58,7 @@ ImageAtlas::ImageAtlas (const ImageAtlas& atlas) {
     }
     this->max_images = atlas.max_images;
 }
-ImageAtlas::ImageAtlas (ImageAtlas&& atlas) {
+gore::imageatlas::imageatlas (imageatlas&& atlas) {
     this->buckets = atlas.buckets;
     this->img = atlas.img;
     this->max_images = atlas.max_images;
@@ -67,7 +67,7 @@ ImageAtlas::ImageAtlas (ImageAtlas&& atlas) {
     atlas.max_images = 0;
 }
 
-ImageAtlas::~ImageAtlas(){
+gore::imageatlas::~imageatlas(){
     if (buckets) {
         for(int i = 0; i < max_images; i++){
             Memb cur = buckets[i];
@@ -81,16 +81,16 @@ ImageAtlas::~ImageAtlas(){
     }
 }
 
-ImageAtlas& ImageAtlas::operator=(const ImageAtlas& atlas) {
+gore::imageatlas& gore::imageatlas::operator=(const imageatlas& atlas) {
     if (this == &atlas || atlas.buckets == nullptr) {
         return *this;
     }
-    ImageAtlas at(atlas);
+    imageatlas at(atlas);
     swap(at, *this);
     return *this;
 }
 
-ImageAtlas& ImageAtlas::operator=(ImageAtlas&& atlas) {
+gore::imageatlas& gore::imageatlas::operator=(imageatlas&& atlas) {
     if (this == &atlas || atlas.buckets == nullptr) {
         return *this;
     }
@@ -98,14 +98,14 @@ ImageAtlas& ImageAtlas::operator=(ImageAtlas&& atlas) {
     return *this;
 }
 
-bool ImageAtlas::checkCollision(Point p1, Point dim1, Point p2, Point dim2){
+bool gore::imageatlas::checkCollision(Point p1, Point dim1, Point p2, Point dim2){
     if(p1.x + dim1.x >= p2.x && p1.x <= p2.x +dim2.x && p1.y + dim1.y >= p2.y && p1.y <= p2.y + dim2.y){
         return true;
     }
     return false;
 }
 
-bool ImageAtlas::spotEmpty(Point p, Point dim){
+bool gore::imageatlas::spotEmpty(Point p, Point dim){
     if (p.x + dim.x > this->img->w || p.y + dim.y > this->img->h || p.x >= this->img->w || p.y >= this->img->h) {
         return false;
     }
@@ -121,7 +121,7 @@ bool ImageAtlas::spotEmpty(Point p, Point dim){
     return true;
 }
 
-vec2 ImageAtlas::getNextImagePos (uint32_t w, uint32_t h) {
+gore::vec2 gore::imageatlas::getNextImagePos (uint32_t w, uint32_t h) {
     while (!spotEmpty({(int)start_pos.x, (int)start_pos.y}, {(int)w, (int)h})) {
         start_pos.x += 2;
         if (start_pos.x + w > img->w) {
@@ -146,7 +146,7 @@ vec2 ImageAtlas::getNextImagePos (uint32_t w, uint32_t h) {
 // only need to look up if y is fine, the x position should be set based on previous insert
 
 //have to make sure the n_img is the same format as the atlas
-void ImageAtlas::addImage(IMG n_img, std::string name) {
+void gore::imageatlas::addImage(IMG n_img, std::string name) {
     if (n_img->bytes_per_pixel != img->bytes_per_pixel) {
         return;
     }
@@ -164,7 +164,7 @@ void ImageAtlas::addImage(IMG n_img, std::string name) {
     start_pos.x += n_img->w;
 }
 
-void ImageAtlas::addImage(std::string path, IMG_TYPE type, std::string name){
+void gore::imageatlas::addImage(std::string path, IMG_TYPE type, std::string name){
     IMG img;
     switch(type){
         case IMG_TYPE::BMP:
@@ -177,7 +177,7 @@ void ImageAtlas::addImage(std::string path, IMG_TYPE type, std::string name){
     addImage(img, name);
 }
 
-vec4 ImageAtlas::getImagePos(std::string name, bool normalize) {
+gore::vec4 gore::imageatlas::getImagePos(std::string name, bool normalize) {
     Memb memb = get(name);
     if(memb == nullptr){
         return {-1.0f, -1.0f, -1.0f, -1.0f};
@@ -189,6 +189,6 @@ vec4 ImageAtlas::getImagePos(std::string name, bool normalize) {
     return p;
 }
 
-IMG ImageAtlas::getImg() {
+gore::IMG gore::imageatlas::getImg() {
     return img;
 }

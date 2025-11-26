@@ -518,7 +518,7 @@ uint8_t* decode4RLE(uint8_t* data, size_t size, BITMAPINFOHEADERV5 dib_header){
 }
 
 //only supports 8 bit color masks currently
-IMG imageloader::loadBMP(std::string path){
+gore::IMG gore::imageloader::loadBMP(std::string path){
     std::ifstream file;
     file.open(path, std::ios::binary | std::ios::ate);
     std::vector<char> buffer;

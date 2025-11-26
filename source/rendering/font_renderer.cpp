@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-std::u16string gore::FontRenderer::convertToU16String (std::string str) {
+std::u16string gore::fontrenderer::convertToU16String (std::string str) {
 	std::u16string wide_str;
 	for (size_t i = 0; i < str.size(); i++) {
 		uint8_t c = str[i];
@@ -25,9 +25,9 @@ std::u16string gore::FontRenderer::convertToU16String (std::string str) {
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
 // https://github.com/GreenLightning/gpu-font-rendering#method
-void gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::Font* Font) {
+void gore::fontrenderer::rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::font* Font) {
 	//have to scale glyph contour points
-	std::vector<Line> lines;
+	std::vector<line> lines;
 	int32_t new_ptsize = ptsize;
 	if (Font->overlap_simple) {
 		new_ptsize *= 2;
@@ -40,7 +40,7 @@ void gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsi
 	float lsbx = g->lsb * scale_factor;
 	float rsbx = g->rsb * scale_factor;
 	for (size_t i = 0; i < g->contours.size(); i++) {
-		Line l = g->contours[i];
+		line l = g->contours[i];
 		l.p1.x = l.p1.x * scale_factor;
 		l.p1.y = l.p1.y * scale_factor;
 		
@@ -72,9 +72,9 @@ void gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsi
 	for (uint32_t y = 0; y < h; y++) {
 		for (uint32_t x = 0; x < w; x++) {
 			vec2 origin = { x + 0.0f, y + 0.0f };
-			Line ray = {{origin.x, origin.y}, {(float)w, origin.y}};
+			line ray = {{origin.x, origin.y}, {(float)w, origin.y}};
 			int32_t winding = 0;
-			for (const Line& line : lines) {
+			for (const line& line : lines) {
 				vec2 p1 = line.p1;
 				vec2 p2 = line.p2;
 
@@ -112,11 +112,11 @@ void gore::FontRenderer::rasterizeGlyph(gore::Glyph* g, uint32_t color, int ptsi
 	Font->atlas.insert(name, w, h, atlas_pos);
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
-void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end) {
+void gore::fontrenderer::rasterizeFont(gore::font* Font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end) {
 	Font->ptsize = ptsize;
 	uint32_t w = ptsize * 20;
 	uint32_t h = w;
-	Font->atlas = ImageAtlas(w, h, 4, Font->glyphs.size());
+	Font->atlas = imageatlas(w, h, 4, Font->glyphs.size());
 	std::cout << "Creating atlas for font " << Font->name << " with dimensions " << w << "x" << h << " and max images " << Font->glyphs.size() << std::endl;
 	imageloader::createTexture(Font->atlas.getImg(), GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (size_t i = 0; i < Font->glyphs.size(); i++) {
@@ -126,7 +126,7 @@ void gore::FontRenderer::rasterizeFont(gore::Font* Font, int ptsize, uint32_t dp
 	}
 	imageloader::updateIMG(Font->atlas.getImg());
 }
-int findFontChar(gore::Font* f, uint16_t c) {
+int findFontChar(gore::font* f, uint16_t c) {
 	for (size_t i = 0; i < f->glyphs.size(); i++) {
 		if (f->glyphs[i].c == c) {
 			return i;
@@ -135,7 +135,7 @@ int findFontChar(gore::Font* f, uint16_t c) {
 	return 0;
 }
 
-void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontrenderer::drawRasterText(gore::font* Font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
 	if (Font->atlas.getImg() == nullptr) {
 		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
@@ -167,7 +167,7 @@ void gore::FontRenderer::drawRasterText(gore::Font* Font, imagerenderer* img_r, 
 	img_r->drawBuffer(Font->atlas.getImg());
 }
 
-void gore::FontRenderer::drawRasterText(gore::Font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontrenderer::drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
 	drawRasterText(font, img_r, convertToU16String(text), x, y, ptsize, dpi);
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
@@ -175,7 +175,7 @@ void gore::FontRenderer::drawRasterText(gore::Font* font, imagerenderer* img_r, 
 //2.4.4
 //cutout memory inefficient parts of glyph like points
 // have to use LSB LMAO
-void gore::FontRenderer::drawText(std::u16string text, gore::Font* Font, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontrenderer::drawText(std::u16string text, gore::font* Font, float x, float y, int ptsize, uint32_t dpi) {
 	float x1 = x;
 	float y1 = y;
 	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
@@ -187,7 +187,7 @@ void gore::FontRenderer::drawText(std::u16string text, gore::Font* Font, float x
 			//draw the glyph
 			x1 += lsb_pixels;
 			for (size_t j = 0; j < Font->glyphs[index].contours.size(); j++) {
-				Line l = Font->glyphs[index].contours[j];
+				line l = Font->glyphs[index].contours[j];
 				//converting line points to ptsize
 				l.p1.x = x1 + (l.p1.x * scale_factor);
 				l.p1.y = y1 - (l.p1.y * scale_factor);
@@ -218,14 +218,14 @@ void gore::FontRenderer::drawText(std::u16string text, gore::Font* Font, float x
    	glDisable(GL_LINE_SMOOTH);
 }
 
-void gore::FontRenderer::drawText(std::string text, gore::Font* Font, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, float y, int ptsize, uint32_t dpi) {
 	drawText(convertToU16String(text), Font, x, y, ptsize, dpi);
 }
 
-gore::FontRenderer::FontRenderer(uint32_t w, uint32_t h) {
+gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) {
 	this->width = w;
 	this->height = h;
-	Matrix ortho = Matrix::calculateOrtho(w, h, w, h);
+	matrix ortho = matrix::calculateOrtho(w, h, w, h);
 	vertexs.reserve(1000);
     allocated = 1;
     glGenBuffers_g(1, &vertex_buffer);
@@ -239,10 +239,10 @@ gore::FontRenderer::FontRenderer(uint32_t w, uint32_t h) {
     font_shader.setuniform("projection", 1, true, ortho);
 }
 
-gore::FontRenderer::FontRenderer (const gore::FontRenderer& f) {
+gore::fontrenderer::fontrenderer (const gore::fontrenderer& f) {
 	this->width = f.width;
 	this->height = f.height;
-	Matrix ortho = Matrix::calculateOrtho(this->width, this->height, this->width, this->height);
+	matrix ortho = matrix::calculateOrtho(this->width, this->height, this->width, this->height);
 	vertexs.reserve(1000);
 	std::copy(f.vertexs.begin(), f.vertexs.end(), vertexs.begin());
     this->allocated = f.allocated;
@@ -258,8 +258,8 @@ gore::FontRenderer::FontRenderer (const gore::FontRenderer& f) {
 }
 
 
-void gore::FontRenderer::setDimensions (uint32_t width, int32_t height) {
-	Matrix ortho = Matrix::calculateOrtho(width, height, this->width, this->height);
+void gore::fontrenderer::setDimensions (uint32_t width, int32_t height) {
+	matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
 	font_shader.bind();
 	font_shader.setuniform("projection", 1, true, ortho);
 	this->width = width;

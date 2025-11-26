@@ -2,7 +2,7 @@
 #include <cstring>
 
 
-Matrix::Matrix(size_t r, size_t c) {
+gore::matrix::matrix(size_t r, size_t c) {
 	columns = c;
 	rows = r;
 	dat = new float[r * c];
@@ -13,18 +13,18 @@ Matrix::Matrix(size_t r, size_t c) {
 	}
 }
 //copy constructor
-Matrix::Matrix(const Matrix& m) {
+gore::matrix::matrix(const matrix& m) {
 	columns = m.columns;
 	rows = m.rows;
 	dat = new float[rows * columns];
 	memcpy(dat, m.dat, rows * columns * sizeof(float));
 }
-Matrix::~Matrix() {
+gore::matrix::~matrix() {
 	if (dat) {
 		delete[] dat;
 	}
 }
-Matrix& Matrix::operator=(const Matrix& rhs) {
+gore::matrix& gore::matrix::operator=(const matrix& rhs) {
 	columns = rhs.columns;
 	rows = rhs.columns;
 	if (dat) {
@@ -35,7 +35,7 @@ Matrix& Matrix::operator=(const Matrix& rhs) {
 	return *this;
 }
 
-Matrix& Matrix::operator+=(const Matrix& rhs) {
+gore::matrix& gore::matrix::operator+=(const matrix& rhs) {
 	for (size_t i = 0; i < rhs.rows; i++) {
 		for (size_t j = 0; j < rhs.columns; j++) {
 			(*this)[i][j] += rhs[i][j];
@@ -43,7 +43,7 @@ Matrix& Matrix::operator+=(const Matrix& rhs) {
 	}
 	return *this;
 }
-Matrix& Matrix::operator-=(const Matrix& rhs) {
+gore::matrix& gore::matrix::operator-=(const matrix& rhs) {
 	for (size_t i = 0; i < rhs.rows; i++) {
 		for (size_t j = 0; j < rhs.columns; j++) {
 			(*this)[i][j] += rhs[i][j];
@@ -51,7 +51,7 @@ Matrix& Matrix::operator-=(const Matrix& rhs) {
 	}
 	return *this;
 }
-Matrix& Matrix::operator*=(const float& n) {
+gore::matrix& gore::matrix::operator*=(const float& n) {
 	for (size_t i = 0; i < rows; i++) {
 		for (size_t j = 0; j < columns; j++) {
 			(*this)[i][j] *= n;
@@ -59,10 +59,10 @@ Matrix& Matrix::operator*=(const float& n) {
 	}
 	return *this;
 }
-Matrix& Matrix::operator*=(const Matrix& rhs) {
+gore::matrix& gore::matrix::operator*=(const matrix& rhs) {
 	//this is right
 	//looping all rows
-	Matrix t(rows, columns);
+	matrix t(rows, columns);
 	for (size_t i = 0; i < rows; i++) {
 		//outer loop setting the actual element value in rows
 		for (size_t p = 0; p < columns; p++) {
@@ -78,10 +78,10 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 	return *this;
 }
 
-Matrix& Matrix::operator^=(const float& n) {
+gore::matrix& gore::matrix::operator^=(const float& n) {
 	if (n <= 0) {
 		//might be right?
-		Matrix t(this->rows, this->columns);
+		matrix t(this->rows, this->columns);
 		for (size_t i = 0, k = 0; i < rows; i++, k++) {
 			t[i][k] = 1.0f;
 		}
@@ -96,20 +96,20 @@ Matrix& Matrix::operator^=(const float& n) {
 }
 
 
-float* Matrix::operator[](size_t row) {
+float* gore::matrix::operator[](size_t row) {
 	return (dat + (row * this->columns));
 	//return matrice[row];
 }
-const float* Matrix::operator[](size_t row) const {
+const float* gore::matrix::operator[](size_t row) const {
 	return (dat + (row * this->columns));
 }
-size_t Matrix::numColumns() {
+size_t gore::matrix::numColumns() {
 	return columns;
 }
-size_t Matrix::numRows() {
+size_t gore::matrix::numRows() {
 	return rows;
 }
-bool Matrix::setrow(size_t row, float val) {
+bool gore::matrix::setrow(size_t row, float val) {
 	if (row >= rows) {
 		return false;
 	}
@@ -118,7 +118,7 @@ bool Matrix::setrow(size_t row, float val) {
 	}
 	return true;
 }
-std::string Matrix::to_string() {
+std::string gore::matrix::to_string() {
 	std::string ret = "";
 
 	for (size_t i = 0; i < rows; i++) {
@@ -130,7 +130,7 @@ std::string Matrix::to_string() {
 	}
 	return ret;
 }
-float* Matrix::data() {
+float* gore::matrix::data() {
 	return dat;
 }
 
@@ -138,7 +138,7 @@ float* Matrix::data() {
 // https://stackoverflow.com/questions/12230312/is-glmortho-actually-wrong
 // https://docs.gl/gl3/glOrtho
 // height shifting too far up
-Matrix Matrix::calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height) {
+gore::matrix gore::matrix::calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height) {
 	float aspect = (float)width / (float)height;
 	float adjustedWidth = (float)width;
 	float adjustedHeight = (float)height;
@@ -147,7 +147,7 @@ Matrix Matrix::calculateOrtho(uint32_t width, uint32_t height, uint32_t last_wid
 	} else {
 		adjustedHeight = adjustedWidth / aspect;
 	}
-	Matrix matrice(4, 4);
+	matrix matrice(4, 4);
 	matrice[0][0] = 2.0f / adjustedWidth;
 	matrice[1][1] = -2.0f / height;
 	matrice[2][2] = -2.0f / (1.0f - -1.0f); //zfar

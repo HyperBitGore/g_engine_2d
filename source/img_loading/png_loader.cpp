@@ -194,7 +194,7 @@ public:
 //  -sRGB
 //  -cHRM
 
-IMG imageloader::loadPNG(std::string path) {
+gore::IMG gore::imageloader::loadPNG(std::string path) {
     // open file
     std::ifstream file;
     file.open(path, std::ios::binary);

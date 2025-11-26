@@ -1,42 +1,44 @@
 #pragma once
 #include "image_renderer.hpp"
 
-class Line {
+namespace gore {
+
+class line {
 private:
 	
 public:
 	vec2 p1;
 	vec2 p2;
-	Line() {
+	line() {
 		
 	}
-	Line(vec2 v1, vec2 v2) {
+	line(vec2 v1, vec2 v2) {
 		p1 = v1;
 		p2 = v2;
 	}
-	Line(const Line& l) {
+	line(const line& l) {
 		p1 = l.p1;
 		p2 = l.p2;
 	}
 };
 
-class PrimitiveRenderer {
+class primitiverenderer {
 private:
 	std::vector<vec2> vertexs;
 	GLuint vertex_buffer;
 	GLuint allocated;
-	Shader triangle_shader;
+	shader triangle_shader;
 	GLuint triangle_vao;
-	Shader point_shader;
+	shader point_shader;
 	GLuint point_vao;
-	Shader line_shader;
+	shader line_shader;
 	GLuint line_vao;
 	uint32_t width, height;
 public:
 	//use to initialize shaders
-	PrimitiveRenderer(GLuint sw, GLuint sh);
+	primitiverenderer(GLuint sw, GLuint sh);
 	// copy
-	PrimitiveRenderer(const PrimitiveRenderer& p);
+	primitiverenderer(const primitiverenderer& p);
 	//sets color for drawing
 	void setColor(vec4 color);
 	//triangles
@@ -64,3 +66,4 @@ public:
 	// for width and height
 	void setDimensions (uint32_t width, int32_t height);
 };
+}

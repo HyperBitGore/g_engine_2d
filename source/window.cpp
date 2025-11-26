@@ -42,7 +42,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 #endif
 
-g_window::~g_window() {
+gore::g_window::~g_window() {
 	//has to be same class name
 	#if defined(_WIN32)
 	UnregisterClass("GENG", r_display);
@@ -52,7 +52,7 @@ g_window::~g_window() {
 	#endif
 }
 
-bool g_window::ProcessMessage() {
+bool gore::g_window::ProcessMessage() {
 	#if defined(_WIN32)
 	MSG msg = {};
 
@@ -108,7 +108,7 @@ bool g_window::ProcessMessage() {
 	return true;
 }
 
-bool g_window::updateWindow() {
+bool gore::g_window::updateWindow() {
 	#if defined(_WIN32)
 	return UpdateWindow(getRawWindow());
 	#endif
@@ -118,7 +118,7 @@ bool g_window::updateWindow() {
 }
 
 
-bool g_window::swapBuffers() {
+bool gore::g_window::swapBuffers() {
 	#if defined(_WIN32)
 	return SwapBuffers(GetDC(getRawWindow()));
 	#endif
@@ -128,7 +128,7 @@ bool g_window::swapBuffers() {
 	#endif
 }
 #if defined(_WIN32)
-g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y, bool fullscreen)
+gore::g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y, bool fullscreen)
 	: r_display(GetModuleHandle(nullptr))
 {
 	WNDCLASS wnd = {};
@@ -173,7 +173,7 @@ g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x
 #endif
 
 #if defined(__unix__)
-g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen) {
+gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen) {
     if (!display) {
         std::cout << "Unable to open X display\n";
         exit(1);
@@ -229,21 +229,21 @@ g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, 
 }
 #endif
 
-int g_window::getWidth() {
+int gore::g_window::getWidth() {
 	return width;
 }
-int g_window::getHeight() {
+int gore::g_window::getHeight() {
 	return height;
 }
-RAW_WINDOW g_window::getRawWindow() {
+RAW_WINDOW gore::g_window::getRawWindow() {
 	return m_hwnd;
 }
-RAW_DISPLAY g_window::getRawDisplay() {
+RAW_DISPLAY gore::g_window::getRawDisplay() {
 	return r_display;
 }
 
 
-void g_window::toggleFullscreen() {
+void gore::g_window::toggleFullscreen() {
 	#if defined(_WIN32)
 	DWORD dwStyle = GetWindowLong(m_hwnd, GWL_STYLE);
 	MONITORINFO mi = { sizeof(mi) };
@@ -294,11 +294,11 @@ void g_window::toggleFullscreen() {
 	this->fullscreen = !this->fullscreen;
 }
 
-void g_window::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
+void gore::g_window::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 	resizeFunction = func;
 }
 
-void g_window::captureMouseToggle(bool center){
+void gore::g_window::captureMouseToggle(bool center){
 	#if defined(_WIN32)
 	if (!captured) {
 		RECT rect;
@@ -324,7 +324,7 @@ void g_window::captureMouseToggle(bool center){
 	this->center = center;
 }
 
-void g_window::mouseHideToggle() {
+void gore::g_window::mouseHideToggle() {
 	#if defined(_WIN32)
 	ShowCursor(!mouseHide);
 	#endif
@@ -348,7 +348,7 @@ void g_window::mouseHideToggle() {
 }
 
 
-uint32_t g_window::getDPI() {
+uint32_t gore::g_window::getDPI() {
 	#if defined(_WIN32)
 		UINT dpi = GetDpiForWindow(m_hwnd);
 		return dpi;

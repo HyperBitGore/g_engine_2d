@@ -6,9 +6,9 @@
 #include "../rendering/primitive_renderer.hpp"
 
 namespace gore {
-	struct Glyph {
+	struct glyph {
 		uint16_t c; //for unicode
-		std::vector<Line> contours;
+		std::vector<line> contours;
 		int16_t yMax;
 		int16_t yMin;
 		int16_t xMax;
@@ -21,23 +21,23 @@ namespace gore {
 		int y_offset = -1;
 	};
     
-    class Font {
+    class font {
 		private:
 			struct gpos_lookup {
 				
 			};
 		public:
 		std::string name;
-		std::vector<Glyph> glyphs;
+		std::vector<glyph> glyphs;
 		std::vector<IMG> rastered;
 		int32_t ptsize;
 		uint16_t unitsPerEm;
 		bool overlap_simple;
-        ImageAtlas atlas;
-		Font () {
+        imageatlas atlas;
+		font () {
 			this->name = "";
 		}
-		Font (std::string name, int32_t ptsize, uint16_t unitsPerEm, bool overlap_simple) {
+		font (std::string name, int32_t ptsize, uint16_t unitsPerEm, bool overlap_simple) {
 			this->name = name;
 			this->ptsize = ptsize;
 			this->unitsPerEm = unitsPerEm;
@@ -45,7 +45,7 @@ namespace gore {
 
 		}
 		// copy
-		Font (const Font& font) {
+		font (const font& font) {
 			this->name = font.name;
 			this->glyphs = font.glyphs;
 			this->ptsize = font.ptsize;
@@ -54,7 +54,7 @@ namespace gore {
 			this->rastered = font.rastered;
 		}
 		// move
-		Font (const Font&& font) {
+		font (const font&& font) {
 			this->name = font.name;
 			this->glyphs = std::move(font.glyphs);
 			this->ptsize = font.ptsize;
@@ -63,7 +63,7 @@ namespace gore {
 			this->rastered = font.rastered;
 		}
 		// operator=
-		Font& operator=(const Font& font) {
+		font& operator=(const font& font) {
 			this->name = font.name;
 			this->glyphs = font.glyphs;
 			this->ptsize = font.ptsize;
@@ -75,6 +75,6 @@ namespace gore {
 	};
     class FontLoader {
         public:
-	    static Font loadFont(std::string file, uint16_t start, uint16_t end);
+	    static font loadFont(std::string file, uint16_t start, uint16_t end);
     };
 }

@@ -41,8 +41,10 @@ static void FatalError(const char* message)
 	#endif
 }
 
+namespace gore {
+
 //throw hashmap in here for uniform lookup
-class Shader {
+class shader {
 private:
 	GLuint program;
 
@@ -54,7 +56,7 @@ private:
 	GLuint attrib;
 	void* data; //user set pointer
 	
-	HashMap<GLint, std::string> uniform_map;
+	gore::hashmap<GLint, std::string> uniform_map;
 	static int hash(std::string str) {
 		size_t total = 0;
 		for (size_t i = 0; i < str.size(); i++) {
@@ -63,7 +65,7 @@ private:
 		return total % 30;
 	}
 public:
-	Shader() {
+	shader() {
 		program = 0;
 		vao = 0;
 		vertex_buffer = 0;
@@ -71,7 +73,7 @@ public:
 		uniform_map.setHashFunction(hash);
 	}
 	//copy constructor
-	Shader(Shader& x) {
+	shader(shader& x) {
 		this->uniform_map = x.uniform_map;
 		this->program = x.program;
 		this->vao = x.vao;
@@ -92,9 +94,9 @@ public:
 	bool setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w);
 	//float overloads
 	bool setuniform(std::string uni, GLfloat n);
-	bool setuniform(std::string uni, vec2 n);
-	bool setuniform(std::string uni, vec3 n);
-	bool setuniform(std::string uni, vec4 n);
+	bool setuniform(std::string uni, gore::vec2 n);
+	bool setuniform(std::string uni, gore::vec3 n);
+	bool setuniform(std::string uni, gore::vec4 n);
 	//double overloads
 	bool setuniform(std::string uni, GLdouble n);
 	bool setuniform(std::string uni, GLdouble x, GLdouble y);
@@ -106,7 +108,7 @@ public:
 	bool setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value);
 	bool setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLdouble* value);
 	//matrix overloads
-	bool setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, Matrix& matrice);
+	bool setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, gore::matrix& matrice);
 
 	void compile(const char* vertex, const char* frag);
 	void compile(const std::string vert_path, const std::string frag_path);
@@ -117,3 +119,4 @@ public:
 	void updatebufferdata(GLsizei size);
 	void setbufferdata(void* data, GLsizei size, GLenum use);
 };
+}

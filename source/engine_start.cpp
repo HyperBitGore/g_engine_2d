@@ -14,7 +14,7 @@ int myXIOErrorHandler(Display *dpy) {
 #endif
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-EngineNewGL::EngineNewGL(const char* window_name, int width, int height, uint8_t component_mask) {
+gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask) {
 	#if defined(_WIN32)
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
@@ -181,7 +181,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height, uint8_t
 	GLXFBConfig fbconfig = fbc[0];
 
 	wind = new g_window(window_name, display, height, width, 300, 300);
-	in = new Input(wind->getRawDisplay(), wind->getRawWindow());
+	in = new input(wind->getRawDisplay(), wind->getRawWindow());
 
     if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");
 	// Load context creation function
@@ -242,7 +242,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height, uint8_t
 	std::cout << "Texture Units on this machine: " << texture_units << "\n";
 	//start modern opengl needed stuff like shaders and vertex buffers
 	if (component_mask & PRIMITIVE_COMPONENT) {
-		this->prim_r = std::make_unique<PrimitiveRenderer>(width, height);
+		this->prim_r = std::make_unique<primitiverenderer>(width, height);
 	}
 	if (component_mask & IMAGE_COMPONENT) {
 		this->img_r = std::make_unique<imagerenderer>(width, height);
@@ -251,7 +251,7 @@ EngineNewGL::EngineNewGL(const char* window_name, int width, int height, uint8_t
 		this->gray_r = std::make_unique<grayscalerenderer>(width, height);
 	}
 	if (component_mask & FONT_COMPONENT) {
-		this->font_r = std::make_unique<gore::FontRenderer>(width, height);
+		this->font_r = std::make_unique<gore::fontrenderer>(width, height);
 	}
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);

@@ -5,6 +5,7 @@
 //https://www.khronos.org/opengl/wiki/Texture
 	//-read the glsl binding section
 //https://learnopengl.com/Getting-started/Transformations
+namespace gore {
 class imagerenderer {
 protected:
 	struct ivertex{
@@ -17,7 +18,7 @@ protected:
 		float roty;
 	};
 	std::vector<ivertex> vertexs;
-	Shader shader;
+	shader shader;
 	GLuint vao;
 	GLuint vertex_buffer;
 	GLuint allocated;
@@ -29,17 +30,17 @@ public:
 	imagerenderer(size_t w, size_t h);
 	// copy
 	imagerenderer(const imagerenderer& img);
-	void addImageVertex(vec2 pos, vec2 dimensions);
-	void addImageVertex(vec2 pos, vec2 dimensions, float rot);
-	void addImageVertex(vec2 pos, vec2 dimensions, vec4 uvs, float rot);
-	void drawBuffer(IMG img);
+	void addImageVertex(gore::vec2 pos, gore::vec2 dimensions);
+	void addImageVertex(gore::vec2 pos, gore::vec2 dimensions, float rot);
+	void addImageVertex(gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
+	void drawBuffer(gore::IMG img);
 	void drawBuffer(GLuint texture);
-	void drawImage(IMG img, vec2 pos, vec2 dimensions);
-	void drawImage(IMG img, vec2 pos, vec2 dimensions, vec4 uvs);
-	void drawImageRotated(IMG img,vec2 pos, vec2 dimensions, float rot);
-	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions);
-	void drawTexture(GLuint texture, vec2 pos, vec2 dimensions, vec4 uvs);
-	void drawTextureRotated(GLuint texture, vec2 pos, vec2 dimensions, float rot);
+	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions);
+	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
+	void drawImageRotated(gore::IMG img,gore::vec2 pos, gore::vec2 dimensions, float rot);
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
+	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void setDimensions (uint32_t width, uint32_t height);
 };
 
@@ -56,7 +57,7 @@ class grayscalerenderer : public imagerenderer {
 
 //https://open.gl/framebuffers
 //https://www.youtube.com/watch?v=QQ3jr-9Rc1o
-class DrawPass {
+class drawpass {
 	private:
 		GLuint color_buffer;
 		GLuint depth_buffer; //also stencil buffer
@@ -65,7 +66,7 @@ class DrawPass {
 		GLsizei w;
 		GLsizei h;
 	public:
-		DrawPass(GLsizei width, GLsizei height, GLenum attach) {
+		drawpass(GLsizei width, GLsizei height, GLenum attach) {
 			w = width;
 			h = height;
 			glGenFramebuffers_g(1, &color_buffer);
@@ -95,7 +96,7 @@ class DrawPass {
 
 			this->attach = attach;
 		}
-		~DrawPass() {
+		~drawpass() {
 			glDeleteFramebuffers_g(1, &color_buffer);
 			glDeleteRenderbuffers_g(1, &depth_buffer);
 			glDeleteTextures(1, &texture);
@@ -136,3 +137,4 @@ class DrawPass {
 			unbind();
 		}
 };
+}

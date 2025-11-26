@@ -8,42 +8,43 @@
 // -implement perspective, translate, rotate, and scale
 //https://www.khanacademy.org/math/linear-algebra/matrix-transformations/lin-trans-examples/v/linear-transformation-examples-scaling-and-reflections
 //https://matrixcalc.org/
-class Matrix {
+namespace gore {
+class matrix {
 private:
 	size_t columns;
 	size_t rows;
 	float* dat;
 public:
-	Matrix() = delete;
-	Matrix(size_t r, size_t c);
+	matrix() = delete;
+	matrix(size_t r, size_t c);
 	//copy constructor
-	Matrix(const Matrix& m);
-	~Matrix();
+	matrix(const matrix& m);
+	~matrix();
 
-	Matrix& operator=(const Matrix& rhs);
-	Matrix& operator+=(const Matrix& rhs);
-	Matrix& operator-=(const Matrix& rhs);
-	Matrix& operator*=(const float& n);
-	Matrix& operator*=(const Matrix& rhs);
-	Matrix& operator^=(const float& n);
+	matrix& operator=(const matrix& rhs);
+	matrix& operator+=(const matrix& rhs);
+	matrix& operator-=(const matrix& rhs);
+	matrix& operator*=(const float& n);
+	matrix& operator*=(const matrix& rhs);
+	matrix& operator^=(const float& n);
 
-	friend Matrix operator+(Matrix lhs, const Matrix& rhs) {
+	friend matrix operator+(matrix lhs, const matrix& rhs) {
 		lhs += rhs;
 		return lhs;
 	}
-	friend Matrix operator-(Matrix lhs, const Matrix& rhs) {
+	friend matrix operator-(matrix lhs, const matrix& rhs) {
 		lhs -= rhs;
 		return lhs;
 	}
-	friend Matrix operator*(Matrix lhs, const float& n) {
+	friend matrix operator*(matrix lhs, const float& n) {
 		lhs *= n;
 		return lhs;
 	}
-	friend Matrix operator*(Matrix lhs, const Matrix& rhs) {
+	friend matrix operator*(matrix lhs, const matrix& rhs) {
 		lhs *= rhs;
 		return lhs;
 	}
-	friend Matrix operator^(Matrix lhs, const float& n) {
+	friend matrix operator^(matrix lhs, const float& n) {
 		lhs ^= n;
 		return lhs;
 	}
@@ -56,5 +57,6 @@ public:
 	std::string to_string();
 	float* data();
 
-	static Matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
+	static matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
 };
+}

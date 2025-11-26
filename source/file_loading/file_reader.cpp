@@ -16,7 +16,7 @@
   (((data) << 40) & 0x00FF000000000000) | (((data) << 56) & 0xFF00000000000000) ) 
 
 
-FileReader::FileReader (std::string file_name) {
+gore::filereader::filereader (std::string file_name) {
     this->file_name = file_name;
     std::ifstream file (file_name, std::ios::binary);
     offset = 0;
@@ -31,49 +31,49 @@ FileReader::FileReader (std::string file_name) {
     this->size = data.size();
 }
 // copy
-FileReader::FileReader(const FileReader& f) {
+gore::filereader::filereader(const filereader& f) {
     this->file_name = f.file_name;
     this->offset = f.offset;
     this->size = f.size;
     this->data = f.data;
 }
 // move
-FileReader::FileReader(const FileReader&& f) {
+gore::filereader::filereader(const filereader&& f) {
     this->file_name = f.file_name;
     this->offset = f.offset;
     this->size = f.size;
     std::move(f.data.begin(), f.data.end(), this->data.begin());
 }
 
-FileReader::FileReader(void* data, size_t size) {
+gore::filereader::filereader(void* data, size_t size) {
     this->data = std::string((char*)data, size);
     this->offset = 0;
     this->size = size;
 }
 
-void FileReader::moveHeadBack (uint32_t n) {
+void gore::filereader::moveHeadBack (uint32_t n) {
     offset -= n;
 }
-void FileReader::moveHeadForward (uint32_t n) {
+void gore::filereader::moveHeadForward (uint32_t n) {
     offset += n;
 }
-void FileReader::resetHead () {
+void gore::filereader::resetHead () {
     offset = 0;
 }
-void FileReader::setHead (uint32_t n) {
+void gore::filereader::setHead (uint32_t n) {
     offset = n;
 }
-uint32_t FileReader::fileSize () {
+uint32_t gore::filereader::fileSize () {
     return size;
 }
-char* FileReader::getHead() {
+char* gore::filereader::getHead() {
     return (this->data.data()) + this->offset;
 }
-uint32_t FileReader::getOffset () {
+uint32_t gore::filereader::getOffset () {
     return this->offset;
 }
 
-uint32_t FileReader::readFourBytes (bool big_endian) {
+uint32_t gore::filereader::readFourBytes (bool big_endian) {
     if (this->offset >= this->size) {
         return 0;
     }
@@ -84,7 +84,7 @@ uint32_t FileReader::readFourBytes (bool big_endian) {
     this->offset += sizeof(uint32_t);
     return val;
 }
-uint16_t FileReader::readTwoBytes (bool big_endian) {
+uint16_t gore::filereader::readTwoBytes (bool big_endian) {
     if (this->offset >= this->size) {
         return 0;
     }
@@ -95,7 +95,7 @@ uint16_t FileReader::readTwoBytes (bool big_endian) {
     this->offset += sizeof(uint16_t);
     return val;
 }
-uint8_t FileReader::readOneByte () {
+uint8_t gore::filereader::readOneByte () {
     if (this->offset >= this->size) {
         return 0;
     }

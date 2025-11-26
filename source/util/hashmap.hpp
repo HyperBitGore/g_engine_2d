@@ -1,30 +1,30 @@
 #include <cstddef>
 #include <vector>
 #include <functional>
-
+namespace gore {
 template<typename T, typename G>
-	struct MapItem {
+	struct mapitem {
 		G key;
 		T item;
-		MapItem<T, G>* next;
+		mapitem<T, G>* next;
 	};
 	//gonna be more inefficent than a specially designed version
 	template<typename T, typename G>
-	class HashMap {
+	class hashmap {
 	private:
-		std::vector<MapItem<T, G>*> buckets;
+		std::vector<mapitem<T, G>*> buckets;
 		std::function<int(G)> hash_func;
 	public:
-		HashMap() {
+		hashmap() {
 
 		}
-		~HashMap() {
+		~hashmap() {
 			//actually need to clean up news here tf
 			for (size_t i = 0; i < buckets.size(); i++) {
 				if (buckets[i] != nullptr) {
-					MapItem<T, G>* cur = buckets[i];
+					mapitem<T, G>* cur = buckets[i];
 					while (cur != nullptr) {
-						MapItem<T, G>* next = cur->next;
+						mapitem<T, G>* next = cur->next;
 						delete cur;
 						cur = next;
 					}
@@ -40,8 +40,8 @@ template<typename T, typename G>
 					buckets.push_back(nullptr);
 				}
 			}
-			MapItem<T, G>* temp = buckets[n];
-			buckets[n] = new MapItem<T, G>;
+			mapitem<T, G>* temp = buckets[n];
+			buckets[n] = new mapitem<T, G>;
 			buckets[n]->key = f;
 			buckets[n]->item = item;
 			buckets[n]->next = temp;
@@ -53,7 +53,7 @@ template<typename T, typename G>
 				return nullptr;
 			}
 			if (buckets[n]->key != f) {
-				MapItem<T, G>* ptr = buckets[n];
+				mapitem<T, G>* ptr = buckets[n];
 				while (ptr != nullptr) {
 					if (ptr->key == f) {
 						return &ptr->item;
@@ -70,8 +70,8 @@ template<typename T, typename G>
 				return false;
 			}
 			if (buckets[n]->key != f) {
-				MapItem<T, G>* ptr = buckets[n]->next;
-				MapItem<T, G>* last = buckets[n];
+				mapitem<T, G>* ptr = buckets[n]->next;
+				mapitem<T, G>* last = buckets[n];
 				while (ptr != nullptr) {
 					if (ptr->key == f) {
 						last->next = ptr->next;
@@ -82,7 +82,7 @@ template<typename T, typename G>
 					ptr = ptr->next;
 				}
 			}
-			MapItem<T, G>* next = buckets[n]->next;
+			mapitem<T, G>* next = buckets[n]->next;
 			delete buckets[n];
 			buckets[n] = next;
 			return false;
@@ -93,8 +93,8 @@ template<typename T, typename G>
 				return false;
 			}
 			if (&buckets[n]->item != t) {
-				MapItem<T, G>* ptr = buckets[n]->next;
-				MapItem<T, G>* last = buckets[n];
+				mapitem<T, G>* ptr = buckets[n]->next;
+				mapitem<T, G>* last = buckets[n];
 				while (ptr != nullptr) {
 					if (&ptr->item == t) {
 						last->next = ptr->next;
@@ -105,7 +105,7 @@ template<typename T, typename G>
 					ptr = ptr->next;
 				}
 			}
-			MapItem<T, G>* next = buckets[n]->next;
+			mapitem<T, G>* next = buckets[n]->next;
 			delete buckets[n];
 			buckets[n] = next;
 			return false;
@@ -118,8 +118,9 @@ template<typename T, typename G>
 		void reserve(size_t n) {
 			buckets.reserve(n);
 		}
-		std::vector<MapItem<T, G>*>& getBuckets(){
+		std::vector<mapitem<T, G>*>& getBuckets(){
 			return buckets;
 		}
 
 	};
+}

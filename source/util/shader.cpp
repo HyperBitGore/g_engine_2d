@@ -2,11 +2,11 @@
 #include <fstream>
 #include <sstream>
 
-void Shader::bind() {
+void gore::shader::bind() {
 	glUseProgram_g(program);
 }
 
-bool Shader::setuniform(std::string uni, GLint n) {
+bool gore::shader::setuniform(std::string uni, GLint n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -21,7 +21,7 @@ bool Shader::setuniform(std::string uni, GLint n) {
 	return true;
 }
 
-bool Shader::setuniform(std::string uni, GLint x, GLint y) {
+bool gore::shader::setuniform(std::string uni, GLint x, GLint y) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -34,7 +34,7 @@ bool Shader::setuniform(std::string uni, GLint x, GLint y) {
 	glUniform2i_g(*uf, x, y);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLint x, GLint y, GLint z) {
+bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -47,7 +47,7 @@ bool Shader::setuniform(std::string uni, GLint x, GLint y, GLint z) {
 	glUniform3i_g(*uf, x, y, z);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w) {
+bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -61,7 +61,7 @@ bool Shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w) {
 	return true;
 }
 //unsigned int overloads
-bool Shader::setuniform(std::string uni, GLuint n) {
+bool gore::shader::setuniform(std::string uni, GLuint n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -74,7 +74,7 @@ bool Shader::setuniform(std::string uni, GLuint n) {
 	glUniform1ui_g(*uf, n);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLuint x, GLuint y) {
+bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -87,7 +87,7 @@ bool Shader::setuniform(std::string uni, GLuint x, GLuint y) {
 	glUniform2ui_g(*uf, x, y);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z) {
+bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -100,7 +100,7 @@ bool Shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z) {
 	glUniform3ui_g(*uf, x, y, z);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w) {
+bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -114,7 +114,7 @@ bool Shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w)
 	return true;
 }
 //float overloads
-bool Shader::setuniform(std::string uni, GLfloat n) {
+bool gore::shader::setuniform(std::string uni, GLfloat n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -127,7 +127,7 @@ bool Shader::setuniform(std::string uni, GLfloat n) {
 	glUniform1f_g(*uf, n);
 	return true;
 }
-bool Shader::setuniform(std::string uni, vec2 n) {
+bool gore::shader::setuniform(std::string uni, gore::vec2 n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -140,7 +140,7 @@ bool Shader::setuniform(std::string uni, vec2 n) {
 	glUniform2f_g(*uf, n.x, n.y);
 	return true;
 }
-bool Shader::setuniform(std::string uni, vec3 n) {
+bool gore::shader::setuniform(std::string uni, gore::vec3 n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -153,7 +153,7 @@ bool Shader::setuniform(std::string uni, vec3 n) {
 	glUniform3f_g(*uf, n.x, n.y, n.z);
 	return true;
 }
-bool Shader::setuniform(std::string uni, vec4 n) {
+bool gore::shader::setuniform(std::string uni, gore::vec4 n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -167,7 +167,7 @@ bool Shader::setuniform(std::string uni, vec4 n) {
 	return true;
 }
 //double overloads
-bool Shader::setuniform(std::string uni, GLdouble n) {
+bool gore::shader::setuniform(std::string uni, GLdouble n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -180,7 +180,7 @@ bool Shader::setuniform(std::string uni, GLdouble n) {
 	glUniform1d_g(*uf, n);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLdouble x, GLdouble y) {
+bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -193,7 +193,7 @@ bool Shader::setuniform(std::string uni, GLdouble x, GLdouble y) {
 	glUniform2d_g(*uf, x, y);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z) {
+bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -206,7 +206,7 @@ bool Shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z) {
 	glUniform3d_g(*uf, x, y, z);
 	return true;
 }
-bool Shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
+bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -225,7 +225,7 @@ bool Shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z, GLd
 
 
 //stride is number of elements in a single element which count represents, maxes out at 4
-bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLfloat* value) {
+bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLfloat* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -265,7 +265,7 @@ bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsiz
 	return true;
 }
 //stride is number of elements in a single element which count represents, maxes out at 4
-bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLint* value) {
+bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLint* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -305,7 +305,7 @@ bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsiz
 	return true;
 }
 //stride is number of elements in a single element which count represents, maxes out at 4
-bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value) {
+bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -345,7 +345,7 @@ bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsiz
 	return true;
 }
 
-bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLdouble* value) {
+bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLdouble* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -385,7 +385,7 @@ bool Shader::setuniform(const std::string uni, const GLsizei stride, const GLsiz
 	return true;
 }
 // https://registry.khronos.org/OpenGL-Refpages/gl4/html/glUniform.xhtml
-bool Shader::setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, Matrix& matrice) {
+bool gore::shader::setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, gore::matrix& matrice) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation_g(program, uni.c_str());
@@ -435,7 +435,7 @@ bool Shader::setuniform(const std::string uni, const GLsizei count, const GLbool
 	return true;
 }
 
-void Shader::compile(const char* vertex_file, const char* fragment_file) {
+void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader_g(GL_VERTEX_SHADER);
 	GLuint FragmentShaderID = glCreateShader_g(GL_FRAGMENT_SHADER);
@@ -497,7 +497,7 @@ void Shader::compile(const char* vertex_file, const char* fragment_file) {
 	glDeleteShader_g(FragmentShaderID);
 	program = ProgramID;
 }
-void Shader::compile(const std::string vert_path, const std::string frag_path) {
+void gore::shader::compile(const std::string vert_path, const std::string frag_path) {
 	std::ifstream f;
 	f.open(vert_path);
 	std::stringstream ver_stream;
@@ -574,7 +574,7 @@ void Shader::compile(const std::string vert_path, const std::string frag_path) {
 }
 
 //bind shader before calling this
-void Shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
+void gore::shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
 	glGenVertexArrays_g(1, &vao);
 	glGenBuffers_g(1, &vertex_buffer);
 	glBindVertexArray_g(vao);
@@ -585,17 +585,17 @@ void Shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
 	buffer_target = target;
 }
 //bind shader before calling this
-void Shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
+void gore::shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
 	glEnableVertexAttribArray_g(attrib);
 	glVertexAttribPointer_g(attrib, size, type, normalized, stride, (void*)elementoffset);
 	attrib++;
 }
 //assuming last data pointer is set
-void Shader::updatebufferdata(GLsizei size){
+void gore::shader::updatebufferdata(GLsizei size){
 	glBufferSubData_g(buffer_target, 0, size, this->data);
 }
 //setting the data pointer
-void Shader::setbufferdata(void* data, GLsizei size, GLenum use){
+void gore::shader::setbufferdata(void* data, GLsizei size, GLenum use){
 	this->data = data;
 	glBindVertexArray_g(vao);
 	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);

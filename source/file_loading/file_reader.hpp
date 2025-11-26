@@ -2,22 +2,22 @@
 #include <cstdint>
 #include <string>
 
-
+namespace gore {
 // read files byte by byte
-class FileReader {
+class filereader {
 private:
     uint32_t offset;
     uint32_t size;
     std::string data;
 public:
     std::string file_name;    
-    FileReader (std::string file_name);
+    filereader (std::string file_name);
     // copy
-    FileReader(const FileReader& f);
+    filereader(const filereader& f);
     // move
-    FileReader(const FileReader&& f);
+    filereader(const filereader&& f);
     // wrap raw data
-    FileReader(void* data, size_t size);
+    filereader(void* data, size_t size);
 
     void moveHeadBack (uint32_t n);
     void moveHeadForward (uint32_t n);
@@ -31,3 +31,4 @@ public:
     uint16_t readTwoBytes (bool big_endian);
     uint8_t readOneByte ();
 };
+}

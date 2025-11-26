@@ -123,7 +123,7 @@ struct cmap {
 
 
 //have to convert these to little endian( I don't know how these macros work but they do so fuck it)
-void read_offset_subtable(FileReader* fr, off_subtable* table){
+void read_offset_subtable(gore::filereader* fr, off_subtable* table){
 	table->scaler_type = fr->readFourBytes(true);
 	table->numTables = fr->readTwoBytes(true);
 	table->searchRange = fr->readTwoBytes(true);
@@ -131,7 +131,7 @@ void read_offset_subtable(FileReader* fr, off_subtable* table){
 	table->rangeShift = fr->readTwoBytes(true);
 }
 
-void read_table_directory(FileReader* fr, std::vector<table_dir>& table, int tbl_size) {
+void read_table_directory(gore::filereader* fr, std::vector<table_dir>& table, int tbl_size) {
 	for (int i = 0; i < tbl_size; i++) {
 		table_dir dir;
 		dir.t = "";
@@ -377,7 +377,7 @@ void readFormat12(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 
 //https://developer.apple.com/gore::Fonts/TrueType-Reference-Manual/RM06/Chap6cmap.html
 //https://learn.microsoft.com/en-us/typography/opentype/spec/cmap
-cmap readCmap(FileReader* fr, int offset, int length, uint16_t start, uint16_t end) {
+cmap readCmap(gore::filereader* fr, int offset, int length, uint16_t start, uint16_t end) {
 	cmap map;
 	fr->moveHeadForward(offset);
     uint32_t start_offset = fr->getOffset();
@@ -459,7 +459,7 @@ inline uint32_t readLoca32(char* s, uint16_t index) {
 	return SwapFourBytes(*d);
 }
 
-std::vector<loca> readLoca(FileReader* fr, int offset, int length, uint16_t format, cmap* map) {
+std::vector<loca> readLoca(gore::filereader* fr, int offset, int length, uint16_t format, cmap* map) {
 	fr->moveHeadForward(offset);
 	std::vector<loca> locas;
 	int index = 0;
@@ -510,7 +510,7 @@ struct TTFHeader {
 
 
 
-TTFHeader readHead(FileReader* fr, int offset, int length) {
+TTFHeader readHead(gore::filereader* fr, int offset, int length) {
 	TTFHeader head;
 	fr->setHead(offset);
 	head.version = fr->readFourBytes(true); //can't swap the bytes on a double for some reason
@@ -555,7 +555,7 @@ struct hhea_table {
 	uint16_t numberOfHMetrics; //number of hMetric entries in 'hmtx' table
 };
 
-hhea_table readHheaTable(FileReader* fr, int offset, int length) {
+hhea_table readHheaTable(gore::filereader* fr, int offset, int length) {
 	hhea_table h;
 	fr->moveHeadForward(offset);
 	h.majorVersion = fr->readTwoBytes(true);
@@ -587,7 +587,7 @@ struct hmtx_table {
 	std::vector<int16_t> leftSideBearings; //for glyphs that have same width as previous glyph
 };
 
-hmtx_table readHmtxTable(FileReader* fr, int offset, int length, uint16_t numHMetrics, size_t numGlyphs) {
+hmtx_table readHmtxTable(gore::filereader* fr, int offset, int length, uint16_t numHMetrics, size_t numGlyphs) {
 	hmtx_table h;
 	fr->moveHeadForward(offset);
 	for (size_t i = 0; i < numHMetrics; i++) {
@@ -651,7 +651,7 @@ struct glyph_table {
 	bool overlap_simple = false;
 };
 // read glyf table
-glyph_table readGlyfs(FileReader* fr, int offset, int length, std::vector<loca> locas) {
+glyph_table readGlyfs(gore::filereader* fr, int offset, int length, std::vector<loca> locas) {
 	glyph_table table;
 	for (size_t i = 0; i < locas.size(); i++) {
 		fr->resetHead();
@@ -1014,7 +1014,7 @@ uint32_t readValueRecord (char* start, uint16_t format, glyph_table* glyf_table,
 // https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
 // should just directly modify glyf data, instead of returning anything
 // would be easier tbh
-void readGpos (FileReader* fr, int32_t offset, int32_t length, glyph_table* glyf_table) {
+void readGpos (gore::filereader* fr, int32_t offset, int32_t length, glyph_table* glyf_table) {
 	fr->moveHeadForward(offset);
 	uint32_t start_offset = fr->getOffset();
 	gpos_1_1 gposheader = *(gpos_1_1*)(fr->getHead());
@@ -1188,12 +1188,12 @@ table_dir* findTable(std::string table, Font_dir* directory) {
 	return nullptr;
 }
 struct bezier_point {
-	vec2 point;
+	gore::vec2 point;
 	bool on_curve;
 };
 
 // breakdown bezier curve into line segments
-void breakBezier(std::vector<Line>& lines, vec2 p1, vec2 p2, vec2 p3, int subdiv) {
+void breakBezier(std::vector<gore::line>& lines, gore::vec2 p1, gore::vec2 p2, gore::vec2 p3, int subdiv) {
 	float step = 1.0f / subdiv;
 	float lx = p1.x, ly = p1.y;
 	for (int i = 0; i <= subdiv; i++) {
@@ -1208,23 +1208,23 @@ void breakBezier(std::vector<Line>& lines, vec2 p1, vec2 p2, vec2 p3, int subdiv
 	}
 }
 // have to process contour points that are off in a more meaningful way
-std::vector<Line> constructLineSegments (std::vector<bezier_point>& countour_points) {
+std::vector<gore::line> constructLineSegments (std::vector<bezier_point>& countour_points) {
 	for (size_t i = 0; i < countour_points.size(); i++) {
 		if (i != 0 && !countour_points[i].on_curve && !countour_points[i - 1].on_curve) {
-			vec2 mid;
+			gore::vec2 mid;
 			mid.x = (countour_points[i - 1].point.x + countour_points[i].point.x) / 2.0f;
 			mid.y = (countour_points[i - 1].point.y + countour_points[i].point.y) / 2.0f;
 			countour_points.insert(countour_points.begin() + i, {mid, true});
 		}
 	}
-	std::vector<Line> lines;
-	vec2 last_on_curve;
+	std::vector<gore::line> lines;
+	gore::vec2 last_on_curve;
 	for (size_t i = 0; i < countour_points.size(); i++) {
 		bezier_point p1 = countour_points[i];
 		bezier_point p2 = countour_points[(i + 1) % countour_points.size()];
 		if (p1.on_curve && p2.on_curve) {
 			// simple line
-			Line l;
+			gore::line l;
 			l.p1 = p1.point;
 			l.p2 = p2.point;
 			lines.push_back(l);
@@ -1242,9 +1242,9 @@ std::vector<Line> constructLineSegments (std::vector<bezier_point>& countour_poi
 	return lines;
 }
 
-void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, hmtx_table* hmtx) {
+void constructGlyphs (Font_dir* directory, gore::font* f, glyph_table* g_table, hmtx_table* hmtx) {
 	for (auto& i : g_table->simple_glyphs) {
-		gore::Glyph g;
+		gore::glyph g;
 		g.c = i.c;
 		g.xMax = i.xMax;
 		g.yMax = i.yMax;
@@ -1254,7 +1254,7 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 		g.lsb = hmtx->hMetrics[i.glyf_index].lsb;
         g.rsb = g.advanceWidth - (g.lsb + g.xMax - g.xMin);
 		int32_t k = 0;
-		std::vector<vec2> points;
+		std::vector<gore::vec2> points;
 		for (int32_t j = 0; j < i.numberOfContours; j++) {
 			int32_t generated_points_start_index = (points.size() > 0) ? (int32_t)points.size() - 1 : 0;
 			int32_t contour_start_index = k;
@@ -1266,7 +1266,7 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 				contour_points.push_back({ { x, y }, (i.flags[k] & ON_CURVE_POINT) != 0 });
 			}
 			//now we have all contour points, we can generate the bezier curves
-			std::vector<Line> contour_lines = constructLineSegments(contour_points);
+			std::vector<gore::line> contour_lines = constructLineSegments(contour_points);
 			//append to glyph lines
 			g.contours.insert(g.contours.end(), contour_lines.begin(), contour_lines.end());
 			k = i.endPtsOfCountours[j] + 1;
@@ -1276,7 +1276,7 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 	}
 	for (auto& i : g_table->compound_glyphs) {
 		//compound glyphs not supported yet
-		gore::Glyph cg;
+		gore::glyph cg;
 		cg.c = i.c;
 		cg.xMax = i.xMax;
 		cg.yMax = i.yMax;
@@ -1305,7 +1305,7 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 			}
 			for (auto& g : f->glyphs) {
 				if (g.c == glyph_index) {
-					gore::Glyph g_copy = g;
+					gore::glyph g_copy = g;
 					for (size_t t = 0; t < g_copy.contours.size(); t++) {
 						float scale01 = 0.0f;
 						float scale10 = 0.0f;
@@ -1350,7 +1350,7 @@ void constructGlyphs (Font_dir* directory, gore::Font* f, glyph_table* g_table, 
 	}
 }
 // issue is overlapping lines and gaps, that creates the line artifacts with the winding rasterization
-void readDirectorys(Font_dir* directory, gore::Font* f, FileReader* fr, uint16_t start, uint16_t end) {
+void readDirectorys(Font_dir* directory, gore::font* f, gore::filereader* fr, uint16_t start, uint16_t end) {
 	//getting directorys in order we need them
 	cmap c_map;
 	TTFHeader header;
@@ -1404,14 +1404,14 @@ void readDirectorys(Font_dir* directory, gore::Font* f, FileReader* fr, uint16_t
 // https://fontdrop.info/
 //big endian so characters will be reversed to me
 //start and end variables are the start of characters you want to load and end is the last character to load
-gore::Font gore::FontLoader::loadFont(std::string file, uint16_t start, uint16_t end) {
-	FileReader fr(file);
+gore::font gore::FontLoader::loadFont(std::string file, uint16_t start, uint16_t end) {
+	filereader fr(file);
 	//read the gore::Font directory
 	Font_dir directory;
 	read_offset_subtable(&fr, &directory.off_sub);
 	read_table_directory(&fr,  directory.table, directory.off_sub.numTables);
 	//now we read all of the directorys we need to
-	gore::Font Font;
+	gore::font Font;
 	Font.name = file;
 	Font.overlap_simple = false;
 	readDirectorys(&directory, &Font, &fr, start, end);
