@@ -3,6 +3,7 @@
 #include "rendering/image_renderer.hpp"
 #include "rendering/primitive_renderer.hpp"
 #include <memory>
+#include "util/logging.hpp"
 #define PRIMITIVE_COMPONENT 0x1
 #define IMAGE_COMPONENT 0x2
 #define FONT_COMPONENT 0x4
@@ -45,6 +46,7 @@ private:
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
+	gore::logger logger;
 	#if defined (__unix__)
 	Display* display;
 	GLXContext ctx;
@@ -53,17 +55,18 @@ public:
 	// rendering backends
 	std::unique_ptr<primitiverenderer> prim_r = nullptr;
 	std::unique_ptr<imagerenderer> img_r = nullptr;
-	std::unique_ptr<fontrenderer> font_r = nullptr;
+	std::unique_ptr<fontrenderer> font_renderer = nullptr;
 	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
 	// parts is a bitmask which tells us what to load
-	g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask);
+	g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask, gore::LogType log_level = gore::LogType::NONE, std::string log_file = "g_engine_2d.log");
 
 	//move constructor
 	g_engine_2d(g_engine_2d&& o) {
 		this->prim_r = std::move(o.prim_r);
 		this->img_r = std::move(o.img_r);
-		this->font_r = std::move(o.font_r);
+		this->font_renderer = std::move(o.font_renderer);
 		this->gray_r = std::move(o.gray_r);
+		this->logger = std::move(o.logger);
 		//this->ap = std::move(o.ap);
 		this->wind = o.wind;
 		this->in = o.in;
@@ -79,8 +82,9 @@ public:
 	g_engine_2d(const g_engine_2d& o) {
 		this->prim_r = std::make_unique<primitiverenderer>(*o.prim_r);
 		this->img_r = std::make_unique<imagerenderer>(*o.img_r);
-		this->font_r = std::make_unique<fontrenderer>(*o.font_r);
+		this->font_renderer = std::make_unique<fontrenderer>(*o.font_renderer);
 		this->gray_r = std::make_unique<grayscalerenderer>(*o.gray_r);
+		this->logger = o.logger;
 		//this->ap = o.ap;
 		this->wind = o.wind;
 		this->in = o.in;

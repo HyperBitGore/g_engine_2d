@@ -12,7 +12,6 @@ void* GetGLFuncAddress(const char* name) {
 		p = (void*)GetProcAddress(module, name);
 	}
 	#endif
-	//std::cout << p << "\n";
 	return p;
 }
 

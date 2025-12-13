@@ -7,7 +7,7 @@
 
 uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
-gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT);
+gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT, gore::LogType::BOTH);
 gore::drawpass dr(640, 480, GL_COLOR_ATTACHMENT0);
 gore::audioplayer ap(4);
 gore::audio aud;
@@ -225,19 +225,19 @@ void renderFunction() {
 	eng2.enable(GL_BLEND);
 	eng2.img_r->drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
-	eng2.font_r->drawRasterText(&f_test, eng2.img_r.get(), "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
-	eng2.font_r->drawRasterText(&f_test, eng2.img_r.get(), "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
-	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
-	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
+	gore::fontraster::drawRasterText(&f_test, eng2.img_r.get(), "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
+	gore::fontraster::drawRasterText(&f_test, eng2.img_r.get(), "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
 	eng2.disable(GL_BLEND);
-	eng2.font_r->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
-	eng2.font_r->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
-	eng2.font_r->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
+	eng2.font_renderer->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
+	eng2.font_renderer->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
+	eng2.font_renderer->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
 	const char test_str[] = {'\x7E', '!', '\x7F', (char)200};
 	std::u16string test_str2 = {0xC8, 0x7E, 0x21, 0x10A, 0xFFFF, 0x2DC, 0x144};
-	eng2.font_r->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
-	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
-	eng2.font_r->drawRasterText(&open_sans, eng2.img_r.get(), "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
+	eng2.font_renderer->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }
 
 int nthBit(int number, int n) {
@@ -338,12 +338,12 @@ int main() {
 	std::cout << gore::imageloader::getPixel(imgtest, 0, 10, 4) << "\n";
 	gore::imageloader::updateIMG(imgtest);
 	eng2.setRenderFunction(renderFunction);
-	f_test = gore::FontLoader::loadFont("resources/EnvyCodeR.ttf", 0, 735);
-	open_sans =  gore::FontLoader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
+	f_test = gore::fontloader::loadFont("resources/EnvyCodeR.ttf", 0, 735);
+	open_sans =  gore::fontloader::loadFont("resources/OpenSans-Regular.ttf", 32, 127);
 
 	//testing font rasterizing
-	eng2.font_r->rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335, 32, 127);
-	eng2.font_r->rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335, 32, 127);
+	gore::fontraster::rasterizeFont(&f_test, 64, eng2.getDPI(), 4278190335, 32, 127);
+	gore::fontraster::rasterizeFont(&open_sans, 64, eng2.getDPI(), 4278190335, 32, 127);
 	blank_test = gore::imageloader::createBlank(100, 100, 4);
 	gore::imageloader::createTexture(blank_test, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	for (int i = 0; i < 100; i++) {

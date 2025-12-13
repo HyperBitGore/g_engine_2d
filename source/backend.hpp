@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstring>
 #include <functional>
+#include "util/logging.hpp"
 
 #if defined(_WIN32)
 #define RAW_WINDOW HWND

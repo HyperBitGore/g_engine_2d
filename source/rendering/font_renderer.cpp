@@ -5,27 +5,12 @@
 #include <cstdint>
 #include <string>
 
-std::u16string gore::fontrenderer::convertToU16String (std::string str) {
-	std::u16string wide_str;
-	for (size_t i = 0; i < str.size(); i++) {
-		uint8_t c = str[i];
-		if (c <= 127) {
-			wide_str.push_back(str[i]);
-		} else {
-			throw std::runtime_error("Non-ASCII character encountered");
-			
-		}
-	}
-
-	return wide_str;
-}
-
 //https://www.youtube.com/watch?v=4bIsntTiKfM
 //coding math is the goat
 
 const float DENSITY_CONSTANT = 72.0f; // Points per inch
 // https://github.com/GreenLightning/gpu-font-rendering#method
-void gore::fontrenderer::rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::font* Font) {
+void gore::fontraster::rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::font* Font) {
 	//have to scale glyph contour points
 	std::vector<line> lines;
 	int32_t new_ptsize = ptsize;
@@ -112,7 +97,7 @@ void gore::fontrenderer::rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsi
 	Font->atlas.insert(name, w, h, atlas_pos);
 }
 //flipx vector will decide what glyphs to flip on x axis instead of the normal y axis
-void gore::fontrenderer::rasterizeFont(gore::font* Font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end) {
+void gore::fontraster::rasterizeFont(gore::font* Font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end) {
 	Font->ptsize = ptsize;
 	uint32_t w = ptsize * 20;
 	uint32_t h = w;
@@ -135,7 +120,7 @@ int findFontChar(gore::font* f, uint16_t c) {
 	return 0;
 }
 
-void gore::fontrenderer::drawRasterText(gore::font* Font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontraster::drawRasterText(gore::font* Font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
 	if (Font->atlas.getImg() == nullptr) {
 		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
@@ -167,8 +152,8 @@ void gore::fontrenderer::drawRasterText(gore::font* Font, imagerenderer* img_r, 
 	img_r->drawBuffer(Font->atlas.getImg());
 }
 
-void gore::fontrenderer::drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
-	drawRasterText(font, img_r, convertToU16String(text), x, y, ptsize, dpi);
+void gore::fontraster::drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
+	drawRasterText(font, img_r, gore::fontloader::convertToU16String(text), x, y, ptsize, dpi);
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
@@ -219,7 +204,7 @@ void gore::fontrenderer::drawText(std::u16string text, gore::font* Font, float x
 }
 
 void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, float y, int ptsize, uint32_t dpi) {
-	drawText(convertToU16String(text), Font, x, y, ptsize, dpi);
+	drawText(gore::fontloader::convertToU16String(text), Font, x, y, ptsize, dpi);
 }
 
 gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) {

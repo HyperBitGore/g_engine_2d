@@ -54,11 +54,9 @@ double gore::g_engine_2d::getDelta() {
 std::pair<double, double> gore::g_engine_2d::getFrames() {
 	if (clockToMilliseconds(delta_f) > 1000.0) { //every second
 		frameRate = (double)frames * 0.5 + frameRate * 0.5; //more stable
-		//std::cout << "Frames: " << frameRate << "\n";
 		frames = 0;
 		delta_f -= CLOCKS_PER_SEC;
 		averageFrameTimeMilliseconds = 1000.0 / (frameRate == 0 ? 0.001 : frameRate);
-		//std::cout << "CPU time was:" << averageFrameTimeMilliseconds << std::endl;
 		return { frameRate, averageFrameTimeMilliseconds };
 	}
 	return { frameRate, averageFrameTimeMilliseconds };
@@ -69,9 +67,8 @@ std::pair<double, double> gore::g_engine_2d::getFrames() {
 
 bool gore::g_engine_2d::updateWindow() {
 	wind->updateWindow();
-	//UpdateWindow(wind->getHwnd());
 	if (!wind->ProcessMessage()) {
-		std::cout << "Closing window\n";
+		logger.log("Closing window");
 		delete wind;
 		return false;
 	}
@@ -84,6 +81,7 @@ bool gore::g_engine_2d::updateWindow() {
 	if (!wind->swapBuffers())
 	{
 		FatalError("Failed to swap OpenGL buffers!");
+		return false;
 	}
 	end_f = clock();
 	delta = end_f - begin_f;
@@ -127,8 +125,8 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 		if (gray_r) {
 			gray_r->setDimensions(w, h);
 		}
-		if (font_r) {
-			font_r->setDimensions(w, h);
+		if (font_renderer) {
+			font_renderer->setDimensions(w, h);
 		}
 		func(w, h);
 	};

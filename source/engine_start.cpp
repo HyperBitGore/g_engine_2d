@@ -14,7 +14,7 @@ int myXIOErrorHandler(Display *dpy) {
 #endif
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask) {
+gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask, gore::LogType log_level, std::string log_file) {
 	#if defined(_WIN32)
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
@@ -77,7 +77,8 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 	}
 	//create window
 	wind = new g_window(window_name, nullptr, height, width, 300, 300);
-	in = new Input(wind->getRawDisplay(), wind->getRawWindow());
+	in = new input(wind->getRawDisplay(), wind->getRawWindow());
+	logger = gore::logger(log_level, log_file);
 	HDC dc_w = GetDC(wind->getRawWindow());
 	// set pixel format for OpenGL context
 	{
@@ -231,15 +232,12 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	int test[4];
-	glGetIntegerv(GL_VIEWPORT, test);
-	std::cout << test[0] << " : " << test[1] << "\n";
-	//glViewport(0, 0, width, height);
+
 
 	loadFunctions();
 	glViewport(0, 0, width, height);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
-	std::cout << "Texture Units on this machine: " << texture_units << "\n";
+	logger.log("Texture Units on this machine: " + std::to_string(texture_units));
 	//start modern opengl needed stuff like shaders and vertex buffers
 	if (component_mask & PRIMITIVE_COMPONENT) {
 		this->prim_r = std::make_unique<primitiverenderer>(width, height);
@@ -251,7 +249,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 		this->gray_r = std::make_unique<grayscalerenderer>(width, height);
 	}
 	if (component_mask & FONT_COMPONENT) {
-		this->font_r = std::make_unique<gore::fontrenderer>(width, height);
+		this->font_renderer = std::make_unique<gore::fontrenderer>(width, height);
 	}
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);

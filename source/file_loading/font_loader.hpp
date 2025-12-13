@@ -73,8 +73,10 @@ namespace gore {
 			return *this;
 		}
 	};
-    class FontLoader {
+    class fontloader {
         public:
 	    static font loadFont(std::string file, uint16_t start, uint16_t end);
+		// if your char codes go above 127, we read it like UTF-8
+		static std::u16string convertToU16String (std::string str);
     };
 }

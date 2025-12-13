@@ -76,6 +76,21 @@ inline uint8_t swap1Byte(uint8_t n) {
 	//return (((n >> 7) & 1) | ((n >> 6) & 1) | ((n >> 5) & 1) | ((n >> 4) & 1) | ((n >> 3) & 1) | ((n >> 2) & 1) | ((n >> 1) & 1) | ((n >> 0) & 1));
 }
 
+std::u16string gore::fontloader::convertToU16String (std::string str) {
+	std::u16string wide_str;
+	for (size_t i = 0; i < str.size(); i++) {
+		uint8_t c = str[i];
+		if (c <= 127) {
+			wide_str.push_back(str[i]);
+		} else {
+			throw std::runtime_error("Non-ASCII character encountered");
+			
+		}
+	}
+
+	return wide_str;
+}
+
 
 //ttf file structs
 
@@ -239,7 +254,6 @@ void readFormat4(char* c, cmap_table* table, uint16_t start, uint16_t end) {
 		table->indexs.push_back({(int32_t)index, start1});
 		//table->indexs.push_back({ get_glyph_index_format4(start1, &form, idRangeStart), start1 });
 	}
-	//std::cout << table->indexs[0].c << " : " << table->indexs[0].index << "\n";
 }
 //untested
 void readFormat0(char* c, cmap_table* table, uint16_t start, uint16_t end) {
@@ -1404,7 +1418,7 @@ void readDirectorys(Font_dir* directory, gore::font* f, gore::filereader* fr, ui
 // https://fontdrop.info/
 //big endian so characters will be reversed to me
 //start and end variables are the start of characters you want to load and end is the last character to load
-gore::font gore::FontLoader::loadFont(std::string file, uint16_t start, uint16_t end) {
+gore::font gore::fontloader::loadFont(std::string file, uint16_t start, uint16_t end) {
 	filereader fr(file);
 	//read the gore::Font directory
 	Font_dir directory;

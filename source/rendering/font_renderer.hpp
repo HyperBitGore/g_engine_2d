@@ -21,10 +21,6 @@ namespace gore {
 		//font drawing
 		void drawText(std::string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
 		void drawText(std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
-		void rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::font* Font);
-		void rasterizeFont(gore::font* font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end);
-		void drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
-		void drawRasterText(gore::font* font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi);
 		// for width and height
 		void setDimensions (uint32_t width, int32_t height);
 		// set color of rendered text
@@ -32,7 +28,14 @@ namespace gore {
 			font_shader.bind();
 			font_shader.setuniform("textColor", color);
 		}
-		// if your char codes go above 127, we read it like UTF-8
-		static std::u16string convertToU16String (std::string str);
+	};
+
+	class fontraster {
+		public:
+		static void rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::font* Font);
+		static void rasterizeFont(gore::font* font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end);
+		static void drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
+		static void drawRasterText(gore::font* font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi);
+
 	};
 }

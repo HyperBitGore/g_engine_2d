@@ -296,7 +296,6 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
         length = FLIP_ENDIAN_32(length);
         i += 4;
         std::string cc = { buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]};
-        // std::cout << cc << "\n";
         val = READ_AS_UINT32(buffer + i);
         i += 4;
         // the chunk type

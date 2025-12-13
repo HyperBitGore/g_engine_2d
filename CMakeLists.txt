@@ -16,6 +16,7 @@ source/util/vector.hpp source/rendering/primitive_renderer.cpp source/rendering/
 source/rendering/image_renderer_shader.hpp
 source/rendering/primitive_renderer.hpp source/rendering/font_renderer.hpp source/file_loading/font_loader.cpp source/file_loading/font_loader.hpp source/img_loading/png_loader.cpp
 source/img_loading/common.hpp source/img_loading/inflate.hpp source/file_loading/file_reader.hpp source/file_loading/file_reader.cpp
+source/util/logging.hpp
 )
 
 #target_compile_options(g_engine PRIVATE /utf-8)

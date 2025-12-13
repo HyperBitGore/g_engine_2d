@@ -9,9 +9,6 @@ gore::imageatlas::imageatlas () {
 
 //need to create an image 
 gore::imageatlas::imageatlas(int w, int h, int bytes_per_pixel, uint32_t max_images) {
-    //images.setHashFunction(imageHash);
-
-    //std::cout << "Colliding: " << checkCollision({10, 10}, {20, 20}, {10, 20}, {10, 10}) << "\n";
     this->max_images = max_images;
     buckets = new Memb[max_images];
     for(int i = 0; i < max_images; i++){
