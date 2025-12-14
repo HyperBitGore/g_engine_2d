@@ -90,7 +90,7 @@ gore::audio gore::audioplayer::loadWavFile(std::string file) {
         memcpy(ad->data, c, ad->size);
     }
     else {
-        std::cout << "Failed to allocate enough space for audio data\n";
+        logger->log("Failed to allocate enough space for audio data");
     }
     return ad;
 }
@@ -238,12 +238,12 @@ void gore::audioplayer::_RenderThread() {
     }
 }
 
-gore::audioplayer::audioplayer(size_t n_streams) {
+gore::audioplayer::audioplayer(size_t n_streams, LogType loglevel) {
+    logger = std::make_shared<gore::logger>(loglevel, "audioplayer.log");
     for (size_t i = 0; i < n_streams; i++) {
-        audiostream* as = new audiostream;
+        audiostream* as = new audiostream(logger);
         streams.push_back(as);
     }
-
     rend_thread = std::thread(&gore::audioplayer::_RenderThread, this);
 }
 
@@ -460,7 +460,7 @@ gore::audiostream::audiostream() {
     #if defined(__unix__)
     int err = snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
     if (err < 0) {
-        std::cout << "Failed to open alsa device\n";
+        logger->log("Failed to open alsa device");
         return;
     }
     snd_pcm_sw_params_malloc(&sw_params);
@@ -469,7 +469,7 @@ gore::audiostream::audiostream() {
 	snd_pcm_hw_params_alloca(&hw_params);
     /* Setup HW params for all possible parameters */
 	if (snd_pcm_hw_params_any(pcm_handle, hw_params) < 0) {
-		std::cout << "Failed to retrieve HW params\n";
+		logger->log( "Failed to retrieve HW params");
 		return;
 	}
     //set hw params
@@ -528,6 +528,11 @@ gore::audiostream::audiostream() {
     play = false;
     #endif
 }
+
+gore::audiostream::audiostream(std::shared_ptr<gore::logger> log) : gore::audiostream() {
+    this->logger = log;
+}
+
 gore::audiostream::~audiostream() {
     #if defined(_WIN32)
     CoTaskMemFree(formatex);

@@ -46,7 +46,6 @@ private:
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
-	gore::logger logger;
 	#if defined (__unix__)
 	Display* display;
 	GLXContext ctx;
@@ -57,6 +56,7 @@ public:
 	std::unique_ptr<imagerenderer> img_r = nullptr;
 	std::unique_ptr<fontrenderer> font_renderer = nullptr;
 	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
+	gore::logger logger;
 	// parts is a bitmask which tells us what to load
 	g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask, gore::LogType log_level = gore::LogType::NONE, std::string log_file = "g_engine_2d.log");
 

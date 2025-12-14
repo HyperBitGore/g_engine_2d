@@ -9,7 +9,7 @@ uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
 gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT, gore::LogType::BOTH);
 gore::drawpass dr(640, 480, GL_COLOR_ATTACHMENT0);
-gore::audioplayer ap(4);
+gore::audioplayer ap(4, gore::LogType::BOTH);
 gore::audio aud;
 gore::audio s_test;
 gore::audio s_test2;

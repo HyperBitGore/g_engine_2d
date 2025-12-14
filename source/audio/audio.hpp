@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <fstream>
+#include "../util/logging.hpp"
 #if defined (_WIN32)
 #include <Windows.h>
 #include <Audioclient.h>
@@ -135,9 +136,11 @@ private:
 
 	bool play = true;
 	bool fs = false;
+	std::shared_ptr<gore::logger> logger;
 public:
 	~audiostream();
 	audiostream();
+	audiostream(std::shared_ptr<gore::logger> log);
 
 	void playStream();
 	void playFile(audio file);
@@ -183,9 +186,10 @@ private:
 	std::mutex mtx;
 	bool run = true;
 	void _RenderThread();
+	std::shared_ptr<logger> logger;
 public:
 	audioplayer() = delete;
-	audioplayer(size_t n_streams);
+	audioplayer(size_t n_streams, LogType loglevel);
 	~audioplayer();
 	// copy
 	audioplayer(const audioplayer& a) = delete;

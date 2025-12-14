@@ -183,7 +183,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 
 	wind = new g_window(window_name, display, height, width, 300, 300);
 	in = new input(wind->getRawDisplay(), wind->getRawWindow());
-
+	logger = gore::logger(log_level, log_file);
     if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");
 	// Load context creation function
 	glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
