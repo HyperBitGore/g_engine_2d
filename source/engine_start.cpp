@@ -180,10 +180,10 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
     }
 
 	GLXFBConfig fbconfig = fbc[0];
-
-	wind = new g_window(window_name, display, height, width, 300, 300);
+	logger = std::make_shared<gore::logger>(log_level, log_file);
+	wind = new g_window(window_name, display, height, width, 300, 300, false, logger);
 	in = new input(wind->getRawDisplay(), wind->getRawWindow());
-	logger = gore::logger(log_level, log_file);
+
     if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");
 	// Load context creation function
 	glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
@@ -237,7 +237,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 	loadFunctions();
 	glViewport(0, 0, width, height);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
-	logger.log("Texture Units on this machine: " + std::to_string(texture_units));
+	logger->log("Texture Units on this machine: " + std::to_string(texture_units));
 	//start modern opengl needed stuff like shaders and vertex buffers
 	if (component_mask & PRIMITIVE_COMPONENT) {
 		this->prim_r = std::make_unique<primitiverenderer>(width, height);

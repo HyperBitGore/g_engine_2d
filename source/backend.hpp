@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstring>
 #include <functional>
+#include <memory>
 #include "util/logging.hpp"
 
 #if defined(_WIN32)
@@ -309,8 +310,9 @@ private:
 	bool captured = false;
 	bool center = false;
 	bool mouseHide = true;
+	std::shared_ptr<gore::logger> logger;
 public:
-	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false);
+	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false, std::shared_ptr<gore::logger> logger = nullptr);
 	g_window(const g_window&) = delete;
 	g_window& operator =(const g_window&) = delete;
 	~g_window();

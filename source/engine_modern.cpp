@@ -68,7 +68,7 @@ std::pair<double, double> gore::g_engine_2d::getFrames() {
 bool gore::g_engine_2d::updateWindow() {
 	wind->updateWindow();
 	if (!wind->ProcessMessage()) {
-		logger.log("Closing window");
+		logger->log("Closing window");
 		delete wind;
 		return false;
 	}

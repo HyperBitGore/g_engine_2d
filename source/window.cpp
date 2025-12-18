@@ -1,6 +1,7 @@
 #include "backend.hpp"
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 
 
 std::function<void(uint32_t, uint32_t)> resizeFunction;
@@ -76,7 +77,7 @@ bool gore::g_window::ProcessMessage() {
 	XEvent event;
         if (XPending(r_display)) {
             XNextEvent(r_display, &event);
-			std::cout << "event: " << event.type << "\n";
+			logger->log("event: " + std::to_string(event.type));
 			switch (event.type) {
 				case DestroyNotify:
 					return false;
@@ -173,9 +174,10 @@ gore::g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w,
 #endif
 
 #if defined(__unix__)
-gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen) {
+gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen, std::shared_ptr<gore::logger> logger) {
+	this->logger = logger;
     if (!display) {
-        std::cout << "Unable to open X display\n";
+        logger->log("Unable to open X display");
         exit(1);
     }
 	this->r_display = display;
