@@ -91,6 +91,7 @@ gore::audio gore::audioplayer::loadWavFile(std::string file) {
     }
     else {
         logger->log("Failed to allocate enough space for audio data");
+        logger->flush();
     }
     return ad;
 }
@@ -235,6 +236,7 @@ void gore::audioplayer::_RenderThread() {
         for (auto& i : streams) {
             i->playStream();
         }
+        logger->flush();
     }
 }
 

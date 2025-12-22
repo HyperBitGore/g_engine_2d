@@ -5,3 +5,4 @@ build
 out.txt
 g_engine_2d.log
 audioplayer.log
+font_loader.log

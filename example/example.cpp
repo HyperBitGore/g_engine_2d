@@ -116,19 +116,19 @@ void renderFunction() {
 	if (s_cool >= 0.1f) {
 		if (eng2.getKeyDown(g_1)) {
 			s_cool = 0;
-			//ap.playFile(s_test, 0);
+			ap.playFile(s_test, 0);
 		}
 		else if (eng2.getKeyDown(g_2)) {
 			s_cool = 0;
-			//ap.playFile(s_test2, 0);
+			ap.playFile(s_test2, 0);
 		}
 		else if (eng2.getKeyDown(g_3)) {
 			s_cool = 0;
-			//ap.playFile(s_test3, 3);
+			ap.playFile(s_test3, 3);
 		}
 		else if (eng2.getKeyDown(g_4)) {
 			s_cool = 0;
-			//ap.playFile(s_test4, 1);
+			ap.playFile(s_test4, 1);
 		}
 		
 	}

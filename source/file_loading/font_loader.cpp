@@ -2,6 +2,7 @@
 #include "file_reader.hpp"
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 
 #define SwapTwoBytes(data) \
 ( (((data) >> 8) & 0x00FF) | (((data) << 8) & 0xFF00) ) 
@@ -55,6 +56,8 @@
 #define VALUE_FORMAT_X_ADVANCE_DEVICE 0x0040
 #define VALUE_FORMAT_Y_ADVANCE_DEVICE 0x0080
 
+
+gore::logger logger_f(gore::LogType::BOTH, "font_loader.log");
 
 inline int getnthBit(short number, int n) {
 	return (number >> n) & 1;
@@ -420,14 +423,14 @@ cmap readCmap(gore::filereader* fr, int offset, int length, uint16_t start, uint
 			readFormat0(m, &i, start, end);
 			break;
 		case 2:
-			std::cout << "Unsupported cmap format; Format 2;" << std::endl;
+			logger_f.log("Unsupported cmap format; Format 2;");
 			//readFormat2(m, &map.tables[i], start, end);
 			break;
 		case 6:
 			readFormat6(m, &i, start, end);
 			break;
 		case 8:
-			std::cout << "Unsupported cmap format; Format 8;" << std::endl;
+			logger_f.log("Unsupported cmap format; Format 8;");
 			//readFormat8(m, &map.tables[i], start, end);
 			break;
 		case 10:
@@ -439,11 +442,11 @@ cmap readCmap(gore::filereader* fr, int offset, int length, uint16_t start, uint
 			break;
 		case 13:
 			//not doing this cause it is not needed
-			std::cout << "Unsupported cmap format; Format 13;" << std::endl;
+			logger_f.log("Unsupported cmap format; Format 13;");
 			break;
 		case 14:
 			//not doing this cause it is not needed
-			std::cout << "Unsupported cmap format; Format 14;" << std::endl;
+			logger_f.log("Unsupported cmap format; Format 14;");
 			break;
 		}
 	}
@@ -1314,7 +1317,7 @@ void constructGlyphs (Font_dir* directory, gore::font* f, glyph_table* g_table, 
 			}
 			if (glyph_index == j.glyphIndex) {
 				//couldn't find simple glyph, skipping
-				std::cout << "Couldn't find simple glyph for compound glyph index " << j.glyphIndex << std::endl;
+				logger_f.log("Couldn't find simple glyph for compound glyph index " + std::to_string(j.glyphIndex));
 				continue;
 			}
 			for (auto& g : f->glyphs) {
@@ -1352,7 +1355,7 @@ void constructGlyphs (Font_dir* directory, gore::font* f, glyph_table* g_table, 
 							}
 						} else {
 							//args are points, first arg is parent point, second is child point
-							std::cout << "Compound glyph point args not supported yet." << std::endl;
+							logger_f.log("Compound glyph point args not supported yet.");
 						}
 						cg.contours.push_back(g_copy.contours[t]);
 					}
@@ -1429,6 +1432,7 @@ gore::font gore::fontloader::loadFont(std::string file, uint16_t start, uint16_t
 	Font.name = file;
 	Font.overlap_simple = false;
 	readDirectorys(&directory, &Font, &fr, start, end);
-	std::cout << "Loaded font: " << file << " with " << Font.glyphs.size() << " glyphs." << std::endl;
+	logger_f.log("Loaded font: " + file + " with " + std::to_string(Font.glyphs.size()) + " glyphs.");
+	logger_f.flush();
 	return Font;
 }
