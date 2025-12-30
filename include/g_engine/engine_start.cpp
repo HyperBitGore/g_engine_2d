@@ -76,9 +76,9 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 		DestroyWindow(dummy);
 	}
 	//create window
-	wind = new g_window(window_name, nullptr, height, width, 300, 300);
-	in = new input(wind->getRawDisplay(), wind->getRawWindow());
 	logger = gore::logger(log_level, log_file);
+	wind = new g_window(window_name, nullptr, height, width, 300, 300, false, false, logger);
+	in = new input(wind->getRawDisplay(), wind->getRawWindow());
 	HDC dc_w = GetDC(wind->getRawWindow());
 	// set pixel format for OpenGL context
 	{
@@ -181,7 +181,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 
 	GLXFBConfig fbconfig = fbc[0];
 	logger = std::make_shared<gore::logger>(log_level, log_file);
-	wind = new g_window(window_name, display, height, width, 300, 300, false, logger);
+	wind = new g_window(window_name, display, height, width, 300, 300, false, false, logger);
 	in = new input(wind->getRawDisplay(), wind->getRawWindow());
 
     if (!fbc || fbcount == 0) FatalError("Failed to get FBConfig");

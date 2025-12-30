@@ -16,7 +16,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		{
 			uint32_t width = LOWORD(lparam);
 			uint32_t height = HIWORD(lparam);
-			glViewport(0, 0, width, height);
+			if (!maintainViewport) {
+				glViewport(0, 0, width, height);
+			}
 			if (resizeFunction) {
 				resizeFunction(width, height);
 			}
@@ -84,16 +86,20 @@ bool gore::g_window::ProcessMessage() {
 					if (resizeFunction) {
 						this->width = event.xconfigure.width;
 						this->height = event.xconfigure.height;
+						if (!maintainViewport) {
+							glViewport(0, 0, width, height);
+						}
 						resizeFunction(width, height);
-						glViewport(0, 0, width, height);
 					}
 				break;
 				case Expose:
 					if (resizeFunction) {
 						this->width = event.xexpose.width;
 						this->height = event.xexpose.height;
+						if (!maintainViewport) {
+							glViewport(0, 0, width, height);
+						}
 						resizeFunction(width, height);
-						glViewport(0, 0, width, height);
 					}
 				break;
 				case MotionNotify:
@@ -173,7 +179,7 @@ gore::g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w,
 #endif
 
 #if defined(__unix__)
-gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen, std::shared_ptr<gore::logger> logger) {
+gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen, bool maintainViewport, std::shared_ptr<gore::logger> logger) {
 	this->logger = logger;
     if (!display) {
         logger->log("Unable to open X display");
@@ -182,6 +188,7 @@ gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, i
 	this->r_display = display;
 	height = h;
 	width = w;
+	this->maintainViewport = maintainViewport;
     Window root = DefaultRootWindow(display);
 	// Choose framebuffer config
 	static int visual_attribs[] = {
@@ -360,4 +367,8 @@ uint32_t gore::g_window::getDPI() {
 		return dpi;
 	#endif
 	return 96;
+}
+
+void gore::g_window::maintainViewportToggle() {
+	this->maintainViewport = !this->maintainViewport;
 }

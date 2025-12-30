@@ -310,9 +310,10 @@ private:
 	bool captured = false;
 	bool center = false;
 	bool mouseHide = true;
+	bool maintainViewport = false;
 	std::shared_ptr<gore::logger> logger;
 public:
-	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false, std::shared_ptr<gore::logger> logger = nullptr);
+	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false, bool maintainViewport = false, std::shared_ptr<gore::logger> logger = nullptr);
 	g_window(const g_window&) = delete;
 	g_window& operator =(const g_window&) = delete;
 	~g_window();
@@ -327,6 +328,7 @@ public:
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 	void captureMouseToggle(bool center);
 	void mouseHideToggle();
+	void maintainViewportToggle();
 	uint32_t getDPI();
 };
 

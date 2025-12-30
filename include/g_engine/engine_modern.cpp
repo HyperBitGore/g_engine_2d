@@ -132,3 +132,7 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 	};
 	wind->setWindowResize(f);
 }
+
+void gore::g_engine_2d::toggleMaintainViewport() {
+	wind->maintainViewportToggle();
+}

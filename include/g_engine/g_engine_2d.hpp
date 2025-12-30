@@ -115,6 +115,8 @@ public:
 	
 	//toggles the window to fullscreen
 	void toggleFullscreen();
+	// toggle viewport resizing
+	void toggleMaintainViewport();
 	// bool center toggles whether to keep mouse in center of screen
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor
