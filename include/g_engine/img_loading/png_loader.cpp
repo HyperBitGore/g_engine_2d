@@ -19,7 +19,7 @@
 #define PNG_IEND_TAG 0x444E4549
 #define PNG_SRGB_TAG 0x52444849
 #define PNG_CHRM_TAG 0x414d4167
-#define PNG_GAMA_TAG 0x42475273
+#define PNGAMA_TAG 0x42475273
 #define PNG_ICCP_TAG 0x0
 #define PNG_TRNS_TAG 0x0
 
@@ -318,7 +318,7 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
             case PNG_SRGB_TAG:
                 sRgb = buffer[i];
             break;
-            case PNG_GAMA_TAG:
+            case PNGAMA_TAG:
                 gamma = READ_AS_UINT32(buffer + i);
                 gammaUsed = true;
             break;
@@ -342,12 +342,12 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
     }
     idat = processIDATChunk(idat, ihdr, (ihdr.color_type == 3) ? 1 : bytes_per_pixel);
     glGenTextures(1, &img->tex);
-    glActiveTexture_g(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
-    glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // now create gl image
     switch (ihdr.color_type) {
         case 3:
@@ -369,8 +369,8 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
                 }
                 img->format = GL_RGB8;
                 img->type = GL_UNSIGNED_BYTE;
-                glTextureStorage2D_g(img->tex, 1, GL_RGB8, img->w, img->h);
-                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, GL_UNSIGNED_BYTE, img->data);
+                glTextureStorage2D(img->tex, 1, GL_RGB8, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, GL_UNSIGNED_BYTE, img->data);
             }
         break;
         case 0:
@@ -402,8 +402,8 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
             const GLenum type = (ihdr.bit_depth <= 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
             img->format = format;
             img->type = type;
-            glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
-            glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RED, type, img->data);
+            glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+            glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RED, type, img->data);
         }
         break;
         case 2:
@@ -416,8 +416,8 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
                 img->format = format;
                 img->type = type;
-                glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
-                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
+                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGB, type, img->data);
             }
         break;
         case 4:
@@ -430,8 +430,8 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
                 img->format = format;
                 img->type = type;
-                glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
-                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RG, type, img->data);
+                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RG, type, img->data);
             }
         break;
         case 6:
@@ -444,8 +444,8 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
                 const GLenum type = (ihdr.bit_depth == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
                 img->format = format;
                 img->type = type;
-                glTextureStorage2D_g(img->tex, 1, format, img->w, img->h);
-                glTextureSubImage2D_g(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, type, img->data);
+                glTextureStorage2D(img->tex, 1, format, img->w, img->h);
+                glTextureSubImage2D(img->tex, 0, 0, 0, img->w, img->h, GL_RGBA, type, img->data);
             }
         break;
     }
@@ -462,7 +462,7 @@ gore::IMG gore::imageloader::loadPNG(std::string path) {
     if (chrmUsed) {
 
     }
-    glGenerateMipmap_g(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
     return img;
 }

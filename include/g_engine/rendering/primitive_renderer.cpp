@@ -18,31 +18,31 @@ void gore::primitiverenderer::drawTriangle(vec2 v1, vec2 v2, vec2 v3){
     vertexs.push_back(v2);
     vertexs.push_back(v3);
     triangle_shader.bind();
-    glBindVertexArray_g(triangle_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(triangle_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
 }
 void gore::primitiverenderer::drawBufferTriangle(){
     triangle_shader.bind();
-    glBindVertexArray_g(triangle_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(triangle_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
 }
 //quads
 void gore::primitiverenderer::addQuad(vec2 pos, float w, float h){
@@ -63,31 +63,31 @@ void gore::primitiverenderer::drawQuad(vec2 pos, float w, float h){
     vertexs.push_back({pos.x, pos.y + h});
     vertexs.push_back({pos.x + w, pos.y});  
     triangle_shader.bind();
-    glBindVertexArray_g(triangle_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(triangle_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
 }
 void gore::primitiverenderer::drawBufferQuad(){
     triangle_shader.bind();
-    glBindVertexArray_g(triangle_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(triangle_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_TRIANGLES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
 }
 //points
 void gore::primitiverenderer::addPoint(vec2 p){
@@ -96,31 +96,31 @@ void gore::primitiverenderer::addPoint(vec2 p){
 void gore::primitiverenderer::drawPoint(vec2 p){
     point_shader.bind();
     vertexs.push_back(p);
-    glBindVertexArray_g(point_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(point_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_POINTS, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_POINTS, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
 }
 void gore::primitiverenderer::drawBufferPoint(){
     point_shader.bind();
-    glBindVertexArray_g(point_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(point_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_POINTS, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_POINTS, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
 }
 //lines
 void gore::primitiverenderer::addLine(vec2 p1, vec2 p2){
@@ -133,34 +133,34 @@ void gore::primitiverenderer::drawLine(vec2 p1, vec2 p2){
     vertexs.push_back(p1);
     vertexs.push_back(p2);
     line_shader.bind();
-    glBindVertexArray_g(line_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(line_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_LINES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_LINES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
    glDisable(GL_LINE_SMOOTH);
 }
 void gore::primitiverenderer::drawBufferLine(){
     glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     line_shader.bind();
-    glBindVertexArray_g(line_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(line_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_LINES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_LINES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
    glDisable(GL_LINE_SMOOTH);
 }
 
@@ -226,34 +226,34 @@ gore::primitiverenderer::primitiverenderer(GLuint sw, GLuint sh) {
     matrix ortho = matrix::calculateOrtho(sw, sh, sw, sh);
     vertexs.reserve(1000);
     allocated = 1;
-    glGenBuffers_g(1, &vertex_buffer);
+    glGenBuffers(1, &vertex_buffer);
     triangle_shader.compile(triangle_vertex, triangle_fragment);
     triangle_shader.bind();
     triangle_shader.setuniform("projection", 1, true, ortho);
-    glGenVertexArrays_g(1, &triangle_vao);
-    glBindVertexArray_g(triangle_vao);
+    glGenVertexArrays(1, &triangle_vao);
+    glBindVertexArray(triangle_vao);
     //bind buffers per vertexatrribarray,if you don't bind buffers, attribarrays break
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     
     point_shader.compile(point_vertex, point_fragment);
     point_shader.bind();
-    glGenVertexArrays_g(1, &point_vao);
-    glBindVertexArray_g(point_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glGenVertexArrays(1, &point_vao);
+    glBindVertexArray(point_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     point_shader.setuniform("point_size", 1.0f);
     point_shader.setuniform("projection", 1, true, ortho);
 
     line_shader.compile(line_vertex, line_fragment);
     line_shader.bind();
-    glGenVertexArrays_g(1, &line_vao);
-    glBindVertexArray_g(line_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glGenVertexArrays(1, &line_vao);
+    glBindVertexArray(line_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     line_shader.setuniform("projection", 1, true, ortho);
     setLineWidth(1.0f);
     this->width = sw;
@@ -266,34 +266,34 @@ gore::primitiverenderer::primitiverenderer(const primitiverenderer& p) {
     vertexs.reserve(1000);
     std::copy(p.vertexs.begin(), p.vertexs.end(), vertexs.begin());
     this->allocated = p.allocated;
-    glGenBuffers_g(1, &vertex_buffer);
+    glGenBuffers(1, &vertex_buffer);
     triangle_shader.compile(triangle_vertex, triangle_fragment);
     triangle_shader.bind();
     triangle_shader.setuniform("projection", 1, true, ortho);
-    glGenVertexArrays_g(1, &triangle_vao);
-    glBindVertexArray_g(triangle_vao);
+    glGenVertexArrays(1, &triangle_vao);
+    glBindVertexArray(triangle_vao);
     //bind buffers per vertexatrribarray,if you don't bind buffers, attribarrays break
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     
     point_shader.compile(point_vertex, point_fragment);
     point_shader.bind();
-    glGenVertexArrays_g(1, &point_vao);
-    glBindVertexArray_g(point_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glGenVertexArrays(1, &point_vao);
+    glBindVertexArray(point_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     point_shader.setuniform("point_size", 1.0f);
     point_shader.setuniform("projection", 1, true, ortho);
 
     line_shader.compile(line_vertex, line_fragment);
     line_shader.bind();
-    glGenVertexArrays_g(1, &line_vao);
-    glBindVertexArray_g(line_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glGenVertexArrays(1, &line_vao);
+    glBindVertexArray(line_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     line_shader.setuniform("projection", 1, true, ortho);
     setLineWidth(1.0f);
 }

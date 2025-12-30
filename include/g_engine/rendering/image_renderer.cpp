@@ -33,40 +33,40 @@ void gore::imagerenderer::addImageVertex(vec2 pos, vec2 dim, vec4 uvs, float rot
 }
 
 void gore::imagerenderer::drawBuffer(IMG img){
-    glActiveTexture_g(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, img->tex);
     shader.bind();
     //shader.setuniform("mtexture", img->tex);
-    glBindVertexArray_g(vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+         glBufferData(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
     }else{
-         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
     }
-    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
-    glBindVertexArray_g(0);
-	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
     vertexs.clear();
 }
 
 void gore::imagerenderer::drawBuffer(GLuint texture){
-    glActiveTexture_g(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     shader.bind();
     //shader.setuniform("mtexture", img->tex);
-    glBindVertexArray_g(vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-         glBufferData_g(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
+         glBufferData(GL_ARRAY_BUFFER, vertexs.size() * sizeof(ivertex), vertexs.data(), GL_DYNAMIC_DRAW);
     }else{
-         glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
+         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(ivertex), &vertexs[0]);
     }
-    glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
-    glBindVertexArray_g(0);
-	glBindBuffer_g(GL_ARRAY_BUFFER, 0);
+    glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
+    glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
     vertexs.clear();
 }
 
@@ -123,7 +123,7 @@ void gore::imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim,
     vertexs.push_back({pos.x + dim.x, pos.y + dim.y, 1.0f, 1.0f, rot, pos.x, pos.y});
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f,rot, pos.x, pos.y});
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y});
-    glActiveTexture_g(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     drawBuffer(texture);
 }
 
@@ -142,18 +142,18 @@ gore::imagerenderer::imagerenderer(size_t w, size_t h) {
     allocated = 0;
     //shader.compile(std::string("img.vs"), std::string("img.fs"));
     shader.compile(vertex_shader_image, fragment_shader_image);
-    glGenVertexArrays_g(1, &vao);
-    glGenBuffers_g(1, &vertex_buffer);
-    glBindVertexArray_g(vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
-    glEnableVertexAttribArray_g(1);
-    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
-    glEnableVertexAttribArray_g(2);
-    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
-    glEnableVertexAttribArray_g(3);
-    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vertex_buffer);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
     matrix ortho = matrix::calculateOrtho(w, h, w, h);
     this->width = w;
@@ -166,18 +166,18 @@ gore::imagerenderer::imagerenderer(const imagerenderer& img) {
     this->allocated = img.allocated;
     //shader.compile(std::string("img.vs"), std::string("img.fs"));
     shader.compile(vertex_shader_image, fragment_shader_image);
-    glGenVertexArrays_g(1, &vao);
-    glGenBuffers_g(1, &vertex_buffer);
-    glBindVertexArray_g(vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
-    glEnableVertexAttribArray_g(1);
-    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
-    glEnableVertexAttribArray_g(2);
-    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
-    glEnableVertexAttribArray_g(3);
-    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vertex_buffer);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
     this->width = img.width;
     this->height = img.height;
@@ -199,18 +199,18 @@ void gore::imagerenderer::setDimensions (uint32_t width, uint32_t height) {
 gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     allocated = 0;
     shader.compile(vertex_shader_grayscale, fragment_shader_grayscale);
-    glGenVertexArrays_g(1, &vao);
-    glGenBuffers_g(1, &vertex_buffer);
-    glBindVertexArray_g(vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
-    glEnableVertexAttribArray_g(1);
-    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
-    glEnableVertexAttribArray_g(2);
-    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
-    glEnableVertexAttribArray_g(3);
-    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vertex_buffer);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
     matrix ortho = matrix::calculateOrtho(w, h, w, h);
     shader.setuniform("projection", 1, true, ortho);
@@ -222,18 +222,18 @@ gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer()
 gore::grayscalerenderer::grayscalerenderer(const grayscalerenderer& gsr) {
     allocated = 0;
     shader.compile(vertex_shader_grayscale, fragment_shader_grayscale);
-    glGenVertexArrays_g(1, &vao);
-    glGenBuffers_g(1, &vertex_buffer);
-    glBindVertexArray_g(vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
-    glEnableVertexAttribArray_g(1);
-    glVertexAttribPointer_g(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
-    glEnableVertexAttribArray_g(2);
-    glVertexAttribPointer_g(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
-    glEnableVertexAttribArray_g(3);
-    glVertexAttribPointer_g(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vertex_buffer);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)0); //position
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 2)); //uv
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 4)); //rotation
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(ivertex), (void*)(sizeof(float) * 5)); //rotation point
     shader.bind();
     this->width = gsr.width;
     this->height = gsr.height;

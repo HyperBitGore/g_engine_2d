@@ -3,220 +3,220 @@
 #include <sstream>
 
 void gore::shader::bind() {
-	glUseProgram_g(program);
+	glUseProgram(program);
 }
 
 bool gore::shader::setuniform(std::string uni, GLint n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform1i_g(point, n);
+			glUniform1i(point, n);
 			uniform_map.insert(uni, point);
 			return true;
 		}
 		return false;
 	}
-	glUniform1i_g(*uf, n);
+	glUniform1i(*uf, n);
 	return true;
 }
 
 bool gore::shader::setuniform(std::string uni, GLint x, GLint y) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform2i_g(point, x, y);
+			glUniform2i(point, x, y);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform2i_g(*uf, x, y);
+	glUniform2i(*uf, x, y);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform3i_g(point, x, y, z);
+			glUniform3i(point, x, y, z);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform3i_g(*uf, x, y, z);
+	glUniform3i(*uf, x, y, z);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform4i_g(point, x, y, z, w);
+			glUniform4i(point, x, y, z, w);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform4i_g(*uf, x, y, z, w);
+	glUniform4i(*uf, x, y, z, w);
 	return true;
 }
 //unsigned int overloads
 bool gore::shader::setuniform(std::string uni, GLuint n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform1ui_g(point, n);
+			glUniform1ui(point, n);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform1ui_g(*uf, n);
+	glUniform1ui(*uf, n);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform2ui_g(point, x, y);
+			glUniform2ui(point, x, y);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform2ui_g(*uf, x, y);
+	glUniform2ui(*uf, x, y);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform3ui_g(point, x, y, z);
+			glUniform3ui(point, x, y, z);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform3ui_g(*uf, x, y, z);
+	glUniform3ui(*uf, x, y, z);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform4ui_g(point, x, y, z, w);
+			glUniform4ui(point, x, y, z, w);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform4ui_g(*uf, x, y, z, w);
+	glUniform4ui(*uf, x, y, z, w);
 	return true;
 }
 //float overloads
 bool gore::shader::setuniform(std::string uni, GLfloat n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform1f_g(point, n);
+			glUniform1f(point, n);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform1f_g(*uf, n);
+	glUniform1f(*uf, n);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, gore::vec2 n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform2f_g(point, n.x, n.y);
+			glUniform2f(point, n.x, n.y);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform2f_g(*uf, n.x, n.y);
+	glUniform2f(*uf, n.x, n.y);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, gore::vec3 n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform3f_g(point, n.x, n.y, n.z);
+			glUniform3f(point, n.x, n.y, n.z);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform3f_g(*uf, n.x, n.y, n.z);
+	glUniform3f(*uf, n.x, n.y, n.z);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, gore::vec4 n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform4f_g(point, n.x, n.y, n.z, n.w);
+			glUniform4f(point, n.x, n.y, n.z, n.w);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform4f_g(*uf, n.x, n.y, n.z, n.w);
+	glUniform4f(*uf, n.x, n.y, n.z, n.w);
 	return true;
 }
 //double overloads
 bool gore::shader::setuniform(std::string uni, GLdouble n) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform1d_g(point, n);
+			glUniform1d(point, n);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform1d_g(*uf, n);
+	glUniform1d(*uf, n);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform2d_g(point, x, y);
+			glUniform2d(point, x, y);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform2d_g(*uf, x, y);
+	glUniform2d(*uf, x, y);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform3d_g(point, x, y, z);
+			glUniform3d(point, x, y, z);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform3d_g(*uf, x, y, z);
+	glUniform3d(*uf, x, y, z);
 	return true;
 }
 bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
-			glUniform4d_g(point, x, y, z, w);
+			glUniform4d(point, x, y, z, w);
 			uniform_map.insert(uni, point);
 		}
 		return false;
 	}
-	glUniform4d_g(*uf, x, y, z, w);
+	glUniform4d(*uf, x, y, z, w);
 	return true;
 }
 
@@ -228,20 +228,20 @@ bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble 
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLfloat* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
 			switch (stride) {
 			case 1:
-				glUniform1fv_g(point, count, value);
+				glUniform1fv(point, count, value);
 				break;
 			case 2:
-				glUniform2fv_g(point, count, value);
+				glUniform2fv(point, count, value);
 				break;
 			case 3:
-				glUniform3fv_g(point, count, value);
+				glUniform3fv(point, count, value);
 				break;
 			case 4:
-				glUniform4fv_g(point, count, value);
+				glUniform4fv(point, count, value);
 				break;
 			}
 			uniform_map.insert(uni, point);
@@ -250,16 +250,16 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 	}
 	switch (stride) {
 	case 1:
-		glUniform1fv_g(*uf, count, value);
+		glUniform1fv(*uf, count, value);
 		break;
 	case 2:
-		glUniform2fv_g(*uf, count, value);
+		glUniform2fv(*uf, count, value);
 		break;
 	case 3:
-		glUniform3fv_g(*uf, count, value);
+		glUniform3fv(*uf, count, value);
 		break;
 	case 4:
-		glUniform4fv_g(*uf, count, value);
+		glUniform4fv(*uf, count, value);
 		break;
 	}
 	return true;
@@ -268,20 +268,20 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLint* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
 			switch (stride) {
 			case 1:
-				glUniform1iv_g(point, count, value);
+				glUniform1iv(point, count, value);
 				break;
 			case 2:
-				glUniform2iv_g(point, count, value);
+				glUniform2iv(point, count, value);
 				break;
 			case 3:
-				glUniform3iv_g(point, count, value);
+				glUniform3iv(point, count, value);
 				break;
 			case 4:
-				glUniform4iv_g(point, count, value);
+				glUniform4iv(point, count, value);
 				break;
 			}
 			uniform_map.insert(uni, point);
@@ -290,16 +290,16 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 	}
 	switch (stride) {
 	case 1:
-		glUniform1iv_g(*uf, count, value);
+		glUniform1iv(*uf, count, value);
 		break;
 	case 2:
-		glUniform2iv_g(*uf, count, value);
+		glUniform2iv(*uf, count, value);
 		break;
 	case 3:
-		glUniform3iv_g(*uf, count, value);
+		glUniform3iv(*uf, count, value);
 		break;
 	case 4:
-		glUniform4iv_g(*uf, count, value);
+		glUniform4iv(*uf, count, value);
 		break;
 	}
 	return true;
@@ -308,20 +308,20 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
 			switch (stride) {
 			case 1:
-				glUniform1uiv_g(point, count, value);
+				glUniform1uiv(point, count, value);
 				break;
 			case 2:
-				glUniform2uiv_g(point, count, value);
+				glUniform2uiv(point, count, value);
 				break;
 			case 3:
-				glUniform3uiv_g(point, count, value);
+				glUniform3uiv(point, count, value);
 				break;
 			case 4:
-				glUniform4uiv_g(point, count, value);
+				glUniform4uiv(point, count, value);
 				break;
 			}
 			uniform_map.insert(uni, point);
@@ -330,16 +330,16 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 	}
 	switch (stride) {
 	case 1:
-		glUniform1uiv_g(*uf, count, value);
+		glUniform1uiv(*uf, count, value);
 		break;
 	case 2:
-		glUniform2uiv_g(*uf, count, value);
+		glUniform2uiv(*uf, count, value);
 		break;
 	case 3:
-		glUniform3uiv_g(*uf, count, value);
+		glUniform3uiv(*uf, count, value);
 		break;
 	case 4:
-		glUniform4uiv_g(*uf, count, value);
+		glUniform4uiv(*uf, count, value);
 		break;
 	}
 	return true;
@@ -348,20 +348,20 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLdouble* value) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
 			switch (stride) {
 			case 1:
-				glUniform1dv_g(point, count, value);
+				glUniform1dv(point, count, value);
 				break;
 			case 2:
-				glUniform2dv_g(point, count, value);
+				glUniform2dv(point, count, value);
 				break;
 			case 3:
-				glUniform3dv_g(point, count, value);
+				glUniform3dv(point, count, value);
 				break;
 			case 4:
-				glUniform4dv_g(point, count, value);
+				glUniform4dv(point, count, value);
 				break;
 			}
 			uniform_map.insert(uni, point);
@@ -370,16 +370,16 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 	}
 	switch (stride) {
 	case 1:
-		glUniform1dv_g(*uf, count, value);
+		glUniform1dv(*uf, count, value);
 		break;
 	case 2:
-		glUniform2dv_g(*uf, count, value);
+		glUniform2dv(*uf, count, value);
 		break;
 	case 3:
-		glUniform3dv_g(*uf, count, value);
+		glUniform3dv(*uf, count, value);
 		break;
 	case 4:
-		glUniform4dv_g(*uf, count, value);
+		glUniform4dv(*uf, count, value);
 		break;
 	}
 	return true;
@@ -388,7 +388,7 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 bool gore::shader::setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, gore::matrix& matrice) {
 	GLint* uf = uniform_map.get(uni);
 	if (uf == nullptr) {
-		GLint point = glGetUniformLocation_g(program, uni.c_str());
+		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
 			uniform_map.insert(uni, point);
 		} else {
@@ -425,7 +425,7 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei count, const 
 				case 3:
 				break;
 				case 4:
-					glUniformMatrix4fv_g(*uf, count, transpose, matrice.data());
+					glUniformMatrix4fv(*uf, count, transpose, matrice.data());
 				break;
 			}
 		break;
@@ -437,8 +437,8 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei count, const 
 
 void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
 	// Create the shaders
-	GLuint VertexShaderID = glCreateShader_g(GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = glCreateShader_g(GL_FRAGMENT_SHADER);
+	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
 	GLint Result = GL_FALSE;
 	int InfoLogLength;
@@ -446,15 +446,15 @@ void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
 	// Compile Vertex Shader
 	std::cout << "Compiling vertex shader" << std::endl;
 	char const* VertexSourcePointer = vertex_file;
-	glShaderSource_g(VertexShaderID, 1, &VertexSourcePointer, NULL);
-	glCompileShader_g(VertexShaderID);
+	glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
+	glCompileShader(VertexShaderID);
 
 	// Check Vertex Shader
-	glGetShaderiv_g(VertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv_g(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if (InfoLogLength > 0) {
 		std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog_g(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
 		printf("%s\n", &VertexShaderErrorMessage[0]);
 	}
 
@@ -462,39 +462,39 @@ void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
 	// Compile Fragment Shader
 	std::cout << "Compiling fragment shader" << std::endl;;
 	char const* FragmentSourcePointer = fragment_file;
-	glShaderSource_g(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
-	glCompileShader_g(FragmentShaderID);
+	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
+	glCompileShader(FragmentShaderID);
 
 	// Check Fragment Shader
-	glGetShaderiv_g(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv_g(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if (InfoLogLength > 0) {
 		std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog_g(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
 		printf("%s\n", &FragmentShaderErrorMessage[0]);
 	}
 
 	// Link the program
 	std::cout << "Linking program" << std::endl;
-	GLuint ProgramID = glCreateProgram_g();
-	glAttachShader_g(ProgramID, VertexShaderID);
-	glAttachShader_g(ProgramID, FragmentShaderID);
-	glLinkProgram_g(ProgramID);
+	GLuint ProgramID = glCreateProgram();
+	glAttachShader(ProgramID, VertexShaderID);
+	glAttachShader(ProgramID, FragmentShaderID);
+	glLinkProgram(ProgramID);
 
 	// Check the program
-	glGetProgramiv_g(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv_g(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if (InfoLogLength > 0) {
 		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-		glGetProgramInfoLog_g(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 		printf("%s\n", &ProgramErrorMessage[0]);
 	}
 
-	glDetachShader_g(ProgramID, VertexShaderID);
-	glDetachShader_g(ProgramID, FragmentShaderID);
+	glDetachShader(ProgramID, VertexShaderID);
+	glDetachShader(ProgramID, FragmentShaderID);
 
-	glDeleteShader_g(VertexShaderID);
-	glDeleteShader_g(FragmentShaderID);
+	glDeleteShader(VertexShaderID);
+	glDeleteShader(FragmentShaderID);
 	program = ProgramID;
 }
 void gore::shader::compile(const std::string vert_path, const std::string frag_path) {
@@ -512,8 +512,8 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 	const char* fragment_file = fstr.c_str();
 
 	// Create the shaders
-	GLuint VertexShaderID = glCreateShader_g(GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = glCreateShader_g(GL_FRAGMENT_SHADER);
+	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
 	GLint Result = GL_FALSE;
 	int InfoLogLength;
@@ -521,15 +521,15 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 	// Compile Vertex Shader
 	std::cout << "Compiling vertex shader " << vert_path << std::endl;
 	char const* VertexSourcePointer = vertex_file;
-	glShaderSource_g(VertexShaderID, 1, &VertexSourcePointer, NULL);
-	glCompileShader_g(VertexShaderID);
+	glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
+	glCompileShader(VertexShaderID);
 
 	// Check Vertex Shader
-	glGetShaderiv_g(VertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv_g(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if (InfoLogLength > 0) {
 		std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog_g(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
 		printf("%s\n", &VertexShaderErrorMessage[0]);
 	}
 
@@ -537,67 +537,67 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 	// Compile Fragment Shader
 	std::cout << "Compiling fragment shader " << frag_path << std::endl;;
 	char const* FragmentSourcePointer = fragment_file;
-	glShaderSource_g(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
-	glCompileShader_g(FragmentShaderID);
+	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
+	glCompileShader(FragmentShaderID);
 
 	// Check Fragment Shader
-	glGetShaderiv_g(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv_g(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if (InfoLogLength > 0) {
 		std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog_g(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
 		printf("%s\n", &FragmentShaderErrorMessage[0]);
 	}
 
 	// Link the program
 	std::cout << "Linking program" << std::endl;
-	GLuint ProgramID = glCreateProgram_g();
-	glAttachShader_g(ProgramID, VertexShaderID);
-	glAttachShader_g(ProgramID, FragmentShaderID);
-	glLinkProgram_g(ProgramID);
+	GLuint ProgramID = glCreateProgram();
+	glAttachShader(ProgramID, VertexShaderID);
+	glAttachShader(ProgramID, FragmentShaderID);
+	glLinkProgram(ProgramID);
 
 	// Check the program
-	glGetProgramiv_g(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv_g(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if (InfoLogLength > 0) {
 		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-		glGetProgramInfoLog_g(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 		printf("%s\n", &ProgramErrorMessage[0]);
 	}
 
-	glDetachShader_g(ProgramID, VertexShaderID);
-	glDetachShader_g(ProgramID, FragmentShaderID);
+	glDetachShader(ProgramID, VertexShaderID);
+	glDetachShader(ProgramID, FragmentShaderID);
 
-	glDeleteShader_g(VertexShaderID);
-	glDeleteShader_g(FragmentShaderID);
+	glDeleteShader(VertexShaderID);
+	glDeleteShader(FragmentShaderID);
 	program = ProgramID;
 }
 
 //bind shader before calling this
 void gore::shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
-	glGenVertexArrays_g(1, &vao);
-	glGenBuffers_g(1, &vertex_buffer);
-	glBindVertexArray_g(vao);
-	glBindBuffer_g(target, vertex_buffer);
-	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vertex_buffer);
+	glBindVertexArray(vao);
+	glBindBuffer(target, vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	this->data = data;
-	glBufferData_g(GL_ARRAY_BUFFER, size, data, use);
+	glBufferData(GL_ARRAY_BUFFER, size, data, use);
 	buffer_target = target;
 }
 //bind shader before calling this
 void gore::shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
-	glEnableVertexAttribArray_g(attrib);
-	glVertexAttribPointer_g(attrib, size, type, normalized, stride, (void*)elementoffset);
+	glEnableVertexAttribArray(attrib);
+	glVertexAttribPointer(attrib, size, type, normalized, stride, (void*)elementoffset);
 	attrib++;
 }
 //assuming last data pointer is set
 void gore::shader::updatebufferdata(GLsizei size){
-	glBufferSubData_g(buffer_target, 0, size, this->data);
+	glBufferSubData(buffer_target, 0, size, this->data);
 }
 //setting the data pointer
 void gore::shader::setbufferdata(void* data, GLsizei size, GLenum use){
 	this->data = data;
-	glBindVertexArray_g(vao);
-	glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData_g(buffer_target, size, this->data, use);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(buffer_target, size, this->data, use);
 }

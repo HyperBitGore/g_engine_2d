@@ -64,7 +64,7 @@ struct BITMAPINFOHEADERV4{
 	int32_t  blue_y;
 	int32_t  blue_z;
 	uint32_t gamma_red;
-	uint32_t gamma_green;
+	uint32_t gammareen;
 	uint32_t gamma_blue;
 };
 
@@ -95,7 +95,7 @@ struct BITMAPINFOHEADERV5{
 	int32_t  blue_y;
 	int32_t  blue_z;
 	uint32_t gamma_red;
-	uint32_t gamma_green;
+	uint32_t gammareen;
 	uint32_t gamma_blue;
     //new values
     uint32_t intent;
@@ -593,12 +593,12 @@ gore::IMG gore::imageloader::loadBMP(std::string path){
     }
     //creating the gl texture
     glGenTextures(1, &img->tex);
-	glActiveTexture_g(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     if(dib_header.compression == 2){
         //only used for 4bit indexed color
         img->data = decode4RLE(img->data, dib_header.image_size, dib_header);
@@ -645,7 +645,7 @@ gore::IMG gore::imageloader::loadBMP(std::string path){
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data); //done
         break;
     }
-	glGenerateMipmap_g(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
     return img;
 }

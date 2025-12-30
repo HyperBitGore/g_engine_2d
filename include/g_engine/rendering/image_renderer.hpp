@@ -69,9 +69,9 @@ class drawpass {
 		drawpass(GLsizei width, GLsizei height, GLenum attach) {
 			w = width;
 			h = height;
-			glGenFramebuffers_g(1, &color_buffer);
-			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
-			//glCreateTextures_g(GL_TEXTURE_2D, 1, &texture);
+			glGenFramebuffers(1, &color_buffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
+			//glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 			glGenTextures(1, &texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -82,37 +82,37 @@ class drawpass {
 
 			
 			//creating render buffer
-			glGenRenderbuffers_g(1, &depth_buffer);
-			glBindRenderbuffer_g(GL_RENDERBUFFER, depth_buffer);
-			glRenderbufferStorage_g(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-			glFramebufferRenderbuffer_g(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
-			glFramebufferTexture2D_g(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-			GLuint ret = glCheckFramebufferStatus_g(GL_FRAMEBUFFER);
+			glGenRenderbuffers(1, &depth_buffer);
+			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+			GLuint ret = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 			if (ret != GL_FRAMEBUFFER_COMPLETE) {
 				std::cout << "Framebuffer failed creation!\n";
 				std::cout << ret << "\n";
 			}
-			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			this->attach = attach;
 		}
 		~drawpass() {
-			glDeleteFramebuffers_g(1, &color_buffer);
-			glDeleteRenderbuffers_g(1, &depth_buffer);
+			glDeleteFramebuffers(1, &color_buffer);
+			glDeleteRenderbuffers(1, &depth_buffer);
 			glDeleteTextures(1, &texture);
 		}
 		void bind() {
-			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
 			//glViewport(0, 0, 640, 480);
 		}
 		void unbind() {
-			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 		//doesn't assume the framebuffer is binded
 		void clear(){
-			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glBindFramebuffer_g(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 		GLuint getTexture() {
 			return texture;
@@ -127,13 +127,13 @@ class drawpass {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 			// Reallocate the depth/stencil renderbuffer
-			glBindRenderbuffer_g(GL_RENDERBUFFER, depth_buffer);
-			glRenderbufferStorage_g(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
 
 			// Re-attach them (optional, in case you're paranoid about driver bugs)
-			glBindFramebuffer_g(GL_FRAMEBUFFER, color_buffer);
-			glFramebufferTexture2D_g(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-			glFramebufferRenderbuffer_g(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 			unbind();
 		}
 };

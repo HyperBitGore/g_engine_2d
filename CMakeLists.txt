@@ -10,13 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(g_engine source/g_engine_2d.hpp source/audio/audio_player.cpp source/engine_modern.cpp source/engine_start.cpp source/rendering/font_renderer.cpp 
-source/function_loader.cpp source/gl_defines.hpp source/util/hashmap.hpp source/img_loading/image_loader.cpp source/input.cpp source/util/matrix.cpp source/util/matrix.hpp source/util/shader.cpp source/window.cpp example/example.cpp source/audio/audio.hpp source/backend.hpp source/util/vector.cpp 
-source/util/vector.hpp source/rendering/primitive_renderer.cpp source/rendering/primitive_renderer_shader.hpp source/rendering/image_renderer.cpp source/img_loading/image_atlas.cpp source/img_loading/bmp_loader.cpp source/util/shader.hpp source/img_loading/image_loader.hpp source/rendering/image_renderer.hpp
-source/rendering/image_renderer_shader.hpp
-source/rendering/primitive_renderer.hpp source/rendering/font_renderer.hpp source/file_loading/font_loader.cpp source/file_loading/font_loader.hpp source/img_loading/png_loader.cpp
-source/img_loading/common.hpp source/img_loading/inflate.hpp source/file_loading/file_reader.hpp source/file_loading/file_reader.cpp
-source/util/logging.hpp
+add_executable(g_engine include/g_engine/g_engine_2d.hpp include/g_engine/audio/audio_player.cpp include/g_engine/engine_modern.cpp include/g_engine/engine_start.cpp include/g_engine/rendering/font_renderer.cpp 
+include/g_engine/function_loader.cpp include/g_engine/gl_defines.hpp include/g_engine/util/hashmap.hpp include/g_engine/img_loading/image_loader.cpp include/g_engine/input.cpp include/g_engine/util/matrix.cpp include/g_engine/util/matrix.hpp include/g_engine/util/shader.cpp include/g_engine/window.cpp example/example.cpp include/g_engine/audio/audio.hpp include/g_engine/backend.hpp include/g_engine/util/vector.cpp 
+include/g_engine/util/vector.hpp include/g_engine/rendering/primitive_renderer.cpp include/g_engine/rendering/primitive_renderer_shader.hpp include/g_engine/rendering/image_renderer.cpp include/g_engine/img_loading/image_atlas.cpp include/g_engine/img_loading/bmp_loader.cpp include/g_engine/util/shader.hpp include/g_engine/img_loading/image_loader.hpp include/g_engine/rendering/image_renderer.hpp
+include/g_engine/rendering/image_renderer_shader.hpp
+include/g_engine/rendering/primitive_renderer.hpp include/g_engine/rendering/font_renderer.hpp include/g_engine/file_loading/font_loader.cpp include/g_engine/file_loading/font_loader.hpp include/g_engine/img_loading/png_loader.cpp
+include/g_engine/img_loading/common.hpp include/g_engine/img_loading/inflate.hpp include/g_engine/file_loading/file_reader.hpp include/g_engine/file_loading/file_reader.cpp
+include/g_engine/util/logging.hpp
 )
 
 #target_compile_options(g_engine PRIVATE /utf-8)

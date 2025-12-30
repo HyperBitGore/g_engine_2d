@@ -17,15 +17,15 @@ void gore::imageloader::createTexture(IMG img, GLenum internalformat, GLenum for
 	img->format = format;
 	img->type = type;
 	glGenTextures(1, &img->tex);
-	//glActiveTexture_g(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri_g(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureStorage2D_g(img->tex, 1, internalformat, img->w, img->h);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D(img->tex, 1, internalformat, img->w, img->h);
 	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
-	glGenerateMipmap_g(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 

@@ -189,17 +189,17 @@ void gore::fontrenderer::drawText(std::u16string text, gore::font* Font, float x
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     font_shader.bind();
-    glBindVertexArray_g(font_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindVertexArray(font_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
-        glBufferData_g(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(vec2), &vertexs[0], GL_DYNAMIC_DRAW);
     }else{
-        glBufferSubData_g(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(vec2), &vertexs[0]);
     }
-    glDrawArrays_g(GL_LINES, 0, (GLsizei)vertexs.size());
+    glDrawArraysExt(GL_LINES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
-    glBindVertexArray_g(0);
+    glBindVertexArray(0);
    	glDisable(GL_LINE_SMOOTH);
 }
 
@@ -213,14 +213,14 @@ gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) {
 	matrix ortho = matrix::calculateOrtho(w, h, w, h);
 	vertexs.reserve(1000);
     allocated = 1;
-    glGenBuffers_g(1, &vertex_buffer);
+    glGenBuffers(1, &vertex_buffer);
 	font_shader.compile(vertexShaderSourceFont, fragmentShaderSourceFont);
     font_shader.bind();
-    glGenVertexArrays_g(1, &font_vao);
-    glBindVertexArray_g(font_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glGenVertexArrays(1, &font_vao);
+    glBindVertexArray(font_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     font_shader.setuniform("projection", 1, true, ortho);
 }
 
@@ -231,14 +231,14 @@ gore::fontrenderer::fontrenderer (const gore::fontrenderer& f) {
 	vertexs.reserve(1000);
 	std::copy(f.vertexs.begin(), f.vertexs.end(), vertexs.begin());
     this->allocated = f.allocated;
-    glGenBuffers_g(1, &vertex_buffer);
+    glGenBuffers(1, &vertex_buffer);
 	font_shader.compile(vertexShaderSourceFont, fragmentShaderSourceFont);
     font_shader.bind();
-    glGenVertexArrays_g(1, &font_vao);
-    glBindVertexArray_g(font_vao);
-    glBindBuffer_g(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray_g(0);
-    glVertexAttribPointer_g(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glGenVertexArrays(1, &font_vao);
+    glBindVertexArray(font_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     font_shader.setuniform("projection", 1, true, ortho);
 }
 

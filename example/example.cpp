@@ -1,6 +1,6 @@
-#include "../source/g_engine_2d.hpp"
-#include "../source/audio/audio.hpp"
-#include "../source/util/matrix.hpp"
+#include "../include/g_engine/g_engine_2d.hpp"
+#include "../include/g_engine/audio/audio.hpp"
+#include "../include/g_engine/util/matrix.hpp"
 #include <bitset>
 #include <cstdint>
 #include <string>
@@ -78,13 +78,13 @@ class Invert {
 		vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w}); //bottom left
 		vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y}); //top righjt
 
-		glActiveTexture_g(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		
 		shader.bind();
 		shader.setbufferdata((void*)vertexs.data(), vertexs.size() * sizeof(vertex), GL_DYNAMIC_DRAW);
 
-		glDrawArrays_g(GL_TRIANGLES, 0, vertexs.size());
+		glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
 		
 		vertexs.clear();
 	}
