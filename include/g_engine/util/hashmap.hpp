@@ -36,7 +36,7 @@ template<typename T, typename G>
 			int n = hash_func(f);
 			if (n > int(buckets.size()) - 1) {
 				int dif = n - (buckets.size() - 1);
-				for (dif; dif > 0; dif--) {
+				for (; dif > 0; dif--) {
 					buckets.push_back(nullptr);
 				}
 			}

@@ -587,7 +587,7 @@ void gore::shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use
 //bind shader before calling this
 void gore::shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
 	glEnableVertexAttribArray(attrib);
-	glVertexAttribPointer(attrib, size, type, normalized, stride, (void*)elementoffset);
+	glVertexAttribPointer(attrib, size, type, normalized, stride, reinterpret_cast<void*>(elementoffset));
 	attrib++;
 }
 //assuming last data pointer is set
