@@ -10,7 +10,6 @@ For Win32
  - opengl32 
  - ole32
 
-
 For Linux
  - X11
  - OpenGL
@@ -19,12 +18,14 @@ For Linux
 
  Current Features
   - Modern OpenGL Context creation
-  - TTF font Loading and Rendering
+  - TTF font loading and rendering
+      - Support for common formats
+      - No hinting support yet
   - 2D Image drawing
   - 2D Primitive drawing
   - PNG and BMP loading
-   - PNG supports most file encoding modes
-   - BMP supports majority of encoding modes
+      - PNG supports most file encoding modes
+      - BMP supports majority of encoding modes
   - Audio Support
      - Audio playing
      - WAV file loading
@@ -36,7 +37,4 @@ For Linux
       - Hide cursor
       - Capture cursor in window
  
-Planned Features
-- Rely on no external headers
-- Improved font rendering/loading
   
