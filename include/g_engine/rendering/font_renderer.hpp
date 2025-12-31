@@ -26,7 +26,7 @@ namespace gore {
 		// set color of rendered text
 		void setColor(vec4 color) {
 			font_shader.bind();
-			font_shader.setuniform("textColor", color);
+			font_shader.setuniform("set_color", color);
 		}
 	};
 

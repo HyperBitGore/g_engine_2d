@@ -8,6 +8,7 @@ void gore::shader::bind() {
 
 bool gore::shader::setuniform(std::string uni, GLint n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -23,6 +24,7 @@ bool gore::shader::setuniform(std::string uni, GLint n) {
 
 bool gore::shader::setuniform(std::string uni, GLint x, GLint y) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -36,6 +38,7 @@ bool gore::shader::setuniform(std::string uni, GLint x, GLint y) {
 }
 bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -49,6 +52,7 @@ bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z) {
 }
 bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -63,6 +67,7 @@ bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint 
 //unsigned int overloads
 bool gore::shader::setuniform(std::string uni, GLuint n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -76,6 +81,7 @@ bool gore::shader::setuniform(std::string uni, GLuint n) {
 }
 bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -89,6 +95,7 @@ bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y) {
 }
 bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -102,6 +109,7 @@ bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z) {
 }
 bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLuint w) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -116,6 +124,7 @@ bool gore::shader::setuniform(std::string uni, GLuint x, GLuint y, GLuint z, GLu
 //float overloads
 bool gore::shader::setuniform(std::string uni, GLfloat n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -129,6 +138,7 @@ bool gore::shader::setuniform(std::string uni, GLfloat n) {
 }
 bool gore::shader::setuniform(std::string uni, gore::vec2 n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -142,6 +152,7 @@ bool gore::shader::setuniform(std::string uni, gore::vec2 n) {
 }
 bool gore::shader::setuniform(std::string uni, gore::vec3 n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -155,6 +166,7 @@ bool gore::shader::setuniform(std::string uni, gore::vec3 n) {
 }
 bool gore::shader::setuniform(std::string uni, gore::vec4 n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -169,6 +181,7 @@ bool gore::shader::setuniform(std::string uni, gore::vec4 n) {
 //double overloads
 bool gore::shader::setuniform(std::string uni, GLdouble n) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -182,6 +195,7 @@ bool gore::shader::setuniform(std::string uni, GLdouble n) {
 }
 bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -195,6 +209,7 @@ bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y) {
 }
 bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -208,6 +223,7 @@ bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble 
 }
 bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -227,6 +243,7 @@ bool gore::shader::setuniform(std::string uni, GLdouble x, GLdouble y, GLdouble 
 //stride is number of elements in a single element which count represents, maxes out at 4
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLfloat* value) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -267,6 +284,7 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 //stride is number of elements in a single element which count represents, maxes out at 4
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLint* value) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -307,6 +325,7 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 //stride is number of elements in a single element which count represents, maxes out at 4
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLuint* value) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -347,6 +366,7 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 
 bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const GLsizei count, const GLdouble* value) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {
@@ -387,6 +407,7 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei stride, const
 // https://registry.khronos.org/OpenGL-Refpages/gl4/html/glUniform.xhtml
 bool gore::shader::setuniform(const std::string uni, const GLsizei count, const GLboolean transpose, gore::matrix& matrice) {
 	GLint* uf = uniform_map.get(uni);
+	this->bind();
 	if (uf == nullptr) {
 		GLint point = glGetUniformLocation(program, uni.c_str());
 		if (point != -1) {

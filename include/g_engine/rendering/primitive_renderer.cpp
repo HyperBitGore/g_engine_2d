@@ -5,6 +5,7 @@
 void gore::primitiverenderer::setColor(vec4 color){
     triangle_shader.setuniform("set_color", color);
     point_shader.setuniform("set_color", color);
+    line_shader.setuniform("set_color", color);
 }
 
 //triangles

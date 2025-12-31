@@ -230,6 +230,7 @@ void renderFunction() {
 	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
 	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
 	eng2.disable(GL_BLEND);
+	eng2.font_renderer->setColor({1.0f, 0.5f, 0.0f, 1.0f});
 	eng2.font_renderer->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
 	eng2.font_renderer->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
 	eng2.font_renderer->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
