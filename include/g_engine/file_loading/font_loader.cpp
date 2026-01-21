@@ -649,8 +649,8 @@ struct comp_glyf : glyf {
 	struct Component {
 				uint16_t flags;
 				uint16_t glyphIndex;
-				uint32_t arg1;
-				uint32_t arg2;
+				int32_t arg1; // since this can be signed
+				int32_t arg2;
 				int16_t scale;
 				int16_t xscale;
 				int16_t yscale;
@@ -808,12 +808,13 @@ glyph_table readGlyfs(gore::filereader* fr, int offset, int length, std::vector<
 				comp_glyf::Component component;
 				component.flags = flags;
 				component.glyphIndex = fr->readTwoBytes(true);
+				// issue was weird casting issue, implicit signed cast didn't work
 				if (flags & ARG_1_AND_2_ARE_WORDS) {
-					component.arg1 = fr->readTwoBytes(true);
-					component.arg2 = fr->readTwoBytes(true);
+					component.arg1 = (!(flags & ARGS_ARE_XY_VALUES)) ? fr->readTwoBytes(true) : (int16_t)fr->readTwoBytes(true);
+					component.arg2 = (!(flags & ARGS_ARE_XY_VALUES)) ? fr->readTwoBytes(true) : (int16_t)fr->readTwoBytes(true);
 				} else {
-					component.arg1 = fr->readOneByte();
-					component.arg2 = fr->readOneByte();
+					component.arg1 = (!(flags & ARGS_ARE_XY_VALUES)) ? fr->readOneByte() : (int8_t)fr->readOneByte();
+					component.arg2 = (!(flags & ARGS_ARE_XY_VALUES)) ? fr->readOneByte() : (int8_t)fr->readOneByte();
 				}
 				if ( flags & WE_HAVE_A_SCALE ) {
 					component.scale = fr->readTwoBytes(true);
@@ -1317,7 +1318,7 @@ void constructGlyphs (Font_dir* directory, gore::font* f, glyph_table* g_table, 
 			}
 			if (glyph_index == j.glyphIndex) {
 				//couldn't find simple glyph, skipping
-				logger_f.log("Couldn't find simple glyph for compound glyph index " + std::to_string(j.glyphIndex));
+				logger_f.log("Couldn't find simple glyph " + std::to_string(glyph_index) + " for compound glyph index " + std::to_string(j.glyphIndex));
 				continue;
 			}
 			for (auto& g : f->glyphs) {
