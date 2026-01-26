@@ -116,21 +116,27 @@ uint32_t gore::g_engine_2d::getDPI() {
 
 void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 	std::function<void(uint32_t, uint32_t)> f = [this, &func](uint32_t w, uint32_t h) {
-		if (prim_r) {
-			prim_r->setDimensions(w, h);
-		}
-		if (img_r) {
-			img_r->setDimensions(w, h);
-		}
-		if (gray_r) {
-			gray_r->setDimensions(w, h);
-		}
-		if (font_renderer) {
-			font_renderer->setDimensions(w, h);
+		if (!maintainRendererViewport) {
+			if (prim_r) {
+				prim_r->setDimensions(w, h);
+			}
+			if (img_r) {
+				img_r->setDimensions(w, h);
+			}
+			if (gray_r) {
+				gray_r->setDimensions(w, h);
+			}
+			if (font_renderer) {
+				font_renderer->setDimensions(w, h);
+			}
 		}
 		func(w, h);
 	};
 	wind->setWindowResize(f);
+}
+
+void gore::g_engine_2d::toggleRendererViewportResizing () {
+	this->maintainRendererViewport = !maintainRendererViewport;
 }
 
 void gore::g_engine_2d::toggleMaintainViewport() {

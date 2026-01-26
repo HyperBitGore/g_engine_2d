@@ -43,6 +43,7 @@ private:
 		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
 	}
 	int texture_units;
+	bool maintainRendererViewport = false;
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
@@ -117,6 +118,8 @@ public:
 	void toggleFullscreen();
 	// toggle viewport resizing
 	void toggleMaintainViewport();
+	// toggle renderer viewport resizing
+	void toggleRendererViewportResizing ();
 	// bool center toggles whether to keep mouse in center of screen
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor
