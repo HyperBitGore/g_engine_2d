@@ -9,7 +9,6 @@
 #define FONT_COMPONENT 0x4
 #define GRAYSCALE_COMPONENT 0x8
 
-
 //add 3d support
 //add 3d line rendering
 //add 3d primitives
@@ -43,7 +42,7 @@ private:
 		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
 	}
 	int texture_units;
-	bool maintainRendererViewport = false;
+	uint32_t maintainRendererViewport = PRIMITIVE_COMPONENT | IMAGE_COMPONENT | FONT_COMPONENT | GRAYSCALE_COMPONENT;
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
@@ -119,7 +118,7 @@ public:
 	// toggle viewport resizing
 	void toggleMaintainViewport();
 	// toggle renderer viewport resizing
-	void toggleRendererViewportResizing ();
+	void toggleRendererViewportResizing (uint32_t mask);
 	// bool center toggles whether to keep mouse in center of screen
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor
