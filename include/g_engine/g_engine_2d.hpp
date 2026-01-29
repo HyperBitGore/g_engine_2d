@@ -116,9 +116,9 @@ public:
 	//toggles the window to fullscreen
 	void toggleFullscreen();
 	// toggle viewport resizing
-	void toggleMaintainViewport();
-	// toggle renderer viewport resizing
-	void toggleRendererViewportResizing (uint32_t mask);
+	void setMaintainViewport(bool maintain);
+	// toggle renderer viewport resizing, if the component is activated in mask will be resized on window resize
+	void setRendererViewportMask (uint32_t mask);
 	// bool center toggles whether to keep mouse in center of screen
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor

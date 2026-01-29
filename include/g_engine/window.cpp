@@ -369,6 +369,6 @@ uint32_t gore::g_window::getDPI() {
 	return 96;
 }
 
-void gore::g_window::maintainViewportToggle() {
-	this->maintainViewport = !this->maintainViewport;
+void gore::g_window::setMaintainViewport(bool maintainViewport) {
+	this->maintainViewport = maintainViewport;
 }

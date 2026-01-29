@@ -133,10 +133,10 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 	wind->setWindowResize(f);
 }
 
-void gore::g_engine_2d::toggleRendererViewportResizing (uint32_t mask) {
+void gore::g_engine_2d::setRendererViewportMask (uint32_t mask) {
 	this->maintainRendererViewport = mask;
 }
 
-void gore::g_engine_2d::toggleMaintainViewport() {
-	wind->maintainViewportToggle();
+void gore::g_engine_2d::setMaintainViewport(bool maintain) {
+	wind->setMaintainViewport(maintain);
 }
