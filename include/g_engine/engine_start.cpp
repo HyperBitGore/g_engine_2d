@@ -251,6 +251,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 	if (component_mask & FONT_COMPONENT) {
 		this->font_renderer = std::make_unique<gore::fontrenderer>(width, height);
 	}
+	setWindowResize(nullptr);
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);
 	#endif

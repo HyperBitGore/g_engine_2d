@@ -20,12 +20,15 @@ gore::vec2 gore::g_engine_2d::getMousePos() {
 	ScreenToClient(wind->getRawWindow(), po);
 	p.x = (float)po->x;
 	p.y = (float)po->y;
+	//gotta translate the y axis for my coord system
+	p.y = p.y - wind->getHeight();
+	p.y = std::abs(p.y);
 	#endif
 	#if defined(__unix__)
 	int x, y, win_x, win_y;
 	Window root_return, child_return;
 	unsigned int mask_return;
-	XQueryPointer(display, wind->getRawWindow(),
+	bool queryReturn = XQueryPointer(display, wind->getRawWindow(),
 		&root_return, &child_return,
 		&x, &y,       // Root (global) coords
 		&win_x, &win_y, // Window-relative coords
@@ -33,10 +36,6 @@ gore::vec2 gore::g_engine_2d::getMousePos() {
 	p.x = (float)win_x;
 	p.y = (float)win_y;
 	#endif
-
-	//gotta translate the y axis for my coord system
-	p.y = p.y - wind->getHeight();
-	p.y = std::abs(p.y);
 
 	#if defined(_WIN32)
 	delete po;
@@ -115,7 +114,7 @@ uint32_t gore::g_engine_2d::getDPI() {
 }
 
 void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
-	std::function<void(uint32_t, uint32_t)> f = [this, &func](uint32_t w, uint32_t h) {
+	std::function<void(uint32_t, uint32_t)> f = [this, func](uint32_t w, uint32_t h) {
 		if (prim_r && (maintainRendererViewport & PRIMITIVE_COMPONENT)) {
 			prim_r->setDimensions(w, h);
 		}
@@ -128,7 +127,9 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 		if (font_renderer && (maintainRendererViewport & FONT_COMPONENT)) {
 			font_renderer->setDimensions(w, h);
 		}
-		func(w, h);
+		if (func) {
+			func(w, h);
+		}
 	};
 	wind->setWindowResize(f);
 }
