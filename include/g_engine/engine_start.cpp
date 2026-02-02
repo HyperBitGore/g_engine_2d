@@ -3,6 +3,7 @@
 #include "rendering/image_renderer.hpp"
 #include "rendering/primitive_renderer.hpp"
 #include "util/shader.hpp"
+#include <GL/glext.h>
 #include <memory>
 
 #if defined (__unix__)
@@ -14,7 +15,7 @@ int myXIOErrorHandler(Display *dpy) {
 #endif
 
 //https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask, gore::LogType log_level, std::string log_file) {
+gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t height, uint32_t component_mask, gore::LogType log_level, std::string log_file, uint32_t target_width, uint32_t target_height) {
 	#if defined(_WIN32)
 	//function pointers
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
@@ -251,7 +252,16 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, int width, int height, u
 	if (component_mask & FONT_COMPONENT) {
 		this->font_renderer = std::make_unique<gore::fontrenderer>(width, height);
 	}
+	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
+		this->basic_image = std::make_unique<imagerenderer>(width, height);
+	}
 	setWindowResize(nullptr);
+	dr1 = std::make_unique<drawpass>(target_width, target_height, GL_COLOR_ATTACHMENT0);
+	this->component_mask = component_mask;
+	this->window_width = width;
+	this->window_height = height;
+	this->target_width = target_width;
+	this->target_height = target_height;
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);
 	#endif

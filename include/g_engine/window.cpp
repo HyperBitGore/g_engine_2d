@@ -372,3 +372,12 @@ uint32_t gore::g_window::getDPI() {
 void gore::g_window::setMaintainViewport(bool maintainViewport) {
 	this->maintainViewport = maintainViewport;
 }
+
+void gore::g_window::setWindowTitle (std::string title) {
+	#if defined(_WIN32)
+		SetWindowTextA(his->m_hwnd, title.c_str());
+	#endif
+	#if defined(__unix__)
+		XStoreName(this->r_display, this->m_hwnd, title.c_str());
+	#endif
+}

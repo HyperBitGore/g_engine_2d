@@ -113,6 +113,8 @@ PFNGLUNIFORM4DVPROC glUniform4dv;
 
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
+PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
+
 void gore::g_engine_2d::loadFunctions() {
 	glBindBuffer = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
 	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)GetGLFuncAddress("glGenVertexArrays");
@@ -207,4 +209,5 @@ void gore::g_engine_2d::loadFunctions() {
 
 	glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)GetGLFuncAddress("glUniformMatrix4fv");
 
+	glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)GetGLFuncAddress("glBlitFramebuffer");
 }

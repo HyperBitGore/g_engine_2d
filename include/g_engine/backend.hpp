@@ -329,6 +329,7 @@ public:
 	void captureMouseToggle(bool center);
 	void mouseHideToggle();
 	void setMaintainViewport(bool maintain);
+	void setWindowTitle (std::string title);
 	uint32_t getDPI();
 };
 

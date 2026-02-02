@@ -2,12 +2,14 @@
 #include "rendering/font_renderer.hpp"
 #include "rendering/image_renderer.hpp"
 #include "rendering/primitive_renderer.hpp"
+#include <cstdint>
 #include <memory>
 #include "util/logging.hpp"
 #define PRIMITIVE_COMPONENT 0x1
 #define IMAGE_COMPONENT 0x2
 #define FONT_COMPONENT 0x4
 #define GRAYSCALE_COMPONENT 0x8
+#define MAINTAIN_ASPECT_RATIO_COMPONENT 0x10
 
 //add 3d support
 //add 3d line rendering
@@ -26,8 +28,7 @@ private:
 	input* in;
 	std::function<void()> renderFund;
 	//color constants
-	gore::vec4 draw_color;
-	gore::vec4 clear_color;
+	gore::vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	//delta time
 	clock_t delta = 0;
@@ -41,8 +42,16 @@ private:
 		// units/(units/time) => time (seconds) * 1000 = milliseconds
 		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
 	}
+	// rendering
 	int texture_units;
 	uint32_t maintainRendererViewport = PRIMITIVE_COMPONENT | IMAGE_COMPONENT | FONT_COMPONENT | GRAYSCALE_COMPONENT;
+	uint32_t component_mask = 0;
+	std::unique_ptr<drawpass> dr1 = nullptr;
+	std::unique_ptr<imagerenderer> basic_image = nullptr;
+	uint32_t target_width;
+	uint32_t target_height;
+	uint32_t window_width;
+	uint32_t window_height;
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
@@ -58,7 +67,7 @@ public:
 	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
 	std::shared_ptr<gore::logger> logger;
 	// parts is a bitmask which tells us what to load
-	g_engine_2d(const char* window_name, int width, int height, uint8_t component_mask, gore::LogType log_level = gore::LogType::NONE, std::string log_file = "g_engine_2d.log");
+	g_engine_2d(const char* window_name, uint32_t width, uint32_t height, uint32_t component_mask, gore::LogType log_level = gore::LogType::NONE, std::string log_file = "g_engine_2d.log", uint32_t target_width = 0, uint32_t target_height = 0);
 
 	//move constructor
 	g_engine_2d(g_engine_2d&& o) {
@@ -67,12 +76,14 @@ public:
 		this->font_renderer = std::move(o.font_renderer);
 		this->gray_r = std::move(o.gray_r);
 		this->logger = std::move(o.logger);
-		//this->ap = std::move(o.ap);
 		this->wind = o.wind;
 		this->in = o.in;
 		this->renderFund = o.renderFund;
-		this->draw_color = o.draw_color;
 		this->clear_color = o.clear_color;
+		this->dr1 = std::move(o.dr1);
+		this->window_width = o.window_width;
+		this->window_height = o.window_height;
+		this->component_mask = o.component_mask;
 		#if defined (__unix__)
 		this->display = o.display;
 		this->ctx = o.ctx;
@@ -85,12 +96,14 @@ public:
 		this->font_renderer = std::make_unique<fontrenderer>(*o.font_renderer);
 		this->gray_r = std::make_unique<grayscalerenderer>(*o.gray_r);
 		this->logger = o.logger;
-		//this->ap = o.ap;
 		this->wind = o.wind;
 		this->in = o.in;
 		this->renderFund = o.renderFund;
-		this->draw_color = o.draw_color;
 		this->clear_color = o.clear_color;
+		this->dr1 = std::make_unique<drawpass>(*o.dr1);;
+		this->window_width = o.window_width;
+		this->window_height = o.window_height;
+		this->component_mask = o.component_mask;
 		#if defined (__unix__)
 		this->display = o.display;
 		this->ctx = o.ctx;
@@ -112,7 +125,8 @@ public:
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 	//updates the window
 	bool updateWindow();
-	
+	// set window title
+	void setWindowTitle (std::string title);
 	//toggles the window to fullscreen
 	void toggleFullscreen();
 	// toggle viewport resizing
@@ -142,21 +156,11 @@ public:
 	bool getMouseMiddleReleased() { return in->GetKeyReleased(g_MouseMiddle); }
 
 	//color functions
-	void setDrawColor(vec4 c) {
-		draw_color = c;
-	}
 	void setClearColor(vec4 c) {
 		clear_color = c;
 	}
-	vec4 getDrawColor() {
-		return draw_color;
-	}
 	vec4 getClearColor() {
 		return clear_color;
-	}
-
-	float convertToRange(float n, float min, float max, float old_min, float old_max) {
-		return ((n - old_min) / (old_max - old_min)) * (max - min) + min;
 	}
 
 	//3d drawing functions

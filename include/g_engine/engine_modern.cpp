@@ -1,4 +1,7 @@
 #include "g_engine_2d.hpp"
+#include "gl_defines.hpp"
+#include <GL/gl.h>
+#include <GL/glext.h>
 #include <cstdint>
 
 bool gore::g_engine_2d::getKeyDown(uint32_t key) {
@@ -61,9 +64,7 @@ std::pair<double, double> gore::g_engine_2d::getFrames() {
 	return { frameRate, averageFrameTimeMilliseconds };
 }
 
-
 //utility type functions
-
 bool gore::g_engine_2d::updateWindow() {
 	wind->updateWindow();
 	if (!wind->ProcessMessage()) {
@@ -72,9 +73,26 @@ bool gore::g_engine_2d::updateWindow() {
 		return false;
 	}
 	begin_f = clock();
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	glClear(GL_COLOR_BUFFER_BIT);
-	renderFund();
+	// this will probably compile more efficiently than two ifs
+	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
+		glViewport(0, 0, this->target_width, this->target_height);
+		dr1->clear();
+		dr1->bind();
+		renderFund();
+		dr1->unbind();
+		glViewport(0, 0, this->window_width, this->window_height);
+		// blit to screen
+		//basic_image->drawTexture(dr1->getTexture(), {0.0f, 0.0f}, {(float)this->window_width, (float)this->window_height}, {0.0f, 1.0f, 1.0f, -1.0f});
+		// basic_image->drawTexture(dr1->getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, dr1->getColorBuffer());
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // screen framebuffer
+		glBlitFramebuffer(0, 0, target_width, target_height, 0, 0, window_width, window_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	} else {
+		renderFund();
+	}
 	
 
 	if (!wind->swapBuffers())
@@ -115,18 +133,24 @@ uint32_t gore::g_engine_2d::getDPI() {
 
 void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 	std::function<void(uint32_t, uint32_t)> f = [this, func](uint32_t w, uint32_t h) {
-		if (prim_r && (maintainRendererViewport & PRIMITIVE_COMPONENT)) {
-			prim_r->setDimensions(w, h);
+		if (this->component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
+			basic_image->setDimensions(w, h);
+		} else {
+			if (prim_r && (maintainRendererViewport & PRIMITIVE_COMPONENT)) {
+				prim_r->setDimensions(w, h);
+			}
+			if (img_r && (maintainRendererViewport & IMAGE_COMPONENT)) {
+				img_r->setDimensions(w, h);
+			}
+			if (gray_r && (maintainRendererViewport & GRAYSCALE_COMPONENT)) {
+				gray_r->setDimensions(w, h);
+			}
+			if (font_renderer && (maintainRendererViewport & FONT_COMPONENT)) {
+				font_renderer->setDimensions(w, h);
+			}
 		}
-		if (img_r && (maintainRendererViewport & IMAGE_COMPONENT)) {
-			img_r->setDimensions(w, h);
-		}
-		if (gray_r && (maintainRendererViewport & GRAYSCALE_COMPONENT)) {
-			gray_r->setDimensions(w, h);
-		}
-		if (font_renderer && (maintainRendererViewport & FONT_COMPONENT)) {
-			font_renderer->setDimensions(w, h);
-		}
+		this->window_width = w;
+		this->window_height = h;
 		if (func) {
 			func(w, h);
 		}
@@ -140,4 +164,8 @@ void gore::g_engine_2d::setRendererViewportMask (uint32_t mask) {
 
 void gore::g_engine_2d::setMaintainViewport(bool maintain) {
 	wind->setMaintainViewport(maintain);
+}
+
+void gore::g_engine_2d::setWindowTitle (std::string title) {
+	this->wind->setWindowTitle(title);
 }

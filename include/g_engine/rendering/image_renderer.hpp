@@ -66,12 +66,16 @@ class drawpass {
 		GLsizei w;
 		GLsizei h;
 	public:
+		// this does nothing, dont use uninited drawpasses, u will get fucking huge errors!
+		drawpass () {
+
+		}
 		drawpass(GLsizei width, GLsizei height, GLenum attach) {
 			w = width;
 			h = height;
 			glGenFramebuffers(1, &color_buffer);
 			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
-			//glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+
 			glGenTextures(1, &texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -96,6 +100,39 @@ class drawpass {
 
 			this->attach = attach;
 		}
+		// copy
+		drawpass (const drawpass& dr) {
+			this->attach = dr.attach;
+			this->w = dr.w;
+			this->h = dr.h;
+			glGenFramebuffers(1, &color_buffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
+
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+			
+			//creating render buffer
+			glGenRenderbuffers(1, &depth_buffer);
+			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+			GLuint ret = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+			if (ret != GL_FRAMEBUFFER_COMPLETE) {
+				std::cout << "Framebuffer failed creation, during copy operation!\n";
+				std::cout << ret << "\n";
+			}
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, dr.color_buffer);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, color_buffer);
+			glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
 		~drawpass() {
 			glDeleteFramebuffers(1, &color_buffer);
 			glDeleteRenderbuffers(1, &depth_buffer);
@@ -103,7 +140,6 @@ class drawpass {
 		}
 		void bind() {
 			glBindFramebuffer(GL_FRAMEBUFFER, color_buffer);
-			//glViewport(0, 0, 640, 480);
 		}
 		void unbind() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -116,6 +152,9 @@ class drawpass {
 		}
 		GLuint getTexture() {
 			return texture;
+		}
+		GLuint getColorBuffer () {
+			return color_buffer;
 		}
 		void resize (uint32_t width, uint32_t height) {
 			this->w = width;

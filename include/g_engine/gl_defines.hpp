@@ -112,3 +112,5 @@ extern PFNGLUNIFORM3DVPROC glUniform3dv;
 extern PFNGLUNIFORM4DVPROC glUniform4dv;
 
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+
+extern PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
