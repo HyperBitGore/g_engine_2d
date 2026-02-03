@@ -259,6 +259,7 @@ gore::primitiverenderer::primitiverenderer(GLuint sw, GLuint sh) {
     setLineWidth(1.0f);
     this->width = sw;
     this->height = sh;
+    updateView(0.0f, 0.0f, 1.0f);
 }
 gore::primitiverenderer::primitiverenderer(const primitiverenderer& p) {
     this->width = p.width;
@@ -301,12 +302,15 @@ gore::primitiverenderer::primitiverenderer(const primitiverenderer& p) {
 
 void gore::primitiverenderer::setDimensions (uint32_t width, int32_t height) {
     matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
-    triangle_shader.bind();
     triangle_shader.setuniform("projection", 1, true, ortho);
-    point_shader.bind();
     point_shader.setuniform("projection", 1, true, ortho);
-    line_shader.bind();
     line_shader.setuniform("projection", 1, true, ortho);
     this->width = width;
     this->height = height;
+}
+void gore::primitiverenderer::updateView (float x, float y, float zoom) {
+    matrix view = matrix::calculate2DView(x, y, zoom);
+    triangle_shader.setuniform("view", 1, true, view);
+    point_shader.setuniform("view", 1, true, view);
+    line_shader.setuniform("view", 1, true, view);
 }

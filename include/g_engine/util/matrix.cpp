@@ -159,3 +159,20 @@ gore::matrix gore::matrix::calculateOrtho(uint32_t width, uint32_t height, uint3
 
 	return matrice;
 }
+
+gore::matrix gore::matrix::calculate2DView(float x, float y, float zoom) {
+	matrix matrice(4, 4);
+	// identity
+	matrice[0][0] = 1.0f;
+	matrice[1][1] = 1.0f;
+	matrice[2][2] = 1.0f;
+	matrice[3][3] = 1.0f;
+	// zoom 
+	matrice[0][0] = zoom;
+	matrice[1][1] = zoom;
+	// translation
+	matrice[0][3] = -x * zoom;
+	matrice[1][3] = -y * zoom;
+	
+	return matrice;
+}

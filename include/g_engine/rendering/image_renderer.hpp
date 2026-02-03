@@ -42,6 +42,7 @@ public:
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void setDimensions (uint32_t width, uint32_t height);
+	void updateView (float x, float y, float zoom);
 };
 
 class grayscalerenderer : public imagerenderer {

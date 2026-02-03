@@ -23,6 +23,8 @@ namespace gore {
 		void drawText(std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
 		// for width and height
 		void setDimensions (uint32_t width, int32_t height);
+		// for view
+		void updateView (float x, float y, float zoom);
 		// set color of rendered text
 		void setColor(vec4 color) {
 			font_shader.bind();

@@ -222,6 +222,7 @@ gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     font_shader.setuniform("projection", 1, true, ortho);
+	updateView(0.0f, 0.0f, 1.0f);
 }
 
 gore::fontrenderer::fontrenderer (const gore::fontrenderer& f) {
@@ -240,6 +241,7 @@ gore::fontrenderer::fontrenderer (const gore::fontrenderer& f) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
     font_shader.setuniform("projection", 1, true, ortho);
+	updateView(0.0f, 0.0f, 1.0f);
 }
 
 
@@ -249,4 +251,9 @@ void gore::fontrenderer::setDimensions (uint32_t width, int32_t height) {
 	font_shader.setuniform("projection", 1, true, ortho);
 	this->width = width;
 	this->height = height;
+}
+
+void gore::fontrenderer::updateView (float x, float y, float zoom) {
+	matrix view = matrix::calculate2DView(x, y, zoom);
+    font_shader.setuniform("view", 1, true, view);
 }

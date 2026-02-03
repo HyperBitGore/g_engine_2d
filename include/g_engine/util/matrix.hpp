@@ -58,5 +58,6 @@ public:
 	float* data();
 
 	static matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
+	static matrix calculate2DView(float x, float y, float zoom);
 };
 }

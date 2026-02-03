@@ -169,3 +169,18 @@ void gore::g_engine_2d::setMaintainViewport(bool maintain) {
 void gore::g_engine_2d::setWindowTitle (std::string title) {
 	this->wind->setWindowTitle(title);
 }
+
+void gore::g_engine_2d::updateView (float camera_x, float camera_y, float zoom) {
+	if (img_r) {
+		img_r->updateView(camera_x, camera_y, zoom);
+	}
+	if (gray_r) {
+		gray_r->updateView(camera_x, camera_y, zoom);
+	}
+	if (prim_r) {
+		prim_r->updateView(camera_x, camera_y, zoom);
+	}
+	if (font_renderer) {
+		font_renderer->updateView(camera_x, camera_y, zoom);
+	}
+}

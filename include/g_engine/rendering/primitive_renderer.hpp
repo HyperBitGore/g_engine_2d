@@ -65,5 +65,7 @@ public:
 	void circle(vec2 p, float r);
 	// for width and height
 	void setDimensions (uint32_t width, int32_t height);
+	// view matrix setting
+	void updateView (float x, float y, float zoom);
 };
 }

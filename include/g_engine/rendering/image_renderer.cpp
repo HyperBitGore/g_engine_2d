@@ -160,6 +160,7 @@ gore::imagerenderer::imagerenderer(size_t w, size_t h) {
     this->height = h;
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
+    updateView(0.0f, 0.0f, 1.0f);
 }
 
 gore::imagerenderer::imagerenderer(const imagerenderer& img) {
@@ -185,6 +186,7 @@ gore::imagerenderer::imagerenderer(const imagerenderer& img) {
     matrix ortho = matrix::calculateOrtho(this->width, this->height, this->width, this->height);
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
+    updateView(0.0f, 0.0f, 1.0f);
 }
 
 
@@ -194,6 +196,11 @@ void gore::imagerenderer::setDimensions (uint32_t width, uint32_t height) {
     shader.setuniform("projection", 1, true, ortho);
     this->width = width;
     this->height = height;
+}
+
+void gore::imagerenderer::updateView (float x, float y, float zoom) {
+    matrix view = matrix::calculate2DView(x, y, zoom);
+    shader.setuniform("view", 1, true, view);
 }
 
 gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
@@ -216,6 +223,7 @@ gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer()
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);
+    updateView(0.0f, 0.0f, 1.0f);
 }
 
 
@@ -242,4 +250,5 @@ gore::grayscalerenderer::grayscalerenderer(const grayscalerenderer& gsr) {
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);
+    updateView(0.0f, 0.0f, 1.0f);
 }

@@ -175,6 +175,8 @@ public:
 	//
 	void drawLine3D();
 	
+	// camera helpers
+	void updateView (float camera_x, float camera_y, float zoom);
 	//delta time
 	//returns the frame time in seconds
 	double getDelta();
