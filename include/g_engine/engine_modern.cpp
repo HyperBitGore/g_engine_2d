@@ -1,7 +1,6 @@
 #include "g_engine_2d.hpp"
 #include "gl_defines.hpp"
 #include <GL/gl.h>
-#include <GL/glext.h>
 #include <cstdint>
 
 bool gore::g_engine_2d::getKeyDown(uint32_t key) {

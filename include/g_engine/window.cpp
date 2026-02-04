@@ -7,6 +7,7 @@ std::function<void(uint32_t, uint32_t)> resizeFunction;
 bool globalCapture = false;
 
 #if defined(_WIN32)
+bool globalMaintainViewport = false;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	switch (msg) {
 	case WM_PAINT:
@@ -16,7 +17,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		{
 			uint32_t width = LOWORD(lparam);
 			uint32_t height = HIWORD(lparam);
-			if (!maintainViewport) {
+			if (!globalMaintainViewport) {
 				glViewport(0, 0, width, height);
 			}
 			if (resizeFunction) {
@@ -134,9 +135,12 @@ bool gore::g_window::swapBuffers() {
 	#endif
 }
 #if defined(_WIN32)
-gore::g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y, bool fullscreen)
+gore::g_window::g_window(const char* title, RAW_DISPLAY r_display, int h, int w, int x, int y, bool fullscreen, bool maintainViewport, std::shared_ptr<gore::logger> logger)
 	: r_display(GetModuleHandle(nullptr))
 {
+	this->logger = logger;
+	this->maintainViewport = maintainViewport;
+	globalMaintainViewport = maintainViewport;
 	WNDCLASS wnd = {};
 	wnd.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wnd.lpszClassName = "GENG";
@@ -371,11 +375,14 @@ uint32_t gore::g_window::getDPI() {
 
 void gore::g_window::setMaintainViewport(bool maintainViewport) {
 	this->maintainViewport = maintainViewport;
+	#if defined(_WIN32)
+	globalMaintainViewport = maintainViewport;
+	#endif
 }
 
 void gore::g_window::setWindowTitle (std::string title) {
 	#if defined(_WIN32)
-		SetWindowTextA(his->m_hwnd, title.c_str());
+		SetWindowTextA(this->m_hwnd, title.c_str());
 	#endif
 	#if defined(__unix__)
 		XStoreName(this->r_display, this->m_hwnd, title.c_str());

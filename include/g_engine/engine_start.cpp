@@ -3,7 +3,6 @@
 #include "rendering/image_renderer.hpp"
 #include "rendering/primitive_renderer.hpp"
 #include "util/shader.hpp"
-#include <GL/glext.h>
 #include <memory>
 
 #if defined (__unix__)
@@ -77,7 +76,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 		DestroyWindow(dummy);
 	}
 	//create window
-	logger = gore::logger(log_level, log_file);
+	logger = std::make_shared<gore::logger>(log_level, log_file);
 	wind = new g_window(window_name, nullptr, height, width, 300, 300, false, false, logger);
 	in = new input(wind->getRawDisplay(), wind->getRawWindow());
 	HDC dc_w = GetDC(wind->getRawWindow());
