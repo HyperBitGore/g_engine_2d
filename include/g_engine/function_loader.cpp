@@ -115,7 +115,9 @@ PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
 PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
 
+#if defined(_WIN32)
 PFNGLACTIVETEXTUREPROC glActiveTexture;
+#endif
 
 void gore::g_engine_2d::loadFunctions() {
 	glBindBuffer = (PFNGLBINDBUFFERPROC)GetGLFuncAddress("glBindBuffer");
@@ -213,5 +215,7 @@ void gore::g_engine_2d::loadFunctions() {
 
 	glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)GetGLFuncAddress("glBlitFramebuffer");
 
+	#if defined(_WIN32)
 	glActiveTexture = (PFNGLACTIVETEXTUREPROC)GetGLFuncAddress("glActiveTexture");
+	#endif
 }

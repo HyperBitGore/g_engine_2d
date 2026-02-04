@@ -115,4 +115,6 @@ extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
 extern PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
 
+#if defined(_WIN32)
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
+#endif
