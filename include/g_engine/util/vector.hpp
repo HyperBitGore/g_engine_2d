@@ -16,6 +16,15 @@ public:
 		this->width = size;
 		this->f = new float[width];
 	}
+	// assumes the length of r is the same as the size you template class
+	vec(std::initializer_list<float> r) {
+		this->width = size;
+		this->f = new float[width];
+		size_t i = 0;
+		for (float val : r) {
+			this->f[i++] = val;
+		}
+	}
 	//copy constructor
 	vec(vec& v) {
 		this->width = v.width;
@@ -45,7 +54,13 @@ public:
 	float& operator[](size_t index) const {
 		return f[index];
 	}
-
+	float dotProduct (const vec<size>& r) {
+		float f = 0.0f;
+		for (size_t i = 0; i < width; i++) {
+			f += this->f[i] * r[i];
+		}
+		return f;
+	}
 	vec& operator=(const vec& rhs) {
 		this->width = rhs.width;
 		if (f) {
@@ -128,6 +143,13 @@ public:
 		this->x = r.x;
 		this->y = r.y;
 	}
+
+	float dotProduct (const gore::vec2& r) {
+		float f = x * r.x;
+		f += y * r.y;
+		return f;
+	} 
+
 	vec2& operator=(const vec2& r) {
 		this->x = r.x;
 		this->y = r.y;
@@ -218,6 +240,12 @@ public:
 		this->y = r.y;
 		this->z = r.z;
 	}
+	float dotProduct (const gore::vec3& r) {
+		float f = x * r.x;
+		f += y * r.y;
+		f += z * r.z;
+		return f;
+	} 
 	vec3& operator=(const vec3& r) {
 		this->x = r.x;
 		this->y = r.y;
@@ -326,6 +354,13 @@ public:
 		this->z = r.z;
 		this->w = r.w;
 	}
+	float dotProduct (const gore::vec4& r) {
+		float f = x * r.x;
+		f += y * r.y;
+		f += z * r.z;
+		f += w * r.w;
+		return f;
+	} 
 	vec4& operator=(const vec4& r) {
 		this->x = r.x;
 		this->y = r.y;
