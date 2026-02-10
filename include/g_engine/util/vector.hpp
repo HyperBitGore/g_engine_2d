@@ -2,8 +2,6 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
-//class vec3;
-//class vec4;
 
 namespace gore {
 template<size_t size>
@@ -126,6 +124,13 @@ public:
 	float* getdata() {
 		return f;
 	}
+	vec operator-() const noexcept {
+		vec<size> n_vec;
+		for (size_t i = 0; i < width; i++) {
+			n_vec[i] = -f[i];
+		}
+		return n_vec;
+	}
 };
 class vec2 {
 public:
@@ -218,6 +223,9 @@ public:
 	friend vec2 operator^(vec2 lhs, const float& n) {
 		lhs ^= n;
 		return lhs;
+	}
+	vec2 operator-() const noexcept {
+		return {-x, -y};
 	}
 };
 class vec3 {
@@ -328,6 +336,9 @@ public:
 	friend vec3 operator^(vec3 lhs, const float& n) {
 		lhs ^= n;
 		return lhs;
+	}
+	vec3 operator-() const noexcept {
+		return {-x, -y, -z};
 	}
 };
 class vec4 {
@@ -454,6 +465,9 @@ public:
 	friend vec4 operator^(vec4 lhs, const float& n) {
 		lhs ^= n;
 		return lhs;
+	}
+	vec4 operator-() const noexcept {
+		return {-x, -y, -z, -w};
 	}
 };
 };
