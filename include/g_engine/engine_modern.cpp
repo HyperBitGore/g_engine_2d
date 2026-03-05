@@ -42,6 +42,14 @@ gore::vec2 gore::g_engine_2d::getMousePos() {
 	#if defined(_WIN32)
 	delete po;
 	#endif
+	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
+		float ppx = (p.x) / window_width;
+		ppx = ppx * target_width;
+		p.x = ppx;
+		float ppy = (float)p.y / window_height;
+		ppy = ppy * target_height;
+		p.y = ppy;
+	}
 	return p;
 }
 
