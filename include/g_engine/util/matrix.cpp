@@ -1,5 +1,7 @@
 #include "matrix.hpp"
 #include <cstring>
+#include <cmath>
+#include <stdexcept>
 
 
 gore::matrix::matrix(size_t r, size_t c) {
@@ -77,6 +79,37 @@ gore::matrix& gore::matrix::operator*=(const matrix& rhs) {
 	*this = t;
 	return *this;
 }
+gore::vec2	gore::matrix::operator*(const vec2& rhs) {
+	// compare the vector width to the column amt in matrix
+	if (columns == 2 && rows == 2) {
+		gore::vec2 out;
+		out.x = ((*this)[0][0] * rhs.x) + ((*this)[0][1] * rhs.y);
+		out.y = ((*this)[1][0] * rhs.x) + ((*this)[1][1] * rhs.y);
+		return out;
+	} 
+	throw std::runtime_error("Not enough columns in matrix to multiply against a vec2!");
+}
+gore::vec3	gore::matrix::operator*(const vec3& rhs) {
+	if (columns == 3 && rows == 3) {
+		gore::vec3 out;
+		out.x = ((*this)[0][0] * rhs.x) + ((*this)[0][1] * rhs.y) + ((*this)[0][2] * rhs.z);
+		out.y = ((*this)[1][0] * rhs.x) + ((*this)[1][1] * rhs.y) + ((*this)[1][2] * rhs.z);
+		out.z = ((*this)[2][0] * rhs.x) + ((*this)[2][1] * rhs.y) + ((*this)[2][2] * rhs.z);
+		return out;
+	}
+	throw std::runtime_error("Not enough columns in matrix to multiply against a vec3!");
+}
+gore::vec4	gore::matrix::operator*(const vec4& rhs) {
+	if (columns == 4 && rows == 4) {
+		gore::vec4 out;
+		out.x = ((*this)[0][0] * rhs.x) + ((*this)[0][1] * rhs.y) + ((*this)[0][2] * rhs.z) + ((*this)[0][3] * rhs.w);
+		out.y = ((*this)[1][0] * rhs.x) + ((*this)[1][1] * rhs.y) + ((*this)[1][2] * rhs.z) + ((*this)[1][3] * rhs.w);
+		out.z = ((*this)[2][0] * rhs.x) + ((*this)[2][1] * rhs.y) + ((*this)[2][2] * rhs.z) + ((*this)[2][3] * rhs.w);
+		out.w = ((*this)[3][0] * rhs.x) + ((*this)[3][1] * rhs.y) + ((*this)[3][2] * rhs.z) + ((*this)[3][3] * rhs.w);
+		return out;
+	}
+	throw std::runtime_error("Not enough columns in matrix to multiply against a vec4!");
+}
 
 gore::matrix& gore::matrix::operator^=(const float& n) {
 	if (n <= 0) {
@@ -97,10 +130,15 @@ gore::matrix& gore::matrix::operator^=(const float& n) {
 
 
 float* gore::matrix::operator[](size_t row) {
+	if (row >= this->rows) {
+		throw std::runtime_error("Out of bounds in matrix, rows");
+	}
 	return (dat + (row * this->columns));
-	//return matrice[row];
 }
 const float* gore::matrix::operator[](size_t row) const {
+	if (row >= this->rows) {
+		throw std::runtime_error("Out of bounds in matrix, rows");
+	}
 	return (dat + (row * this->columns));
 }
 size_t gore::matrix::numColumns() {
@@ -175,4 +213,65 @@ gore::matrix gore::matrix::calculate2DView(float x, float y, float zoom) {
 	matrice[1][3] = -y * zoom;
 	
 	return matrice;
+}
+
+gore::matrix gore::matrix::inverse() {
+	if (this->columns != this->rows) {
+		throw std::runtime_error("Can't invert a non-square matrix!");
+	}
+	matrix augmented = matrix(this->rows, this->rows * 2);
+	for (size_t i = 0; i < rows; i++) {
+		for (size_t j = 0; j < rows; j++) {
+			augmented[i][j] = (*this)[i][j];
+			augmented[i][j + rows] = (i == j) ? 1.0f : 0.0f; // identity matrix, 1s in diagonals
+		}
+	}
+	// Gauss-Jordan elimination with partial pivoting
+	for (size_t col = 0; col < rows; col++) {
+		// Find the row with the largest absolute value in this column (partial pivoting)
+		size_t pivotRow = col;
+		float maxVal = std::abs(augmented[col][col]);
+		for (size_t r = col + 1; r < rows; r++) {
+			float val = std::abs(augmented[r][col]);
+			if (val > maxVal) {
+				maxVal = val;
+				pivotRow = r;
+			}
+		}
+
+		if (maxVal == 0.0f) {
+			throw std::runtime_error("Matrix is singular and cannot be inverted!");
+		}
+
+		// Swap current row with pivot row
+		if (pivotRow != col) {
+			for (size_t j = 0; j < rows * 2; j++) {
+				float tmp = augmented[col][j];
+				augmented[col][j] = augmented[pivotRow][j];
+				augmented[pivotRow][j] = tmp;
+			}
+		}
+
+		// Scale the pivot row so the pivot element becomes 1
+		float scale = augmented[col][col];
+		for (size_t j = 0; j < rows * 2; j++) {
+			augmented[col][j] /= scale;
+		}
+
+		// Eliminate this column from all other rows
+		for (size_t r = 0; r < rows; r++) {
+			if (r == col) continue;
+			float factor = augmented[r][col];
+			for (size_t j = 0; j < rows * 2; j++) {
+				augmented[r][j] -= factor * augmented[col][j];
+			}
+		}
+	}
+	gore::matrix inv = gore::matrix(rows, columns);
+	for (size_t i = 0; i < rows; i++) {
+		for (size_t j = 0; j < rows; j++) {
+			inv[i][j] = augmented[i][j + rows];
+		}
+	}
+	return inv;
 }

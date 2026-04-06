@@ -1,4 +1,5 @@
 #pragma once
+#include "vector.hpp"
 #include <cstdint>
 #include <string>
 
@@ -27,6 +28,9 @@ public:
 	matrix& operator*=(const float& n);
 	matrix& operator*=(const matrix& rhs);
 	matrix& operator^=(const float& n);
+	vec2	operator*(const vec2& rhs);
+	vec3	operator*(const vec3& rhs);
+	vec4	operator*(const vec4& rhs);
 
 	friend matrix operator+(matrix lhs, const matrix& rhs) {
 		lhs += rhs;
@@ -56,6 +60,7 @@ public:
 	bool setrow(size_t row, float val);
 	std::string to_string();
 	float* data();
+	gore::matrix inverse();
 
 	static matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
 	static matrix calculate2DView(float x, float y, float zoom);
