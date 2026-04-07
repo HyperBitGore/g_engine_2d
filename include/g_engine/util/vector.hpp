@@ -227,6 +227,16 @@ public:
 	vec2 operator-() const noexcept {
 		return {-x, -y};
 	}
+	float length () const {
+		return std::sqrtf(x * x + y * y);
+	}
+	vec2 normalize () {
+		float len = this->length();
+		if (len < 1e-9f) {
+        	return {0.0f, 0.0f}; // avoid division by zero
+    	}
+		return { x / len, y / len};
+	}
 };
 class vec3 {
 public:
@@ -339,6 +349,16 @@ public:
 	}
 	vec3 operator-() const noexcept {
 		return {-x, -y, -z};
+	}
+	float length () const {
+		return std::sqrtf(x * x + y * y + z * z);
+	}
+	vec3 normalize () {
+		float len = this->length();
+		if (len < 1e-9f) {
+        	return {0.0f, 0.0f, 0.0f}; // avoid division by zero
+    	}
+		return { x / len, y / len, z / len};
 	}
 };
 class vec4 {
@@ -468,6 +488,16 @@ public:
 	}
 	vec4 operator-() const noexcept {
 		return {-x, -y, -z, -w};
+	}
+	float length () const {
+		return std::sqrtf(x * x + y * y + z * z + w * w);
+	}
+	vec4 normalize () {
+		float len = this->length();
+		if (len < 1e-9f) {
+        	return {0.0f, 0.0f, 0.0f, 0.0f}; // avoid division by zero
+    	}
+		return { x / len, y / len, z / len, w / len};
 	}
 };
 };
