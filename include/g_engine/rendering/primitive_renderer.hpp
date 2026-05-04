@@ -58,11 +58,18 @@ public:
 	void drawLine(vec2 p1, vec2 p2);
 	void drawBufferLine();
 	void setLineWidth(float l);
+	void drawLinearBezier(vec2 p1, vec2 p2);
+	void drawQuadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
+	void drawCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
+	void drawCircleFilled(vec2 p, float r);
+	void drawCircleOutline(vec2 p, float r, uint32_t segments);
 	//this add points to buffer, they are used for lines so make sure to call drawBufferLine when these are used
-	void linearBezier(vec2 p1, vec2 p2);
-	void quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
-	void cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
-	void circle(vec2 p, float r);
+	void addLinearBezier(vec2 p1, vec2 p2);
+	void addQuadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
+	void addCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
+	void addCircleFilled(vec2 p, float r);
+	void addCircleOutline(vec2 p, float r, uint32_t segments);
+
 	// for width and height
 	void setDimensions (uint32_t width, int32_t height);
 	// view matrix setting

@@ -176,8 +176,8 @@ void renderFunction() {
 	eng2.prim_r->setColor({0.0f, 0.2f, 1.0f, 1.0f});
 	eng2.prim_r->drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
 	eng2.prim_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
-	eng2.prim_r->circle({500.0f, 50.0f}, 50.0f);
-	eng2.prim_r->quadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
+	eng2.prim_r->addCircleFilled({500.0f, 50.0f}, 50.0f);
+	eng2.prim_r->addQuadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
 	eng2.prim_r->drawBufferLine();
 	c++;
 	if (c >= 50) {

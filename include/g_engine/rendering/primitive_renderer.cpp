@@ -166,10 +166,10 @@ void gore::primitiverenderer::drawBufferLine(){
 }
 
 void gore::primitiverenderer::setLineWidth(float l){
-     glLineWidth(l);
+    glLineWidth(l);
 }
 
-void gore::primitiverenderer::linearBezier(vec2 p1, vec2 p2){
+void gore::primitiverenderer::addLinearBezier(vec2 p1, vec2 p2){
     int subdiv = (int)std::abs(p1.x - p2.x) + (int)std::abs(p1.y - p2.y);
 	float step = 1.0f / (float)subdiv;
 	//passing point or not reaching it, need to re-examine how many subdiv to do
@@ -180,7 +180,13 @@ void gore::primitiverenderer::linearBezier(vec2 p1, vec2 p2){
 		vertexs.push_back({ x, y });
 	}
 }
-void gore::primitiverenderer::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv){
+
+void gore::primitiverenderer::drawLinearBezier(vec2 p1, vec2 p2) {
+    addLinearBezier(p1, p2);
+    drawBufferLine();
+}
+
+void gore::primitiverenderer::addQuadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv){
     float step = 1.0f / subdiv;
 	float lx = 0, ly = 0;
 	for (int i = 0; i <= subdiv; i++) {
@@ -196,7 +202,13 @@ void gore::primitiverenderer::quadraticBezier(vec2 p1, vec2 p2, vec2 p3, int sub
 		ly = y;
 	}
 }
-void gore::primitiverenderer::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv){
+
+void gore::primitiverenderer::drawQuadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv) {
+    addQuadraticBezier(p1, p2, p3, subdiv);
+    drawBufferLine();
+}
+
+void gore::primitiverenderer::addCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv){
     float step = 1.0f / subdiv;
 	float lx = 0, ly = 0;
 	for (int i = 0; i <= subdiv; i++) {
@@ -212,15 +224,36 @@ void gore::primitiverenderer::cubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, in
 		ly = y;
 	}
 }
-void gore::primitiverenderer::circle(vec2 p, float r){
-    float x1, y1;
-	for (float ang = 0; ang < 360; ang += 0.5f) {
-		x1 = float(r * cos(ang * M_PI / 180) + p.x);
-		y1 = float(r * sin(ang * M_PI / 180) + p.y);
+void gore::primitiverenderer::drawCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv) {
+    addCubicBezier(p1, p2, p3, p4, subdiv);
+    drawBufferLine();
+}
+void gore::primitiverenderer::addCircleFilled(vec2 p, float r){
+    float step = 2.0f * M_PI / 720.0f;
+    for (float ang = 0; ang < 2.0f * M_PI; ang += step) {
+        vertexs.push_back(p);
+        vertexs.push_back({p.x + r * cosf(ang), p.y + r * sinf(ang)});
+        vertexs.push_back({p.x + r * cosf(ang + step), p.y + r * sinf(ang + step)});
+    }
+}
 
-		vertexs.push_back({ x1, y1 });
-		vertexs.push_back({ p.x, p.y });
-	}
+void gore::primitiverenderer::drawCircleFilled(vec2 p, float r){
+    addCircleFilled(p, r);
+    drawBufferTriangle();
+}
+
+void gore::primitiverenderer::addCircleOutline(vec2 p, float r, uint32_t segments) {
+    float step = 2.0f * M_PI / segments;
+    for (size_t i = 0; i < segments; i++) {
+        float a0 = i * (float)step;
+        float a1 = (i + 1) * (float)step;
+        addLine({p.x + r * std::cosf(a0), p.y + r * sinf(a0)}, {p.x + r * std::cosf(a1), p.y + r * std::sinf(a1)});
+    }
+}
+
+void gore::primitiverenderer::drawCircleOutline(vec2 p, float r, uint32_t segments) {
+    addCircleOutline(p, r, segments);
+    drawBufferLine();
 }
 
 gore::primitiverenderer::primitiverenderer(GLuint sw, GLuint sh) {
