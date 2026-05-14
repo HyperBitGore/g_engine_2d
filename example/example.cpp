@@ -361,6 +361,8 @@ int main() {
 	std::cout << nthBit(10, 1) << "\n";
 	double d = 0;
 	double dd = 0;
+	eng2.toggleFrameLimitActive();
+	eng2.setFrameLimit(600);
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();
 		eng2.updateInputState();

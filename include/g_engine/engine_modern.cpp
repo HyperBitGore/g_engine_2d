@@ -3,6 +3,7 @@
 #include <GL/gl.h>
 #include <chrono>
 #include <cstdint>
+#include <thread>
 
 bool gore::g_engine_2d::getKeyDown(uint32_t key) {
 	return in->GetKeyDown(key);
@@ -112,6 +113,22 @@ bool gore::g_engine_2d::updateWindow() {
 	delta = dt.count();
 	delta_f += dt.count();
 	frames++;
+	// this is apparently how UE5 and unity do it
+	if (limitframes) {
+		double remainder = frame_time_limit - delta;
+		if (remainder > 0.0) {
+			constexpr double spin_threshold_ms = 4.0;
+			// we sleep for a bit, but this is inaccurate so only sleep for portion and active wait for remainder
+			if (remainder > spin_threshold_ms) {
+				std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(remainder - spin_threshold_ms));
+			}
+			auto spin_target = end_time + std::chrono::duration<double, std::milli>(remainder);
+			while (std::chrono::steady_clock::now() < spin_target) {}
+			std::chrono::duration<double, std::milli> actual_dt = std::chrono::steady_clock::now() - begin_time;
+			delta = actual_dt.count();
+			delta_f += actual_dt.count() - dt.count();
+		}
+	}
 	return true;
 }
 

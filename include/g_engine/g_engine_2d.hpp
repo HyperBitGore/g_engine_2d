@@ -37,7 +37,7 @@ private:
 
 	//delta time
 	std::chrono::duration<std::chrono::milliseconds::period> last_time;
-	long long frames = 0;
+	unsigned long long frames = 0;
 	double delta = 0;
 	double delta_f = 0;
 	double frameRate = 30;
