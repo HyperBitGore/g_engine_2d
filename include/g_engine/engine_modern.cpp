@@ -1,6 +1,7 @@
 #include "g_engine_2d.hpp"
 #include "gl_defines.hpp"
 #include <GL/gl.h>
+#include <chrono>
 #include <cstdint>
 
 bool gore::g_engine_2d::getKeyDown(uint32_t key) {
@@ -55,31 +56,30 @@ gore::vec2 gore::g_engine_2d::getMousePos() {
 
 //returns the frame time in seconds
 double gore::g_engine_2d::getDelta() {
-	clock_t d = delta;
-	delta = 0;
-	return d / (double)CLOCKS_PER_SEC;
+	return delta / 1000.0;
 }
 //returns number of frames in a second and the average frame time in milliseconds, every second. 
 std::pair<double, double> gore::g_engine_2d::getFrames() {
-	if (clockToMilliseconds(delta_f) > 1000.0) { //every second
+	if (delta_f > 1000.0) { //every second
 		frameRate = (double)frames * 0.5 + frameRate * 0.5; //more stable
 		frames = 0;
-		delta_f -= CLOCKS_PER_SEC;
+		delta_f -= 1000.0;
 		averageFrameTimeMilliseconds = 1000.0 / (frameRate == 0 ? 0.001 : frameRate);
 		return { frameRate, averageFrameTimeMilliseconds };
 	}
 	return { frameRate, averageFrameTimeMilliseconds };
 }
+// https://medium.com/@tglaiel/how-to-make-your-game-run-at-60fps-24c61210fe75
 
 //utility type functions
 bool gore::g_engine_2d::updateWindow() {
+	auto begin_time = std::chrono::steady_clock::now();
 	wind->updateWindow();
 	if (!wind->ProcessMessage()) {
 		logger->log("Closing window");
 		delete wind;
 		return false;
 	}
-	begin_f = clock();
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	glClear(GL_COLOR_BUFFER_BIT);
 	// this will probably compile more efficiently than two ifs
@@ -107,9 +107,10 @@ bool gore::g_engine_2d::updateWindow() {
 		FatalError("Failed to swap OpenGL buffers!");
 		return false;
 	}
-	end_f = clock();
-	delta = end_f - begin_f;
-	delta_f += end_f - begin_f;
+	auto end_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double, std::milli> dt = end_time - begin_time;
+	delta = dt.count();
+	delta_f += dt.count();
 	frames++;
 	return true;
 }
@@ -190,4 +191,12 @@ void gore::g_engine_2d::updateView (float camera_x, float camera_y, float zoom) 
 	if (font_renderer) {
 		font_renderer->updateView(camera_x, camera_y, zoom);
 	}
+}
+
+void gore::g_engine_2d::toggleFrameLimitActive () {
+	this->limitframes = !this->limitframes;
+}
+void gore::g_engine_2d::setFrameLimit (uint32_t fps) {
+	this->fps = fps;
+	this->frame_time_limit = 1000.0f / this->fps;
 }

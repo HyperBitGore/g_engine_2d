@@ -2,6 +2,7 @@
 #include "rendering/font_renderer.hpp"
 #include "rendering/image_renderer.hpp"
 #include "rendering/primitive_renderer.hpp"
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include "util/logging.hpp"
@@ -10,6 +11,10 @@
 #define FONT_COMPONENT 0x4
 #define GRAYSCALE_COMPONENT 0x8
 #define MAINTAIN_ASPECT_RATIO_COMPONENT 0x10
+
+// add frame limiting
+// add casting mouse pointer coords into viewspace
+// add optimized image renderer
 
 //add 3d support
 //add 3d line rendering
@@ -31,17 +36,12 @@ private:
 	gore::vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	//delta time
-	clock_t delta = 0;
-	clock_t delta_f = 0;
-	clock_t begin_f;
-	clock_t end_f;
-	size_t frames = 0;
+	std::chrono::duration<std::chrono::milliseconds::period> last_time;
+	long long frames = 0;
+	double delta = 0;
+	double delta_f = 0;
 	double frameRate = 30;
 	double averageFrameTimeMilliseconds = 33.333;
-	double clockToMilliseconds(clock_t ticks) {
-		// units/(units/time) => time (seconds) * 1000 = milliseconds
-		return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
-	}
 	// rendering
 	int texture_units;
 	uint32_t maintainRendererViewport = PRIMITIVE_COMPONENT | IMAGE_COMPONENT | FONT_COMPONENT | GRAYSCALE_COMPONENT;
@@ -52,6 +52,11 @@ private:
 	uint32_t target_height;
 	uint32_t window_width;
 	uint32_t window_height;
+	// frame rate related
+	bool limitframes = false;
+	float fps = 60.0f;
+	float frame_time_limit = 0.16f;
+	float accumlator = 0.0f;
 	//function loading
 	//only run this after gl initilized
 	void loadFunctions();
@@ -116,7 +121,8 @@ public:
 		XCloseDisplay(display);
 		#endif
 	}
-
+	void toggleFrameLimitActive ();
+	void setFrameLimit (uint32_t fps);
 	//sets renderfunction
 	void setRenderFunction(std::function<void()> func) {
 		renderFund = func;
