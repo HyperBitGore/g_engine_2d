@@ -1,5 +1,6 @@
 #include "g_engine_2d.hpp"
 #include "gl_defines.hpp"
+#include "util/matrix.hpp"
 #include <GL/gl.h>
 #include <chrono>
 #include <cstdint>
@@ -51,6 +52,12 @@ gore::vec2 gore::g_engine_2d::getMousePos() {
 		float ppy = (float)p.y / window_height;
 		ppy = ppy * target_height;
 		p.y = ppy;
+	}
+	if (component_mask & USE_VIEW_MATRICE) {
+		gore::matrix inverseView = view.inverse();
+    	gore::vec4 point = inverseView * gore::vec4(p.x, p.y, 1.0, 1.0);
+		p.x = point.x;
+		p.y = point.y;
 	}
 	return p;
 }
@@ -174,6 +181,7 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 				font_renderer->setDimensions(w, h);
 			}
 		}
+		this->ortho = gore::matrix::calculateOrtho(w, h, this->window_width, this->window_height);
 		this->window_width = w;
 		this->window_height = h;
 		if (func) {
@@ -196,17 +204,20 @@ void gore::g_engine_2d::setWindowTitle (std::string title) {
 }
 
 void gore::g_engine_2d::updateView (float camera_x, float camera_y, float zoom) {
-	if (img_r) {
-		img_r->updateView(camera_x, camera_y, zoom);
-	}
-	if (gray_r) {
-		gray_r->updateView(camera_x, camera_y, zoom);
-	}
-	if (prim_r) {
-		prim_r->updateView(camera_x, camera_y, zoom);
-	}
-	if (font_renderer) {
-		font_renderer->updateView(camera_x, camera_y, zoom);
+	if (component_mask & USE_VIEW_MATRICE) {
+		if (img_r) {
+			img_r->updateView(camera_x, camera_y, zoom);
+		}
+		if (gray_r) {
+			gray_r->updateView(camera_x, camera_y, zoom);
+		}
+		if (prim_r) {
+			prim_r->updateView(camera_x, camera_y, zoom);
+		}
+		if (font_renderer) {
+			font_renderer->updateView(camera_x, camera_y, zoom);
+		}
+		this->view = gore::matrix::calculate2DView(camera_x, camera_y, zoom);
 	}
 }
 

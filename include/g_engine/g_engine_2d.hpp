@@ -6,11 +6,15 @@
 #include <cstdint>
 #include <memory>
 #include "util/logging.hpp"
+#include "util/matrix.hpp"
 #define PRIMITIVE_COMPONENT 0x1
 #define IMAGE_COMPONENT 0x2
 #define FONT_COMPONENT 0x4
 #define GRAYSCALE_COMPONENT 0x8
 #define MAINTAIN_ASPECT_RATIO_COMPONENT 0x10
+#define USE_VIEW_MATRICE 0x20
+
+#define ALL_COMPONENTS PRIMITIVE_COMPONENT | IMAGE_COMPONENT | FONT_COMPONENT | GRAYSCALE_COMPONENT | MAINTAIN_ASPECT_RATIO_COMPONENT | USE_VIEW_MATRICE
 
 // add frame limiting
 // add casting mouse pointer coords into viewspace
@@ -64,6 +68,9 @@ private:
 	Display* display;
 	GLXContext ctx;
 	#endif
+	// matrices
+	gore::matrix view = gore::matrix(4, 4);
+	gore::matrix ortho = gore::matrix(4, 4);
 public:
 	// rendering backends
 	std::unique_ptr<primitiverenderer> prim_r = nullptr;
@@ -93,6 +100,8 @@ public:
 		this->display = o.display;
 		this->ctx = o.ctx;
 		#endif
+		this->view = o.view;
+		this->ortho = o.ortho;
 	}
 	//copy constructor, probably not accurate to what behavior we would want out of a copy constructor
 	g_engine_2d(const g_engine_2d& o) {
@@ -113,6 +122,8 @@ public:
 		this->display = o.display;
 		this->ctx = o.ctx;
 		#endif
+		this->view = o.view;
+		this->ortho = o.ortho;
 	}
 	~g_engine_2d () {
 		#if defined (__unix__)

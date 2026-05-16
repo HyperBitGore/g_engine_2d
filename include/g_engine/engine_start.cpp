@@ -264,4 +264,6 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);
 	#endif
+	this->view = gore::matrix::calculate2DView(0, 0, 1.0f);
+	this->ortho = gore::matrix::calculateOrtho(width, height, width, height);
 }

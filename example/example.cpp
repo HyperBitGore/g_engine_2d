@@ -7,7 +7,7 @@
 
 uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
-gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT, gore::LogType::BOTH);
+gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT | USE_VIEW_MATRICE, gore::LogType::BOTH);
 gore::drawpass dr(640, 480, GL_COLOR_ATTACHMENT0);
 gore::audioplayer ap(4, gore::LogType::BOTH);
 gore::audio aud;
@@ -39,6 +39,7 @@ bool dir2 = false;
 double timer = 0;
 double s_cool = 0;
 bool play_it = true;
+float zoom = 0.0;
 
 //bezier testing
 gore::vec2 bez_m = { 120.0f, 130.0f };
@@ -153,6 +154,13 @@ void renderFunction() {
 			play_it = true;
 			
 		}
+	}
+	if (eng2.getKeyDown(g_x)) {
+		zoom -= 0.01;
+		eng2.updateView(0, 0, zoom);
+	} else if (eng2.getKeyDown(g_z)) {
+		zoom += 0.01;
+		eng2.updateView(0, 0, zoom);
 	}
 	dr.bind();
 	eng2.prim_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
