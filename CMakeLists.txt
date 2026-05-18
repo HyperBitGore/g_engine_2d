@@ -10,22 +10,71 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(g_engine include/g_engine/g_engine_2d.hpp include/g_engine/audio/audio_player.cpp include/g_engine/engine_modern.cpp include/g_engine/engine_start.cpp include/g_engine/rendering/font_renderer.cpp 
-include/g_engine/function_loader.cpp include/g_engine/gl_defines.hpp include/g_engine/util/hashmap.hpp include/g_engine/img_loading/image_loader.cpp include/g_engine/input.cpp include/g_engine/util/matrix.cpp include/g_engine/util/matrix.hpp include/g_engine/util/shader.cpp include/g_engine/window.cpp example/example.cpp include/g_engine/audio/audio.hpp include/g_engine/backend.hpp include/g_engine/util/vector.cpp 
-include/g_engine/util/vector.hpp include/g_engine/rendering/primitive_renderer.cpp include/g_engine/rendering/primitive_renderer_shader.hpp include/g_engine/rendering/image_renderer.cpp include/g_engine/img_loading/image_atlas.cpp include/g_engine/img_loading/bmp_loader.cpp include/g_engine/util/shader.hpp include/g_engine/img_loading/image_loader.hpp include/g_engine/rendering/image_renderer.hpp
-include/g_engine/rendering/image_renderer_shader.hpp
-include/g_engine/rendering/primitive_renderer.hpp include/g_engine/rendering/font_renderer.hpp include/g_engine/file_loading/font_loader.cpp include/g_engine/file_loading/font_loader.hpp include/g_engine/img_loading/png_loader.cpp
-include/g_engine/img_loading/common.hpp include/g_engine/img_loading/inflate.hpp include/g_engine/file_loading/file_reader.hpp include/g_engine/file_loading/file_reader.cpp
-include/g_engine/util/logging.hpp
+set(ENGINE_SOURCES
+    include/g_engine/g_engine_2d.hpp
+    include/g_engine/audio/audio_player.cpp
+    include/g_engine/engine_modern.cpp
+    include/g_engine/engine_start.cpp
+    include/g_engine/rendering/font_renderer.cpp
+    include/g_engine/function_loader.cpp
+    include/g_engine/gl_defines.hpp
+    include/g_engine/util/hashmap.hpp
+    include/g_engine/img_loading/image_loader.cpp
+    include/g_engine/input.cpp
+    include/g_engine/util/matrix.cpp
+    include/g_engine/util/matrix.hpp
+    include/g_engine/util/shader.cpp
+    include/g_engine/window.cpp
+    include/g_engine/audio/audio.hpp
+    include/g_engine/backend.hpp
+    include/g_engine/util/vector.cpp
+    include/g_engine/util/vector.hpp
+    include/g_engine/rendering/primitive_renderer.cpp
+    include/g_engine/rendering/primitive_renderer_shader.hpp
+    include/g_engine/rendering/image_renderer.cpp
+    include/g_engine/img_loading/image_atlas.cpp
+    include/g_engine/img_loading/bmp_loader.cpp
+    include/g_engine/util/shader.hpp
+    include/g_engine/img_loading/image_loader.hpp
+    include/g_engine/rendering/image_renderer.hpp
+    include/g_engine/rendering/image_renderer_shader.hpp
+    include/g_engine/rendering/primitive_renderer.hpp
+    include/g_engine/rendering/font_renderer.hpp
+    include/g_engine/file_loading/font_loader.cpp
+    include/g_engine/file_loading/font_loader.hpp
+    include/g_engine/img_loading/png_loader.cpp
+    include/g_engine/img_loading/common.hpp
+    include/g_engine/img_loading/inflate.hpp
+    include/g_engine/file_loading/file_reader.hpp
+    include/g_engine/file_loading/file_reader.cpp
+    include/g_engine/util/logging.hpp
 )
+
+add_executable(g_engine ${ENGINE_SOURCES} example/example.cpp)
+
+# Tests
+add_executable(test_audio
+    include/g_engine/audio/audio_player.cpp
+    include/g_engine/audio/audio.hpp
+    include/g_engine/util/logging.hpp
+    tests/audio.cpp
+)
+add_executable(test_images      ${ENGINE_SOURCES} tests/images.cpp)
+add_executable(test_primitives  ${ENGINE_SOURCES} tests/primitives.cpp)
+add_executable(test_text        ${ENGINE_SOURCES} tests/text.cpp)
+add_executable(test_frame_limit ${ENGINE_SOURCES} tests/frame_limit.cpp)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit)
+
 if(WIN32)
-#SET(LINK_LIBRARY gdi32 user32 opengl32 ole32)
-target_link_libraries(g_engine gdi32 user32 opengl32 ole32)
-target_compile_options(g_engine PRIVATE /utf-8)
+foreach(tgt ${VISUAL_TARGETS})
+    target_link_libraries(${tgt} gdi32 user32 opengl32 ole32)
+    target_compile_options(${tgt} PRIVATE /utf-8)
+endforeach()
+target_link_libraries(test_audio ole32)
 endif(WIN32)
 if(UNIX)
 find_package(X11 REQUIRED)
@@ -38,8 +87,13 @@ message(STATUS "X11_Xkblib_LIB: ${X11_Xkb_INCLUDE_PATH}")
 if (NOT X11_Xkb_FOUND)
     message(FATAL_ERROR "XKB extension not found")
 endif()
-target_include_directories(g_engine PRIVATE ${X11_INCLUDE_DIR} ${X11_Xkb_INCLUDE_PATH})
-target_link_libraries(g_engine OpenGL::GL dl X11::X11 X11::Xkb ALSA::ALSA)
+foreach(tgt ${VISUAL_TARGETS})
+    target_include_directories(${tgt} PRIVATE ${X11_INCLUDE_DIR} ${X11_Xkb_INCLUDE_PATH})
+    target_link_libraries(${tgt} OpenGL::GL dl X11::X11 X11::Xkb ALSA::ALSA)
+endforeach()
+target_link_libraries(test_audio ALSA::ALSA)
 endif(UNIX)
 
-target_include_directories(g_engine PUBLIC include/GL)
+foreach(tgt ${VISUAL_TARGETS})
+    target_include_directories(${tgt} PUBLIC include/GL)
+endforeach()

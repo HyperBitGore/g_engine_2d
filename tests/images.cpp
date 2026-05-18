@@ -1,0 +1,77 @@
+// Image test: loads PNG and BMP images, draws them static, rotated, and
+// UV-cropped. Press 1-4 to toggle which image is in focus. Esc to quit.
+#include "../include/g_engine/g_engine_2d.hpp"
+#include "../include/g_engine/img_loading/image_loader.hpp"
+#include <cmath>
+#include <string>
+
+static const uint32_t W = 800;
+static const uint32_t H = 600;
+
+gore::g_engine_2d eng("Image Test", W, H, IMAGE_COMPONENT | GRAYSCALE_COMPONENT, gore::LogType::NONE);
+
+static gore::IMG img_png;
+static gore::IMG img_bmp;
+static gore::IMG img_gray;
+static gore::IMG img_blank;
+
+static float angle   = 0.0f;
+static double cooldown = 0.0;
+static int focused = 0; // which image is highlighted
+
+static const char* labels[] = {
+    "1: PNG (Bliss)",
+    "2: BMP (Bliss)",
+    "3: Grayscale PNG",
+    "4: Programmatic blank",
+};
+
+void render() {
+    eng.enable(GL_BLEND);
+
+    // static PNG
+    eng.img_r->drawImage(img_png,  {20.0f,  20.0f},  {180.0f, 135.0f});
+    // rotating BMP
+    eng.img_r->drawImageRotated(img_bmp, {300.0f, 20.0f},  {180.0f, 135.0f}, angle);
+    // grayscale PNG
+    eng.gray_r->drawImage(img_gray, {560.0f, 20.0f},  {180.0f, 135.0f});
+    // blank programmatic image (red gradient drawn at startup)
+    eng.img_r->drawImage(img_blank, {20.0f, 200.0f}, {180.0f, 180.0f});
+    // UV crop (top-left quarter of the PNG)
+    eng.img_r->drawImage(img_png, {240.0f, 200.0f}, {180.0f, 135.0f}, {0.0f, 0.0f, 0.5f, 0.5f});
+
+    eng.disable(GL_BLEND);
+}
+
+int main() {
+    img_png   = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
+    img_bmp   = gore::imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
+    img_gray  = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale16.png");
+
+    // programmatic blank — fill with a red-to-blue horizontal gradient
+    img_blank = gore::imageloader::createBlank(64, 64, 4);
+    for (int y = 0; y < 64; y++) {
+        for (int x = 0; x < 64; x++) {
+            uint8_t r = (uint8_t)(x * 4);
+            uint8_t b = (uint8_t)(255 - x * 4);
+            gore::imageloader::setPixel(img_blank, x, y, r, 0, b, 255);
+        }
+    }
+    gore::imageloader::createTexture(img_blank, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+    gore::imageloader::updateIMG(img_blank);
+
+    eng.setRenderFunction(render);
+
+    while (eng.updateWindow()) {
+        double dt = eng.getDelta();
+        eng.updateInputState();
+        cooldown += dt;
+
+        angle += (float)(dt * 1.2f);
+        if (angle > 2.0f * (float)M_PI) angle -= 2.0f * (float)M_PI;
+
+        if (cooldown >= 0.25 && eng.getKeyReleased(g_Escape)) break;
+    }
+
+    return 0;
+}
