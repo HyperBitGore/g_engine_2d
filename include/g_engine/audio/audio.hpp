@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <fstream>
+#include <atomic>
 #include "../util/logging.hpp"
 #if defined (_WIN32)
 #include <Windows.h>
@@ -184,7 +185,7 @@ private:
 
 	std::thread rend_thread;
 	std::mutex mtx;
-	bool run = true;
+	std::atomic<bool> run = std::atomic<bool>(true);
 	void _RenderThread();
 	std::shared_ptr<logger> logger;
 public:

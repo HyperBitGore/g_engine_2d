@@ -1,5 +1,6 @@
 #include "audio.hpp"
 #include <algorithm>
+#include <alsa/asoundlib.h>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -144,8 +145,7 @@ void gore::audioplayer::pause(size_t stream) {
 }
 
 void gore::audioplayer::end() {
-    std::lock_guard<std::mutex> guard(mtx);
-    run = false;
+    this->run.store(false);
 }
 
 float sgn(float x) {
@@ -204,7 +204,7 @@ gore::audio gore::audioplayer::generateSawtooth(size_t length, float freq, size_
 }
 
 void gore::audioplayer::_RenderThread() {
-    while (run) {
+    while (this->run.load()) {
         std::lock_guard<std::mutex> guard(mtx);
         for (auto& i : sound_files) {
             streams[i.stream]->playFile(i.aud);
@@ -250,8 +250,8 @@ gore::audioplayer::audioplayer(size_t n_streams, LogType loglevel) {
 }
 
 gore::audioplayer::~audioplayer() {
+    this->run.store(false);
     rend_thread.join();
-    run = false;
     for (size_t i = 0; i < streams.size(); i++) {
         audiostream* as = streams[i];
         streams.erase(streams.begin() + i);
@@ -354,6 +354,15 @@ void gore::audiostream::playStream() {
         #endif
     }
 }
+
+#if defined(__unix__)
+int initiateDevice (snd_pcm_t **pcm_handle) {
+    int err = snd_pcm_open(pcm_handle, "pulse", SND_PCM_STREAM_PLAYBACK, 0);
+    // fallback to default if pulse is unavailable, default alsa device captures exclusive access to the device, so this is bad usually
+    if ( err < 0 ) { err = snd_pcm_open(pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0); }
+    return err;
+}
+#endif
 
 gore::audiostream::audiostream() {
     #if defined(_WIN32)
@@ -460,7 +469,7 @@ gore::audiostream::audiostream() {
     client->Start();
     #endif
     #if defined(__unix__)
-    int err = snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+    int err = initiateDevice(&this->pcm_handle);
     if (err < 0) {
         logger->log("Failed to open alsa device");
         return;

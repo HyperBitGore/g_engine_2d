@@ -318,7 +318,7 @@ int main() {
 	s_test2 = ap.generateSquare(300, 200.0f, 44100);
 	s_test3 = ap.generateTriangle(300, 200.0f, 44100);
 	s_test4 = ap.generateSawtooth(300, 200.0f, 44100);
-	//ap.playFile("resources/dungeonsynth5.wav", 1);
+	ap.playFile("resources/dungeonsynth5.wav", 1);
 	for (size_t i = 0; i < 100; i++) {
 		//ap.playFile(s_test3, 3);
 	}
