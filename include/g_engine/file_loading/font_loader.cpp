@@ -83,12 +83,7 @@ std::u16string gore::fontloader::convertToU16String (std::string str) {
 	std::u16string wide_str;
 	for (size_t i = 0; i < str.size(); i++) {
 		uint8_t c = str[i];
-		if (c <= 127) {
-			wide_str.push_back(str[i]);
-		} else {
-			throw std::runtime_error("Non-ASCII character encountered");
-			
-		}
+		wide_str.push_back(str[i]);
 	}
 
 	return wide_str;

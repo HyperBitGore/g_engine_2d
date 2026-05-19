@@ -17,23 +17,25 @@ static double second_acc = 0.0;
 static double cooldown = 0.0;
 static std::pair<double,double> last_frames = {0, 0};
 static std::string status_msg = "60 fps limit active";
+static gore::font f_mono;
 
 void render() {
     eng.font_renderer->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    eng.font_renderer->drawText(status_msg, nullptr, 20.0f, H - 40.0f, 16, eng.getDPI());
+    eng.font_renderer->drawText(status_msg, &f_mono, 20.0f, H - 40.0f, 16, eng.getDPI());
 
     std::string fps_str = "FPS: " + std::to_string((int)last_frames.first)
                         + "  avg: " + std::to_string(last_frames.second).substr(0, 5) + " ms";
-    eng.font_renderer->drawText(fps_str, nullptr, 20.0f, H - 70.0f, 16, eng.getDPI());
+    eng.font_renderer->drawText(fps_str, &f_mono, 20.0f, H - 70.0f, 16, eng.getDPI());
 
     eng.font_renderer->setColor({0.6f, 0.6f, 0.6f, 1.0f});
-    eng.font_renderer->drawText("1=30fps  2=60fps  3=120fps  Esc=quit", nullptr, 20.0f, 20.0f, 14, eng.getDPI());
+    eng.font_renderer->drawText("1=30fps  2=60fps  3=120fps  Esc=quit", &f_mono, 20.0f, 20.0f, 14, eng.getDPI());
 }
 
 int main() {
     eng.setRenderFunction(render);
     eng.toggleFrameLimitActive();
     eng.setFrameLimit(60);
+    f_mono = gore::fontloader::loadFont("resources/EnvyCodeR.ttf", 0, 735);
 
     while (eng.updateWindow()) {
         double dt = eng.getDelta();
