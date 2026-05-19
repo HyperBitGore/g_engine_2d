@@ -16,6 +16,7 @@ protected:
 		float rot;
 		float rotx;
 		float roty;
+		uint32_t texture_unit;
 	};
 	std::vector<ivertex> vertexs;
 	shader shader;
@@ -23,18 +24,26 @@ protected:
 	GLuint vertex_buffer;
 	GLuint allocated;
 	uint32_t width, height;
+	int32_t texture_units;
 	imagerenderer () {
-
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+		texture_unit_map.setHashFunction(hash);
 	}
+	uint32_t current_unit = 0;
+	static int hash(GLuint texture) {
+		return texture % 512;
+	}
+	gore::hashmap<GLuint, GLuint> texture_unit_map;
+	uint32_t getTextureUnit (GLuint texture);
+	void setTextureSamplers ();
 public:
 	imagerenderer(size_t w, size_t h);
 	// copy
 	imagerenderer(const imagerenderer& img);
-	void addImageVertex(gore::vec2 pos, gore::vec2 dimensions);
-	void addImageVertex(gore::vec2 pos, gore::vec2 dimensions, float rot);
-	void addImageVertex(gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
-	void drawBuffer(gore::IMG img);
-	void drawBuffer(GLuint texture);
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
+	void drawBuffer();
 	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions);
 	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawImageRotated(gore::IMG img,gore::vec2 pos, gore::vec2 dimensions, float rot);

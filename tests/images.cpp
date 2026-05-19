@@ -1,8 +1,9 @@
 // Image test: loads PNG and BMP images, draws them static, rotated, and
 // UV-cropped. Press 1-4 to toggle which image is in focus. Esc to quit.
+// Bottom row tests multi-texture unit batch rendering: three textures are
+// queued with addImageVertex then flushed in a single drawBuffer() call.
 #include "../include/g_engine/g_engine_2d.hpp"
 #include "../include/g_engine/img_loading/image_loader.hpp"
-#include <cmath>
 #include <string>
 
 static const uint32_t W = 800;
@@ -39,6 +40,13 @@ void render() {
     eng.img_r->drawImage(img_blank, {20.0f, 200.0f}, {180.0f, 180.0f});
     // UV crop (top-left quarter of the PNG)
     eng.img_r->drawImage(img_png, {240.0f, 200.0f}, {180.0f, 135.0f}, {0.0f, 0.0f, 0.5f, 0.5f});
+
+    // multi-texture unit batch: PNG, BMP, and blank queued together, flushed
+    // in a single drawBuffer() call to exercise the texture unit map
+    eng.img_r->addImageVertex(img_png->tex,   {20.0f,  400.0f}, {180.0f, 135.0f});
+    eng.img_r->addImageVertex(img_bmp->tex,   {220.0f, 400.0f}, {180.0f, 135.0f});
+    eng.img_r->addImageVertex(img_blank->tex, {420.0f, 400.0f}, {100.0f, 100.0f});
+    eng.img_r->drawBuffer();
 
     eng.disable(GL_BLEND);
 }

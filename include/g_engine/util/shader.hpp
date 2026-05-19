@@ -64,6 +64,8 @@ private:
 		}
 		return total % 30;
 	}
+	// procedural function generation
+	static std::string textureUnitSub (std::string shader_code);
 public:
 	shader() {
 		program = 0;

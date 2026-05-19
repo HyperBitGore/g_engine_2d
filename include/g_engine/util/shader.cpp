@@ -1,6 +1,7 @@
 #include "shader.hpp"
 #include <fstream>
 #include <sstream>
+#include <string>
 
 void gore::shader::bind() {
 	glUseProgram(program);
@@ -457,6 +458,9 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei count, const 
 }
 
 void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
+	// precompile pass, for our custom shader extensions
+	std::string vertex_string = textureUnitSub(vertex_file);
+	std::string fragment_string = textureUnitSub(fragment_file);
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -466,7 +470,7 @@ void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
 
 	// Compile Vertex Shader
 	std::cout << "Compiling vertex shader" << std::endl;
-	char const* VertexSourcePointer = vertex_file;
+	char const* VertexSourcePointer = vertex_string.c_str();
 	glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
 	glCompileShader(VertexShaderID);
 
@@ -482,7 +486,7 @@ void gore::shader::compile(const char* vertex_file, const char* fragment_file) {
 
 	// Compile Fragment Shader
 	std::cout << "Compiling fragment shader" << std::endl;;
-	char const* FragmentSourcePointer = fragment_file;
+	char const* FragmentSourcePointer = fragment_string.c_str();
 	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
 	glCompileShader(FragmentShaderID);
 
@@ -540,8 +544,10 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 	int InfoLogLength;
 
 	// Compile Vertex Shader
+	std::string vertex_string = textureUnitSub(vertex_file);
+	std::string fragment_string = textureUnitSub(fragment_file);
 	std::cout << "Compiling vertex shader " << vert_path << std::endl;
-	char const* VertexSourcePointer = vertex_file;
+	char const* VertexSourcePointer = vertex_string.c_str();
 	glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
 	glCompileShader(VertexShaderID);
 
@@ -557,7 +563,7 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 
 	// Compile Fragment Shader
 	std::cout << "Compiling fragment shader " << frag_path << std::endl;;
-	char const* FragmentSourcePointer = fragment_file;
+	char const* FragmentSourcePointer = fragment_string.c_str();
 	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
 	glCompileShader(FragmentShaderID);
 
@@ -621,4 +627,16 @@ void gore::shader::setbufferdata(void* data, GLsizei size, GLenum use){
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(buffer_target, size, this->data, use);
+}
+// subs out TEXTURE_UNIT in shader code with texture units on system
+std::string gore::shader::textureUnitSub (std::string shader_code) {
+	int32_t texture_units;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+	size_t index = shader_code.find("TEXTURE_UNIT");
+	if (index != std::string::npos) {
+		std::string tex_string = std::to_string(texture_units);
+		shader_code.replace(index, 12, tex_string);
+	}
+
+	return shader_code;
 }

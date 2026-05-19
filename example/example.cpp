@@ -211,10 +211,10 @@ void renderFunction() {
 	eng2.gray_r->drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
 	eng2.gray_r->setWithAlpha(false);
 	gore::vec4 pos = atlas.getImagePos("atlas_test", true);
-	eng2.img_r->addImageVertex({100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
+	eng2.img_r->addImageVertex(atlas.getImg()->tex, {100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
 	pos = atlas.getImagePos("enem2", true);
-	eng2.img_r->addImageVertex({60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
-	eng2.img_r->drawBuffer(atlas.getImg());
+	eng2.img_r->addImageVertex(atlas.getImg()->tex, {60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
+	eng2.img_r->drawBuffer();
 	// img_r.drawImage(imgtest, {0.0f, 0.0f}, {300.0f, 300.0f});
 	// img_r.drawImage(imgtest_bmp, {300.0f, 0.0f}, {300.0f, 300.0f});
 	eng2.disable(GL_BLEND);

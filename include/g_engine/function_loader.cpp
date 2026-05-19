@@ -42,6 +42,7 @@ PFNGLSHADERSOURCEPROC glShaderSource;
 PFNGLGETSHADERIVPROC glGetShaderiv;
 PFNGLUSEPROGRAMPROC glUseProgram;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer;
 PFNGLUNIFORM1IPROC glUniform1i;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
 PFNGLISSHADERPROC glIsShader;
@@ -142,6 +143,7 @@ void gore::g_engine_2d::loadFunctions() {
 	glGetShaderiv = (PFNGLGETSHADERIVPROC)GetGLFuncAddress("glGetShaderiv");
 	glUseProgram = (PFNGLUSEPROGRAMPROC)GetGLFuncAddress("glUseProgram");
 	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)GetGLFuncAddress("glVertexAttribPointer");
+	glVertexAttribIPointer = (PFNGLVERTEXATTRIBIPOINTERPROC)GetGLFuncAddress("glVertexAttribIPointer");
 	glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)GetGLFuncAddress("glGetUniformLocation");
 	glIsShader = (PFNGLISSHADERPROC)GetGLFuncAddress("glIsShader");
 	glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)GetGLFuncAddress("glGetAttribLocation");

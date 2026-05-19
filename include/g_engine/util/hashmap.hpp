@@ -19,7 +19,9 @@ template<typename T, typename G>
 
 		}
 		~hashmap() {
-			//actually need to clean up news here tf
+			clear();
+		}
+		void clear() {
 			for (size_t i = 0; i < buckets.size(); i++) {
 				if (buckets[i] != nullptr) {
 					mapitem<T, G>* cur = buckets[i];

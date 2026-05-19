@@ -145,11 +145,11 @@ void gore::fontraster::drawRasterText(gore::font* Font, imagerenderer* img_r, st
 				float diff = (float)dif * scale_factor;
 				tempy += diff;
 			}
-			img_r->addImageVertex({x1, tempy}, {scale, scale}, uv, 0.0f);
+			img_r->addImageVertex(Font->atlas.getImg()->tex, {x1, tempy}, {scale, scale}, uv, 0.0f);
 		}
 		x1 += adv_pixels;
 	}
-	img_r->drawBuffer(Font->atlas.getImg());
+	img_r->drawBuffer();
 }
 
 void gore::fontraster::drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
