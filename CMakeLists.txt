@@ -63,11 +63,12 @@ add_executable(test_images      ${ENGINE_SOURCES} tests/images.cpp)
 add_executable(test_primitives  ${ENGINE_SOURCES} tests/primitives.cpp)
 add_executable(test_text        ${ENGINE_SOURCES} tests/text.cpp)
 add_executable(test_frame_limit ${ENGINE_SOURCES} tests/frame_limit.cpp)
+add_executable(test_image_stress ${ENGINE_SOURCES} tests/image_render_stress.cpp)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
-set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit)
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress)
 
 if(WIN32)
 foreach(tgt ${VISUAL_TARGETS})
