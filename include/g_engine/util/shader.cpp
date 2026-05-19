@@ -65,6 +65,22 @@ bool gore::shader::setuniform(std::string uni, GLint x, GLint y, GLint z, GLint 
 	glUniform4i(*uf, x, y, z, w);
 	return true;
 }
+
+bool gore::shader::setuniform(std::string uni, GLsizei count, const GLint* values) {
+	GLint* uf = uniform_map.get(uni);
+	this->bind();
+	if (uf == nullptr) {
+		GLint point = glGetUniformLocation(program, uni.c_str());
+		if (point != -1) {
+			glUniform1iv(point, count, values);
+			uniform_map.insert(uni, point);
+		}
+		return false;
+	}
+	glUniform1iv(*uf, count, values);
+	return true;
+}
+
 //unsigned int overloads
 bool gore::shader::setuniform(std::string uni, GLuint n) {
 	GLint* uf = uniform_map.get(uni);

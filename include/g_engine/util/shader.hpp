@@ -3,6 +3,7 @@
 #include "vector.hpp"
 #include "hashmap.hpp"
 #include "matrix.hpp"
+#include <GL/gl.h>
 
 #define pack_rgba(r,g,b,a) (uint32_t)(r<<24|g<<16|b<<8|a)
 #define pack_rgb(r,g,b) (uint32_t)(r<<24|g<<16|b<<8)
@@ -89,6 +90,7 @@ public:
 	bool setuniform(std::string uni, GLint x, GLint y);
 	bool setuniform(std::string uni, GLint x, GLint y, GLint z);
 	bool setuniform(std::string uni, GLint x, GLint y, GLint z, GLint w);
+	bool setuniform(std::string uni, GLsizei count, const GLint* values);
 	//unsigned int overloads
 	bool setuniform(std::string uni, GLuint n);
 	bool setuniform(std::string uni, GLuint x, GLuint y);

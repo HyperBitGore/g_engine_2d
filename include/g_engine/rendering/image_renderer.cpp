@@ -2,13 +2,14 @@
 #include "image_renderer_shader.hpp"
 #include <GL/gl.h>
 
-uint32_t gore::imagerenderer::getTextureUnit (GLuint texture) {
-    uint32_t* unit = texture_unit_map.get(texture);
+GLuint gore::imagerenderer::getTextureUnit (GLuint texture) {
+    GLuint* unit = texture_unit_map.get(texture);
     if (unit == nullptr) {
         uint32_t f_unit = GL_TEXTURE0 + current_unit;
         texture_unit_map.insert(texture, current_unit);
         glActiveTexture(f_unit);
         glBindTexture(GL_TEXTURE_2D, texture);
+        samplers.push_back(current_unit);
         current_unit += 1;
         return current_unit - 1;
         
@@ -18,6 +19,7 @@ uint32_t gore::imagerenderer::getTextureUnit (GLuint texture) {
 
 void gore::imagerenderer::setTextureSamplers () {
     // issue is the setting of uniform mtexture why the indexing doesn't work, fix that here
+    shader.setuniform("mtexture", samplers.size(), samplers.data());
 }
 
 void gore::imagerenderer::addImageVertex(GLuint texture, vec2 pos, vec2 dim){
@@ -29,7 +31,7 @@ void gore::imagerenderer::addImageVertex(GLuint texture, vec2 pos, vec2 dim, flo
 }
 //first two x,y in uv is starting position in image and z, w are width and height for the uvs
 void gore::imagerenderer::addImageVertex(GLuint texture, vec2 pos, vec2 dim, vec4 uvs, float rot){
-    uint32_t unit = getTextureUnit(texture);
+    GLuint unit = getTextureUnit(texture);
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, rot, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,rot, pos.x, pos.y, unit}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y, unit}); //first triangle tip vertex
@@ -41,6 +43,7 @@ void gore::imagerenderer::addImageVertex(GLuint texture, vec2 pos, vec2 dim, vec
 }
 
 void gore::imagerenderer::drawBuffer() {
+    setTextureSamplers();
     shader.bind();
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -55,6 +58,7 @@ void gore::imagerenderer::drawBuffer() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     vertexs.clear();
     texture_unit_map.clear();
+    samplers.clear();
     this->current_unit = 0;
 }
 
@@ -62,7 +66,7 @@ void gore::imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim){
     drawTexture(texture, pos, dim, {0, 0, 1.0, 1.0});
 }
 void gore::imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 uvs){
-    uint32_t unit = getTextureUnit(texture);
+    GLuint unit = getTextureUnit(texture);
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y, unit}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y, unit}); //first triangle tip vertex
@@ -79,7 +83,7 @@ void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim){
 }
 
 void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
-    uint32_t unit = getTextureUnit(img->tex);
+    GLuint unit = getTextureUnit(img->tex);
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y, unit}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, 0.0f, pos.x, pos.y, unit}); //first triangle tip vertex
@@ -92,7 +96,7 @@ void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
 }
 
 void gore::imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim, float rot){
-    uint32_t unit = getTextureUnit(texture);
+    GLuint unit = getTextureUnit(texture);
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y, unit}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, rot, pos.x, pos.y, unit}); //first triangle tip vertex
@@ -105,7 +109,7 @@ void gore::imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim,
 }
 
 void gore::imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
-    uint32_t unit = getTextureUnit(img->tex);
+    GLuint unit = getTextureUnit(img->tex);
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y, unit}); //first triangel top right
     vertexs.push_back({pos.x, pos.y + dim.y, 0.0f, 1.0f, rot, pos.x, pos.y, unit}); //first triangle tip vertex

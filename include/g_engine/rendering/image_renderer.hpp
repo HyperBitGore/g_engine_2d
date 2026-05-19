@@ -16,7 +16,7 @@ protected:
 		float rot;
 		float rotx;
 		float roty;
-		uint32_t texture_unit;
+		GLuint texture_unit;
 	};
 	std::vector<ivertex> vertexs;
 	shader shader;
@@ -34,7 +34,8 @@ protected:
 		return texture % 512;
 	}
 	gore::hashmap<GLuint, GLuint> texture_unit_map;
-	uint32_t getTextureUnit (GLuint texture);
+	std::vector<GLint> samplers;
+	GLuint getTextureUnit (GLuint texture);
 	void setTextureSamplers ();
 public:
 	imagerenderer(size_t w, size_t h);

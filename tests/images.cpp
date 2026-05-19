@@ -1,6 +1,6 @@
 // Image test: loads PNG and BMP images, draws them static, rotated, and
 // UV-cropped. Press 1-4 to toggle which image is in focus. Esc to quit.
-// Bottom row tests multi-texture unit batch rendering: three textures are
+// Bottom row tests multi-texture unit batch rendering: 7 textures are
 // queued with addImageVertex then flushed in a single drawBuffer() call.
 #include "../include/g_engine/g_engine_2d.hpp"
 #include "../include/g_engine/img_loading/image_loader.hpp"
@@ -15,6 +15,9 @@ static gore::IMG img_png;
 static gore::IMG img_bmp;
 static gore::IMG img_gray;
 static gore::IMG img_blank;
+static gore::IMG img_palette;
+static gore::IMG img_enemy;
+static gore::IMG img_test;
 
 static float angle   = 0.0f;
 static double cooldown = 0.0;
@@ -41,20 +44,29 @@ void render() {
     // UV crop (top-left quarter of the PNG)
     eng.img_r->drawImage(img_png, {240.0f, 200.0f}, {180.0f, 135.0f}, {0.0f, 0.0f, 0.5f, 0.5f});
 
-    // multi-texture unit batch: PNG, BMP, and blank queued together, flushed
-    // in a single drawBuffer() call to exercise the texture unit map
-    eng.img_r->addImageVertex(img_png->tex,   {20.0f,  400.0f}, {180.0f, 135.0f});
-    eng.img_r->addImageVertex(img_bmp->tex,   {220.0f, 400.0f}, {180.0f, 135.0f});
-    eng.img_r->addImageVertex(img_blank->tex, {420.0f, 400.0f}, {100.0f, 100.0f});
+    // multi-texture unit batch: 7 different textures queued together and
+    // flushed in a single drawBuffer() call to stress the texture unit map
+    // row 1
+    eng.img_r->addImageVertex(img_png->tex,     {20.0f,  400.0f}, {150.0f, 112.0f});
+    eng.img_r->addImageVertex(img_bmp->tex,     {185.0f, 400.0f}, {150.0f, 112.0f});
+    eng.img_r->addImageVertex(img_blank->tex,   {350.0f, 400.0f}, {112.0f, 112.0f});
+    eng.img_r->addImageVertex(img_palette->tex, {475.0f, 400.0f}, {150.0f, 112.0f});
+    // row 2
+    eng.img_r->addImageVertex(img_enemy->tex,   {20.0f,  525.0f}, {112.0f,  60.0f});
+    eng.img_r->addImageVertex(img_test->tex,    {145.0f, 525.0f}, {112.0f, 112.0f});
+    eng.img_r->addImageVertex(img_gray->tex,    {270.0f, 525.0f}, {150.0f, 112.0f});
     eng.img_r->drawBuffer();
 
     eng.disable(GL_BLEND);
 }
 
 int main() {
-    img_png   = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
-    img_bmp   = gore::imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
-    img_gray  = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale16.png");
+    img_png     = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP).png");
+    img_bmp     = gore::imageloader::loadBMP("resources/Bliss_(Windows_XP).bmp");
+    img_gray    = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_grayscale16.png");
+    img_palette = gore::imageloader::loadPNG("resources/Bliss_(Windows_XP)_pallette.png");
+    img_enemy   = gore::imageloader::loadPNG("resources/enem2_1.png");
+    img_test    = gore::imageloader::loadPNG("resources/test.png");
 
     // programmatic blank — fill with a red-to-blue horizontal gradient
     img_blank = gore::imageloader::createBlank(64, 64, 4);
