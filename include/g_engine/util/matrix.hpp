@@ -61,8 +61,9 @@ public:
 	std::string to_string();
 	float* data();
 	gore::matrix inverse();
-
+	// static matrix generation
 	static matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
 	static matrix calculate2DView(float x, float y, float zoom);
+	static matrix lookat(gore::vec3 pos, gore::vec3 target, gore::vec3 upVector);
 };
 }
