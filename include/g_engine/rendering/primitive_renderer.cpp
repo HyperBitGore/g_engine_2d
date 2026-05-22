@@ -1,14 +1,16 @@
 #include "primitive_renderer.hpp"
-#include "../util/matrix.hpp"
 #include "primitive_renderer_shader.hpp"
 
 //triangles
-gore::trianglerenderer::trianglerenderer(uint32_t width, uint32_t height) : gore::renderer<gore::vec2> (triangle_vertex, triangle_fragment, width, height) {
-
+gore::trianglerenderer::trianglerenderer(uint32_t width, uint32_t height) : gore::renderer<gore::trianglerenderer, gore::vec2> (triangle_vertex, triangle_fragment, width, height) {
+    shader_setup();
 }
 // copy
-gore::trianglerenderer::trianglerenderer(const gore::trianglerenderer& tr) : gore::renderer<gore::vec2> (triangle_vertex, triangle_fragment, tr.width, tr.height) {
-    
+gore::trianglerenderer::trianglerenderer(const gore::trianglerenderer& tr) : gore::renderer<gore::trianglerenderer, gore::vec2> (triangle_vertex, triangle_fragment, tr.width, tr.height) {
+    this->width = tr.width;
+    this->height = tr.height;
+    std::copy(tr.vertexs.begin(), tr.vertexs.end(), this->vertexs.begin());
+    shader_setup();
 }
 //sets color for drawing
 void gore::trianglerenderer::setColor(gore::vec4 color) {
@@ -60,11 +62,14 @@ void gore::trianglerenderer::drawCircleFilled(vec2 p, float r){
     drawBuffer();
 }
 //points
-gore::pointrenderer::pointrenderer(uint32_t width, uint32_t height) : gore::renderer<gore::vec2>(point_vertex, point_fragment, width, height) {
-    shader.bind();
-    shader.setuniform("point_size", 1.0f);
+gore::pointrenderer::pointrenderer(uint32_t width, uint32_t height) : gore::renderer<gore::pointrenderer, gore::vec2>(point_vertex, point_fragment, width, height) {
+    shader_setup();
 }
-gore::pointrenderer::pointrenderer(const gore::pointrenderer& pr) : gore::renderer<gore::vec2>(point_vertex, point_fragment, pr.width, pr.height) {
+gore::pointrenderer::pointrenderer(const gore::pointrenderer& pr) : gore::renderer<gore::pointrenderer, gore::vec2>(point_vertex, point_fragment, pr.width, pr.height) {
+    this->width = pr.width;
+    this->height = pr.height;
+    std::copy(pr.vertexs.begin(), pr.vertexs.end(), this->vertexs.begin());
+    shader_setup();
 }
 void gore::pointrenderer::setColor(gore::vec4 color) {
     shader.setuniform("set_color", color);
@@ -77,9 +82,14 @@ void gore::pointrenderer::drawPoint(vec2 p){
     drawBuffer();
 }
 //lines
-gore::linerenderer::linerenderer(uint32_t width, uint32_t height) : gore::renderer<gore::vec2>(line_vertex, line_fragment, width, height) {
+gore::linerenderer::linerenderer(uint32_t width, uint32_t height) : gore::renderer<gore::linerenderer, gore::vec2>(line_vertex, line_fragment, width, height) {
+    shader_setup();
 }
-gore::linerenderer::linerenderer(const gore::linerenderer& lr) : gore::renderer<gore::vec2>(line_vertex, line_fragment, lr.width, lr.height) {
+gore::linerenderer::linerenderer(const gore::linerenderer& lr) : gore::renderer<gore::linerenderer, gore::vec2>(line_vertex, line_fragment, lr.width, lr.height) {
+    this->width = lr.width;
+    this->height = lr.height;
+    std::copy(lr.vertexs.begin(), lr.vertexs.end(), this->vertexs.begin());
+    shader_setup();
 }
 void gore::linerenderer::setColor(gore::vec4 color) {
     shader.setuniform("set_color", color);

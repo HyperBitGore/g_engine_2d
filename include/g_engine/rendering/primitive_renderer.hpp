@@ -21,12 +21,16 @@ public:
 	}
 };
 
-class trianglerenderer : public renderer<gore::vec2> {
-	private:
+class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
+	protected:
 	void shader_setup() override {
+		shader.bind();
+		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+		setDimensions(this->width, this->height);
+		updateView(0.0f, 0.0f, 1.0f);
 	}
 	public:
 	trianglerenderer(uint32_t width, uint32_t height);
@@ -41,13 +45,17 @@ class trianglerenderer : public renderer<gore::vec2> {
 	void addCircleFilled(vec2 p, float r);
 };
 
-class pointrenderer : public renderer<gore::vec2> {
+class pointrenderer : public renderer<pointrenderer, gore::vec2> {
 	private:
 	void shader_setup() override {
 		draw_arrays_mode = GL_POINTS;
+		shader.bind();
+		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+		setDimensions(this->width, this->height);
+		updateView(0.0f, 0.0f, 1.0f);
 	}
 	public:
 	pointrenderer(uint32_t width, uint32_t height);
@@ -58,13 +66,17 @@ class pointrenderer : public renderer<gore::vec2> {
 	void drawPoint(vec2 p);
 };
 
-class linerenderer : public renderer<gore::vec2> {
+class linerenderer : public renderer<linerenderer, gore::vec2> {
 	private:
 	void shader_setup() override {
 		draw_arrays_mode = GL_LINES;
+		shader.bind();
+		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+		setDimensions(this->width, this->height);
+		updateView(0.0f, 0.0f, 1.0f);
 	}
 	public:
 	void drawBuffer() override;
