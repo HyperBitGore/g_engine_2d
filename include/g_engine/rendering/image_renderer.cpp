@@ -124,11 +124,6 @@ void gore::imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float ro
 
 gore::imagerenderer::imagerenderer(size_t w, size_t h) : gore::renderer<gore::imagerenderer, gore::image_render_vertex> (vertex_shader_image, fragment_shader_image, w, h) {
 }
-std::unique_ptr<gore::imagerenderer> gore::imagerenderer::create(uint32_t width, uint32_t height) {
-    std::unique_ptr<gore::imagerenderer> r(new gore::imagerenderer(width, height));
-    r->createRenderer();
-    return r;
-}
 
 gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer() {
     allocated = 0;
@@ -152,10 +147,4 @@ gore::grayscalerenderer::grayscalerenderer(size_t w, size_t h) : imagerenderer()
     shader.setuniform("projection", 1, true, ortho);
     shader.setuniform("mtexture", (GLuint)0);
     shader.setuniform("withAlpha", false);
-}
-
-std::unique_ptr<gore::grayscalerenderer> gore::grayscalerenderer::create(uint32_t width, uint32_t height) {
-    std::unique_ptr<gore::grayscalerenderer> r(new gore::grayscalerenderer(width, height));
-    r->createRenderer();
-    return r;
 }

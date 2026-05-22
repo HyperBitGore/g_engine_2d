@@ -6,12 +6,6 @@
 gore::trianglerenderer::trianglerenderer(uint32_t width, uint32_t height) : gore::renderer<gore::trianglerenderer, gore::vec2> (triangle_vertex, triangle_fragment, width, height) {
 
 }
-
- std::unique_ptr<gore::trianglerenderer> gore::trianglerenderer::create(uint32_t width, uint32_t height) {
-    std::unique_ptr<gore::trianglerenderer> r(new gore::trianglerenderer(width, height));
-    r->createRenderer();
-    return r;
-}
 // copy
 //sets color for drawing
 void gore::trianglerenderer::setColor(gore::vec4 color) {
@@ -66,11 +60,6 @@ void gore::trianglerenderer::drawCircleFilled(vec2 p, float r){
 gore::pointrenderer::pointrenderer(uint32_t width, uint32_t height) : gore::renderer<gore::pointrenderer, gore::vec2>(point_vertex, point_fragment, width, height) {
 
 }
-std::unique_ptr<gore::pointrenderer> gore::pointrenderer::create(uint32_t width, uint32_t height) {
-    std::unique_ptr<gore::pointrenderer> r(new gore::pointrenderer(width, height));
-    r->createRenderer();
-    return r;
-}
 void gore::pointrenderer::setColor(gore::vec4 color) {
     shader.setuniform("set_color", color);
 }
@@ -84,11 +73,6 @@ void gore::pointrenderer::drawPoint(vec2 p){
 //lines
 gore::linerenderer::linerenderer(uint32_t width, uint32_t height) : gore::renderer<gore::linerenderer, gore::vec2>(line_vertex, line_fragment, width, height) {
 
-}
-std::unique_ptr<gore::linerenderer> gore::linerenderer::create(uint32_t width, uint32_t height) {
-    std::unique_ptr<gore::linerenderer> r(new gore::linerenderer(width, height));
-    r->createRenderer();
-    return r;
 }
 void gore::linerenderer::setColor(gore::vec4 color) {
     shader.setuniform("set_color", color);
@@ -197,4 +181,3 @@ void gore::linerenderer::drawCircleOutline(vec2 p, float r, uint32_t segments) {
     addCircleOutline(p, r, segments);
     drawBuffer();
 }
-

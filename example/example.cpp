@@ -3,6 +3,7 @@
 #include "../include/g_engine/util/matrix.hpp"
 #include <bitset>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 uint32_t globalWidth = 640;
@@ -46,29 +47,27 @@ gore::vec2 bez_m = { 120.0f, 130.0f };
 
 gore::vec2 mos = { 200.0f, 300.0f };
 
-class Invert {
-	private:
-	struct vertex{
-		float x;
-		float y;
-		float w;
-		float h;
-	};
-	gore::shader shader;
-	std::vector<vertex> vertexs;
-	GLuint vertex_buffer;
-	GLuint vao;
+struct invert_vertex{
+	float x;
+	float y;
+	float w;
+	float h;
+};
+
+class Invert : public gore::renderer<Invert, invert_vertex> {
+	protected:
+		friend class renderer<Invert, invert_vertex>;
+		void shader_setup() {
+			shader.setuniform("screen", width, height);
+			shader.setuniform("mtexture", (GLuint)0);
+			shader.genbuffer(GL_ARRAY_BUFFER, sizeof(invert_vertex), vertexs.data(), GL_DYNAMIC_DRAW);
+			//these have to be set in sequential order they appear
+			shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(invert_vertex), 0);
+			shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(invert_vertex), (sizeof(float) * 2));
+		}
+		Invert(GLsizei width, GLsizei height) : gore::renderer<Invert, invert_vertex> (std::string("resources/invert.vs"), std::string("resources/invert.fs"), width, height, true) {
+		}
 	public:
-	Invert(GLsizei width, GLsizei height){
-		shader.compile(std::string("resources/invert.vs"), std::string("resources/invert.fs"));
-		shader.bind();
-		shader.genbuffer(GL_ARRAY_BUFFER, sizeof(vertex), vertexs.data(), GL_DYNAMIC_DRAW);
-		//these have to be set in sequential order they appear
-		shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
-		shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(vertex), (sizeof(float) * 2));
-		shader.setuniform("screen", width, height);
-		shader.setuniform("mtexture", (GLuint)0);
-	}
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dim, gore::vec4 uvs){
 		vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y}); //first triangle top left vertex
 		vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y}); //first triangel top right
@@ -83,7 +82,7 @@ class Invert {
 		glBindTexture(GL_TEXTURE_2D, texture);
 		
 		shader.bind();
-		shader.setbufferdata((void*)vertexs.data(), vertexs.size() * sizeof(vertex), GL_DYNAMIC_DRAW);
+		shader.setbufferdata((void*)vertexs.data(), vertexs.size() * sizeof(invert_vertex), GL_DYNAMIC_DRAW);
 
 		glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
 		
@@ -91,7 +90,7 @@ class Invert {
 	}
 };
 
-Invert invert(640, 480);
+std::unique_ptr<Invert> invert = nullptr;
 double draw_timer = 0;
 bool draw_mode = false;
 void renderFunction() {
@@ -227,7 +226,7 @@ void renderFunction() {
 		draw_timer = 0.0f;
 	}
 	if(draw_mode){
-		invert.drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		invert->drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 		// img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}else{
 		eng2.img_r->drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
@@ -373,6 +372,7 @@ int main() {
 	double dd = 0;
 	eng2.toggleFrameLimitActive();
 	eng2.setFrameLimit(600);
+	invert = Invert::create(640, 480);
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();
 		eng2.updateInputState();

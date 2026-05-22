@@ -248,7 +248,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 		this->img_r = imagerenderer::create(width, height);
 	}
 	if (component_mask & GRAYSCALE_COMPONENT) {
-		this->gray_r = grayscalerenderer::create(width, height);
+		this->gray_r = imagerenderer::create<grayscalerenderer>(width, height);
 	}
 	if (component_mask & FONT_COMPONENT) {
 		this->font_r = gore::fontrenderer::create(width, height);

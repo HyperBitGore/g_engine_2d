@@ -26,13 +26,17 @@ namespace gore {
             renderer () {
                 
             }
-            renderer (std::string vertex_shader, std::string fragment_shader, uint32_t width, uint32_t height) {
+            renderer (std::string vertex_shader, std::string fragment_shader, uint32_t width, uint32_t height, bool file = false) {
                 static_assert(!std::is_abstract_v<Derived>, "Derived class must implement shader_setup()");
                 vertexs.reserve(1000);
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
                 allocated = 0;
                 glGenBuffers(1, &vertex_buffer);
-                shader.compile(vertex_shader.c_str(), fragment_shader.c_str());
+                if (file) {
+                    shader.compile(vertex_shader, fragment_shader);
+                } else {
+                    shader.compile(vertex_shader.c_str(), fragment_shader.c_str());
+                }
                 shader.bind();
                 this->width = width;
                 this->height = height;

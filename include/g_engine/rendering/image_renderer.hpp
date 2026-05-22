@@ -20,6 +20,7 @@ namespace gore {
 
 class imagerenderer : public renderer<imagerenderer, image_render_vertex> {
 protected:
+	friend class renderer<imagerenderer, image_render_vertex>;
 	imagerenderer () {
 		texture_unit_map.setHashFunction(hash);
 	}
@@ -61,11 +62,11 @@ public:
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
-	static std::unique_ptr<imagerenderer> create(uint32_t width, uint32_t height);
 };
 
 class grayscalerenderer : public imagerenderer {
 	protected:
+	friend class renderer<imagerenderer, image_render_vertex>;
 	void shader_setup() override {
 		texture_unit_map.setHashFunction(hash);
 		updateView(0.0f, 0.0f, 1.0f);
@@ -77,7 +78,6 @@ class grayscalerenderer : public imagerenderer {
 		shader.bind();
 		shader.setuniform("withAlpha", withAlpha);
 	}
-	static std::unique_ptr<grayscalerenderer> create(uint32_t width, uint32_t height);
 };
 
 //https://open.gl/framebuffers

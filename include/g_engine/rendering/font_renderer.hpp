@@ -9,6 +9,7 @@ namespace gore {
 	// Render ur favorite fonts
 	class fontrenderer : public renderer<fontrenderer, gore::vec2> {
 		protected:
+		friend class renderer<fontrenderer, gore::vec2>;
 		void shader_setup () override {
 			glBindVertexArray(vao);
 			glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -28,7 +29,6 @@ namespace gore {
 			shader.bind();
 			shader.setuniform("set_color", color);
 		}
-		static std::unique_ptr<fontrenderer> create(uint32_t width, uint32_t height);
 	};
 
 	class fontraster {

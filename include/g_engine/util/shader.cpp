@@ -616,8 +616,9 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 	program = ProgramID;
 }
 
-//bind shader before calling this
+
 void gore::shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
+	this->bind();
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vertex_buffer);
 	glBindVertexArray(vao);
@@ -627,8 +628,9 @@ void gore::shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use
 	glBufferData(GL_ARRAY_BUFFER, size, data, use);
 	buffer_target = target;
 }
-//bind shader before calling this
+
 void gore::shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
+	this->bind();
 	glEnableVertexAttribArray(attrib);
 	glVertexAttribPointer(attrib, size, type, normalized, stride, reinterpret_cast<void*>(elementoffset));
 	attrib++;
@@ -639,6 +641,7 @@ void gore::shader::updatebufferdata(GLsizei size){
 }
 //setting the data pointer
 void gore::shader::setbufferdata(void* data, GLsizei size, GLenum use){
+	this->bind();
 	this->data = data;
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
