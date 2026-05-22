@@ -2,7 +2,9 @@
 #include "../util/shader.hpp"
 #include "../util/matrix.hpp"
 #include <cassert>
+#include <memory>
 #include <type_traits>
+#include <utility>
 namespace gore {
     template <class Derived, class T>
     class renderer {
@@ -17,7 +19,10 @@ namespace gore {
             GLuint draw_arrays_mode = GL_TRIANGLES;
             bool created = false;
             virtual void shader_setup() = 0;
-        public:
+            void createRenderer () {
+                created = true;
+                shader_setup();
+            }
             renderer () {
                 
             }
@@ -34,10 +39,7 @@ namespace gore {
                 glGenVertexArrays(1, &vao);
                 glBindVertexArray(vao);
             }
-            void createRenderer () {
-                created = true;
-                shader_setup();
-            }
+        public:
             virtual void drawBuffer () {
                 assert(created && "call createRenderer before use!");
                 if (vertexs.empty()) return;
@@ -65,6 +67,16 @@ namespace gore {
                 assert(created && "call createRenderer before use!");
                 matrix view = matrix::calculate2DView(x, y, zoom);
                 shader.setuniform("view", 1, true, view);
+            }
+            template<class FactoryDerived = Derived, class... Args>
+            static std::unique_ptr<FactoryDerived> create(Args&&... args) {
+                static_assert(std::is_base_of_v<Derived, FactoryDerived>,
+                    "Factory type must derive from the renderer's root derived type");
+                std::unique_ptr<FactoryDerived> r = std::unique_ptr<FactoryDerived>(
+                    new FactoryDerived(std::forward<Args>(args)...)
+                );
+                r->createRenderer();
+                return r;
             }
     };
 }

@@ -210,3 +210,9 @@ void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, f
 gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) : renderer<gore::fontrenderer, gore::vec2> (vertexShaderSourceFont, fragmentShaderSourceFont, w, h) {
 
 }
+
+std::unique_ptr<gore::fontrenderer> gore::fontrenderer::create(uint32_t width, uint32_t height) {
+    std::unique_ptr<gore::fontrenderer> r(new gore::fontrenderer(width, height));
+    r->createRenderer();
+    return r;
+}

@@ -18,8 +18,8 @@ namespace gore {
 			updateView(0.0f, 0.0f, 1.0f);
 			this->draw_arrays_mode = GL_LINES;
 		}
-		public:
 		fontrenderer(uint32_t w, uint32_t h);
+		public:
 		//font drawing
 		void drawText(std::string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
 		void drawText(std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
@@ -28,6 +28,7 @@ namespace gore {
 			shader.bind();
 			shader.setuniform("set_color", color);
 		}
+		static std::unique_ptr<fontrenderer> create(uint32_t width, uint32_t height);
 	};
 
 	class fontraster {

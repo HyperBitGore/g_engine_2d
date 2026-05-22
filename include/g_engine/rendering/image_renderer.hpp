@@ -49,8 +49,8 @@ protected:
 		updateView(0.0f, 0.0f, 1.0f);
 		setDimensions(this->width, this->height);
 	}
-public:
 	imagerenderer(size_t w, size_t h);
+public:
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
@@ -61,6 +61,7 @@ public:
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
+	static std::unique_ptr<imagerenderer> create(uint32_t width, uint32_t height);
 };
 
 class grayscalerenderer : public imagerenderer {
@@ -70,12 +71,13 @@ class grayscalerenderer : public imagerenderer {
 		updateView(0.0f, 0.0f, 1.0f);
 		setDimensions(this->width, this->height);
 	}
-	public:
 	grayscalerenderer(size_t w, size_t h);
+	public:
 	void setWithAlpha(bool withAlpha) {
 		shader.bind();
 		shader.setuniform("withAlpha", withAlpha);
 	}
+	static std::unique_ptr<grayscalerenderer> create(uint32_t width, uint32_t height);
 };
 
 //https://open.gl/framebuffers

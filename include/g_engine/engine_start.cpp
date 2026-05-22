@@ -240,28 +240,21 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	logger->log("Texture Units on this machine: " + std::to_string(texture_units));
 	//start modern opengl needed stuff like shaders and vertex buffers
 	if (component_mask & PRIMITIVE_COMPONENT) {
-		this->triangle_r = std::make_unique<trianglerenderer>(width, height);
-		this->triangle_r->createRenderer();
-		this->line_r = std::make_unique<linerenderer>(width, height);
-		this->line_r->createRenderer();
-		this->point_r = std::make_unique<pointrenderer>(width, height);
-		this->point_r->createRenderer();
+		this->triangle_r = trianglerenderer::create(width, height);
+		this->line_r = linerenderer::create(width, height);
+		this->point_r = pointrenderer::create(width, height);
 	}
 	if (component_mask & IMAGE_COMPONENT) {
-		this->img_r = std::make_unique<imagerenderer>(width, height);
-		this->img_r->createRenderer();
+		this->img_r = imagerenderer::create(width, height);
 	}
 	if (component_mask & GRAYSCALE_COMPONENT) {
-		this->gray_r = std::make_unique<grayscalerenderer>(width, height);
-		this->gray_r->createRenderer();
+		this->gray_r = grayscalerenderer::create(width, height);
 	}
 	if (component_mask & FONT_COMPONENT) {
-		this->font_r = std::make_unique<gore::fontrenderer>(width, height);
-		this->font_r->createRenderer();
+		this->font_r = gore::fontrenderer::create(width, height);
 	}
 	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
-		this->basic_image = std::make_unique<imagerenderer>(width, height);
-		this->basic_image->createRenderer();
+		this->basic_image = imagerenderer::create(width, height);
 	}
 	setWindowResize(nullptr);
 	dr1 = std::make_unique<drawpass>(target_width, target_height, GL_COLOR_ATTACHMENT0);

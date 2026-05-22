@@ -21,7 +21,7 @@ public:
 };
 
 class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
-	protected:
+	private:
 	void shader_setup() override {
 		shader.bind();
 		glBindVertexArray(vao);
@@ -31,8 +31,8 @@ class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
 		setDimensions(this->width, this->height);
 		updateView(0.0f, 0.0f, 1.0f);
 	}
-	public:
 	trianglerenderer(uint32_t width, uint32_t height);
+	public:
 	void setColor(vec4 color);
 	void addTriangle(vec2 v1, vec2 v2, vec2 v3);
 	void drawTriangle(vec2 v1, vec2 v2, vec2 v3);
@@ -40,6 +40,7 @@ class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
 	void drawQuad(vec2 pos, float w, float h);
 	void drawCircleFilled(vec2 p, float r);
 	void addCircleFilled(vec2 p, float r);
+	static std::unique_ptr<trianglerenderer> create(uint32_t width, uint32_t height);
 };
 
 class pointrenderer : public renderer<pointrenderer, gore::vec2> {
@@ -54,11 +55,12 @@ class pointrenderer : public renderer<pointrenderer, gore::vec2> {
 		setDimensions(this->width, this->height);
 		updateView(0.0f, 0.0f, 1.0f);
 	}
-	public:
 	pointrenderer(uint32_t width, uint32_t height);
+	public:
 	void setColor(vec4 color);
 	void addPoint(vec2 p);
 	void drawPoint(vec2 p);
+	static std::unique_ptr<pointrenderer> create(uint32_t width, uint32_t height);
 };
 
 class linerenderer : public renderer<linerenderer, gore::vec2> {
@@ -73,9 +75,9 @@ class linerenderer : public renderer<linerenderer, gore::vec2> {
 		setDimensions(this->width, this->height);
 		updateView(0.0f, 0.0f, 1.0f);
 	}
+	linerenderer(uint32_t width, uint32_t height);
 	public:
 	void drawBuffer() override;
-	linerenderer(uint32_t width, uint32_t height);
 	void setColor(vec4 color);
 	void addLine(vec2 p1, vec2 p2);
 	void drawLine(vec2 p1, vec2 p2);
@@ -88,5 +90,6 @@ class linerenderer : public renderer<linerenderer, gore::vec2> {
 	void addCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
 	void addCircleOutline(vec2 p, float r, uint32_t segments);
 	void drawCircleOutline(vec2 p, float r, uint32_t segments);
+	static std::unique_ptr<linerenderer> create(uint32_t width, uint32_t height);
 };
 }
