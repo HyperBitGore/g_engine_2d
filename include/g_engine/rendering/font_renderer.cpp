@@ -188,8 +188,8 @@ void gore::fontrenderer::drawText(std::u16string text, gore::font* Font, float x
 	}
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    font_shader.bind();
-    glBindVertexArray(font_vao);
+    shader.bind();
+    glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
         allocated = vertexs.size();
@@ -207,53 +207,6 @@ void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, f
 	drawText(gore::fontloader::convertToU16String(text), Font, x, y, ptsize, dpi);
 }
 
-gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) {
-	this->width = w;
-	this->height = h;
-	matrix ortho = matrix::calculateOrtho(w, h, w, h);
-	vertexs.reserve(1000);
-    allocated = 1;
-    glGenBuffers(1, &vertex_buffer);
-	font_shader.compile(vertexShaderSourceFont, fragmentShaderSourceFont);
-    font_shader.bind();
-    glGenVertexArrays(1, &font_vao);
-    glBindVertexArray(font_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-    font_shader.setuniform("projection", 1, true, ortho);
-	updateView(0.0f, 0.0f, 1.0f);
-}
+gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) : renderer<gore::fontrenderer, gore::vec2> (vertexShaderSourceFont, fragmentShaderSourceFont, w, h) {
 
-gore::fontrenderer::fontrenderer (const gore::fontrenderer& f) {
-	this->width = f.width;
-	this->height = f.height;
-	matrix ortho = matrix::calculateOrtho(this->width, this->height, this->width, this->height);
-	vertexs.reserve(1000);
-	std::copy(f.vertexs.begin(), f.vertexs.end(), vertexs.begin());
-    this->allocated = f.allocated;
-    glGenBuffers(1, &vertex_buffer);
-	font_shader.compile(vertexShaderSourceFont, fragmentShaderSourceFont);
-    font_shader.bind();
-    glGenVertexArrays(1, &font_vao);
-    glBindVertexArray(font_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-    font_shader.setuniform("projection", 1, true, ortho);
-	updateView(0.0f, 0.0f, 1.0f);
-}
-
-
-void gore::fontrenderer::setDimensions (uint32_t width, int32_t height) {
-	matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
-	font_shader.bind();
-	font_shader.setuniform("projection", 1, true, ortho);
-	this->width = width;
-	this->height = height;
-}
-
-void gore::fontrenderer::updateView (float x, float y, float zoom) {
-	matrix view = matrix::calculate2DView(x, y, zoom);
-    font_shader.setuniform("view", 1, true, view);
 }

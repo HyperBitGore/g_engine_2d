@@ -1,34 +1,32 @@
 #pragma once
-#include "primitive_renderer.hpp"
+#include "renderer.hpp"
+#include "image_renderer.hpp"
 #include "../file_loading/font_loader.hpp"
 #include <string>
 
 namespace gore {
 	// https://axleos.com/writing-a-truetype-font-renderer/
 	// Render ur favorite fonts
-	class fontrenderer {
-		private:
-		std::vector<vec2> vertexs;
-		GLuint vertex_buffer;
-		GLuint allocated;
-		shader font_shader;
-		GLuint font_vao;
-		uint32_t width, height;
+	class fontrenderer : public renderer<fontrenderer, gore::vec2> {
+		protected:
+		void shader_setup () override {
+			glBindVertexArray(vao);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+			setDimensions(this->width, this->height);
+			updateView(0.0f, 0.0f, 1.0f);
+			this->draw_arrays_mode = GL_LINES;
+		}
 		public:
 		fontrenderer(uint32_t w, uint32_t h);
-		// copy
-		fontrenderer (const fontrenderer& f);
 		//font drawing
 		void drawText(std::string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
 		void drawText(std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
-		// for width and height
-		void setDimensions (uint32_t width, int32_t height);
-		// for view
-		void updateView (float x, float y, float zoom);
 		// set color of rendered text
 		void setColor(vec4 color) {
-			font_shader.bind();
-			font_shader.setuniform("set_color", color);
+			shader.bind();
+			shader.setuniform("set_color", color);
 		}
 	};
 

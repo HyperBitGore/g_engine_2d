@@ -1,5 +1,4 @@
 #pragma once
-#include "image_renderer.hpp"
 #include "renderer.hpp"
 
 namespace gore {
@@ -34,8 +33,6 @@ class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
 	}
 	public:
 	trianglerenderer(uint32_t width, uint32_t height);
-	// copy
-	trianglerenderer(const trianglerenderer& tr);
 	void setColor(vec4 color);
 	void addTriangle(vec2 v1, vec2 v2, vec2 v3);
 	void drawTriangle(vec2 v1, vec2 v2, vec2 v3);
@@ -59,8 +56,6 @@ class pointrenderer : public renderer<pointrenderer, gore::vec2> {
 	}
 	public:
 	pointrenderer(uint32_t width, uint32_t height);
-	// copy
-	pointrenderer(const pointrenderer& pr);
 	void setColor(vec4 color);
 	void addPoint(vec2 p);
 	void drawPoint(vec2 p);
@@ -81,8 +76,6 @@ class linerenderer : public renderer<linerenderer, gore::vec2> {
 	public:
 	void drawBuffer() override;
 	linerenderer(uint32_t width, uint32_t height);
-	// copy
-	linerenderer(const linerenderer& lr);
 	void setColor(vec4 color);
 	void addLine(vec2 p1, vec2 p2);
 	void drawLine(vec2 p1, vec2 p2);

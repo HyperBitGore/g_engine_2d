@@ -1,14 +1,13 @@
 #pragma once
 #include "../img_loading/image_loader.hpp"
+#include "renderer.hpp"
 
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
 //https://www.khronos.org/opengl/wiki/Texture
 	//-read the glsl binding section
 //https://learnopengl.com/Getting-started/Transformations
 namespace gore {
-class imagerenderer {
-protected:
-	struct ivertex{
+	struct image_render_vertex {
 		float x;
 		float y;
 		float uvx;
@@ -18,15 +17,10 @@ protected:
 		float roty;
 		GLuint texture_unit;
 	};
-	std::vector<ivertex> vertexs;
-	shader shader;
-	GLuint vao;
-	GLuint vertex_buffer;
-	GLuint allocated;
-	uint32_t width, height;
-	int32_t texture_units;
+
+class imagerenderer : public renderer<imagerenderer, image_render_vertex> {
+protected:
 	imagerenderer () {
-		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
 		texture_unit_map.setHashFunction(hash);
 	}
 	uint32_t current_unit = 0;
@@ -37,29 +31,47 @@ protected:
 	std::vector<GLint> samplers;
 	GLuint getTextureUnit (GLuint texture);
 	void setTextureSamplers ();
+	void shader_setup() override {
+		texture_unit_map.setHashFunction(hash);
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)0); //position
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 2)); //uv
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 4)); //rotation
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 5)); //rotation point
+		glEnableVertexAttribArray(4);
+		glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(image_render_vertex), (void*)(sizeof(float) * 7)); // texture unit
+		shader.setuniform("mtexture", (GLuint)0);
+		updateView(0.0f, 0.0f, 1.0f);
+		setDimensions(this->width, this->height);
+	}
 public:
 	imagerenderer(size_t w, size_t h);
-	// copy
-	imagerenderer(const imagerenderer& img);
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
-	void drawBuffer();
+	void drawBuffer() override;
 	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions);
 	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawImageRotated(gore::IMG img,gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
-	void setDimensions (uint32_t width, uint32_t height);
-	void updateView (float x, float y, float zoom);
 };
 
 class grayscalerenderer : public imagerenderer {
+	protected:
+	void shader_setup() override {
+		texture_unit_map.setHashFunction(hash);
+		updateView(0.0f, 0.0f, 1.0f);
+		setDimensions(this->width, this->height);
+	}
 	public:
 	grayscalerenderer(size_t w, size_t h);
-	// copy
-	grayscalerenderer(const grayscalerenderer& gsr);
 	void setWithAlpha(bool withAlpha) {
 		shader.bind();
 		shader.setuniform("withAlpha", withAlpha);

@@ -1,5 +1,7 @@
+#pragma once
 #include "../util/shader.hpp"
 #include "../util/matrix.hpp"
+#include <cassert>
 #include <type_traits>
 namespace gore {
     template <class Derived, class T>
@@ -13,6 +15,7 @@ namespace gore {
             uint32_t width, height;
             int32_t texture_units;
             GLuint draw_arrays_mode = GL_TRIANGLES;
+            bool created = false;
             virtual void shader_setup() = 0;
         public:
             renderer () {
@@ -31,7 +34,12 @@ namespace gore {
                 glGenVertexArrays(1, &vao);
                 glBindVertexArray(vao);
             }
+            void createRenderer () {
+                created = true;
+                shader_setup();
+            }
             virtual void drawBuffer () {
+                assert(created && "call createRenderer before use!");
                 if (vertexs.empty()) return;
                 shader.bind();
                 glBindVertexArray(vao);
@@ -47,12 +55,14 @@ namespace gore {
                 glBindVertexArray(0);
             }
             virtual void setDimensions (uint32_t width, int32_t height) {
+                assert(created && "call createRenderer before use!");
                 matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
                 shader.setuniform("projection", 1, true, ortho);
                 this->width = width;
                 this->height = height;
             }
             virtual void updateView (float x, float y, float zoom) {
+                assert(created && "call createRenderer before use!");
                 matrix view = matrix::calculate2DView(x, y, zoom);
                 shader.setuniform("view", 1, true, view);
             }
