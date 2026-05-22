@@ -15,19 +15,19 @@ static double cooldown = 0.0;
 
 void render() {
     // --- vector (outline) renderer ---
-    eng.font_renderer->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    eng.font_renderer->drawText("Vector outline - 16pt", &f_mono, 20.0f, 40.0f,  16, eng.getDPI());
-    eng.font_renderer->drawText("Vector outline - 24pt", &f_mono, 20.0f, 80.0f,  24, eng.getDPI());
-    eng.font_renderer->drawText("Vector outline - 32pt", &f_sans, 20.0f, 130.0f, 32, eng.getDPI());
-    eng.font_renderer->drawText("The quick brown fox 0123456789", &f_sans, 20.0f, 180.0f, 20, eng.getDPI());
+    eng.font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+    eng.font_r->drawText("Vector outline - 16pt", &f_mono, 20.0f, 40.0f,  16, eng.getDPI());
+    eng.font_r->drawText("Vector outline - 24pt", &f_mono, 20.0f, 80.0f,  24, eng.getDPI());
+    eng.font_r->drawText("Vector outline - 32pt", &f_sans, 20.0f, 130.0f, 32, eng.getDPI());
+    eng.font_r->drawText("The quick brown fox 0123456789", &f_sans, 20.0f, 180.0f, 20, eng.getDPI());
 
-    eng.font_renderer->setColor({1.0f, 0.5f, 0.2f, 1.0f});
-    eng.font_renderer->drawText("Colored vector text", &f_mono, 20.0f, 230.0f, 28, eng.getDPI());
+    eng.font_r->setColor({1.0f, 0.5f, 0.2f, 1.0f});
+    eng.font_r->drawText("Colored vector text", &f_mono, 20.0f, 230.0f, 28, eng.getDPI());
 
     // u16string with extended chars
     std::u16string u16str = {u'H', u'e', u'l', u'l', u'o', u' ', 0x00C9, u'!'};
-    eng.font_renderer->setColor({0.4f, 1.0f, 0.6f, 1.0f});
-    eng.font_renderer->drawText(u16str, &f_sans, 20.0f, 275.0f, 28, eng.getDPI());
+    eng.font_r->setColor({0.4f, 1.0f, 0.6f, 1.0f});
+    eng.font_r->drawText(u16str, &f_sans, 20.0f, 275.0f, 28, eng.getDPI());
 
     // --- raster renderer ---
     eng.enable(GL_BLEND);

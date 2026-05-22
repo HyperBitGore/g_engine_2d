@@ -73,9 +73,11 @@ private:
 	gore::matrix ortho = gore::matrix(4, 4);
 public:
 	// rendering backends
-	std::unique_ptr<primitiverenderer> prim_r = nullptr;
+	std::unique_ptr<trianglerenderer> triangle_r = nullptr;
+	std::unique_ptr<linerenderer> line_r = nullptr;
+	std::unique_ptr<pointrenderer> point_r = nullptr;
 	std::unique_ptr<imagerenderer> img_r = nullptr;
-	std::unique_ptr<fontrenderer> font_renderer = nullptr;
+	std::unique_ptr<fontrenderer> font_r = nullptr;
 	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
 	std::shared_ptr<gore::logger> logger;
 	// parts is a bitmask which tells us what to load
@@ -83,9 +85,9 @@ public:
 
 	//move constructor
 	g_engine_2d(g_engine_2d&& o) {
-		this->prim_r = std::move(o.prim_r);
+		this->triangle_r = std::move(o.triangle_r);
 		this->img_r = std::move(o.img_r);
-		this->font_renderer = std::move(o.font_renderer);
+		this->font_r = std::move(o.font_r);
 		this->gray_r = std::move(o.gray_r);
 		this->logger = std::move(o.logger);
 		this->wind = o.wind;
@@ -105,9 +107,9 @@ public:
 	}
 	//copy constructor, probably not accurate to what behavior we would want out of a copy constructor
 	g_engine_2d(const g_engine_2d& o) {
-		this->prim_r = std::make_unique<primitiverenderer>(*o.prim_r);
+		this->triangle_r = std::make_unique<trianglerenderer>(*o.triangle_r);
 		this->img_r = std::make_unique<imagerenderer>(*o.img_r);
-		this->font_renderer = std::make_unique<fontrenderer>(*o.font_renderer);
+		this->font_r = std::make_unique<fontrenderer>(*o.font_r);
 		this->gray_r = std::make_unique<grayscalerenderer>(*o.gray_r);
 		this->logger = o.logger;
 		this->wind = o.wind;

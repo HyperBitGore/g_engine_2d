@@ -48,6 +48,8 @@ set(ENGINE_SOURCES
     include/g_engine/file_loading/file_reader.hpp
     include/g_engine/file_loading/file_reader.cpp
     include/g_engine/util/logging.hpp
+    include/g_engine/rendering/renderer.hpp
+    include/g_engine/rendering/renderer.cpp
 )
 
 add_executable(g_engine ${ENGINE_SOURCES} example/example.cpp)
@@ -64,11 +66,12 @@ add_executable(test_primitives  ${ENGINE_SOURCES} tests/primitives.cpp)
 add_executable(test_text        ${ENGINE_SOURCES} tests/text.cpp)
 add_executable(test_frame_limit ${ENGINE_SOURCES} tests/frame_limit.cpp)
 add_executable(test_image_stress ${ENGINE_SOURCES} tests/image_render_stress.cpp)
+add_executable(test_rotate_cube_soft ${ENGINE_SOURCES} tests/rotating_cube_software.cpp)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
-set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress)
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft)
 
 if(WIN32)
 foreach(tgt ${VISUAL_TARGETS})

@@ -168,8 +168,10 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 		if (this->component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
 			basic_image->setDimensions(w, h);
 		} else {
-			if (prim_r && (maintainRendererViewport & PRIMITIVE_COMPONENT)) {
-				prim_r->setDimensions(w, h);
+			if (triangle_r && line_r && point_r && (maintainRendererViewport & PRIMITIVE_COMPONENT)) {
+				triangle_r->setDimensions(w, h);
+				line_r->setDimensions(w, h);
+				point_r->setDimensions(w, h);
 			}
 			if (img_r && (maintainRendererViewport & IMAGE_COMPONENT)) {
 				img_r->setDimensions(w, h);
@@ -177,8 +179,8 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 			if (gray_r && (maintainRendererViewport & GRAYSCALE_COMPONENT)) {
 				gray_r->setDimensions(w, h);
 			}
-			if (font_renderer && (maintainRendererViewport & FONT_COMPONENT)) {
-				font_renderer->setDimensions(w, h);
+			if (font_r && (maintainRendererViewport & FONT_COMPONENT)) {
+				font_r->setDimensions(w, h);
 			}
 		}
 		this->ortho = gore::matrix::calculateOrtho(w, h, this->window_width, this->window_height);
@@ -211,11 +213,13 @@ void gore::g_engine_2d::updateView (float camera_x, float camera_y, float zoom) 
 		if (gray_r) {
 			gray_r->updateView(camera_x, camera_y, zoom);
 		}
-		if (prim_r) {
-			prim_r->updateView(camera_x, camera_y, zoom);
+		if (triangle_r && line_r && point_r) {
+			triangle_r->updateView(camera_x, camera_y, zoom);
+			line_r->updateView(camera_x, camera_y, zoom);
+			point_r->updateView(camera_x, camera_y, zoom);
 		}
-		if (font_renderer) {
-			font_renderer->updateView(camera_x, camera_y, zoom);
+		if (font_r) {
+			font_r->updateView(camera_x, camera_y, zoom);
 		}
 		this->view = gore::matrix::calculate2DView(camera_x, camera_y, zoom);
 	}

@@ -20,15 +20,15 @@ static std::string status_msg = "60 fps limit active";
 static gore::font f_mono;
 
 void render() {
-    eng.font_renderer->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    eng.font_renderer->drawText(status_msg, &f_mono, 20.0f, H - 40.0f, 16, eng.getDPI());
+    eng.font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+    eng.font_r->drawText(status_msg, &f_mono, 20.0f, H - 40.0f, 16, eng.getDPI());
 
     std::string fps_str = "FPS: " + std::to_string((int)last_frames.first)
                         + "  avg: " + std::to_string(last_frames.second).substr(0, 5) + " ms";
-    eng.font_renderer->drawText(fps_str, &f_mono, 20.0f, H - 70.0f, 16, eng.getDPI());
+    eng.font_r->drawText(fps_str, &f_mono, 20.0f, H - 70.0f, 16, eng.getDPI());
 
-    eng.font_renderer->setColor({0.6f, 0.6f, 0.6f, 1.0f});
-    eng.font_renderer->drawText("1=30fps  2=60fps  3=120fps  Esc=quit", &f_mono, 20.0f, 20.0f, 14, eng.getDPI());
+    eng.font_r->setColor({0.6f, 0.6f, 0.6f, 1.0f});
+    eng.font_r->drawText("1=30fps  2=60fps  3=120fps  Esc=quit", &f_mono, 20.0f, 20.0f, 14, eng.getDPI());
 }
 
 int main() {

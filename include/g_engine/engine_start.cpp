@@ -240,7 +240,9 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	logger->log("Texture Units on this machine: " + std::to_string(texture_units));
 	//start modern opengl needed stuff like shaders and vertex buffers
 	if (component_mask & PRIMITIVE_COMPONENT) {
-		this->prim_r = std::make_unique<primitiverenderer>(width, height);
+		this->triangle_r = std::make_unique<trianglerenderer>(width, height);
+		this->line_r = std::make_unique<linerenderer>(width, height);
+		this->point_r = std::make_unique<pointrenderer>(width, height);
 	}
 	if (component_mask & IMAGE_COMPONENT) {
 		this->img_r = std::make_unique<imagerenderer>(width, height);
@@ -249,7 +251,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 		this->gray_r = std::make_unique<grayscalerenderer>(width, height);
 	}
 	if (component_mask & FONT_COMPONENT) {
-		this->font_renderer = std::make_unique<gore::fontrenderer>(width, height);
+		this->font_r = std::make_unique<gore::fontrenderer>(width, height);
 	}
 	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
 		this->basic_image = std::make_unique<imagerenderer>(width, height);

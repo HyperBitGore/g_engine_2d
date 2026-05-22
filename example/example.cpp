@@ -163,30 +163,32 @@ void renderFunction() {
 		eng2.updateView(0, 0, zoom);
 	}
 	dr.bind();
-	eng2.prim_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
-	eng2.prim_r->drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
-	eng2.prim_r->drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
-	eng2.prim_r->addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
-	eng2.prim_r->addTriangle({300.0f, 80.0f}, {320.0f, 100.0f}, {340.0f, 80.0f});
-	eng2.prim_r->addTriangle({300.0f, 60.0f}, {320.0f, 80.0f}, {340.0f, 60.0f});
-	eng2.prim_r->addTriangle({0.0f, 0.0f}, {20.0f, 20.0f}, {40.0f, 0.0f});
-	eng2.prim_r->addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
-	eng2.prim_r->drawBufferTriangle();
+	eng2.triangle_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
+	eng2.triangle_r->drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
+	eng2.triangle_r->drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
+	eng2.triangle_r->addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
+	eng2.triangle_r->addTriangle({300.0f, 80.0f}, {320.0f, 100.0f}, {340.0f, 80.0f});
+	eng2.triangle_r->addTriangle({300.0f, 60.0f}, {320.0f, 80.0f}, {340.0f, 60.0f});
+	eng2.triangle_r->addTriangle({0.0f, 0.0f}, {20.0f, 20.0f}, {40.0f, 0.0f});
+	eng2.triangle_r->addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
+	eng2.triangle_r->drawBuffer();
 	
-	eng2.prim_r->setColor({0.5f, 0.3f, 0.1f, 1.0f});
-	eng2.prim_r->drawQuad({pos, 10.0f}, 60.0f, 60.0f);
-	eng2.prim_r->setColor({0.0f, 1.0f, 0.5f, 0.0f});
-	eng2.prim_r->drawPoint({50.0f, 300.0f});
+	eng2.triangle_r->setColor({0.5f, 0.3f, 0.1f, 1.0f});
+	eng2.triangle_r->drawQuad({pos, 10.0f}, 60.0f, 60.0f);
+	eng2.point_r->setColor({0.0f, 1.0f, 0.5f, 0.0f});
+	eng2.point_r->drawPoint({50.0f, 300.0f});
 	for (float y = 0.0f; y <= 300.0f; y += 0.1f) {
-		eng2.prim_r->addPoint({70.0f, y});
+		eng2.point_r->addPoint({70.0f, y});
 	}
-	eng2.prim_r->drawBufferPoint();
-	eng2.prim_r->setColor({0.0f, 0.2f, 1.0f, 1.0f});
-	eng2.prim_r->drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
-	eng2.prim_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
-	eng2.prim_r->addCircleFilled({500.0f, 50.0f}, 50.0f);
-	eng2.prim_r->addQuadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
-	eng2.prim_r->drawBufferLine();
+	eng2.point_r->drawBuffer();
+	eng2.line_r->setColor({0.0f, 0.2f, 1.0f, 1.0f});
+	eng2.line_r->drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
+	eng2.triangle_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
+	eng2.triangle_r->addCircleFilled({500.0f, 50.0f}, 50.0f);
+	eng2.triangle_r->drawBuffer();
+	eng2.line_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
+	eng2.line_r->addQuadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
+	eng2.line_r->drawBuffer();
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -238,13 +240,13 @@ void renderFunction() {
 	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
 	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
 	eng2.disable(GL_BLEND);
-	eng2.font_renderer->setColor({1.0f, 0.5f, 0.0f, 1.0f});
-	eng2.font_renderer->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
-	eng2.font_renderer->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
-	eng2.font_renderer->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
+	eng2.font_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
+	eng2.font_r->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
+	eng2.font_r->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
+	eng2.font_r->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
 	const char test_str[] = {'\x7E', '!', '\x7F', (char)200};
 	std::u16string test_str2 = {0xC8, 0x7E, 0x21, 0x10A, 0xFFFF, 0x2DC, 0x144};
-	eng2.font_renderer->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
+	eng2.font_r->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
 	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
 	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }

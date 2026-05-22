@@ -1,11 +1,10 @@
 #pragma once
 #include "image_renderer.hpp"
+#include "renderer.hpp"
 
 namespace gore {
 
 class line {
-private:
-	
 public:
 	vec2 p1;
 	vec2 p2;
@@ -22,57 +21,67 @@ public:
 	}
 };
 
-class primitiverenderer {
-private:
-	std::vector<vec2> vertexs;
-	GLuint vertex_buffer;
-	GLuint allocated;
-	shader triangle_shader;
-	GLuint triangle_vao;
-	shader point_shader;
-	GLuint point_vao;
-	shader line_shader;
-	GLuint line_vao;
-	uint32_t width, height;
-public:
-	//use to initialize shaders
-	primitiverenderer(GLuint sw, GLuint sh);
+class trianglerenderer : public renderer<gore::vec2> {
+	private:
+	void shader_setup() override {
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	}
+	public:
+	trianglerenderer(uint32_t width, uint32_t height);
 	// copy
-	primitiverenderer(const primitiverenderer& p);
-	//sets color for drawing
+	trianglerenderer(const trianglerenderer& tr);
 	void setColor(vec4 color);
-	//triangles
 	void addTriangle(vec2 v1, vec2 v2, vec2 v3);
 	void drawTriangle(vec2 v1, vec2 v2, vec2 v3);
-	void drawBufferTriangle();
-	//quads
 	void addQuad(vec2 pos, float w, float h);
 	void drawQuad(vec2 pos, float w, float h);
-	void drawBufferQuad();
-	//points
+	void drawCircleFilled(vec2 p, float r);
+	void addCircleFilled(vec2 p, float r);
+};
+
+class pointrenderer : public renderer<gore::vec2> {
+	private:
+	void shader_setup() override {
+		draw_arrays_mode = GL_POINTS;
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	}
+	public:
+	pointrenderer(uint32_t width, uint32_t height);
+	// copy
+	pointrenderer(const pointrenderer& pr);
+	void setColor(vec4 color);
 	void addPoint(vec2 p);
 	void drawPoint(vec2 p);
-	void drawBufferPoint();
-	//lines
+};
+
+class linerenderer : public renderer<gore::vec2> {
+	private:
+	void shader_setup() override {
+		draw_arrays_mode = GL_LINES;
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	}
+	public:
+	void drawBuffer() override;
+	linerenderer(uint32_t width, uint32_t height);
+	// copy
+	linerenderer(const linerenderer& lr);
+	void setColor(vec4 color);
 	void addLine(vec2 p1, vec2 p2);
 	void drawLine(vec2 p1, vec2 p2);
-	void drawBufferLine();
 	void setLineWidth(float l);
 	void drawLinearBezier(vec2 p1, vec2 p2);
 	void drawQuadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
 	void drawCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
-	void drawCircleFilled(vec2 p, float r);
-	void drawCircleOutline(vec2 p, float r, uint32_t segments);
-	//this add points to buffer, they are used for lines so make sure to call drawBufferLine when these are used
 	void addLinearBezier(vec2 p1, vec2 p2);
 	void addQuadraticBezier(vec2 p1, vec2 p2, vec2 p3, int subdiv);
 	void addCubicBezier(vec2 p1, vec2 p2, vec2 p3, vec2 p4, int subdiv);
-	void addCircleFilled(vec2 p, float r);
 	void addCircleOutline(vec2 p, float r, uint32_t segments);
-
-	// for width and height
-	void setDimensions (uint32_t width, int32_t height);
-	// view matrix setting
-	void updateView (float x, float y, float zoom);
+	void drawCircleOutline(vec2 p, float r, uint32_t segments);
 };
 }

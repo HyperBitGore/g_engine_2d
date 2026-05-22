@@ -86,8 +86,8 @@ void render() {
     char hud[128];
     snprintf(hud, sizeof(hud), "Sprites: %d   FPS: %.0f   Avg: %.2f ms",
              sprite_count, last_frames.first, last_frames.second);
-    eng.font_renderer->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    eng.font_renderer->drawText(hud, &f_mono, 10.0f, 30.0f, 20, eng.getDPI());
+    eng.font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+    eng.font_r->drawText(hud, &f_mono, 10.0f, 30.0f, 20, eng.getDPI());
 }
 
 int main() {
