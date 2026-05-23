@@ -1,11 +1,13 @@
 #include "../include/g_engine/g_engine_2d.hpp"
 #include "../include/g_engine/rendering/wireframe_renderer.hpp"
+#include "../include/g_engine/file_loading/model_loading/model_loader.hpp"
 #include <memory>
 static const uint32_t W = 800;
 static const uint32_t H = 600;
 
 gore::g_engine_2d eng("Image Renderer Stress Test", W, H, PRIMITIVE_COMPONENT, gore::LogType::NONE);
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
+std::vector<gore::vec3> penger;
 
 struct SoftwareRendererPoint {
     float x;
@@ -161,6 +163,7 @@ void render () {
 
 int main () {
     software_r = SoftwareRenderer::create(W, H);
+    penger = gore::model_loader::loadObj("resources/penger.obj");
     eng.setRenderFunction(render);
     eng.setFrameLimit(60);
     eng.toggleFrameLimitActive();

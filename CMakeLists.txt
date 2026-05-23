@@ -51,6 +51,7 @@ set(ENGINE_SOURCES
     include/g_engine/rendering/renderer.hpp
     include/g_engine/rendering/wireframe_renderer.hpp
     include/g_engine/rendering/wireframe_renderer.cpp
+    include/g_engine/file_loading/model_loading/obj_loader.cpp
 )
 
 add_executable(g_engine ${ENGINE_SOURCES} example/example.cpp)
