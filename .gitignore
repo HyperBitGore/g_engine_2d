@@ -2,6 +2,7 @@ build
 .vscode
 .cache
 .vs
+.github
 out.txt
 g_engine_2d.log
 audioplayer.log

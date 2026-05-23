@@ -56,6 +56,6 @@ std::vector<gore::vec3> gore::model_loader::loadObj (std::string file_path) {
         }
 
     }
-
+    gore::model model = gore::model(vertexs);
     return vertexs;
 }

@@ -17,6 +17,7 @@ private:
 	float* dat;
 public:
 	matrix() = delete;
+	matrix(size_t r, size_t c, float fill);
 	matrix(size_t r, size_t c);
 	//copy constructor
 	matrix(const matrix& m);
@@ -61,9 +62,17 @@ public:
 	std::string to_string();
 	float* data();
 	gore::matrix inverse();
+	gore::matrix translate(gore::vec3 translation);
+	gore::matrix translate(gore::vec2 translation);
+	gore::matrix rotate(gore::vec3 rotate_axis, float radians);
+	gore::matrix rotate(gore::vec2 rotate_axis, float radians);
+	gore::matrix scale(gore::vec3 scale);
+	gore::matrix scale(gore::vec2 scale);
 	// static matrix generation
+	static matrix generateIdentity (uint32_t row, uint32_t cols);
 	static matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
 	static matrix calculate2DView(float x, float y, float zoom);
 	static matrix lookat(gore::vec3 pos, gore::vec3 target, gore::vec3 upVector);
+	static matrix generateModel (gore::vec3 pos, float angle, gore::vec3 rotate_pos);
 };
 }

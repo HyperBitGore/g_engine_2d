@@ -4,6 +4,17 @@
 #include <stdexcept>
 
 
+gore::matrix::matrix(size_t r, size_t c, float fill) {
+	columns = c;
+	rows = r;
+	dat = new float[r * c];
+	for (size_t i = 0; i < r; i++) {
+		for (size_t j = 0; j < c; j++) {
+			dat[(i * rows) + j] = fill;
+		}
+	}
+}
+
 gore::matrix::matrix(size_t r, size_t c) {
 	columns = c;
 	rows = r;
@@ -172,6 +183,55 @@ float* gore::matrix::data() {
 	return dat;
 }
 
+gore::matrix gore::matrix::translate(gore::vec3 translation) {
+	if (rows == 4 && columns == 4) {
+		throw std::runtime_error("Not a 4 by 4 matrix, can't translate!");
+	}
+	gore::matrix out = *this;
+	out[0][3] = translation.x;
+	out[1][3] = translation.y;
+	out[2][3] = translation.z;
+
+	return out;
+}
+gore::matrix gore::matrix::translate(gore::vec2 translation) {
+	if (rows == 3 && columns == 3) {
+		throw std::runtime_error("Not a 3 by 3 matrix, can't translate by a vec2!");
+	}
+	gore::matrix out = *this;
+	out[0][3] = translation.x;
+	out[1][3] = translation.y;
+	return out;
+}
+
+gore::matrix gore::matrix::rotate(gore::vec3 rotate_axis, float radians) {
+	if (rows == 4 && columns == 4) {
+		throw std::runtime_error("Not a 4 by 4 matrix, can't translate!");
+	}
+	gore::matrix out = *this;
+	return out;
+}
+gore::matrix gore::matrix::rotate(gore::vec2 rotate_axis, float radians) {
+	if (rows == 3 && columns == 3) {
+		throw std::runtime_error("Not a 3 by 3 matrix, can't translate by a vec2!");
+	}
+	gore::matrix out = *this;
+	return out;
+}
+gore::matrix gore::matrix::scale(gore::vec3 scale) {
+	if (rows == 4 && columns == 4) {
+		throw std::runtime_error("Not a 4 by 4 matrix, can't translate!");
+	}
+	gore::matrix out = *this;
+	return out;
+}
+gore::matrix gore::matrix::scale(gore::vec2 scale) {
+	if (rows == 3 && columns == 3) {
+		throw std::runtime_error("Not a 3 by 3 matrix, can't translate by a vec2!");
+	}
+	gore::matrix out = *this;
+	return out;
+}
 
 // https://stackoverflow.com/questions/12230312/is-glmortho-actually-wrong
 // https://docs.gl/gl3/glOrtho
@@ -274,4 +334,23 @@ gore::matrix gore::matrix::inverse() {
 		}
 	}
 	return inv;
+}
+
+
+gore::matrix gore::matrix::generateIdentity (uint32_t row, uint32_t cols) {
+	matrix mat = matrix(row, cols);
+	// put the 1s in the diagonal 
+	for (size_t r = 0; r < row; r++) {
+		// set the col
+		mat[r][r] = 1.0f;
+	}
+	return mat;
+}
+
+gore::matrix gore::matrix::generateModel (gore::vec3 pos, float angle, gore::vec3 rotate_pos) {
+	gore::matrix out = gore::matrix::generateIdentity(4, 4);
+	out = out.translate(pos);
+	// rotate
+	// scale
+	return out;
 }

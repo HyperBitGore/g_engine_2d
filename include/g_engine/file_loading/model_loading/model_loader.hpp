@@ -1,8 +1,22 @@
 #pragma once
 #include <vector>
 #include "../../util/vector.hpp"
+#include "../../util/matrix.hpp"
 
 namespace gore {
+
+    class model {
+        private:
+            gore::vec3 position;
+            std::vector<vec3> vertexs;
+            matrix model_matrix = matrix(4, 4, 0); // how we project and rotate model into world space            
+        public:
+            model() = delete;
+            model (std::vector<vec3> vertexs);
+            // copy
+            model (const model& m);
+    };
+
     class model_loader {
         public:
         model_loader() = delete;
