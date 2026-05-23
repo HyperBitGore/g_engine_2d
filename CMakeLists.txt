@@ -49,7 +49,8 @@ set(ENGINE_SOURCES
     include/g_engine/file_loading/file_reader.cpp
     include/g_engine/util/logging.hpp
     include/g_engine/rendering/renderer.hpp
-    include/g_engine/rendering/renderer.cpp
+    include/g_engine/rendering/wireframe_renderer.hpp
+    include/g_engine/rendering/wireframe_renderer.cpp
 )
 
 add_executable(g_engine ${ENGINE_SOURCES} example/example.cpp)

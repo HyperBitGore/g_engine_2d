@@ -116,11 +116,5 @@ public:
 
 	void compile(const char* vertex, const char* frag);
 	void compile(const std::string vert_path, const std::string frag_path);
-
-	//vao
-	void genbuffer(GLenum target, GLsizei size, void* data, GLenum use);
-	void addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset);
-	void updatebufferdata(GLsizei size);
-	void setbufferdata(void* data, GLsizei size, GLenum use);
 };
 }

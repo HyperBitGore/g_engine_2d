@@ -615,38 +615,6 @@ void gore::shader::compile(const std::string vert_path, const std::string frag_p
 	glDeleteShader(FragmentShaderID);
 	program = ProgramID;
 }
-
-
-void gore::shader::genbuffer(GLenum target, GLsizei size, void* data, GLenum use){
-	this->bind();
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vertex_buffer);
-	glBindVertexArray(vao);
-	glBindBuffer(target, vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	this->data = data;
-	glBufferData(GL_ARRAY_BUFFER, size, data, use);
-	buffer_target = target;
-}
-
-void gore::shader::addvertexattrib(GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei elementoffset){
-	this->bind();
-	glEnableVertexAttribArray(attrib);
-	glVertexAttribPointer(attrib, size, type, normalized, stride, reinterpret_cast<void*>(elementoffset));
-	attrib++;
-}
-//assuming last data pointer is set
-void gore::shader::updatebufferdata(GLsizei size){
-	glBufferSubData(buffer_target, 0, size, this->data);
-}
-//setting the data pointer
-void gore::shader::setbufferdata(void* data, GLsizei size, GLenum use){
-	this->bind();
-	this->data = data;
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(buffer_target, size, this->data, use);
-}
 // subs out TEXTURE_UNIT in shader code with texture units on system
 std::string gore::shader::textureUnitSub (std::string shader_code) {
 	int32_t texture_units;

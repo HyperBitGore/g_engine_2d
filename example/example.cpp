@@ -60,10 +60,13 @@ class Invert : public gore::renderer<Invert, invert_vertex> {
 		void shader_setup() {
 			shader.setuniform("screen", width, height);
 			shader.setuniform("mtexture", (GLuint)0);
-			shader.genbuffer(GL_ARRAY_BUFFER, sizeof(invert_vertex), vertexs.data(), GL_DYNAMIC_DRAW);
-			//these have to be set in sequential order they appear
-			shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(invert_vertex), 0);
-			shader.addvertexattrib(2, GL_FLOAT, GL_FALSE, sizeof(invert_vertex), (sizeof(float) * 2));
+			shader.bind();
+			glBindVertexArray(vao);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(invert_vertex), (void*)0); //position
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(invert_vertex), (void*)(sizeof(float) * 2)); //uv
 		}
 		Invert(GLsizei width, GLsizei height) : gore::renderer<Invert, invert_vertex> (std::string("resources/invert.vs"), std::string("resources/invert.fs"), width, height, true) {
 		}
@@ -82,7 +85,9 @@ class Invert : public gore::renderer<Invert, invert_vertex> {
 		glBindTexture(GL_TEXTURE_2D, texture);
 		
 		shader.bind();
-		shader.setbufferdata((void*)vertexs.data(), vertexs.size() * sizeof(invert_vertex), GL_DYNAMIC_DRAW);
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glBufferData(GL_ARRAY_BUFFER, vertexs.size() * sizeof(invert_vertex), &vertexs[0], GL_DYNAMIC_DRAW);
 
 		glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
 		
