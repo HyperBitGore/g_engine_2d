@@ -73,6 +73,6 @@ public:
 	static matrix calculateOrtho(uint32_t width, uint32_t height, uint32_t last_width, uint32_t last_height);
 	static matrix calculate2DView(float x, float y, float zoom);
 	static matrix lookat(gore::vec3 pos, gore::vec3 target, gore::vec3 upVector);
-	static matrix generateModel (gore::vec3 pos, float angle, gore::vec3 rotate_pos);
+	static matrix generateModel (gore::vec3 pos, float angle, gore::vec3 rotate_pos, gore::vec3 rotate_axis, gore::vec3 scale);
 };
 }

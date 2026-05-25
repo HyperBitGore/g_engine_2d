@@ -39,7 +39,7 @@ gore::matrix::~matrix() {
 }
 gore::matrix& gore::matrix::operator=(const matrix& rhs) {
 	columns = rhs.columns;
-	rows = rhs.columns;
+	rows = rhs.rows;
 	if (dat) {
 		delete[] dat;
 	}
@@ -184,7 +184,7 @@ float* gore::matrix::data() {
 }
 
 gore::matrix gore::matrix::translate(gore::vec3 translation) {
-	if (rows == 4 && columns == 4) {
+	if (rows != 4 || columns != 4) {
 		throw std::runtime_error("Not a 4 by 4 matrix, can't translate!");
 	}
 	gore::matrix out = *this;
@@ -195,42 +195,85 @@ gore::matrix gore::matrix::translate(gore::vec3 translation) {
 	return out;
 }
 gore::matrix gore::matrix::translate(gore::vec2 translation) {
-	if (rows == 3 && columns == 3) {
+	if (rows != 3 || columns != 3) {
 		throw std::runtime_error("Not a 3 by 3 matrix, can't translate by a vec2!");
 	}
 	gore::matrix out = *this;
-	out[0][3] = translation.x;
-	out[1][3] = translation.y;
+	out[0][2] = translation.x;
+	out[1][2] = translation.y;
 	return out;
 }
 
 gore::matrix gore::matrix::rotate(gore::vec3 rotate_axis, float radians) {
-	if (rows == 4 && columns == 4) {
-		throw std::runtime_error("Not a 4 by 4 matrix, can't translate!");
+	if (rows != 4 || columns != 4) {
+		throw std::runtime_error("Not a 4 by 4 matrix, can't rotate!");
 	}
-	gore::matrix out = *this;
-	return out;
+	gore::vec3 normal = rotate_axis.normalize();
+	if (normal.x == 0.0f && normal.y == 0.0f && normal.z == 0.0f) {
+		return *this;
+	}
+	float nx = normal.x;
+	float ny = normal.y;
+	float nz = normal.z;
+
+	float c = std::cos(radians);
+	float s = std::sin(radians);
+	float t = 1.0f - c;
+
+	// Rodrigues' rotation formula
+	matrix rot = generateIdentity(4, 4);
+	rot[0][0] = c + nx*nx*t;
+	rot[0][1] = nx*ny*t - nz*s;
+	rot[0][2] = nx*nz*t + ny*s;
+	rot[1][0] = ny*nx*t + nz*s;
+	rot[1][1] = c + ny*ny*t;
+	rot[1][2] = ny*nz*t - nx*s;
+	rot[2][0] = nz*nx*t - ny*s;
+	rot[2][1] = nz*ny*t + nx*s;
+	rot[2][2] = c + nz*nz*t;
+
+	return *this * rot;
 }
 gore::matrix gore::matrix::rotate(gore::vec2 rotate_axis, float radians) {
-	if (rows == 3 && columns == 3) {
-		throw std::runtime_error("Not a 3 by 3 matrix, can't translate by a vec2!");
+	if (rows != 3 || columns != 3) {
+		throw std::runtime_error("Not a 3 by 3 matrix, can't rotate by a vec2!");
 	}
-	gore::matrix out = *this;
-	return out;
+	float c = std::cos(radians);
+	float s = std::sin(radians);
+	float px = rotate_axis.x;
+	float py = rotate_axis.y;
+
+	// T(pivot) * R * T(-pivot)
+	matrix rot = generateIdentity(3, 3);
+	rot[0][0] =  c;
+	rot[0][1] = -s;
+	rot[0][2] =  px*(1.0f - c) + py*s;
+	rot[1][0] =  s;
+	rot[1][1] =  c;
+	rot[1][2] =  py*(1.0f - c) - px*s;
+
+	return *this * rot;
 }
 gore::matrix gore::matrix::scale(gore::vec3 scale) {
-	if (rows == 4 && columns == 4) {
-		throw std::runtime_error("Not a 4 by 4 matrix, can't translate!");
+	if (rows != 4 || columns != 4) {
+		throw std::runtime_error("Not a 4 by 4 matrix, can't scale!");
 	}
-	gore::matrix out = *this;
-	return out;
+	matrix s = generateIdentity(4, 4);
+	s[0][0] = scale.x;
+	s[1][1] = scale.y;
+	s[2][2] = scale.z;
+
+	return *this * s;
 }
 gore::matrix gore::matrix::scale(gore::vec2 scale) {
-	if (rows == 3 && columns == 3) {
-		throw std::runtime_error("Not a 3 by 3 matrix, can't translate by a vec2!");
+	if (rows != 3 || columns != 3) {
+		throw std::runtime_error("Not a 3 by 3 matrix, can't scale by a vec2!");
 	}
-	gore::matrix out = *this;
-	return out;
+	matrix s = generateIdentity(3, 3);
+	s[0][0] = scale.x;
+	s[1][1] = scale.y;
+
+	return *this * s;
 }
 
 // https://stackoverflow.com/questions/12230312/is-glmortho-actually-wrong
@@ -347,10 +390,36 @@ gore::matrix gore::matrix::generateIdentity (uint32_t row, uint32_t cols) {
 	return mat;
 }
 
-gore::matrix gore::matrix::generateModel (gore::vec3 pos, float angle, gore::vec3 rotate_pos) {
+gore::matrix gore::matrix::generateModel (gore::vec3 pos, float angle, gore::vec3 rotate_pos, gore::vec3 rotate_axis, gore::vec3 scale) {
 	gore::matrix out = gore::matrix::generateIdentity(4, 4);
 	out = out.translate(pos);
-	// rotate
-	// scale
+	out = out.rotate(rotate_axis, angle);
+	out = out.scale(scale);
 	return out;
+}
+// https://learnopengl.com/Getting-started/Camera
+gore::matrix gore::matrix::lookat(gore::vec3 pos, gore::vec3 target, gore::vec3 upVector) {
+	gore::matrix out = generateIdentity(4, 4);
+	// right side of calculation
+	out[0][3] = -pos.x;
+	out[1][3] = -pos.y;
+	out[2][3] = -pos.z;
+	// left side
+	gore::vec3 cameraDirection = (pos - target).normalize();
+	// positive direction of world
+	gore::vec3 cameraRight = upVector.crossProduct(cameraDirection).normalize();
+	// up
+	gore::vec3 cameraUp = cameraDirection.crossProduct(cameraRight);
+	// left side
+	gore::matrix right = generateIdentity(4, 4);
+	right[0][0] = cameraRight.x;
+	right[0][1] = cameraRight.y;
+	right[0][2] = cameraRight.z;
+	right[1][0] = cameraUp.x;
+	right[1][1] = cameraUp.y;
+	right[1][2] = cameraUp.z;
+	right[2][0] = cameraDirection.x;
+	right[2][1] = cameraDirection.y;
+	right[2][2] = cameraDirection.z;
+	return right * out;
 }

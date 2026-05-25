@@ -69,6 +69,14 @@ add_executable(test_primitives  ${ENGINE_SOURCES} tests/primitives.cpp)
 add_executable(test_text        ${ENGINE_SOURCES} tests/text.cpp)
 add_executable(test_frame_limit ${ENGINE_SOURCES} tests/frame_limit.cpp)
 add_executable(test_image_stress ${ENGINE_SOURCES} tests/image_render_stress.cpp)
+add_executable(test_matrix_vector
+    include/g_engine/util/matrix.cpp
+    include/g_engine/util/matrix.hpp
+    include/g_engine/util/vector.cpp
+    include/g_engine/util/vector.hpp
+    tests/matrix_vector_test.cpp
+)
+
 add_executable(test_rotate_cube_soft ${ENGINE_SOURCES} tests/rotating_cube_software.cpp)
 
 #target_compile_options(g_engine PRIVATE /utf-8)

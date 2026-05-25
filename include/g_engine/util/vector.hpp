@@ -263,7 +263,10 @@ public:
 		f += y * r.y;
 		f += z * r.z;
 		return f;
-	} 
+	}
+	vec3 crossProduct (const gore::vec3& r) {
+		return { y*r.z - z*r.y, z*r.x - x * r.z, x*r.y - y*r.x};
+	}
 	vec3& operator=(const vec3& r) {
 		this->x = r.x;
 		this->y = r.y;
