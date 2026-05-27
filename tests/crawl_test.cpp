@@ -25,26 +25,13 @@ const float sensitivity = 0.002f;
 bool capture = false;
 gore::vec2 center = {(float)W / 2.0f, (float)H / 2.0f};
 void mouseMove () {
-    if (!capture) {
-        return;
-    }
-    gore::vec2 p = eng.getMousePos();
-    std::cout << "x: " <<  std::abs(p.x - center.x) << " y: " << std::abs(p.y - center.y) << "\n";
-    if (std::abs(p.x - center.x) <= 1 && std::abs(p.y - center.y) < 1) {
-        std::cout << "center\n";
-        return;
-    }
-    // std::cout << p.x << ", " << p.y << "\n";
-    float dx = p.x - last_mouse.x;
-    float dy = p.y - last_mouse.y;
-    if (std::abs(dx) > 1.0f || std::abs(dy) > 1.0f) {
-        cam.setYaw(cam.getYaw() + dx * sensitivity);
-        cam.setPitch(cam.getPitch() - dy * sensitivity);
-        cam.updateFront();
-        view_dirty = true;
-    }
-    last_mouse = {p.x, p.y};
-    // last_mouse = {(float)W / 2.0f, (float)H / 2.0f};
+    if (!capture) return;
+     float dx = std::trunc(eng.getMousePos().x - (W / 2.0f));  // delta from center
+     float dy = std::trunc(eng.getMousePos().y - (H / 2.0f));
+     cam.setYaw(cam.getYaw() + dx * sensitivity);
+     cam.setPitch(cam.getPitch() - dy * sensitivity);
+     cam.updateFront();
+     view_dirty = true;
 }
 void resize(uint32_t w, uint32_t h) {
     W = w;

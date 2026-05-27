@@ -313,9 +313,6 @@ private:
 	bool maintainViewport = false;
 	std::shared_ptr<gore::logger> logger;
 	std::function<void()> mouseMove;
-	#if defined(__unix__)
-	std::vector<unsigned long> warp_events;
-	#endif
 public:
 	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false, bool maintainViewport = false, std::shared_ptr<gore::logger> logger = nullptr);
 	g_window(const g_window&) = delete;
