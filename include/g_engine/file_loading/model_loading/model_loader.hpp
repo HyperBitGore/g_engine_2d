@@ -7,7 +7,6 @@ namespace gore {
 
     class model {
         private:
-            gore::vec3 position;
             std::vector<vec3> vertexs;
             matrix model_matrix = matrix(4, 4, 0); // how we project and rotate model into world space            
         public:

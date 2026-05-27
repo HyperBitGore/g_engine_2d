@@ -397,6 +397,18 @@ gore::matrix gore::matrix::generateModel (gore::vec3 pos, float angle, gore::vec
 	out = out.scale(scale);
 	return out;
 }
+
+gore::matrix gore::matrix::perspective (float vertical_fov, float aspect_ratio, float near, float far) {
+	gore::matrix out(4, 4);
+	float f = 1 / std::tanf(vertical_fov / 2);
+	out[0][0] = f/aspect_ratio;
+	out[1][1] = f;
+	out[2][2] = (far+near)/(near-far);
+	out[2][3] = (2*far*near)/(near-far);
+	out[3][2] = -1;
+	return out;
+}
+
 // https://learnopengl.com/Getting-started/Camera
 gore::matrix gore::matrix::lookat(gore::vec3 pos, gore::vec3 target, gore::vec3 upVector) {
 	gore::matrix out = generateIdentity(4, 4);

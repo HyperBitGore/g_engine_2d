@@ -51,6 +51,8 @@ set(ENGINE_SOURCES
     include/g_engine/rendering/renderer.hpp
     include/g_engine/rendering/wireframe_renderer.hpp
     include/g_engine/rendering/wireframe_renderer.cpp
+    include/g_engine/rendering/three_dee_renderer.hpp
+    include/g_engine/rendering/three_dee_renderer.cpp
     include/g_engine/file_loading/model_loading/obj_loader.cpp
     include/g_engine/file_loading/model_loading/model.cpp
 )
@@ -76,13 +78,14 @@ add_executable(test_matrix_vector
     include/g_engine/util/vector.hpp
     tests/matrix_vector_test.cpp
 )
+add_executable(test_crawl ${ENGINE_SOURCES} tests/crawl_test.cpp)
 
 add_executable(test_rotate_cube_soft ${ENGINE_SOURCES} tests/rotating_cube_software.cpp)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
-set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft)
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl)
 
 if(WIN32)
 foreach(tgt ${VISUAL_TARGETS})

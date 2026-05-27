@@ -1,0 +1,28 @@
+const char* three_dee_renderer_vertex = "#version 450 core\n"
+    "\n"
+    "layout(location = 0) in vec3 pos;\n"
+    "layout(location = 1) in vec2 uv;\n"
+    "layout(location = 2) in int model_matrice;\n"
+    "layout(location = 3) in int texture_unit;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 projection;\n"
+    "layout(std430, binding = 1) readonly buffer ssbo1\n"
+    "{\n"
+    "   mat4 modelMatrices[];\n"
+    "};\n"
+    "out vec3 v_pos;\n"
+    "void main(){\n"
+    "   v_pos = pos;\n"
+    "   gl_Position = projection * view * vec4(pos, 1.0);\n"
+    "}\n"
+    "";
+
+
+const char* three_dee_renderer_fragment = "#version 450 core\n"
+    "in vec3 v_pos;\n"
+    "out vec4 color;\n"
+    "uniform vec4 set_color;\n"
+    "void main(){\n"
+    "    vec3 pos_color = fract(abs(v_pos));\n"
+    "    color = set_color * vec4(pos_color, 1.0);\n"
+    "}";

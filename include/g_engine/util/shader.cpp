@@ -441,26 +441,33 @@ bool gore::shader::setuniform(const std::string uni, const GLsizei count, const 
 
 				break;
 				case 3:
+
 				break;
 				case 4:
+				
 				break;
 			}
 		break;
 		case 3:
 			switch (matrice.numRows()) {
 				case 2:
+				
 				break;
 				case 3:
+				
 				break;
 				case 4:
+				
 				break;
 			}
 		break;
 		case 4:
 			switch (matrice.numRows()) {
 				case 2:
+				
 				break;
 				case 3:
+				
 				break;
 				case 4:
 					glUniformMatrix4fv(*uf, count, transpose, matrice.data());

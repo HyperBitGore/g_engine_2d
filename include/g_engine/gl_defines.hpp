@@ -19,7 +19,7 @@
 #include <GL/glx.h>  // For Linux (X11)
 #endif
 
-
+extern float toRadians (float degrees);
 
 
 
