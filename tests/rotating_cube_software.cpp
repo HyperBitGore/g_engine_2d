@@ -7,7 +7,7 @@ static const uint32_t H = 600;
 
 gore::g_engine_2d eng("Image Renderer Stress Test", W, H, PRIMITIVE_COMPONENT, gore::LogType::NONE);
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
-std::vector<gore::vec3> penger;
+gore::model penger;
 
 struct SoftwareRendererPoint {
     float x;

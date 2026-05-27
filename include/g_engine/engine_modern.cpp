@@ -92,7 +92,7 @@ bool gore::g_engine_2d::updateWindow() {
 		return false;
 	}
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// this will probably compile more efficiently than two ifs
 	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
 		glViewport(0, 0, this->target_width, this->target_height);

@@ -230,6 +230,8 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	glDisable(GL_CULL_FACE);
 	//glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 

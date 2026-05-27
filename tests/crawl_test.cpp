@@ -13,7 +13,7 @@ gore::g_engine_2d eng("Image Renderer Stress Test", W, H, PRIMITIVE_COMPONENT, g
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
 std::unique_ptr<gore::threedeerender> three_d = nullptr;
 std::vector<gore::vec3> penger;
-gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0});
+gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 
 void render () {
     three_d->addVertexs(penger);
@@ -30,7 +30,7 @@ void mouseMove () {
      float dy = std::trunc(eng.getMousePos().y - (H / 2.0f));
      cam.setYaw(cam.getYaw() + dx * sensitivity);
      cam.setPitch(cam.getPitch() - dy * sensitivity);
-     cam.updateFront();
+     cam.update();
      view_dirty = true;
 }
 void resize(uint32_t w, uint32_t h) {
@@ -40,7 +40,7 @@ void resize(uint32_t w, uint32_t h) {
 }
 
 int main () {
-    penger = gore::model_loader::loadObj("resources/penger.obj");
+penger = gore::model_loader::loadObj("resources/penger.obj").getPositions();
     eng.setRenderFunction(render);
     eng.setWindowResize(resize);
     eng.setFrameLimit(60);
@@ -48,7 +48,7 @@ int main () {
     eng.setMouseMoveFunction(mouseMove);
     wireframe_r = gore::wireframe_renderer::create(W, H);
     three_d = gore::threedeerender::create(W, H);
-    three_d->updateView(cam.pos, cam.pos + cam.front, cam.up);
+    three_d->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
 
 
     bool running = true;
@@ -74,9 +74,12 @@ int main () {
         else if (eng.getKeyDown(g_s)) { cam.moveBackward(speed); view_dirty = true; }
         if (eng.getKeyDown(g_a)) { cam.moveLeft(speed);   view_dirty = true; }
         else if (eng.getKeyDown(g_d)) { cam.moveRight(speed);  view_dirty = true; }
+        if (eng.getKeyDown(g_q)) { cam.tiltLeft (speed); view_dirty = true; }
+        else if (eng.getKeyDown(g_e)) { cam.tiltRight (speed); view_dirty = true; }
 
         if (view_dirty) {
-            three_d->updateView(cam.pos, cam.pos + cam.front, cam.up);
+            cam.update();
+            three_d->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
             view_dirty = false;
         }
     }
