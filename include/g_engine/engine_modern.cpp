@@ -17,7 +17,7 @@ void gore::g_engine_2d::updateInputState(){
 	in->updateState();
 }
 
-gore::vec2 gore::g_engine_2d::getMousePos() {
+gore::vec2 gore::g_engine_2d::getMousePos(bool raw) {
 	vec2 p;
 	#if defined(_WIN32)
 	LPPOINT po = new tagPOINT;
@@ -45,6 +45,9 @@ gore::vec2 gore::g_engine_2d::getMousePos() {
 	#if defined(_WIN32)
 	delete po;
 	#endif
+	if (raw) {
+		return p;
+	}
 	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
 		float ppx = (p.x) / window_width;
 		ppx = ppx * target_width;
@@ -153,6 +156,9 @@ void gore::g_engine_2d::toggleFullscreen() {
 
 void gore::g_engine_2d::toggleMouseCapture(bool center) {
 	wind->captureMouseToggle(center);
+}
+void gore::g_engine_2d::setMouseMoveFunction (std::function<void()> func) {
+	wind->setMouseMoveFunction(func);
 }
 
 void gore::g_engine_2d::toggleMouseHide() {

@@ -6,6 +6,10 @@
 std::function<void(uint32_t, uint32_t)> resizeFunction;
 bool globalCapture = false;
 
+void gore::g_window::setMouseMoveFunction (std::function<void()> function) {
+	this->mouseMove = function;
+}
+
 #if defined(_WIN32)
 bool globalMaintainViewport = false;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -63,6 +67,7 @@ bool gore::g_window::ProcessMessage() {
 		if (msg.message == WM_QUIT) {
 			return false;
 		} else if (msg.message == WM_MOUSEMOVE) {
+			this->mouseMove();
 			if (this->center && globalCapture) {
 				RECT rect;
 				GetClientRect(m_hwnd, &rect);
@@ -104,9 +109,18 @@ bool gore::g_window::ProcessMessage() {
 					}
 				break;
 				case MotionNotify:
-					if (this->center) {
-						XWarpPointer(r_display, None, m_hwnd, 0, 0, 0, 0, width/2, height/2);
-						XFlush(r_display);
+					if (warp_events.size() > 0 && event.xmotion.serial == warp_events[0]) {
+						std::cout << "skipping warp event " << warp_events[0] << "\n";
+						warp_events.erase(warp_events.begin());
+					} else {
+						// std::cout << "event: " << event.xmotion.serial << "\n";
+						this->mouseMove();
+						if (this->center && this->captured) {
+							unsigned long warp_event_serial = XNextRequest(r_display);
+							warp_events.push_back(warp_event_serial);
+							// std::cout << "warp " << warp_event_serial << "\n";
+							XWarpPointer(r_display, None, m_hwnd, 0, 0, 0, 0, width/2, height/2);
+						}
 					}
 				break;
 			}

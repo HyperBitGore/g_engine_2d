@@ -8,7 +8,7 @@ namespace gore{
         float z;
         float uvx;
         float uvy;
-        GLint model_matrice;
+        GLint model_matrice; // if this negative 1 don't utilize ssbo just render the vertex as is
         GLint texture_unit; // if this negative 1 don't utilize texture sampler, use color uniform
     };
     class threedeerender : public renderer<threedeerender, threedee_vertex> {

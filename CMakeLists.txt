@@ -55,6 +55,7 @@ set(ENGINE_SOURCES
     include/g_engine/rendering/three_dee_renderer.cpp
     include/g_engine/file_loading/model_loading/obj_loader.cpp
     include/g_engine/file_loading/model_loading/model.cpp
+    include/g_engine/rendering/camera.hpp
 )
 
 add_executable(g_engine ${ENGINE_SOURCES} example/example.cpp)

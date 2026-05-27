@@ -156,6 +156,8 @@ public:
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor
 	void toggleMouseHide();
+	// set mouse move function 
+	void setMouseMoveFunction (std::function<void()> func);
 	// get window dpi
 	uint32_t getDPI();
 	//input functions
@@ -164,7 +166,7 @@ public:
 	bool getKeyReleased(uint32_t key);
 	void updateInputState();
 
-	vec2 getMousePos();
+	vec2 getMousePos(bool raw = false);
 	//ease of use
 	bool getMouseLeftDown() { return in->GetKeyDown(g_MouseLeft); }
 	bool getMouseRightDown() { return in->GetKeyDown(g_MouseRight); }
