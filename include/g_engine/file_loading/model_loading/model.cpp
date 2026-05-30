@@ -13,6 +13,9 @@ gore::model::model (std::vector<gore::model_face> faces) {
 gore::model::model (const model& m) {
     this->faces = m.faces;
     this->model_matrix = m.model_matrix;
+    this->img = m.img;
+    this->gltfs = m.gltfs;
+    this->mtls = m.mtls;
 }
 
 std::vector<gore::vec3> gore::model::getPositions() const {
@@ -28,4 +31,16 @@ std::vector<gore::vec3> gore::model::getPositions() const {
 
 std::vector<gore::model_face>& gore::model::getFaces() {
     return faces;
+}
+
+void gore::model::addMaterials (const std::vector<mtl_material>& mats) {
+    for (auto& i : mats) {
+        mtls.push_back(i);
+    }
+}
+
+void gore::model::addMaterials (const std::vector<gltf_material>& mats) {
+    for (auto& i : mats) {
+        gltfs.push_back(i);
+    }
 }

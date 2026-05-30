@@ -13,6 +13,7 @@ gore::g_engine_2d eng("Image Renderer Stress Test", W, H, PRIMITIVE_COMPONENT, g
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
 std::unique_ptr<gore::threedeerender> three_d = nullptr;
 std::vector<gore::vec3> penger;
+gore::model peng;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 
 void render () {
@@ -40,7 +41,8 @@ void resize(uint32_t w, uint32_t h) {
 }
 
 int main () {
-penger = gore::model_loader::loadObj("resources/penger.obj").getPositions();
+    peng = gore::model_loader::loadObj("resources/penger.obj");
+    penger = peng.getPositions();
     eng.setRenderFunction(render);
     eng.setWindowResize(resize);
     eng.setFrameLimit(60);

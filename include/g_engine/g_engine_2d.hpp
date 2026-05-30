@@ -7,6 +7,7 @@
 #include <memory>
 #include "util/logging.hpp"
 #include "util/matrix.hpp"
+#include "util/shader.hpp"
 #define PRIMITIVE_COMPONENT 0x1
 #define IMAGE_COMPONENT 0x2
 #define FONT_COMPONENT 0x4
@@ -207,5 +208,12 @@ public:
 	//enable/disable glthings
 	void enable(GLenum en);
 	void disable(GLenum en);
+	// window access
+	RAW_WINDOW getWindow () {
+		return wind->getRawWindow();
+	}
+	RAW_DISPLAY getDisplay () {
+		return wind->getRawDisplay();
+	}
 };
 }

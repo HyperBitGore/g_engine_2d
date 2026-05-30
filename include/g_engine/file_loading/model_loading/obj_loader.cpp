@@ -1,11 +1,12 @@
 #include "model_loader.hpp"
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 #include <algorithm>
 
-enum class LineType {VN, VT, V, VP, F, L, UNKNOWN};
+enum class LineType {VN, VT, V, VP, F, L, MTL, USEMTL, UNKNOWN};
 
 std::string consumeNextWord (std::string str, size_t* offset) {
     size_t i = *offset;
@@ -32,6 +33,8 @@ LineType detectLineType (std::string str, size_t* offset) {
     if (out == "vp") return LineType::VP;
     if (out == "f")  return LineType::F;
     if (out == "l")  return LineType::L;
+    if (out == "mtllib") return LineType::MTL;
+    if (out == "usemtl") return LineType::USEMTL;
     return LineType::UNKNOWN;
 }
 
@@ -137,12 +140,68 @@ model_face_index parseFace (std::string str, size_t* offset) {
     return out_face;
 }
 
-// need texture/mtl support
 // need line element support
 // need quad/ngon support (maybe)
 // need parameter space support
 // https://paulbourke.net/dataformats/obj/
 // https://en.wikipedia.org/wiki/Wavefront_.obj_file
+
+std::vector<gore::mtl_material> gore::model_loader::loadMtl(std::string file_path) {
+    std::ifstream file(file_path);
+    if (!file) return {};
+
+    std::vector<gore::mtl_material> materials;
+    gore::mtl_material current;
+    bool has_current = false;
+
+    std::string line;
+    while (getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        size_t offset = 0;
+        std::string kw = consumeNextWord(line, &offset);
+
+        if (kw == "newmtl") {
+            if (has_current) materials.push_back(current);
+            current = gore::mtl_material{};
+            current.name = consumeNextWord(line, &offset);
+            has_current = true;
+        } else if (!has_current) {
+            continue;
+        } else if (kw == "Ka" || kw == "Kd" || kw == "Ks" || kw == "Ke") {
+            std::string r = consumeNextWord(line, &offset);
+            std::string g = consumeNextWord(line, &offset);
+            std::string b = consumeNextWord(line, &offset);
+            if (!r.empty() && !g.empty() && !b.empty()) {
+                gore::vec3 col = {std::stof(r), std::stof(g), std::stof(b)};
+                if      (kw == "Ka") current.Ka = col;
+                else if (kw == "Kd") current.Kd = col;
+                else if (kw == "Ks") current.Ks = col;
+                else                 current.Ke = col;
+            }
+        } else if (kw == "Ns") {
+            std::string v = consumeNextWord(line, &offset);
+            if (!v.empty()) current.Ns = std::stof(v);
+        } else if (kw == "Ni") {
+            std::string v = consumeNextWord(line, &offset);
+            if (!v.empty()) current.Ni = std::stof(v);
+        } else if (kw == "d") {
+            std::string v = consumeNextWord(line, &offset);
+            if (!v.empty()) current.d = std::stof(v);
+        } else if (kw == "Tr") {
+            // Tr is an alternative transparency field: d = 1 - Tr
+            std::string v = consumeNextWord(line, &offset);
+            if (!v.empty()) current.d = 1.0f - std::stof(v);
+        } else if (kw == "illum") {
+            std::string v = consumeNextWord(line, &offset);
+            if (!v.empty()) current.illum = std::stoi(v);
+        } else if (kw == "map_Kd") {
+            current.map_Kd = consumeNextWord(line, &offset);
+        }
+    }
+    if (has_current) materials.push_back(current);
+    return materials;
+}
+
 gore::model gore::model_loader::loadObj (std::string file_path) {
     std::ifstream file(file_path);
     if (!file) {
@@ -159,6 +218,9 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
     std::vector<gore::vec2> uvs;
     std::vector<gore::vec3> normals;
     std::vector<model_face> faces;
+    std::string mtl_path = "";
+    std::vector<mtl_material> mats;
+    int mat_index = -1;
 
     const gore::vec2 zero_uv   = {0.0f, 0.0f};
     const gore::vec3 zero_norm = {0.0f, 0.0f, 0.0f};
@@ -211,12 +273,35 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                     gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
                     face.norm1 = face.norm2 = face.norm3 = flat;
                 }
+                if (mat_index >= 0 && mat_index < mats.size()) {
+                    face.material_index = mat_index;
+                }
                 faces.push_back(face);
                 break;
             }
+            case LineType::MTL: {
+                mtl_path = consumeNextWord(i, &offset);
+                mtl_path = std::filesystem::path(file_path).parent_path().string() + "/" + mtl_path;
+                mats = loadMtl(mtl_path);
+            }
+            break;
+            case LineType::USEMTL: {
+                std::string name = consumeNextWord(i, &offset);
+                for (size_t j = 0; j < mats.size(); j++) {
+                    if (mats[j].name == name) {
+                        mat_index = j;
+                        break;
+                    }
+                }
+            }
+            break;
             default:
                 break;
         }
     }
-    return model(faces);
+    model output(faces);
+    if (mtl_path != "") {
+        output.addMaterials(mats);
+    }
+    return output;
 }

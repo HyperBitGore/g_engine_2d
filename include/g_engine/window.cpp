@@ -109,7 +109,9 @@ bool gore::g_window::ProcessMessage() {
 					}
 				break;
 				case MotionNotify:
-					this->mouseMove();
+					if (this->mouseMove) {
+						this->mouseMove();
+					}
 					if (this->center && this->captured) {
 						unsigned long warp_event_serial = XNextRequest(r_display);
 						XWarpPointer(r_display, None, m_hwnd, 0, 0, 0, 0, width/2, height/2);
@@ -229,7 +231,7 @@ gore::g_window::g_window(const char* title, RAW_DISPLAY display, int h, int w, i
     swa.colormap = XCreateColormap(r_display, RootWindow(r_display, vi->screen), vi->visual, AllocNone);
     swa.event_mask = ExposureMask | KeyPressMask;
 
-    m_hwnd = XCreateWindow(r_display, root, 0, 0, 800, 600, 0, vi->depth,
+    m_hwnd = XCreateWindow(r_display, root, 0, 0, w, h, 0, vi->depth,
                         InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
 	if (fullscreen) {
 		XWindowAttributes window_attributes;
