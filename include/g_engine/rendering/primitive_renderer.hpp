@@ -29,7 +29,7 @@ class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-		setDimensions(this->width, this->height);
+		updateDimensions(this->width, this->height);
 		updateView(0.0f, 0.0f, 1.0f);
 	}
 	trianglerenderer(uint32_t width, uint32_t height);
@@ -53,7 +53,7 @@ class pointrenderer : public renderer<pointrenderer, gore::vec2> {
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-		setDimensions(this->width, this->height);
+		updateDimensions(this->width, this->height);
 		updateView(0.0f, 0.0f, 1.0f);
 	}
 	pointrenderer(uint32_t width, uint32_t height);
@@ -73,7 +73,7 @@ class linerenderer : public renderer<linerenderer, gore::vec2> {
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-		setDimensions(this->width, this->height);
+		updateDimensions(this->width, this->height);
 		updateView(0.0f, 0.0f, 1.0f);
 	}
 	linerenderer(uint32_t width, uint32_t height);

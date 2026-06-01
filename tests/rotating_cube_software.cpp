@@ -5,7 +5,7 @@
 static const uint32_t W = 800;
 static const uint32_t H = 600;
 
-gore::g_engine_2d eng("Image Renderer Stress Test", W, H, PRIMITIVE_COMPONENT, gore::LogType::NONE);
+gore::g_engine_2d eng("Image Renderer Stress Test", W, H, 0, gore::LogType::NONE);
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
 gore::model penger;
 
@@ -164,10 +164,12 @@ void render () {
 int main () {
     software_r = SoftwareRenderer::create(W, H);
     penger = gore::model_loader::loadObj("resources/penger.obj");
+    wireframe_r = gore::wireframe_renderer::create(W, H);
+    eng.addRenderer(software_r.get(),  false, false, false);
+    eng.addRenderer(wireframe_r.get(), false, false, false);
     eng.setRenderFunction(render);
     eng.setFrameLimit(60);
     eng.toggleFrameLimitActive();
-    wireframe_r = gore::wireframe_renderer::create(W, H);
     float angle_change = 0;
     float angle_triangle_change = 0;
     while (eng.updateWindow()) {

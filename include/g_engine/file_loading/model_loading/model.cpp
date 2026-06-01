@@ -33,13 +33,13 @@ std::vector<gore::model_face>& gore::model::getFaces() {
     return faces;
 }
 
-void gore::model::addMaterials (const std::vector<mtl_material>& mats) {
+void gore::model::addMaterials (const std::vector<model_material::mtl_material>& mats) {
     for (auto& i : mats) {
         mtls.push_back(i);
     }
 }
 
-void gore::model::addMaterials (const std::vector<gltf_material>& mats) {
+void gore::model::addMaterials (const std::vector<model_material::gltf_material>& mats) {
     for (auto& i : mats) {
         gltfs.push_back(i);
     }

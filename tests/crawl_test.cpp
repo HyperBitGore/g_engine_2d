@@ -9,7 +9,7 @@
 uint32_t W = 1024;
 uint32_t H = 768;
 
-gore::g_engine_2d eng("Image Renderer Stress Test", W, H, PRIMITIVE_COMPONENT, gore::LogType::NONE);
+gore::g_engine_2d eng("Image Renderer Stress Test", W, H, 0, gore::LogType::NONE);
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
 std::unique_ptr<gore::threedeerender> three_d = nullptr;
 std::vector<gore::vec3> penger;
@@ -50,6 +50,8 @@ int main () {
     eng.setMouseMoveFunction(mouseMove);
     wireframe_r = gore::wireframe_renderer::create(W, H);
     three_d = gore::threedeerender::create(W, H);
+    eng.addRenderer(wireframe_r.get(), false, false, false);
+    eng.addRenderer(three_d.get(),     false, false, true);
     three_d->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
 
 

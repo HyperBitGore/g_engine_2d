@@ -27,7 +27,6 @@ namespace gore{
             void addVertexs(const std::vector<gore::vec3>& vertexs);
             void drawBuffer() override;
             // matrices
-            void setDimensions (uint32_t width, int32_t height) override;
-            void updateView (gore::vec3 camera_pos, gore::vec3 camera_target, gore::vec3 upVector);
+            void updateDimensions (uint32_t width, uint32_t height) override;
     };
 }

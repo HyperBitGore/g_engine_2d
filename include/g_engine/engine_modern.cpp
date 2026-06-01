@@ -172,21 +172,12 @@ uint32_t gore::g_engine_2d::getDPI() {
 void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
 	std::function<void(uint32_t, uint32_t)> f = [this, func](uint32_t w, uint32_t h) {
 		if (this->component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
-			basic_image->setDimensions(w, h);
+			basic_image->updateDimensions(w, h);
 		} else {
-			if (triangle_r && line_r && point_r && (maintainRendererViewport & PRIMITIVE_COMPONENT)) {
-				triangle_r->setDimensions(w, h);
-				line_r->setDimensions(w, h);
-				point_r->setDimensions(w, h);
-			}
-			if (img_r && (maintainRendererViewport & IMAGE_COMPONENT)) {
-				img_r->setDimensions(w, h);
-			}
-			if (gray_r && (maintainRendererViewport & GRAYSCALE_COMPONENT)) {
-				gray_r->setDimensions(w, h);
-			}
-			if (font_r && (maintainRendererViewport & FONT_COMPONENT)) {
-				font_r->setDimensions(w, h);
+			for (auto& i : renderers) {
+				if (!i.maintain_viewport) {
+					i.ptr->updateDimensions(w, h);
+				}
 			}
 		}
 		this->ortho = gore::matrix::calculateOrtho(w, h, this->window_width, this->window_height);
@@ -199,10 +190,6 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 	wind->setWindowResize(f);
 }
 
-void gore::g_engine_2d::setRendererViewportMask (uint32_t mask) {
-	this->maintainRendererViewport = mask;
-}
-
 void gore::g_engine_2d::setMaintainViewport(bool maintain) {
 	wind->setMaintainViewport(maintain);
 }
@@ -213,19 +200,10 @@ void gore::g_engine_2d::setWindowTitle (std::string title) {
 
 void gore::g_engine_2d::updateView (float camera_x, float camera_y, float zoom) {
 	if (component_mask & USE_VIEW_MATRICE) {
-		if (img_r) {
-			img_r->updateView(camera_x, camera_y, zoom);
-		}
-		if (gray_r) {
-			gray_r->updateView(camera_x, camera_y, zoom);
-		}
-		if (triangle_r && line_r && point_r) {
-			triangle_r->updateView(camera_x, camera_y, zoom);
-			line_r->updateView(camera_x, camera_y, zoom);
-			point_r->updateView(camera_x, camera_y, zoom);
-		}
-		if (font_r) {
-			font_r->updateView(camera_x, camera_y, zoom);
+		for (auto& i : renderers) {
+			if (i.update_view) {
+				i.ptr->updateView({camera_x, camera_y}, zoom);
+			}
 		}
 		this->view = gore::matrix::calculate2DView(camera_x, camera_y, zoom);
 	}

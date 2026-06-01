@@ -12,21 +12,16 @@ void gore::threedeerender::shader_setup()  {
     glVertexAttribIPointer(2, 1, GL_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 5)); // model matrice index
     glEnableVertexAttribArray(3);
     glVertexAttribIPointer(3, 1, GL_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 6)); // texture unit index
-    setDimensions(this->width, this->height);
+    updateDimensions(this->width, this->height);
     updateView({0, 0, 5}, {0, 0, 0}, gore::vec3(0,1,0));
     shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
-void gore::threedeerender::setDimensions (uint32_t width, int32_t height) {
+void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
     this->width = width;
     this->height = height;
     gore::matrix perspective = gore::matrix::perspective(toRadians(this->vertical_fov), (float)this->width / (float)this->height, this->near_clip, this->far_clip);
     shader.setuniform("projection", 1, true, perspective);
-}
-
-void gore::threedeerender::updateView (gore::vec3 camera_pos, gore::vec3 camera_target, gore::vec3 upVector) {
-    gore::matrix view = gore::matrix::lookat(camera_pos, camera_target, upVector);
-    shader.setuniform("view", 1, true, view);
 }
 
 gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::threedeerender, gore::threedee_vertex> (three_dee_renderer_vertex, three_dee_renderer_fragment, w, h) {

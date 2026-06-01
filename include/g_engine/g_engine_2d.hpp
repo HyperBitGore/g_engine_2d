@@ -5,17 +5,13 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include "rendering/renderer.hpp"
 #include "util/logging.hpp"
 #include "util/matrix.hpp"
 #include "util/shader.hpp"
-#define PRIMITIVE_COMPONENT 0x1
-#define IMAGE_COMPONENT 0x2
-#define FONT_COMPONENT 0x4
-#define GRAYSCALE_COMPONENT 0x8
-#define MAINTAIN_ASPECT_RATIO_COMPONENT 0x10
-#define USE_VIEW_MATRICE 0x20
-
-#define ALL_COMPONENTS PRIMITIVE_COMPONENT | IMAGE_COMPONENT | FONT_COMPONENT | GRAYSCALE_COMPONENT | MAINTAIN_ASPECT_RATIO_COMPONENT | USE_VIEW_MATRICE
+#define MAINTAIN_ASPECT_RATIO_COMPONENT 0x1
+#define USE_VIEW_MATRICE 0x2
+#define ALL_COMPONENTS MAINTAIN_ASPECT_RATIO_COMPONENT | USE_VIEW_MATRICE
 
 // add frame limiting
 // add casting mouse pointer coords into viewspace
@@ -49,7 +45,6 @@ private:
 	double averageFrameTimeMilliseconds = 33.333;
 	// rendering
 	int texture_units;
-	uint32_t maintainRendererViewport = PRIMITIVE_COMPONENT | IMAGE_COMPONENT | FONT_COMPONENT | GRAYSCALE_COMPONENT;
 	uint32_t component_mask = 0;
 	std::unique_ptr<drawpass> dr1 = nullptr;
 	std::unique_ptr<imagerenderer> basic_image = nullptr;
@@ -72,24 +67,21 @@ private:
 	// matrices
 	gore::matrix view = gore::matrix(4, 4);
 	gore::matrix ortho = gore::matrix(4, 4);
+	// renderers
+	struct render_ptr {
+		renderer_base* ptr;
+		bool maintain_viewport;
+		bool update_view;
+		bool update_view_3d;
+	};
+	std::vector<render_ptr> renderers;
 public:
-	// rendering backends
-	std::unique_ptr<trianglerenderer> triangle_r = nullptr;
-	std::unique_ptr<linerenderer> line_r = nullptr;
-	std::unique_ptr<pointrenderer> point_r = nullptr;
-	std::unique_ptr<imagerenderer> img_r = nullptr;
-	std::unique_ptr<fontrenderer> font_r = nullptr;
-	std::unique_ptr<grayscalerenderer> gray_r = nullptr;
 	std::shared_ptr<gore::logger> logger;
 	// parts is a bitmask which tells us what to load
 	g_engine_2d(const char* window_name, uint32_t width, uint32_t height, uint32_t component_mask, gore::LogType log_level = gore::LogType::NONE, std::string log_file = "g_engine_2d.log", uint32_t target_width = 0, uint32_t target_height = 0);
 
 	//move constructor
 	g_engine_2d(g_engine_2d&& o) {
-		this->triangle_r = std::move(o.triangle_r);
-		this->img_r = std::move(o.img_r);
-		this->font_r = std::move(o.font_r);
-		this->gray_r = std::move(o.gray_r);
 		this->logger = std::move(o.logger);
 		this->wind = o.wind;
 		this->in = o.in;
@@ -108,10 +100,6 @@ public:
 	}
 	//copy constructor, probably not accurate to what behavior we would want out of a copy constructor
 	g_engine_2d(const g_engine_2d& o) {
-		this->triangle_r = std::make_unique<trianglerenderer>(*o.triangle_r);
-		this->img_r = std::make_unique<imagerenderer>(*o.img_r);
-		this->font_r = std::make_unique<fontrenderer>(*o.font_r);
-		this->gray_r = std::make_unique<grayscalerenderer>(*o.gray_r);
 		this->logger = o.logger;
 		this->wind = o.wind;
 		this->in = o.in;
@@ -141,6 +129,10 @@ public:
 	void setRenderFunction(std::function<void()> func) {
 		renderFund = func;
 	}
+	// adds a renderer to be updated on window resize
+	void addRenderer (renderer_base* ptr, bool maintain_viewport, bool update_view, bool update_view_3d) {
+		renderers.push_back({ptr, maintain_viewport, update_view, update_view_3d});
+	}
 	// sets the window resize user function
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
 	//updates the window
@@ -151,8 +143,6 @@ public:
 	void toggleFullscreen();
 	// toggle viewport resizing
 	void setMaintainViewport(bool maintain);
-	// toggle renderer viewport resizing, if the component is activated in mask will be resized on window resize
-	void setRendererViewportMask (uint32_t mask);
 	// bool center toggles whether to keep mouse in center of screen
 	void toggleMouseCapture(bool center);
 	// toggles whether to hide the mouse cursor
@@ -184,18 +174,6 @@ public:
 	vec4 getClearColor() {
 		return clear_color;
 	}
-
-	//3d drawing functions
-	//
-	void drawPoint3D();
-	//
-	void drawTriangle3D();
-	//
-	void drawCube();
-	//
-	void drawSphere();
-	//
-	void drawLine3D();
 	
 	// camera helpers
 	void updateView (float camera_x, float camera_y, float zoom);

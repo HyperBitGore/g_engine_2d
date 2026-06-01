@@ -9,7 +9,10 @@
 static const uint32_t W = 800;
 static const uint32_t H = 600;
 
-gore::g_engine_2d eng("Image Test", W, H, IMAGE_COMPONENT | GRAYSCALE_COMPONENT, gore::LogType::NONE);
+gore::g_engine_2d eng("Image Test", W, H, 0, gore::LogType::NONE);
+
+static std::unique_ptr<gore::imagerenderer>    img_r;
+static std::unique_ptr<gore::grayscalerenderer> gray_r;
 
 static gore::IMG img_png;
 static gore::IMG img_bmp;
@@ -34,28 +37,28 @@ void render() {
     eng.enable(GL_BLEND);
 
     // static PNG
-    eng.img_r->drawImage(img_png,  {20.0f,  20.0f},  {180.0f, 135.0f});
+    img_r->drawImage(img_png,  {20.0f,  20.0f},  {180.0f, 135.0f});
     // rotating BMP
-    eng.img_r->drawImageRotated(img_bmp, {300.0f, 20.0f},  {180.0f, 135.0f}, angle);
+    img_r->drawImageRotated(img_bmp, {300.0f, 20.0f},  {180.0f, 135.0f}, angle);
     // grayscale PNG
-    eng.gray_r->drawImage(img_gray, {560.0f, 20.0f},  {180.0f, 135.0f});
+    gray_r->drawImage(img_gray, {560.0f, 20.0f},  {180.0f, 135.0f});
     // blank programmatic image (red gradient drawn at startup)
-    eng.img_r->drawImage(img_blank, {20.0f, 200.0f}, {180.0f, 180.0f});
+    img_r->drawImage(img_blank, {20.0f, 200.0f}, {180.0f, 180.0f});
     // UV crop (top-left quarter of the PNG)
-    eng.img_r->drawImage(img_png, {240.0f, 200.0f}, {180.0f, 135.0f}, {0.0f, 0.0f, 0.5f, 0.5f});
+    img_r->drawImage(img_png, {240.0f, 200.0f}, {180.0f, 135.0f}, {0.0f, 0.0f, 0.5f, 0.5f});
 
     // multi-texture unit batch: 7 different textures queued together and
     // flushed in a single drawBuffer() call to stress the texture unit map
     // row 1
-    eng.img_r->addImageVertex(img_png->tex,     {20.0f,  400.0f}, {150.0f, 112.0f});
-    eng.img_r->addImageVertex(img_bmp->tex,     {185.0f, 400.0f}, {150.0f, 112.0f});
-    eng.img_r->addImageVertex(img_blank->tex,   {350.0f, 400.0f}, {112.0f, 112.0f});
-    eng.img_r->addImageVertex(img_palette->tex, {475.0f, 400.0f}, {150.0f, 112.0f});
+    img_r->addImageVertex(img_png->tex,     {20.0f,  400.0f}, {150.0f, 112.0f});
+    img_r->addImageVertex(img_bmp->tex,     {185.0f, 400.0f}, {150.0f, 112.0f});
+    img_r->addImageVertex(img_blank->tex,   {350.0f, 400.0f}, {112.0f, 112.0f});
+    img_r->addImageVertex(img_palette->tex, {475.0f, 400.0f}, {150.0f, 112.0f});
     // row 2
-    eng.img_r->addImageVertex(img_enemy->tex,   {20.0f,  525.0f}, {112.0f,  60.0f});
-    eng.img_r->addImageVertex(img_test->tex,    {145.0f, 525.0f}, {112.0f, 112.0f});
-    eng.img_r->addImageVertex(img_gray->tex,    {270.0f, 525.0f}, {150.0f, 112.0f});
-    eng.img_r->drawBuffer();
+    img_r->addImageVertex(img_enemy->tex,   {20.0f,  525.0f}, {112.0f,  60.0f});
+    img_r->addImageVertex(img_test->tex,    {145.0f, 525.0f}, {112.0f, 112.0f});
+    img_r->addImageVertex(img_gray->tex,    {270.0f, 525.0f}, {150.0f, 112.0f});
+    img_r->drawBuffer();
 
     eng.disable(GL_BLEND);
 }
@@ -79,6 +82,11 @@ int main() {
     }
     gore::imageloader::createTexture(img_blank, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
     gore::imageloader::updateIMG(img_blank);
+
+    img_r  = gore::imagerenderer::create(W, H);
+    gray_r = gore::imagerenderer::create<gore::grayscalerenderer>(W, H);
+    eng.addRenderer(img_r.get(),  false, false, false);
+    eng.addRenderer(gray_r.get(), false, false, false);
 
     eng.setRenderFunction(render);
 

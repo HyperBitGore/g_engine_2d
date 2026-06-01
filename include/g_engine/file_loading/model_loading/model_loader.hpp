@@ -6,45 +6,46 @@
 #include "../../img_loading/image_loader.hpp"
 
 namespace gore {
+    namespace model_material {
+        struct mtl_material {
+            std::string name;
+            gore::vec3 Ka = {0.2f, 0.2f, 0.2f}; // ambient
+            gore::vec3 Kd = {0.8f, 0.8f, 0.8f}; // diffuse
+            gore::vec3 Ks = {0.0f, 0.0f, 0.0f}; // specular
+            gore::vec3 Ke = {0.0f, 0.0f, 0.0f}; // emissive
+            float Ns  = 10.0f; // specular exponent
+            float d   = 1.0f;  // dissolve (opacity)
+            float Ni  = 1.0f;  // index of refraction
+            int illum = 2;     // illumination model
+            std::string map_Kd; // diffuse texture path
+            std::string map_Ka; // ambient texture path
+            std::string map_Ks; // specular texture path
+            std::string map_bump; // bump map path;
+            std::string map_d; // transparency map
+        };
 
-    struct mtl_material {
-        std::string name;
-        gore::vec3 Ka = {0.2f, 0.2f, 0.2f}; // ambient
-        gore::vec3 Kd = {0.8f, 0.8f, 0.8f}; // diffuse
-        gore::vec3 Ks = {0.0f, 0.0f, 0.0f}; // specular
-        gore::vec3 Ke = {0.0f, 0.0f, 0.0f}; // emissive
-        float Ns  = 10.0f; // specular exponent
-        float d   = 1.0f;  // dissolve (opacity)
-        float Ni  = 1.0f;  // index of refraction
-        int illum = 2;     // illumination model
-        std::string map_Kd; // diffuse texture path
-        std::string map_Ka; // ambient texture path
-        std::string map_Ks; // specular texture path
-        std::string map_bump; // bump map path;
-        std::string map_d; // transparency map
-    };
+        enum class AlphaMode { OPAQUE, MASK, BLEND };
 
-    enum class AlphaMode { OPAQUE, MASK, BLEND };
-
-    struct gltf_material {
-        std::string name;
-        // PBR metallic-roughness
-        gore::vec4 base_color_factor      = {1.0f, 1.0f, 1.0f, 1.0f};
-        float      metallic_factor        = 1.0f;
-        float      roughness_factor       = 1.0f;
-        // emissive
-        gore::vec3 emissive_factor        = {0.0f, 0.0f, 0.0f};
-        // texture indices into the gltf textures array (-1 = not set)
-        int tex_base_color        = -1;
-        int tex_metallic_roughness= -1;
-        int tex_normal            = -1;
-        int tex_occlusion         = -1;
-        int tex_emissive          = -1;
-        // alpha
-        AlphaMode alpha_mode      = AlphaMode::OPAQUE;
-        float     alpha_cutoff    = 0.5f; // only used when alpha_mode == MASK
-        bool      double_sided    = false;
-    };
+        struct gltf_material {
+            std::string name;
+            // PBR metallic-roughness
+            gore::vec4 base_color_factor      = {1.0f, 1.0f, 1.0f, 1.0f};
+            float      metallic_factor        = 1.0f;
+            float      roughness_factor       = 1.0f;
+            // emissive
+            gore::vec3 emissive_factor        = {0.0f, 0.0f, 0.0f};
+            // texture indices into the gltf textures array (-1 = not set)
+            int tex_base_color        = -1;
+            int tex_metallic_roughness= -1;
+            int tex_normal            = -1;
+            int tex_occlusion         = -1;
+            int tex_emissive          = -1;
+            // alpha
+            AlphaMode alpha_mode      = AlphaMode::OPAQUE;
+            float     alpha_cutoff    = 0.5f; // only used when alpha_mode == MASK
+            bool      double_sided    = false;
+        };
+    }
 
     struct model_face {
         gore::vec3 p1;
@@ -63,8 +64,8 @@ namespace gore {
         private:
             std::vector<model_face> faces;
             IMG img = nullptr;
-            std::vector<mtl_material> mtls;
-            std::vector<gltf_material> gltfs;
+            std::vector<model_material::mtl_material> mtls;
+            std::vector<model_material::gltf_material> gltfs;
             matrix model_matrix = matrix(4, 4, 0); // how we project and rotate model into world space            
         public:
             model();
@@ -73,8 +74,8 @@ namespace gore {
             model (const model& m);
             std::vector<model_face>& getFaces();
             std::vector<gore::vec3> getPositions() const;
-            void addMaterials (const std::vector<mtl_material>& mats);
-            void addMaterials (const std::vector<gltf_material>& mats);
+            void addMaterials (const std::vector<model_material::mtl_material>& mats);
+            void addMaterials (const std::vector<model_material::gltf_material>& mats);
     };
 
     class model_loader {
@@ -83,7 +84,7 @@ namespace gore {
         // https://en.wikipedia.org/wiki/Wavefront_.obj_file
         static model loadObj (std::string file_path);
         // https://en.wikipedia.org/wiki/Wavefront_.obj_file#Material_template_library
-        static std::vector<mtl_material> loadMtl (std::string file_path);
+        static std::vector<model_material::mtl_material> loadMtl (std::string file_path);
         // https://www.khronos.org/gltf/#gltf-spec
         static model loadGltf (std::string file_path);
     };

@@ -146,12 +146,12 @@ model_face_index parseFace (std::string str, size_t* offset) {
 // https://paulbourke.net/dataformats/obj/
 // https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
-std::vector<gore::mtl_material> gore::model_loader::loadMtl(std::string file_path) {
+std::vector<gore::model_material::mtl_material> gore::model_loader::loadMtl(std::string file_path) {
     std::ifstream file(file_path);
     if (!file) return {};
 
-    std::vector<gore::mtl_material> materials;
-    gore::mtl_material current;
+    std::vector<gore::model_material::mtl_material> materials;
+    gore::model_material::mtl_material current;
     bool has_current = false;
 
     std::string line;
@@ -162,7 +162,7 @@ std::vector<gore::mtl_material> gore::model_loader::loadMtl(std::string file_pat
 
         if (kw == "newmtl") {
             if (has_current) materials.push_back(current);
-            current = gore::mtl_material{};
+            current = gore::model_material::mtl_material{};
             current.name = consumeNextWord(line, &offset);
             has_current = true;
         } else if (!has_current) {
@@ -219,7 +219,7 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
     std::vector<gore::vec3> normals;
     std::vector<model_face> faces;
     std::string mtl_path = "";
-    std::vector<mtl_material> mats;
+    std::vector<model_material::mtl_material> mats;
     int mat_index = -1;
 
     const gore::vec2 zero_uv   = {0.0f, 0.0f};

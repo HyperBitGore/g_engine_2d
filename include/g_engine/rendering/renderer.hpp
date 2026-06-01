@@ -6,8 +6,17 @@
 #include <type_traits>
 #include <utility>
 namespace gore {
+    class renderer_base {
+        public:
+        virtual ~renderer_base () = default;
+        virtual void drawBuffer () = 0;
+        virtual void updateDimensions (uint32_t w, uint32_t h) = 0;
+        virtual void updateView (gore::vec2 pos, float zoom) = 0;
+        virtual void updateView (gore::vec3 camera_pos, gore::vec3 camera_target, gore::vec3 upVector) = 0;
+    };
+
     template <class Derived, class T>
-    class renderer {
+    class renderer : public renderer_base {
         protected:
             std::vector<T> vertexs;
             shader shader;
@@ -60,7 +69,7 @@ namespace gore {
                 vertexs.clear();
                 glBindVertexArray(0);
             }
-            virtual void setDimensions (uint32_t width, int32_t height) {
+            virtual void updateDimensions (uint32_t width, uint32_t height) {
                 assert(created && "call createRenderer before use!");
                 matrix ortho = matrix::calculateOrtho(width, height, this->width, this->height);
                 shader.setuniform("projection", 1, true, ortho);
@@ -70,6 +79,16 @@ namespace gore {
             virtual void updateView (float x, float y, float zoom) {
                 assert(created && "call createRenderer before use!");
                 matrix view = matrix::calculate2DView(x, y, zoom);
+                shader.setuniform("view", 1, true, view);
+            }
+            virtual void updateView (gore::vec2 pos, float zoom) {
+                assert(created && "call createRenderer before use!");
+                matrix view = matrix::calculate2DView(pos.x, pos.y, zoom);
+                shader.setuniform("view", 1, true, view);
+            }
+            virtual void updateView (gore::vec3 camera_pos, gore::vec3 camera_target, gore::vec3 upVector) {
+                assert(created && "call createRenderer before use!");
+                gore::matrix view = gore::matrix::lookat(camera_pos, camera_target, upVector);
                 shader.setuniform("view", 1, true, view);
             }
             template<class FactoryDerived = Derived, class... Args>

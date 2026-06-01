@@ -11,27 +11,30 @@
 static const uint32_t W = 640;
 static const uint32_t H = 480;
 
-gore::g_engine_2d eng("Frame Limit Test", W, H, FONT_COMPONENT, gore::LogType::NONE);
+gore::g_engine_2d eng("Frame Limit Test", W, H, 0, gore::LogType::NONE);
 
 static double second_acc = 0.0;
 static double cooldown = 0.0;
 static std::pair<double,double> last_frames = {0, 0};
 static std::string status_msg = "60 fps limit active";
 static gore::font f_mono;
+static std::unique_ptr<gore::fontrenderer> font_r;
 
 void render() {
-    eng.font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    eng.font_r->drawText(status_msg, &f_mono, 20.0f, H - 40.0f, 16, eng.getDPI());
+    font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+    font_r->drawText(status_msg, &f_mono, 20.0f, H - 40.0f, 16, eng.getDPI());
 
     std::string fps_str = "FPS: " + std::to_string((int)last_frames.first)
                         + "  avg: " + std::to_string(last_frames.second).substr(0, 5) + " ms";
-    eng.font_r->drawText(fps_str, &f_mono, 20.0f, H - 70.0f, 16, eng.getDPI());
+    font_r->drawText(fps_str, &f_mono, 20.0f, H - 70.0f, 16, eng.getDPI());
 
-    eng.font_r->setColor({0.6f, 0.6f, 0.6f, 1.0f});
-    eng.font_r->drawText("1=30fps  2=60fps  3=120fps  Esc=quit", &f_mono, 20.0f, 20.0f, 14, eng.getDPI());
+    font_r->setColor({0.6f, 0.6f, 0.6f, 1.0f});
+    font_r->drawText("1=30fps  2=60fps  3=120fps  Esc=quit", &f_mono, 20.0f, 20.0f, 14, eng.getDPI());
 }
 
 int main() {
+    font_r = gore::fontrenderer::create(W, H);
+    eng.addRenderer(font_r.get(), false, false, false);
     eng.setRenderFunction(render);
     eng.toggleFrameLimitActive();
     eng.setFrameLimit(60);

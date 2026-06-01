@@ -241,20 +241,6 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
 	logger->log("Texture Units on this machine: " + std::to_string(texture_units));
 	//start modern opengl needed stuff like shaders and vertex buffers
-	if (component_mask & PRIMITIVE_COMPONENT) {
-		this->triangle_r = trianglerenderer::create(width, height);
-		this->line_r = linerenderer::create(width, height);
-		this->point_r = pointrenderer::create(width, height);
-	}
-	if (component_mask & IMAGE_COMPONENT) {
-		this->img_r = imagerenderer::create(width, height);
-	}
-	if (component_mask & GRAYSCALE_COMPONENT) {
-		this->gray_r = imagerenderer::create<grayscalerenderer>(width, height);
-	}
-	if (component_mask & FONT_COMPONENT) {
-		this->font_r = gore::fontrenderer::create(width, height);
-	}
 	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
 		this->basic_image = imagerenderer::create(width, height);
 	}

@@ -8,7 +8,14 @@
 
 uint32_t globalWidth = 640;
 uint32_t globalHeight = 480;
-gore::g_engine_2d eng2("Test Window", 640, 480, PRIMITIVE_COMPONENT | IMAGE_COMPONENT | GRAYSCALE_COMPONENT | FONT_COMPONENT | USE_VIEW_MATRICE, gore::LogType::BOTH);
+gore::g_engine_2d eng2("Test Window", 640, 480, USE_VIEW_MATRICE, gore::LogType::BOTH);
+
+std::unique_ptr<gore::trianglerenderer>  triangle_r;
+std::unique_ptr<gore::linerenderer>      line_r;
+std::unique_ptr<gore::pointrenderer>     point_r;
+std::unique_ptr<gore::imagerenderer>     img_r;
+std::unique_ptr<gore::grayscalerenderer> gray_r;
+std::unique_ptr<gore::fontrenderer>      font_r;
 gore::drawpass dr(640, 480, GL_COLOR_ATTACHMENT0);
 gore::audioplayer ap(4, gore::LogType::BOTH);
 gore::audio aud;
@@ -167,32 +174,32 @@ void renderFunction() {
 		eng2.updateView(0, 0, zoom);
 	}
 	dr.bind();
-	eng2.triangle_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
-	eng2.triangle_r->drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
-	eng2.triangle_r->drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
-	eng2.triangle_r->addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
-	eng2.triangle_r->addTriangle({300.0f, 80.0f}, {320.0f, 100.0f}, {340.0f, 80.0f});
-	eng2.triangle_r->addTriangle({300.0f, 60.0f}, {320.0f, 80.0f}, {340.0f, 60.0f});
-	eng2.triangle_r->addTriangle({0.0f, 0.0f}, {20.0f, 20.0f}, {40.0f, 0.0f});
-	eng2.triangle_r->addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
-	eng2.triangle_r->drawBuffer();
+	triangle_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
+	triangle_r->drawTriangle({480.0f, 200.0f}, {500.0f, 250.0f}, {520.0f, 200.0f});
+	triangle_r->drawTriangle({-480.0f, 200.0f}, {-500.0f, 250.0f}, {-520.0f, 200.0f});
+	triangle_r->addTriangle({300.0f, 100.0f}, {320.0f, 120.0f}, {340.0f, 100.0f});
+	triangle_r->addTriangle({300.0f, 80.0f}, {320.0f, 100.0f}, {340.0f, 80.0f});
+	triangle_r->addTriangle({300.0f, 60.0f}, {320.0f, 80.0f}, {340.0f, 60.0f});
+	triangle_r->addTriangle({0.0f, 0.0f}, {20.0f, 20.0f}, {40.0f, 0.0f});
+	triangle_r->addTriangle({640.0f, 480.0f}, {620.0f, 460.0f}, {600.0f, 480.0f});
+	triangle_r->drawBuffer();
 	
-	eng2.triangle_r->setColor({0.5f, 0.3f, 0.1f, 1.0f});
-	eng2.triangle_r->drawQuad({pos, 10.0f}, 60.0f, 60.0f);
-	eng2.point_r->setColor({0.0f, 1.0f, 0.5f, 0.0f});
-	eng2.point_r->drawPoint({50.0f, 300.0f});
+	triangle_r->setColor({0.5f, 0.3f, 0.1f, 1.0f});
+	triangle_r->drawQuad({pos, 10.0f}, 60.0f, 60.0f);
+	point_r->setColor({0.0f, 1.0f, 0.5f, 0.0f});
+	point_r->drawPoint({50.0f, 300.0f});
 	for (float y = 0.0f; y <= 300.0f; y += 0.1f) {
-		eng2.point_r->addPoint({70.0f, y});
+		point_r->addPoint({70.0f, y});
 	}
-	eng2.point_r->drawBuffer();
-	eng2.line_r->setColor({0.0f, 0.2f, 1.0f, 1.0f});
-	eng2.line_r->drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
-	eng2.triangle_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
-	eng2.triangle_r->addCircleFilled({500.0f, 50.0f}, 50.0f);
-	eng2.triangle_r->drawBuffer();
-	eng2.line_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
-	eng2.line_r->addQuadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
-	eng2.line_r->drawBuffer();
+	point_r->drawBuffer();
+	line_r->setColor({0.0f, 0.2f, 1.0f, 1.0f});
+	line_r->drawLine({100.0f, 300.0f}, {400.0f, 400.0f});
+	triangle_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
+	triangle_r->addCircleFilled({500.0f, 50.0f}, 50.0f);
+	triangle_r->drawBuffer();
+	line_r->setColor({1.0f, 0.2f, 0.5f, 1.0f});
+	line_r->addQuadraticBezier({100.0f, 400.0f}, {250.0f, 350.0f}, {200.0f, 300.0f}, 20);
+	line_r->drawBuffer();
 	c++;
 	if (c >= 50) {
 		c = 0;
@@ -206,21 +213,21 @@ void renderFunction() {
 	float r = float(ang) * (float)M_PI / (float)180.0;
 	float r_r = float(r_ang) * (float)M_PI / (float)180.0;
 	eng2.enable(GL_BLEND);
-	eng2.img_r->drawImage(imgtest, {300.0f, 200.0f}, {100.0f, 100.0f});
-	eng2.img_r->drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
-	eng2.img_r->drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
-	eng2.img_r->drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
-	eng2.img_r->drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
-	eng2.img_r->drawImage(conversion_test, {560.0f, 200.0f}, {100.0f, 100.0f});
-	eng2.gray_r->drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
-	eng2.gray_r->setWithAlpha(true);
-	eng2.gray_r->drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
-	eng2.gray_r->setWithAlpha(false);
+	img_r->drawImage(imgtest, {300.0f, 200.0f}, {100.0f, 100.0f});
+	img_r->drawImageRotated(atlas_test, {400.0f, 250.0f}, {100.0f, 100.0f}, r);
+	img_r->drawImage(blank_test, {300.0f, 330.0f}, {50.0f, 50.0f});
+	img_r->drawImageRotated(imgtest, {200.0f, 200.0f}, {100.0f, 100.0f}, r);
+	img_r->drawImage(imgtest_pallete, {480.0f, 150.0f}, {100.0f, 100.0f});
+	img_r->drawImage(conversion_test, {560.0f, 200.0f}, {100.0f, 100.0f});
+	gray_r->drawImage(imgtest_types, {480.0f, 350.0f}, {100.0f, 100.0f});
+	gray_r->setWithAlpha(true);
+	gray_r->drawImage(imgtest_grayalpha, {480.0f, 280.0f}, {100.0f, 100.0f});
+	gray_r->setWithAlpha(false);
 	gore::vec4 pos = atlas.getImagePos("atlas_test", true);
-	eng2.img_r->addImageVertex(atlas.getImg()->tex, {100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
+	img_r->addImageVertex(atlas.getImg()->tex, {100.0f, 200.0f}, {100.0f, 100.0f}, pos, 0.0f);
 	pos = atlas.getImagePos("enem2", true);
-	eng2.img_r->addImageVertex(atlas.getImg()->tex, {60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
-	eng2.img_r->drawBuffer();
+	img_r->addImageVertex(atlas.getImg()->tex, {60.0f, 200.0f}, {50.0f, 60.0f}, pos, 0.0f);
+	img_r->drawBuffer();
 	// img_r.drawImage(imgtest, {0.0f, 0.0f}, {300.0f, 300.0f});
 	// img_r.drawImage(imgtest_bmp, {300.0f, 0.0f}, {300.0f, 300.0f});
 	eng2.disable(GL_BLEND);
@@ -234,25 +241,25 @@ void renderFunction() {
 		invert->drawTexture(dr.getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
 		// img_r.drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}else{
-		eng2.img_r->drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
+		img_r->drawTexture(dr.getTexture(), {0.0f, 0.0f}, {(float)globalWidth, (float)globalHeight}, {0.0f, 1.0f, 1.0f, -1.0f});
 	}
 	eng2.enable(GL_BLEND);
-	eng2.img_r->drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
+	img_r->drawImage(bmptest, {250.0f, 250.0f}, {(float)200, (float)200});
 	//testing font rendering
-	gore::fontraster::drawRasterText(&f_test, eng2.img_r.get(), "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
-	gore::fontraster::drawRasterText(&f_test, eng2.img_r.get(), "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
-	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
-	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
+	gore::fontraster::drawRasterText(&f_test, img_r.get(), "Hello world LOL", 100.0f, 100.0f, 32, eng2.getDPI());
+	gore::fontraster::drawRasterText(&f_test, img_r.get(), "abcdefghijklmnopqrstuvwxzy0123456789,;'\"", 50.0f, 500.0f, 48, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, img_r.get(), "The quick brown fox jumps over the lazy dog.", 200.0f, 550.0f, 32, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, img_r.get(), "Hello, fancy seeing you here; Hope you have a nice day!", 200.0f, 700.0f, 32, eng2.getDPI());
 	eng2.disable(GL_BLEND);
-	eng2.font_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
-	eng2.font_r->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
-	eng2.font_r->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
-	eng2.font_r->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
+	font_r->setColor({1.0f, 0.5f, 0.0f, 1.0f});
+	font_r->drawText("Hello World qqjj 97 8", &f_test, 100, 30, 24, eng2.getDPI());
+	font_r->drawText("Hello, fancy seeing you here; Hope you have a nice day! bb", &open_sans, 200.0f, 650.0f, 32, eng2.getDPI());
+	font_r->drawText("o", &open_sans, 200.0f, 850.0f, 128, eng2.getDPI());
 	const char test_str[] = {'\x7E', '!', '\x7F', (char)200};
 	std::u16string test_str2 = {0xC8, 0x7E, 0x21, 0x10A, 0xFFFF, 0x2DC, 0x144};
-	eng2.font_r->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
-	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
-	gore::fontraster::drawRasterText(&open_sans, eng2.img_r.get(), "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
+	font_r->drawText(test_str2, &f_test, 300.0f, 800.0f, 48, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, img_r.get(), "o~!", 300.0f, 850.0f, 128, eng2.getDPI());
+	gore::fontraster::drawRasterText(&open_sans, img_r.get(), "WMabcdefghijklmnopqrstuvwxzy0123456789,;~'\"", 400.0f, 800.0f, 48, eng2.getDPI());
 }
 
 int nthBit(int number, int n) {
@@ -377,6 +384,18 @@ int main() {
 	double dd = 0;
 	eng2.toggleFrameLimitActive();
 	eng2.setFrameLimit(600);
+	triangle_r = gore::trianglerenderer::create(640, 480);
+	line_r     = gore::linerenderer::create(640, 480);
+	point_r    = gore::pointrenderer::create(640, 480);
+	img_r      = gore::imagerenderer::create(640, 480);
+	gray_r     = gore::imagerenderer::create<gore::grayscalerenderer>(640, 480);
+	font_r     = gore::fontrenderer::create(640, 480);
+	eng2.addRenderer(triangle_r.get(), false, true,  false);
+	eng2.addRenderer(line_r.get(),     false, true,  false);
+	eng2.addRenderer(point_r.get(),    false, true,  false);
+	eng2.addRenderer(img_r.get(),      false, true,  false);
+	eng2.addRenderer(gray_r.get(),     false, true,  false);
+	eng2.addRenderer(font_r.get(),     false, true, false);
 	invert = Invert::create(640, 480);
 	while (eng2.updateWindow()) {
 		double del = eng2.getDelta();

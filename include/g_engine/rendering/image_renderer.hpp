@@ -48,7 +48,7 @@ protected:
 		glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(image_render_vertex), (void*)(sizeof(float) * 7)); // texture unit
 		shader.setuniform("mtexture", (GLuint)0);
 		updateView(0.0f, 0.0f, 1.0f);
-		setDimensions(this->width, this->height);
+		updateDimensions(this->width, this->height);
 	}
 	imagerenderer(size_t w, size_t h);
 public:
@@ -70,7 +70,7 @@ class grayscalerenderer : public imagerenderer {
 	void shader_setup() override {
 		texture_unit_map.setHashFunction(hash);
 		updateView(0.0f, 0.0f, 1.0f);
-		setDimensions(this->width, this->height);
+		updateDimensions(this->width, this->height);
 	}
 	grayscalerenderer(size_t w, size_t h);
 	public:

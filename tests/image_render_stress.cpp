@@ -21,7 +21,10 @@ static const uint32_t H = 600;
 
 static gore::font f_mono;
 
-gore::g_engine_2d eng("Image Renderer Stress Test", W, H, IMAGE_COMPONENT | FONT_COMPONENT | PRIMITIVE_COMPONENT, gore::LogType::NONE);
+gore::g_engine_2d eng("Image Renderer Stress Test", W, H, 0, gore::LogType::NONE);
+
+static std::unique_ptr<gore::imagerenderer> img_r;
+static std::unique_ptr<gore::fontrenderer>  font_r;
 
 // all textures used in the batch
 static gore::IMG img_png;
@@ -78,16 +81,16 @@ static std::pair<double,double> last_frames = {0, 0};
 void render() {
     // queue every sprite — all different textures, single draw call
     for (const auto& s : sprites)
-        eng.img_r->addImageVertex(tex_pool[s.tex_idx],
+        img_r->addImageVertex(tex_pool[s.tex_idx],
                                   {s.x, s.y},
                                   {(float)SPRITE_W, (float)SPRITE_H});
-    eng.img_r->drawBuffer();
+    img_r->drawBuffer();
 
     char hud[128];
     snprintf(hud, sizeof(hud), "Sprites: %d   FPS: %.0f   Avg: %.2f ms",
              sprite_count, last_frames.first, last_frames.second);
-    eng.font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    eng.font_r->drawText(hud, &f_mono, 10.0f, 30.0f, 20, eng.getDPI());
+    font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+    font_r->drawText(hud, &f_mono, 10.0f, 30.0f, 20, eng.getDPI());
 }
 
 int main() {
@@ -114,6 +117,12 @@ int main() {
     tex_pool[5] = img_blank->tex;
 
     init_sprites(sprite_count);
+
+    img_r  = gore::imagerenderer::create(W, H);
+    font_r = gore::fontrenderer::create(W, H);
+    eng.addRenderer(img_r.get(),  false, false, false);
+    eng.addRenderer(font_r.get(), false, false, false);
+
     eng.setRenderFunction(render);
 
     char title[64];
