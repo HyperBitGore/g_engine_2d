@@ -1,5 +1,6 @@
 #pragma once
 #include "../util/shader.hpp"
+#include <memory>
 #if defined(__unix__)
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -14,9 +15,10 @@ struct g_img {
 	uint8_t bytes_per_pixel;
 	GLenum format;
 	GLenum type;
+	GLenum internalformat;
 	size_t size;
 };
-typedef g_img* IMG;
+typedef std::unique_ptr<g_img> IMG;
 struct Point {
 	int x;
 	int y;
@@ -43,7 +45,7 @@ private:
         }
 		return tot % max_images;
 	}
-	void insert(std::string name, IMG img, vec2 point){
+	void insert(std::string name, const IMG& img, vec2 point){
 		int hash = imageHash(name);
 		Memb m = new Member;
 		m->p_and_d = {point.x, point.y, (float)img->w, (float)img->h};
@@ -91,7 +93,7 @@ public:
 	// operators
 	imageatlas& operator=(const imageatlas& atlas);
 	imageatlas& operator=(imageatlas&& atlas);
-	void addImage(IMG img, std::string name);
+	void addImage(const IMG& img, std::string name);
 	void addImage(std::string path, IMG_TYPE type, std::string name);
 	vec2 getNextImagePos (uint32_t w, uint32_t h);
 	void insert(std::string name, uint32_t w, uint32_t h, vec2 point){
@@ -112,31 +114,32 @@ public:
 
 	}
 	vec4 getImagePos(std::string name, bool normalize = false);
-	IMG getImg();
+	const IMG& getImg();
 };
 
 //rewrite image loader to be manageable
 class imageloader{
 	public:
 	static IMG createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel);
-	static void createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type);
+	static void createTexture(const IMG& img, GLenum internalformat, GLenum format, GLenum type);
+	static IMG copyIMG (const IMG& img);
 	static IMG loadPNG(std::string path);
 	static IMG loadBMP(std::string path);
-	static IMG convertIMGRGBA8(IMG img);
-	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
-	static void setPixel(IMG img, int x, int y, uint8_t r, uint8_t g);
-	static void setPixel(IMG img, int x, int y, uint8_t r);
+	static IMG convertIMGRGBA8(const IMG& img);
+	static void setPixel(const IMG& img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+	static void setPixel(const IMG& img, int x, int y, uint8_t r, uint8_t g, uint8_t b);
+	static void setPixel(const IMG& img, int x, int y, uint8_t r, uint8_t g);
+	static void setPixel(const IMG& img, int x, int y, uint8_t r);
 	//assumed the color components are 8 bits each
-	static void setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes);
+	static void setPixelRaw(const IMG& img, int x, int y, uint32_t color, int bytes);
 
 	//run after you've done all the editing of data you want to
-	static void updateIMG(IMG img) {
+	static void updateIMG(const IMG& img) {
 		glBindTexture(GL_TEXTURE_2D, (GLuint)img->tex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img->w, img->h, img->format, img->type, img->data);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	static uint64_t getPixel(IMG img, int x, int y, int bytes);
+	static uint64_t getPixel(const IMG& img, int x, int y, int bytes);
 };
 }

@@ -57,7 +57,7 @@ gore::imageatlas::imageatlas (const imageatlas& atlas) {
 }
 gore::imageatlas::imageatlas (imageatlas&& atlas) {
     this->buckets = atlas.buckets;
-    this->img = atlas.img;
+    this->img = std::move(atlas.img);
     this->max_images = atlas.max_images;
     atlas.buckets = nullptr;
     atlas.img = nullptr;
@@ -133,7 +133,7 @@ gore::vec2 gore::imageatlas::getNextImagePos (uint32_t w, uint32_t h) {
             n_img->type = img->type;
             delete [] img->data;
             imageloader::createTexture(n_img, GL_RGBA8, n_img->format, n_img->type);
-            img = n_img;
+            img = std::move(n_img);
         }
     }
     return start_pos;
@@ -143,7 +143,7 @@ gore::vec2 gore::imageatlas::getNextImagePos (uint32_t w, uint32_t h) {
 // only need to look up if y is fine, the x position should be set based on previous insert
 
 //have to make sure the n_img is the same format as the atlas
-void gore::imageatlas::addImage(IMG n_img, std::string name) {
+void gore::imageatlas::addImage(const IMG& n_img, std::string name) {
     if (n_img->bytes_per_pixel != img->bytes_per_pixel) {
         return;
     }
@@ -186,6 +186,6 @@ gore::vec4 gore::imageatlas::getImagePos(std::string name, bool normalize) {
     return p;
 }
 
-gore::IMG gore::imageatlas::getImg() {
+const gore::IMG& gore::imageatlas::getImg() {
     return img;
 }

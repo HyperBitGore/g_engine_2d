@@ -56,9 +56,9 @@ public:
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
 	void drawBuffer() override;
-	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions);
-	void drawImage(gore::IMG img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
-	void drawImageRotated(gore::IMG img,gore::vec2 pos, gore::vec2 dimensions, float rot);
+	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions);
+	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
+	void drawImageRotated(const IMG& img,gore::vec2 pos, gore::vec2 dimensions, float rot);
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
 	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
 	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);

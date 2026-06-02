@@ -80,11 +80,11 @@ void gore::imagerenderer::drawTexture(GLuint texture, vec2 pos, vec2 dim, vec4 u
     drawBuffer();
 }
 
-void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim){
+void gore::imagerenderer::drawImage(const IMG& img, vec2 pos, vec2 dim){
     drawImage(img, pos, dim, {0, 0, 1.0, 1.0});
 }
 
-void gore::imagerenderer::drawImage(IMG img, vec2 pos, vec2 dim, vec4 uvs){
+void gore::imagerenderer::drawImage(const IMG& img, vec2 pos, vec2 dim, vec4 uvs){
     GLuint unit = getTextureUnit(img->tex);
     vertexs.push_back({pos.x, pos.y, uvs.x, uvs.y, 0.0f, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y,0.0f, pos.x, pos.y, unit}); //first triangel top right
@@ -110,7 +110,7 @@ void gore::imagerenderer::drawTextureRotated(GLuint texture, vec2 pos, vec2 dim,
     drawBuffer();
 }
 
-void gore::imagerenderer::drawImageRotated(IMG img, vec2 pos, vec2 dim, float rot){
+void gore::imagerenderer::drawImageRotated(const IMG& img, vec2 pos, vec2 dim, float rot){
     GLuint unit = getTextureUnit(img->tex);
     vertexs.push_back({pos.x, pos.y, 0.0f, 0.0f, rot, pos.x, pos.y, unit}); //first triangle top left vertex
     vertexs.push_back({pos.x + dim.x, pos.y, 1.0f, 0.0f,rot, pos.x, pos.y, unit}); //first triangel top right

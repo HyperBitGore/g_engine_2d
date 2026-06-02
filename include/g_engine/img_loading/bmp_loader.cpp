@@ -1,5 +1,6 @@
 #include "image_loader.hpp"
 #include <fstream>
+#include <memory>
 #include <vector>
 /*
 //https://docs.fileformat.com/image/bmp/
@@ -550,7 +551,7 @@ gore::IMG gore::imageloader::loadBMP(std::string path){
     uint8_t* pallete = ((uint8_t*)bdp) + dib_header.header_size;
 
     //creaing the image data
-    IMG img = new g_img;
+    IMG img = std::make_unique<g_img>();
     img->bytes_per_pixel = dib_header.bitspp/8;
 
     //account for negative height numbers

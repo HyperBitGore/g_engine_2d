@@ -13,9 +13,42 @@ gore::model::model (std::vector<gore::model_face> faces) {
 gore::model::model (const model& m) {
     this->faces = m.faces;
     this->model_matrix = m.model_matrix;
-    this->img = m.img;
+    this->img = imageloader::copyIMG(m.img);
     this->gltfs = m.gltfs;
     this->mtls = m.mtls;
+}
+
+// move
+gore::model::model (model&& m) {
+    this->faces = std::move(m.faces);
+    this->model_matrix = std::move(m.model_matrix);
+    this->img = std::move(m.img);
+    this->gltfs = std::move(m.gltfs);
+    this->mtls = std::move(m.mtls);
+}
+
+// copy assignment
+gore::model& gore::model::operator=(const model& m) {
+    if (this != &m) {
+        this->faces = m.faces;
+        this->model_matrix = m.model_matrix;
+        this->img = imageloader::copyIMG(m.img);
+        this->gltfs = m.gltfs;
+        this->mtls = m.mtls;
+    }
+    return *this;
+}
+
+// move assignment
+gore::model& gore::model::operator=(model&& m) {
+    if (this != &m) {
+        this->faces = std::move(m.faces);
+        this->model_matrix = std::move(m.model_matrix);
+        this->img = std::move(m.img);
+        this->gltfs = std::move(m.gltfs);
+        this->mtls = std::move(m.mtls);
+    }
+    return *this;
 }
 
 std::vector<gore::vec3> gore::model::getPositions() const {

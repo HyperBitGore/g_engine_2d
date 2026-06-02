@@ -29,7 +29,6 @@ namespace gore {
 		public:
 		std::string name;
 		std::vector<glyph> glyphs;
-		std::vector<IMG> rastered;
 		int32_t ptsize;
 		uint16_t unitsPerEm;
 		bool overlap_simple;
@@ -51,7 +50,6 @@ namespace gore {
 			this->ptsize = font.ptsize;
 			this->unitsPerEm = font.unitsPerEm;
 			this->overlap_simple = font.overlap_simple;
-			this->rastered = font.rastered;
 		}
 		// move
 		font (const font&& font) {
@@ -60,7 +58,6 @@ namespace gore {
 			this->ptsize = font.ptsize;
 			this->unitsPerEm = font.unitsPerEm;
 			this->overlap_simple = font.overlap_simple;
-			this->rastered = font.rastered;
 		}
 		// operator=
 		font& operator=(const font& font) {
@@ -69,7 +66,6 @@ namespace gore {
 			this->ptsize = font.ptsize;
 			this->unitsPerEm = font.unitsPerEm;
 			this->overlap_simple = font.overlap_simple;
-			this->rastered = font.rastered;
 			return *this;
 		}
 	};

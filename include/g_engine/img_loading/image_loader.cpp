@@ -1,21 +1,23 @@
 #include "image_loader.hpp"
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 
 gore::IMG gore::imageloader::createBlank(GLuint w, GLuint h, GLuint bytes_per_pixel){
-	IMG img = new g_img;
+	IMG img = std::make_unique<g_img>();
 	img->h = h;
 	img->w = w;
 	img->bytes_per_pixel = bytes_per_pixel;
 	img->data = new uint8_t[(w * bytes_per_pixel) * h];
 	std::memset(img->data, 0, (w * bytes_per_pixel) * h);
 	img->size = (w * bytes_per_pixel * h);
-	return img;
+	return std::move(img);
 }
 
-void gore::imageloader::createTexture(IMG img, GLenum internalformat, GLenum format, GLenum type){
+void gore::imageloader::createTexture(const IMG& img, GLenum internalformat, GLenum format, GLenum type){
 	img->format = format;
 	img->type = type;
+	img->internalformat = internalformat;
 	glGenTextures(1, &img->tex);
 	//glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, img->tex);
@@ -29,8 +31,33 @@ void gore::imageloader::createTexture(IMG img, GLenum internalformat, GLenum for
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+gore::IMG gore::imageloader::copyIMG (const IMG& img) {
+	IMG n_img = std::make_unique<g_img>();
+	n_img->h = img->h;
+	n_img->w = img->w;
+	n_img->bytes_per_pixel = img->bytes_per_pixel;
+	n_img->data = new uint8_t[(img->w * img->bytes_per_pixel) * img->h];
+	std::memset(img->data, 0, (img->w * img->bytes_per_pixel) * img->h);
+	n_img->size = (img->w * img->bytes_per_pixel * img->h);
+	n_img->format = img->format;
+	n_img->type = img->type;
+	n_img->internalformat = img->internalformat;
+	glGenTextures(1, &img->tex);
+	//glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, img->tex);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D(img->tex, 1, n_img->internalformat, img->w, img->h);
+	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, n_img->format, GL_UNSIGNED_BYTE, img->data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return std::move(n_img);
+}
 
-void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+
+void gore::imageloader::setPixel(const IMG& img, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	size_t row = y * (img->w * 4);
 	size_t col = x * 4;
 	img->data[row + col] = r;
@@ -38,7 +65,7 @@ void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, ui
 	img->data[row + col + 2] = b;
 	img->data[row + col + 3] = a;
 }
-void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+void gore::imageloader::setPixel(const IMG& img, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 	size_t row = y * (img->w * 3);
 	size_t col = x * 3;
 	img->data[row + col] = r;
@@ -46,20 +73,20 @@ void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g, ui
 	img->data[row + col + 2] = b;
 }
 
-void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r, uint8_t g) {
+void gore::imageloader::setPixel(const IMG& img, int x, int y, uint8_t r, uint8_t g) {
 	size_t row = y * (img->w * 2);
 	size_t col = x * 2;
 	img->data[row + col] = r;
 	img->data[row + col + 1] = g;
 }
-void gore::imageloader::setPixel(IMG img, int x, int y, uint8_t r) {
+void gore::imageloader::setPixel(const IMG& img, int x, int y, uint8_t r) {
 	size_t row = y * (img->w);
 	size_t col = x;
 	img->data[row + col] = r;
 }
 
 
-void gore::imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int bytes) {
+void gore::imageloader::setPixelRaw(const IMG& img, int x, int y, uint32_t color, int bytes) {
 	if (x >= img->w || y >= img->h) {
 		return;
 	}
@@ -72,7 +99,7 @@ void gore::imageloader::setPixelRaw(IMG img, int x, int y, uint32_t color, int b
 	}
 }
 
-uint64_t gore::imageloader::getPixel(IMG img, int x, int y, int bytes) {
+uint64_t gore::imageloader::getPixel(const IMG& img, int x, int y, int bytes) {
 	if (bytes <= 0) {
 		return 0;
 	}
@@ -87,9 +114,9 @@ uint64_t gore::imageloader::getPixel(IMG img, int x, int y, int bytes) {
 	return out;
 }
 
-gore::IMG gore::imageloader::convertIMGRGBA8(IMG img) {
+gore::IMG gore::imageloader::convertIMGRGBA8(const IMG& img) {
 	if (img->format == GL_RGBA8) {
-		return img;
+		throw std::runtime_error("Already in RGBA8 format!");
 	}
 	IMG data = createBlank(img->w, img->h, 4);
 	createTexture(data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);

@@ -72,6 +72,13 @@ namespace gore {
             model (std::vector<model_face> faces);
             // copy
             model (const model& m);
+            // move
+            model (model&& m);
+            // copy assignment
+            model& operator=(const model& m);
+            // move assignment
+            model& operator=(model&& m);
+            
             std::vector<model_face>& getFaces();
             std::vector<gore::vec3> getPositions() const;
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
