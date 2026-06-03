@@ -1,7 +1,5 @@
 #pragma once
 #include "common.hpp"
-#include <stdexcept>
-#define KB32 32768
 /*
 In other words, if one were to print out the compressed data as
 a sequence of bytes, starting with the first byte at the
@@ -46,7 +44,7 @@ class inflate : deflate_compressor {
         //copy constructor
         Bitwrapper (const Bitwrapper& wrap) {
             size = wrap.size;
-            offset = wrap.size;
+            offset = wrap.offset;
             bit_offset = wrap.bit_offset;
             data = wrap.data;
             data_clone = wrap.data_clone;
@@ -58,16 +56,23 @@ class inflate : deflate_compressor {
 
 
         //move constructor
-        Bitwrapper (const Bitwrapper&& wrap) noexcept {
+        Bitwrapper (Bitwrapper&& wrap) noexcept {
             size = wrap.size;
-            offset = wrap.size;
+            offset = wrap.offset;
             bit_offset = wrap.bit_offset;
             data = wrap.data;
             data_clone = wrap.data_clone;
         }
 
-        Bitwrapper& operator=(const Bitwrapper&& wrap) {
-            return *this = Bitwrapper(wrap);
+        Bitwrapper& operator=(Bitwrapper&& wrap) {
+            if (this != &wrap) {
+                size = wrap.size;
+                offset = wrap.offset;
+                bit_offset = wrap.bit_offset;
+                data = wrap.data;
+                data_clone = wrap.data_clone;
+            }
+            return *this;
         }
 
         uint32_t readBits (uint8_t bits) {
@@ -268,6 +273,54 @@ class inflate : deflate_compressor {
 
         }
     }
+
+    static size_t realDecompress (std::function<Bitwrapper&()> getData, std::function<void(std::vector<uint8_t>&, size_t)> writeData) {
+        size_t out_size = 0;
+        //creating default huffman tree
+        std::vector <Code> fixed_codes = generateFixedCodes();
+        std::vector <Code> fixed_dist_codes = generateFixedDistanceCodes();
+        FlatHuffmanTree fixed_huffman(fixed_codes);
+        FlatHuffmanTree fixed_dist_huffman(fixed_dist_codes);
+        std::vector<uint8_t> buffer;
+        size_t it = 0;
+        while (true) {
+            Bitwrapper& dat = getData();
+            uint8_t final = dat.readBits(1);
+            uint8_t type = dat.readBits(2);
+            FlatHuffmanTree used_tree = fixed_huffman;
+            FlatHuffmanTree used_dist = fixed_dist_huffman;
+            switch (type) {
+                case 0:
+                {
+                    dat.moveByte(true);
+                    uint16_t len = dat.readBits(16);
+                    uint16_t nlen = dat.readBits(16);
+                    for (size_t i = 0; i < len; i++) {
+                        buffer.push_back(dat.readByte());
+                        out_size++;
+                    }
+                }
+                break;
+                case 2:
+                    {
+                        std::pair<FlatHuffmanTree, FlatHuffmanTree> trees = decodeTree(dat);
+                        used_tree = trees.first;
+                        used_dist = trees.second;
+                    }
+                case 1:
+                    decompressHuffmanBlock(dat, buffer, used_tree, used_dist);
+                break;
+            }
+            out_size += buffer.size();
+            writeData(buffer, it);
+            it = buffer.size();
+            if (final) {
+                break;
+            }
+        }
+        return out_size;
+    }
+
     public:
 
     static size_t decompressZlib (void* in, size_t in_size, void* out, size_t out_size) {
@@ -285,54 +338,15 @@ class inflate : deflate_compressor {
     static size_t decompress (void* in, size_t in_size, void* out, size_t out_size) {
         Bitwrapper dat = Bitwrapper(in, in_size);
         uint8_t* out_data = (uint8_t*)out;
-        //creating default huffman tree
-        std::vector <Code> fixed_codes = generateFixedCodes();
-        std::vector <Code> fixed_dist_codes = generateFixedDistanceCodes();
-        FlatHuffmanTree fixed_huffman(fixed_codes);
-        FlatHuffmanTree fixed_dist_huffman(fixed_dist_codes);
-        
-        uint32_t it = 0;
-        uint32_t ot = 0;
-        std::vector<uint8_t> buffer;
-        while (true) {
-            uint8_t final = dat.readBits(1);
-            uint8_t type = dat.readBits(2);
-            FlatHuffmanTree used_tree = fixed_huffman;
-            FlatHuffmanTree used_dist = fixed_dist_huffman;
-            switch (type) {
-                case 0:
-                {
-                    dat.moveByte(true);
-                    uint16_t len = dat.readBits(16);
-                    it += 2;
-                    uint16_t nlen = dat.readBits(16);
-                    it += 2;
-                    for (size_t i = 0; i < len; i++) {
-                        buffer.push_back(dat.readByte());
-                    }
-                }
-                break;
-                case 2:
-                    {
-                        std::pair<FlatHuffmanTree, FlatHuffmanTree> trees = decodeTree(dat);
-                        used_tree = trees.first;
-                        used_dist = trees.second;
-                    }
-                case 1:
-                    decompressHuffmanBlock(dat, buffer, used_tree, used_dist);
-                break;
+        size_t it = 0;
+        realDecompress([&]() -> Bitwrapper& {
+            return dat;
+        }, [&](std::vector<uint8_t>& buffer, size_t buffer_offset) -> void {
+            for (size_t i = buffer_offset; i < buffer.size() && it < out_size; i++, it++) {
+                out_data[it] = buffer[i];
             }
-            if (final) {
-                break;
-            }
-            else if (buffer.size() >= out_size || it >= in_size) {
-                return 0;
-            }
-        }
-        for (auto& i : buffer) {
-            out_data[ot++] = i;
-        }
-        return ot;
+        });
+        return it;
     }
 
     static std::vector<uint8_t> decompressZlib (void* in, size_t in_size) {
@@ -348,104 +362,46 @@ class inflate : deflate_compressor {
 
     static std::vector<uint8_t> decompress (void* in, size_t in_size) {
         Bitwrapper dat = Bitwrapper(in, in_size);
-        //creating default huffman tree
-        std::vector <Code> fixed_codes = generateFixedCodes();
-        std::vector <Code> fixed_dist_codes = generateFixedDistanceCodes();
-        FlatHuffmanTree fixed_huffman(fixed_codes);
-        FlatHuffmanTree fixed_dist_huffman(fixed_dist_codes);
-        
-        std::vector<uint8_t> buffer;
-        while (true) {
-            uint8_t final = dat.readBits(1);
-            uint8_t type = dat.readBits(2);
-            FlatHuffmanTree used_tree = fixed_huffman;
-            FlatHuffmanTree used_dist = fixed_dist_huffman;
-            switch (type) {
-                case 0:
-                {
-                    dat.moveByte(true);
-                    uint16_t len = dat.readBits(16);
-                    uint16_t nlen = dat.readBits(16);
-                    for (size_t i = 0; i < len; i++) {
-                        buffer.push_back(dat.readByte());
-                    }
-                }
-                break;
-                case 2:
-                    {
-                        std::pair<FlatHuffmanTree, FlatHuffmanTree> trees = decodeTree(dat);
-                        used_tree = trees.first;
-                        used_dist = trees.second;
-                    }
-                case 1:
-                    decompressHuffmanBlock(dat, buffer, used_tree, used_dist);
-                break;
+        std::vector<uint8_t> real_buffer;
+        size_t out_size = realDecompress([&]() -> Bitwrapper& {
+            return dat;
+        }, [&](std::vector<uint8_t>& buffer, size_t buffer_offset) -> void {
+            for (size_t i = buffer_offset; i < buffer.size(); i++) {
+                real_buffer.push_back(buffer[i]);
             }
-            if (final) {
-                break;
-            } else if (dat.getOffset() > in_size) {
-                return {};
+        });
+        return real_buffer;
+    }
+
+    static std::vector<uint8_t> decompress (std::vector<uint8_t> in ) {
+        std::vector<uint8_t> real_buffer;
+        Bitwrapper dat = Bitwrapper(in.data(), in.size());
+        size_t out_size = realDecompress([&]() -> Bitwrapper& {
+            return dat;
+        }, [&](std::vector<uint8_t>& buffer, size_t buffer_offset) -> void {
+            for (size_t i = buffer_offset; i < buffer.size(); i++) {
+                real_buffer.push_back(buffer[i]);
             }
-        }
-        if (buffer.size() < in_size) {
-            return {};
-        }
-        return buffer;
+        });
+        return real_buffer;
     }
 
     // done
     static size_t decompress (std::string file_path, std::string new_file) {
-        //creating default huffman tree
-        std::vector <Code> fixed_codes = generateFixedCodes();
-        std::vector <Code> fixed_dist_codes = generateFixedDistanceCodes();
-        FlatHuffmanTree fixed_huffman(fixed_codes);
-        FlatHuffmanTree fixed_dist_huffman(fixed_dist_codes);
-        
         uint8_t read_buffer[KB32];
-        std::vector<uint8_t> out_buffer;
         std::ifstream f;
         f.open(file_path, std::ios::binary);
         std::ofstream out_file;
         out_file.open(new_file.c_str(), std::ios::binary);
-        size_t size = 0;
-        while (true) {
-            std::memset(read_buffer, 0, KB32);
-            out_buffer.clear();
-            // read 32kb from the file then 
+        Bitwrapper dat = Bitwrapper(read_buffer, 0);
+        size_t size = realDecompress([&]() -> Bitwrapper& {
             f.read((char*)read_buffer, KB32);
             std::streamsize read = f.gcount();
-            Bitwrapper dat(read_buffer, (size_t)read);
-            uint8_t final = dat.readBits(1);
-            uint8_t type = dat.readBits(2);
-            FlatHuffmanTree used_tree = fixed_huffman;
-            FlatHuffmanTree used_dist = fixed_dist_huffman;
-            switch (type) {
-                case 0:
-                {
-                    dat.moveByte(true);
-                    uint16_t len = dat.readBits(16);
-                    uint16_t nlen = dat.readBits(16);
-                    for (size_t i = 0; i < len; i++) {
-                        out_buffer.push_back(dat.readByte());
-                    }
-                }
-                break;
-                case 2:
-                    {
-                        std::pair<FlatHuffmanTree, FlatHuffmanTree> trees = decodeTree(dat);
-                        used_tree = trees.first;
-                        used_dist = trees.second;
-                    }
-                case 1:
-                    decompressHuffmanBlock(dat, out_buffer, used_tree, used_dist);
-                break;
-            }
-            out_file.write((char*)out_buffer.data(), out_buffer.size());
-            size += out_buffer.size();
-            if (final) {
-                break;
-            }
-        }
+            dat = Bitwrapper(read_buffer, (size_t)read);
+            return dat;
+        }, [&](std::vector<uint8_t>& buffer, size_t buffer_offset) -> void {
+            out_file.write((char*)buffer.data() + buffer_offset, buffer.size() - buffer_offset);
+        });
         out_file.close();
         f.close();
         return size;

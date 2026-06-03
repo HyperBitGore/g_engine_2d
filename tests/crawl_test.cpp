@@ -15,6 +15,7 @@ std::unique_ptr<gore::threedeerender> three_d = nullptr;
 std::unique_ptr<gore::imagerenderer> image = nullptr;
 std::vector<gore::vec3> penger;
 gore::model peng;
+gore::model cube_tex;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 
 void render () {
@@ -46,6 +47,7 @@ void resize(uint32_t w, uint32_t h) {
 
 int main () {
     peng = gore::model_loader::loadObj("resources/penger.obj");
+    cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
     penger = peng.getPositions();
     eng.setRenderFunction(render);
     eng.setWindowResize(resize);

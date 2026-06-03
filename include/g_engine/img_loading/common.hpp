@@ -10,15 +10,18 @@
 #include <algorithm>
 #include <string>
 #include <fstream>
+#include <functional>
+#define KB32 32768
 
 // deflate
-
+//  - compression level 1 broken
+//  - optimize
+    //  - more compression options for better or faster compression (like zlib)
+    //  - heuristic for when to use dynamic huffman vs fixed huffman vs uncompressed
 // inflate
 //  -if ever need to optimize inflate, add a code lookup table in huffman tree
 //  -support zlib better
-//      -allow zlib files
 //      -parse dicts if fdict bit set
-
 class deflate_compressor {
     protected:
 
@@ -394,6 +397,7 @@ class deflate_compressor {
                 // try fixing tree first
                 if (checkCodesOversubscribed(codes) != 1.0) {
                     std::string str = "Code tree is over or under subscribed!" + std::to_string(checkCodesOversubscribed(codes));
+                    std::cerr << str << "\n";
                     throw std::runtime_error(str.c_str());
                 }
                 return codes;

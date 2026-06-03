@@ -234,23 +234,27 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                 std::string x = consumeNextWord(i, &offset);
                 std::string y = consumeNextWord(i, &offset);
                 std::string z = consumeNextWord(i, &offset);
-                if (!x.empty() && !y.empty() && !z.empty())
+                if (!x.empty() && !y.empty() && !z.empty()) {
                     positions.push_back({std::stof(x), std::stof(y), std::stof(z)});
+                }
                 break;
             }
             case LineType::VT: {
                 std::string u = consumeNextWord(i, &offset);
                 std::string v = consumeNextWord(i, &offset);
-                if (!u.empty() && !v.empty())
+                if (!u.empty() && !v.empty()) {
+                    float y = std::abs(1.0 - std::stof(v));
                     uvs.push_back({std::stof(u), std::stof(v)});
+                }
                 break;
             }
             case LineType::VN: {
                 std::string x = consumeNextWord(i, &offset);
                 std::string y = consumeNextWord(i, &offset);
                 std::string z = consumeNextWord(i, &offset);
-                if (!x.empty() && !y.empty() && !z.empty())
+                if (!x.empty() && !y.empty() && !z.empty()) {
                     normals.push_back({std::stof(x), std::stof(y), std::stof(z)});
+                }
                 break;
             }
             case LineType::F: {

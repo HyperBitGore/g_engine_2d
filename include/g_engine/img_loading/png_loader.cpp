@@ -125,6 +125,8 @@ std::vector<uint8_t> processIDATChunk (std::vector<uint8_t> buffer, IHDR ihdr, c
                     output.push_back(read[i] + PaethPredictor(left, upper, upper_left));
                 }
             break;
+            default:
+                throw std::runtime_error("Unknown PNG filter type: " + std::to_string(read[i]));
         }
     }
 
