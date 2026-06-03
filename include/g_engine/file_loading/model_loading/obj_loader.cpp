@@ -149,7 +149,7 @@ model_face_index parseFace (std::string str, size_t* offset) {
 std::vector<gore::model_material::mtl_material> gore::model_loader::loadMtl(std::string file_path) {
     std::ifstream file(file_path);
     if (!file) return {};
-
+    std::string parent_path = std::filesystem::path(file_path).parent_path();
     std::vector<gore::model_material::mtl_material> materials;
     gore::model_material::mtl_material current;
     bool has_current = false;
@@ -159,7 +159,7 @@ std::vector<gore::model_material::mtl_material> gore::model_loader::loadMtl(std:
         if (line.empty() || line[0] == '#') continue;
         size_t offset = 0;
         std::string kw = consumeNextWord(line, &offset);
-
+        
         if (kw == "newmtl") {
             if (has_current) materials.push_back(current);
             current = gore::model_material::mtl_material{};
@@ -195,7 +195,7 @@ std::vector<gore::model_material::mtl_material> gore::model_loader::loadMtl(std:
             std::string v = consumeNextWord(line, &offset);
             if (!v.empty()) current.illum = std::stoi(v);
         } else if (kw == "map_Kd") {
-            current.map_Kd = consumeNextWord(line, &offset);
+            current.map_Kd = parent_path + "/" + consumeNextWord(line, &offset);
         }
     }
     if (has_current) materials.push_back(current);
@@ -242,7 +242,7 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                 std::string u = consumeNextWord(i, &offset);
                 std::string v = consumeNextWord(i, &offset);
                 if (!u.empty() && !v.empty())
-                    uvs.push_back({std::stof(u), 1.0f - std::stof(v)}); // flip V for OpenGL
+                    uvs.push_back({std::stof(u), std::stof(v)});
                 break;
             }
             case LineType::VN: {

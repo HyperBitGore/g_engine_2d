@@ -15,12 +15,58 @@ template<typename T, typename G>
 		std::vector<mapitem<T, G>*> buckets;
 		std::function<int(G)> hash_func;
 	public:
-		hashmap() {
+		hashmap() : hash_func(nullptr) {
 
 		}
 		~hashmap() {
 			clear();
 		}
+		// copy
+		hashmap (const hashmap& m) : hash_func(m.hash_func) {
+			for (size_t i = 0; i < m.buckets.size(); i++) {
+				mapitem<T, G>* src = m.buckets[i];
+				mapitem<T, G>** dst = &buckets.emplace_back(nullptr);
+				while (src != nullptr) {
+					*dst = new mapitem<T, G>;
+					(*dst)->key = src->key;
+					(*dst)->item = src->item;
+					dst = &(*dst)->next;
+					src = src->next;
+				}
+			}
+		}
+		// move
+		hashmap (hashmap&& m) noexcept : buckets(std::move(m.buckets)), hash_func(std::move(m.hash_func)) {
+		}
+		// copy assignment
+		hashmap& operator=(const hashmap& m) {
+			if (this != &m) {
+				clear();
+				hash_func = m.hash_func;
+				for (size_t i = 0; i < m.buckets.size(); i++) {
+					mapitem<T, G>* src = m.buckets[i];
+					mapitem<T, G>** dst = &buckets.emplace_back(nullptr);
+					while (src != nullptr) {
+						*dst = new mapitem<T, G>;
+						(*dst)->key = src->key;
+						(*dst)->item = src->item;
+						dst = &(*dst)->next;
+						src = src->next;
+					}
+				}
+			}
+			return *this;
+		}
+		// move assignment
+		hashmap& operator=(hashmap&& m) noexcept {
+			if (this != &m) {
+				clear();
+				buckets = std::move(m.buckets);
+				hash_func = std::move(m.hash_func);
+			}
+			return *this;
+		}
+
 		void clear() {
 			for (size_t i = 0; i < buckets.size(); i++) {
 				if (buckets[i] != nullptr) {

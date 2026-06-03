@@ -63,11 +63,16 @@ namespace gore {
     class model {
         private:
             std::vector<model_face> faces;
-            IMG img = nullptr;
             std::vector<model_material::mtl_material> mtls;
             std::vector<model_material::gltf_material> gltfs;
-            matrix model_matrix = matrix(4, 4, 0); // how we project and rotate model into world space            
+            static int hash(std::string str) {
+		        return (str.size() > 0) ? str[0] + str[str.size() - 1] % 1024 : 0;
+	        }
+            std::vector<IMG> images;
+            matrix model_matrix = matrix(4, 4, 0); // how we project and rotate model into world space
+            model_material::mtl_material* getMTLMat (int32_t index);   
         public:
+            hashmap<uint32_t, std::string> image_map;
             model();
             model (std::vector<model_face> faces);
             // copy
@@ -83,6 +88,7 @@ namespace gore {
             std::vector<gore::vec3> getPositions() const;
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
             void addMaterials (const std::vector<model_material::gltf_material>& mats);
+            IMG& getImage (int32_t mtl_index);
     };
 
     class model_loader {

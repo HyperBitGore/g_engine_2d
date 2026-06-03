@@ -52,7 +52,6 @@ gore::IMG gore::imageloader::copyIMG (const IMG& img) {
 	glTextureStorage2D(img->tex, 1, n_img->internalformat, img->w, img->h);
 	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, n_img->format, GL_UNSIGNED_BYTE, img->data);
 	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	return std::move(n_img);
 }
 

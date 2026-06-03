@@ -52,6 +52,7 @@ const char* vertex_shader_grayscale = "#version 450 core\n"
     "    pre = pre + rot;\n"
     "    p = pre;\n"
     "    tex_coord = uv;\n"
+    "    tex_unit = tex_u;\n"
     "    gl_Position = vec4(p.x, p.y, 0.0, 1.0);\n"
     "}\n"
     "";

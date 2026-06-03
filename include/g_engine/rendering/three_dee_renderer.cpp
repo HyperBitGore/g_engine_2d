@@ -1,7 +1,27 @@
 #include "three_dee_renderer.hpp"
 #include "three_dee_renderer_shader.hpp"
 
+GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
+    GLuint* unit = texture_unit_map.get(texture);
+    if (unit == nullptr) {
+        uint32_t f_unit = GL_TEXTURE0 + current_unit;
+        texture_unit_map.insert(texture, current_unit);
+        glActiveTexture(f_unit);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        samplers.push_back(current_unit);
+        current_unit += 1;
+        return current_unit - 1;
+        
+    }
+    return *unit;
+}
+
+void gore::threedeerender::setTextureSamplers () {
+    shader.setuniform("mtexture", samplers.size(), samplers.data());
+}
+
 void gore::threedeerender::shader_setup()  {
+    texture_unit_map.setHashFunction(hash);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);
@@ -9,12 +29,14 @@ void gore::threedeerender::shader_setup()  {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 3)); //uvs
     glEnableVertexAttribArray(2);
-    glVertexAttribIPointer(2, 1, GL_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 5)); // model matrice index
+    glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 5)); // model matrice index
     glEnableVertexAttribArray(3);
-    glVertexAttribIPointer(3, 1, GL_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 6)); // texture unit index
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 6)); // texture unit index
     updateDimensions(this->width, this->height);
     updateView({0, 0, 5}, {0, 0, 0}, gore::vec3(0,1,0));
     shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
+    shader.setuniform("temp_texture", (GLint)(0));
+    setTextureSamplers();
 }
 
 void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
@@ -27,21 +49,50 @@ void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
 gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::threedeerender, gore::threedee_vertex> (three_dee_renderer_vertex, three_dee_renderer_fragment, w, h) {
 
 }
+
+void gore::threedeerender::addModel (gore::model& model) {
+    uint32_t c = 0;
+    for (auto& i : model.getFaces()) {
+        uint32_t texture_unit = 2000u;
+        /*if (i.material_index >= 0) {
+            gore::IMG& img = model.getImage(i.material_index);
+            texture_unit = getTextureUnit(img->tex);
+        }*/
+        if (c % 2 == 0) {
+            vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, 2000u, 1000u});
+            vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, 2000u, 1000u});
+            vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, 2000u, 1000u});
+        } else {
+            vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, 2000u, 1000u});
+            vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, 2000u, 1000u});
+            vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, 2000u, 1000u});
+        }
+        c++;
+    }
+}
+
 // unskinned vertex
 void gore::threedeerender::addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3) {
-    vertexs.push_back({pos.x, pos.y, pos.z, 0.0, 0.0, -1, -1});
-    vertexs.push_back({pos2.x, pos2.y, pos2.z, 0.0, 0.0, -1, -1});
-    vertexs.push_back({pos3.x, pos3.y, pos3.z, 0.0, 0.0, -1, -1});
+    vertexs.push_back({pos.x, pos.y, pos.z, 0.0, 0.0, 2000u, 2000u});
+    vertexs.push_back({pos2.x, pos2.y, pos2.z, 0.0, 0.0, 2000u, 2000u});
+    vertexs.push_back({pos3.x, pos3.y, pos3.z, 0.0, 0.0, 2000u, 2000u});
 }
 // unskinned vertexs
 void gore::threedeerender::addVertexs(const std::vector<gore::vec3>& vertexs) {
     for (auto& i : vertexs) {
-        this->vertexs.push_back({i.x, i.y, i.z, 0.0, 0.0, -1, -1});
+        this->vertexs.push_back({i.x, i.y, i.z, 0.0, 0.0, 2000u, 2000u});
     }
+}
+
+void gore::threedeerender::setTempTexture(GLuint tex) {
+    glActiveTexture(GL_TEXTURE0 + (0));
+    glBindTexture(GL_TEXTURE_2D, tex);
+    shader.setuniform("temp_texture", (GLint)(0));
 }
 void gore::threedeerender::drawBuffer() {
     assert(created && "call createRenderer before use!");
     if (vertexs.empty()) return;
+    setTextureSamplers();
     shader.bind();
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -51,7 +102,11 @@ void gore::threedeerender::drawBuffer() {
     }else{
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(threedee_vertex), &vertexs[0]);
     }
-    glDrawArraysExt(draw_arrays_mode, 0, (GLsizei)vertexs.size());
-    vertexs.clear();
+    glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
     glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    vertexs.clear();
+    texture_unit_map.clear();
+    samplers.clear();
+    current_unit = 0;
 }

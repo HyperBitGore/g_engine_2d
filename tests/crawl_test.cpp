@@ -12,13 +12,17 @@ uint32_t H = 768;
 gore::g_engine_2d eng("Image Renderer Stress Test", W, H, 0, gore::LogType::NONE);
 std::unique_ptr<gore::wireframe_renderer> wireframe_r = nullptr;
 std::unique_ptr<gore::threedeerender> three_d = nullptr;
+std::unique_ptr<gore::imagerenderer> image = nullptr;
 std::vector<gore::vec3> penger;
 gore::model peng;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 
 void render () {
-    three_d->addVertexs(penger);
+    gore::IMG& omg = peng.getImage(0);
+    three_d->setTempTexture(omg->tex);
+    three_d->addModel(peng);
     three_d->drawBuffer();
+    // image->drawImage(omg, {100.0f, 100.0f}, {50.0f, 50.0f});
 }
 gore::vec2 last_mouse = {(float)W / 2.0f, (float)H / 2.0f};
 bool view_dirty = false;
@@ -50,6 +54,7 @@ int main () {
     eng.setMouseMoveFunction(mouseMove);
     wireframe_r = gore::wireframe_renderer::create(W, H);
     three_d = gore::threedeerender::create(W, H);
+    image = gore::imagerenderer::create(W, H);
     eng.addRenderer(wireframe_r.get(), false, false, false);
     eng.addRenderer(three_d.get(),     false, false, true);
     three_d->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
