@@ -73,11 +73,12 @@ uint8_t PaethPredictor (uint8_t a, uint8_t b, uint8_t c) {
 enum FilterType {FILTER_NONE = 0, FILTER_SUB = 1, FILTER_UP = 2, FILTER_AVERAGE = 3, FILTER_PAETH = 4};
 
 //For all filters, the bytes "to the left of" the first pixel in a scanline must be treated as being zero. For filters that refer to the prior scanline, the entire prior scanline must be treated as being zeroes for the first scanline of an image (or of a pass of an interlaced image). 
-
+// bit depth below 1 is fucked here
 std::vector<uint8_t> processIDATChunk (std::vector<uint8_t> buffer, IHDR ihdr, const uint32_t bytes_per_pixel) {
     std::vector<uint8_t> read = inflate::decompressZlib(buffer.data(), buffer.size());
     std::vector<uint8_t> output;
-    const uint32_t scanline_length = (ihdr.width * bytes_per_pixel);
+    // bit depth below 8 need different calculation, ceiling (width * bit_depth / 8)
+    const uint32_t scanline_length = (ihdr.bit_depth < 8) ? ((ihdr.width * ihdr.bit_depth + 7) / 8) : (ihdr.width * bytes_per_pixel);
     // now process the data!
     size_t row_count = 0;
     for (size_t i = 0; i < read.size(); row_count++) {

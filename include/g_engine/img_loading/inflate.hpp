@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include <stdexcept>
 /*
 In other words, if one were to print out the compressed data as
 a sequence of bytes, starting with the first byte at the
@@ -320,17 +321,31 @@ class inflate : deflate_compressor {
         }
         return out_size;
     }
-
+    static inline size_t zlibHeaderRead (void* in, size_t in_size) {
+        size_t change = 2;
+        uint8_t* c = (uint8_t*)in;
+        uint8_t cm = (*c) & 0b1111;
+        if (cm != 8) {
+            throw std::runtime_error("ZLIB compression method is not 8 (deflate), unreadable by deflate.hpp");
+        }
+        uint8_t cinfo = ((*c) & 0b11110000) >> 4;
+        // flag byte
+        c += 1;
+        uint8_t fcheck = (*c) & 0b1111;
+        uint8_t fdict = (*c) & 0b100000;
+        uint8_t flevel = ((*c) & 0b11000000) >> 6;
+        c += 1;
+        // have to skip the DICT adler32 checksum
+        if (fdict) {
+            uint32_t checksum = *((uint32_t*)c);
+            change += 4;
+        }
+        return change;
+    }
     public:
 
     static size_t decompressZlib (void* in, size_t in_size, void* out, size_t out_size) {
-        // idc about zlib data :)
-        uint32_t change = 2;
-        uint8_t v = extract1BitLeft(*(uint8_t*)in + 1, 5);
-        // fdict set, skip the other four bytes with the checksum
-        if (v) {
-            change = 6;
-        }
+        uint32_t change = zlibHeaderRead(in, in_size);
         return decompress((char*)in + change, in_size - change, out, out_size);
     }
 
@@ -350,13 +365,7 @@ class inflate : deflate_compressor {
     }
 
     static std::vector<uint8_t> decompressZlib (void* in, size_t in_size) {
-        // idc about zlib data :)
-        uint32_t change = 2;
-        uint8_t v = extract1BitLeft(*(uint8_t*)in + 1, 5);
-        // fdict set, skip the other four bytes with the checksum
-        if (v) {
-            change = 6;
-        }
+        uint32_t change = zlibHeaderRead(in, in_size);
         return decompress(((char*)in) + change, in_size - change);
     }
 

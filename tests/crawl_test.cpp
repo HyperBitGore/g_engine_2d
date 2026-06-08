@@ -23,7 +23,11 @@ void render () {
     three_d->setTempTexture(omg->tex);
     three_d->addModel(peng);
     three_d->drawBuffer();
-    // image->drawImage(omg, {100.0f, 100.0f}, {50.0f, 50.0f});
+    gore::IMG& ipg = cube_tex.getImage(0);
+    three_d->setTempTexture(ipg->tex);
+    three_d->addModel(cube_tex);
+    three_d->drawBuffer();
+    image->drawImage(ipg, {100.0f, 100.0f}, {50.0f, 50.0f});
 }
 gore::vec2 last_mouse = {(float)W / 2.0f, (float)H / 2.0f};
 bool view_dirty = false;
@@ -46,8 +50,8 @@ void resize(uint32_t w, uint32_t h) {
 }
 
 int main () {
-    peng = gore::model_loader::loadObj("resources/penger.obj");
     cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
+    peng = gore::model_loader::loadObj("resources/penger.obj");
     penger = peng.getPositions();
     eng.setRenderFunction(render);
     eng.setWindowResize(resize);
