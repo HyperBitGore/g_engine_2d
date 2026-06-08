@@ -47,6 +47,8 @@ namespace gore {
         };
     }
 
+    enum class WindingOrder { CCW, CW };
+
     struct model_face {
         gore::vec3 p1;
         gore::vec3 p2;
@@ -58,6 +60,7 @@ namespace gore {
         gore::vec2 uv2;
         gore::vec2 uv3;
         int material_index = -1;
+        WindingOrder winding_order = WindingOrder::CCW;
     };
     // treat this kind've like a texture you load and use its contents to create objects you actually feed into render pipeline
     class model {

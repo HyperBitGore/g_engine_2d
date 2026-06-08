@@ -52,12 +52,15 @@ gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::
 
 void gore::threedeerender::addModel (gore::model& model) {
     uint32_t c = 0;
+    bool set = false;
     for (auto& i : model.getFaces()) {
         uint32_t texture_unit = 2000u;
-        /*if (i.material_index >= 0) {
+        if (i.material_index >= 0 && !set) {
             gore::IMG& img = model.getImage(i.material_index);
-            texture_unit = getTextureUnit(img->tex);
-        }*/
+            // texture_unit = getTextureUnit(img->tex);
+            setTempTexture(img->tex);
+            set = true;
+        }
         if (c % 2 == 0) {
             vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, 2000u, 1000u});
             vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, 2000u, 1000u});

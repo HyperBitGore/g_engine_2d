@@ -2,6 +2,7 @@
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <algorithm>
@@ -97,7 +98,7 @@ model_face_index parseFace (std::string str, size_t* offset) {
     std::string type_string = consumeNextWord(str, &last_offset);
     ModelFaceType type = determineFaceType(type_string);
     std::vector<std::string> split = splitString(str, offset, "/");
-
+    // this doesn't support negative indices
     auto toIdx = [](const std::string& s) -> int {
         if (s.empty()) return -1;
         return std::stoi(s) - 1; // convert 1-based to 0-based
@@ -244,7 +245,7 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                 std::string v = consumeNextWord(i, &offset);
                 if (!u.empty() && !v.empty()) {
                     float y = std::abs(1.0 - std::stof(v));
-                    uvs.push_back({std::stof(u), std::stof(v)});
+                    uvs.push_back({std::stof(u), y});
                 }
                 break;
             }
@@ -276,6 +277,19 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                     gore::vec3 edge2 = face.p3 - face.p1;
                     gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
                     face.norm1 = face.norm2 = face.norm3 = flat;
+                }
+                {
+                    gore::vec3 edge1 = face.p2 - face.p1;
+                    gore::vec3 edge2 = face.p3 - face.p1;
+                    gore::vec3 geo_normal = edge1.crossProduct(edge2).normalize();
+                    gore::vec3 avg_normal = {
+                        (face.norm1.x + face.norm2.x + face.norm3.x) / 3.0f,
+                        (face.norm1.y + face.norm2.y + face.norm3.y) / 3.0f,
+                        (face.norm1.z + face.norm2.z + face.norm3.z) / 3.0f
+                    };
+                    face.winding_order = (geo_normal.dotProduct(avg_normal) >= 0.0f)
+                        ? gore::WindingOrder::CCW
+                        : gore::WindingOrder::CW;
                 }
                 if (mat_index >= 0 && mat_index < mats.size()) {
                     face.material_index = mat_index;

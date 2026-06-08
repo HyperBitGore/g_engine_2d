@@ -19,14 +19,14 @@ gore::model cube_tex;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 
 void render () {
+    eng.enable(GL_CULL_FACE);
     gore::IMG& omg = peng.getImage(0);
-    three_d->setTempTexture(omg->tex);
     three_d->addModel(peng);
     three_d->drawBuffer();
     gore::IMG& ipg = cube_tex.getImage(0);
-    three_d->setTempTexture(ipg->tex);
     three_d->addModel(cube_tex);
     three_d->drawBuffer();
+    eng.disable(GL_CULL_FACE);
     image->drawImage(ipg, {100.0f, 100.0f}, {50.0f, 50.0f});
 }
 gore::vec2 last_mouse = {(float)W / 2.0f, (float)H / 2.0f};
@@ -65,7 +65,7 @@ int main () {
     eng.addRenderer(three_d.get(),     false, false, true);
     three_d->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
 
-
+    eng.setClearColor({0.0, 0.5, 1.0, 1.0});
     bool running = true;
     while (running) {
         // Sample mouse BEFORE updateWindow so we read position prior to the warp-to-center
