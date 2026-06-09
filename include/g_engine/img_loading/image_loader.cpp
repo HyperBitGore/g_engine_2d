@@ -119,7 +119,7 @@ gore::IMG gore::imageloader::convertIMGRGBA8(const IMG& img) {
 	}
 	IMG data = createBlank(img->w, img->h, 4);
 	createTexture(data, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-	switch (img->format) {
+	switch (img->internalformat) {
 		case GL_R8:
 			for(size_t i = 0, j = 0; i < img->size && j < data->size; i++, j += 4) {
 				uint8_t val = img->data[i];

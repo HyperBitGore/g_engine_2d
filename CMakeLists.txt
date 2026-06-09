@@ -58,7 +58,7 @@ set(ENGINE_SOURCES
     include/g_engine/rendering/camera.hpp
 )
 
-add_executable(g_engine ${ENGINE_SOURCES} example/example.cpp)
+add_executable(g_engine ${ENGINE_SOURCES} tests/example.cpp)
 
 # Tests
 add_executable(test_audio
