@@ -1,5 +1,6 @@
 #include "three_dee_renderer.hpp"
 #include "three_dee_renderer_shader.hpp"
+#include <GL/glext.h>
 
 GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
     GLuint* unit = texture_unit_map.get(texture);
@@ -17,7 +18,7 @@ GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
 }
 
 void gore::threedeerender::setTextureSamplers () {
-    shader.setuniform("mtexture", samplers.size(), samplers.data());
+    shader.setuniform("textures", samplers.size(), samplers.data());
 }
 
 void gore::threedeerender::shader_setup()  {
@@ -35,8 +36,8 @@ void gore::threedeerender::shader_setup()  {
     updateDimensions(this->width, this->height);
     updateView({0, 0, 5}, {0, 0, 0}, gore::vec3(0,1,0));
     shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
-    shader.setuniform("temp_texture", (GLint)(0));
-    setTextureSamplers();
+    // ssbo
+    glGenBuffers(1, &ssbo);
 }
 
 void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
@@ -51,27 +52,19 @@ gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::
 }
 
 void gore::threedeerender::addModel (gore::model& model) {
-    uint32_t c = 0;
     bool set = false;
+    model_matrices.push_back(model.getMatrix());
     for (auto& i : model.getFaces()) {
         uint32_t texture_unit = 2000u;
-        if (i.material_index >= 0 && !set) {
+        if (i.material_index >= 0) {
             gore::IMG& img = model.getImage(i.material_index);
-            // texture_unit = getTextureUnit(img->tex);
-            setTempTexture(img->tex);
-            set = true;
+            texture_unit = getTextureUnit(img->tex);
         }
-        if (c % 2 == 0) {
-            vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, 2000u, 1000u});
-            vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, 2000u, 1000u});
-            vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, 2000u, 1000u});
-        } else {
-            vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, 2000u, 1000u});
-            vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, 2000u, 1000u});
-            vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, 2000u, 1000u});
-        }
-        c++;
+        vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, model_matrice, texture_unit});
+        vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, model_matrice, texture_unit});
+        vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, model_matrice, texture_unit});
     }
+    model_matrice++;
 }
 
 // unskinned vertex
@@ -87,16 +80,11 @@ void gore::threedeerender::addVertexs(const std::vector<gore::vec3>& vertexs) {
     }
 }
 
-void gore::threedeerender::setTempTexture(GLuint tex) {
-    glActiveTexture(GL_TEXTURE0 + (0));
-    glBindTexture(GL_TEXTURE_2D, tex);
-    shader.setuniform("temp_texture", (GLint)(0));
-}
 void gore::threedeerender::drawBuffer() {
     assert(created && "call createRenderer before use!");
     if (vertexs.empty()) return;
-    setTextureSamplers();
     shader.bind();
+    setTextureSamplers();
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     if(vertexs.size() > allocated){
@@ -105,6 +93,18 @@ void gore::threedeerender::drawBuffer() {
     }else{
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexs.size() * sizeof(threedee_vertex), &vertexs[0]);
     }
+    std::vector<float> flat_matrices;
+    flat_matrices.reserve(model_matrices.size() * 16);
+    for (auto& m : model_matrices) {
+        float* d = m.data();
+        flat_matrices.insert(flat_matrices.end(), d, d + 16);
+    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        flat_matrices.size() * sizeof(float),
+        flat_matrices.data(),
+        GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
     glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -112,4 +112,7 @@ void gore::threedeerender::drawBuffer() {
     texture_unit_map.clear();
     samplers.clear();
     current_unit = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    model_matrices.clear();
+    model_matrice = 0;
 }

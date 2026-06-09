@@ -26,6 +26,11 @@ namespace gore{
             std::vector<GLint> samplers;
             GLuint getTextureUnit (GLuint texture);
             void setTextureSamplers ();
+            // model matrice count
+            uint32_t model_matrice = 0;
+            std::vector<matrix> model_matrices;
+            GLuint ssbo;
+            matrix identity = matrix::generateIdentity(4, 4);
 	        void shader_setup() override;
             threedeerender(size_t w, size_t h);
         public:
@@ -35,7 +40,6 @@ namespace gore{
             void addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3);
             void addVertexs(const std::vector<gore::vec3>& vertexs);
             void addModel (gore::model& model);
-            void setTempTexture (GLuint tex);
             void drawBuffer() override;
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;

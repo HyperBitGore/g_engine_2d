@@ -92,6 +92,12 @@ namespace gore {
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
             void addMaterials (const std::vector<model_material::gltf_material>& mats);
             IMG& getImage (int32_t mtl_index);
+            void translate (vec3 translation);
+            void rotate (vec3 axis, float radians);
+            void resetMatrix ();
+            matrix getMatrix () {
+                return model_matrix;
+            }
     };
 
     class model_loader {

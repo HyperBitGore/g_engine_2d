@@ -9,7 +9,7 @@ gore::model::model() {
 // we assume that vertexs are in model space still
 gore::model::model (std::vector<gore::model_face> faces) {
     this->faces = faces;
-    this->model_matrix = matrix::generateIdentity(this->model_matrix.numRows(), this->model_matrix.numColumns());
+    this->model_matrix = matrix::generateIdentity(4, 4);
     this->image_map.setHashFunction(hash);
 }
 // copy
@@ -136,4 +136,16 @@ gore::model_material::mtl_material* gore::model::getMTLMat (int32_t index) {
         return &mtls[index];
     } 
     return nullptr;
+}
+
+void gore::model::translate (gore::vec3 translation) {
+    model_matrix = model_matrix.translate(translation);
+}
+
+void gore::model::rotate (gore::vec3 axis, float radians) {
+    model_matrix = model_matrix.rotate(axis, radians);
+}
+
+void gore::model::resetMatrix () {
+    model_matrix = matrix::generateIdentity(4, 4);
 }

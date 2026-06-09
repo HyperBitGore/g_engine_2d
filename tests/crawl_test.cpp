@@ -17,12 +17,11 @@ std::vector<gore::vec3> penger;
 gore::model peng;
 gore::model cube_tex;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
+gore::vec3 peng_pos = {0.0, 2.0, 0.0};
 
 void render () {
     eng.enable(GL_CULL_FACE);
-    gore::IMG& omg = peng.getImage(0);
     three_d->addModel(peng);
-    three_d->drawBuffer();
     gore::IMG& ipg = cube_tex.getImage(0);
     three_d->addModel(cube_tex);
     three_d->drawBuffer();
@@ -52,6 +51,10 @@ void resize(uint32_t w, uint32_t h) {
 int main () {
     cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
     peng = gore::model_loader::loadObj("resources/penger.obj");
+    GLint max_ssbo_size;
+    glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &max_ssbo_size);
+    std::cout << "Max ssbo: " << max_ssbo_size << "\n";
+    peng.translate({0.0, 2.0, 0.0});
     penger = peng.getPositions();
     eng.setRenderFunction(render);
     eng.setWindowResize(resize);
@@ -67,6 +70,10 @@ int main () {
 
     eng.setClearColor({0.0, 0.5, 1.0, 1.0});
     bool running = true;
+    double peng_count = 0.0;
+    double peng_change = -0.1;
+    float cube_angle = 0.0f;
+    const float cube_rot_speed = 1.0f; // radians per second
     while (running) {
         // Sample mouse BEFORE updateWindow so we read position prior to the warp-to-center
         gore::vec2 cur_mouse = eng.getMousePos(true);
@@ -76,7 +83,21 @@ int main () {
         eng.updateInputState();
         double delta = eng.getDelta();
         float speed = 2.5f * (float)delta;
+        cube_angle += cube_rot_speed * (float)delta;
+        cube_tex.resetMatrix();
+        cube_tex.rotate({0.0f, 1.0f, 0.0f}, cube_angle);
 
+        peng_count += delta;
+         if (peng_count > 0.1) {
+            peng_count = 0;
+            if (peng_pos.y + peng_change < 0.0) {
+                peng_change = 0.05;
+            } else if (peng_pos.y + peng_change > 2.5) {
+                peng_change = -0.05;
+            }
+            peng_pos.y += peng_change;
+            peng.translate(peng_pos);
+        }
         // Escape toggles mouse-look on/off
         if (eng.getKeyReleased(g_Escape)) {
             eng.toggleMouseCapture(true);
