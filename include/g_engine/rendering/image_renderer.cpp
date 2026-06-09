@@ -41,6 +41,9 @@ void gore::imagerenderer::addImageVertex(GLuint texture, vec2 pos, vec2 dim, vec
     vertexs.push_back({pos.x + dim.x, pos.y + dim.y, uvs.x + uvs.z, uvs.y + uvs.w, rot, pos.x, pos.y, unit}); //bottom right
     vertexs.push_back({pos.x, pos.y + dim.y, uvs.x, uvs.y + uvs.w, rot, pos.x, pos.y, unit}); //bottom left
     vertexs.push_back({pos.x + dim.x, pos.y, uvs.x + uvs.z, uvs.y, rot, pos.x, pos.y, unit}); //top righjt
+    if (current_unit >= texture_units - 1) {
+        drawBuffer();
+    }
 }
 
 void gore::imagerenderer::drawBuffer() {

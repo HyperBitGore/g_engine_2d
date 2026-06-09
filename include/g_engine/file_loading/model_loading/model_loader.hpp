@@ -92,6 +92,9 @@ namespace gore {
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
             void addMaterials (const std::vector<model_material::gltf_material>& mats);
             IMG& getImage (int32_t mtl_index);
+            // Add a pre-loaded image as a new material, avoiding file I/O.
+            // The face's material_index must equal the mtls index this creates.
+            void addImageMaterial(IMG img, const std::string& key);
             void translate (vec3 translation);
             void rotate (vec3 axis, float radians);
             void resetMatrix ();

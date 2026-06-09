@@ -25,6 +25,7 @@ namespace gore{
             gore::hashmap<GLuint, GLuint> texture_unit_map;
             std::vector<GLint> samplers;
             GLuint getTextureUnit (GLuint texture);
+            bool textureBinded (GLuint texture);
             void setTextureSamplers ();
             // model matrice count
             uint32_t model_matrice = 0;

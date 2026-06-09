@@ -33,6 +33,7 @@ template<typename T, typename G>
 					dst = &(*dst)->next;
 					src = src->next;
 				}
+				*dst = nullptr;
 			}
 		}
 		// move
@@ -53,6 +54,7 @@ template<typename T, typename G>
 						dst = &(*dst)->next;
 						src = src->next;
 					}
+					*dst = nullptr;
 				}
 			}
 			return *this;

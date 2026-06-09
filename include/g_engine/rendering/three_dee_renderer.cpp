@@ -17,6 +17,11 @@ GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
     return *unit;
 }
 
+bool gore::threedeerender::textureBinded (GLuint texture) {
+    GLuint* unit = texture_unit_map.get(texture);
+    return unit != nullptr;
+}
+
 void gore::threedeerender::setTextureSamplers () {
     shader.setuniform("textures", samplers.size(), samplers.data());
 }
@@ -52,13 +57,17 @@ gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::
 }
 
 void gore::threedeerender::addModel (gore::model& model) {
-    bool set = false;
     model_matrices.push_back(model.getMatrix());
+    uint32_t last_unit = 2000u;
     for (auto& i : model.getFaces()) {
         uint32_t texture_unit = 2000u;
         if (i.material_index >= 0) {
             gore::IMG& img = model.getImage(i.material_index);
+            if (!textureBinded(img->tex) && current_unit == texture_units) {
+                drawBuffer();
+            }
             texture_unit = getTextureUnit(img->tex);
+            last_unit = texture_unit;
         }
         vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, model_matrice, texture_unit});
         vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, model_matrice, texture_unit});

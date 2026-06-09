@@ -14,6 +14,7 @@ gore::model::model (std::vector<gore::model_face> faces) {
 }
 // copy
 gore::model::model (const model& m) {
+    this->image_map.setHashFunction(hash);
     this->faces = m.faces;
     this->model_matrix = m.model_matrix;
     for (auto& i : m.images) {
@@ -22,18 +23,17 @@ gore::model::model (const model& m) {
     this->image_map = m.image_map;
     this->gltfs = m.gltfs;
     this->mtls = m.mtls;
-    this->image_map.setHashFunction(hash);
 }
 
 // move
 gore::model::model (model&& m) {
+    this->image_map.setHashFunction(hash);
     this->faces = std::move(m.faces);
     this->model_matrix = std::move(m.model_matrix);
     this->images = std::move(m.images);
     this->image_map = std::move(m.image_map);
     this->gltfs = std::move(m.gltfs);
     this->mtls = std::move(m.mtls);
-    this->image_map.setHashFunction(hash);
 }
 
 // copy assignment
@@ -136,6 +136,15 @@ gore::model_material::mtl_material* gore::model::getMTLMat (int32_t index) {
         return &mtls[index];
     } 
     return nullptr;
+}
+
+void gore::model::addImageMaterial(IMG img, const std::string& key) {
+    model_material::mtl_material mat;
+    mat.name   = key;
+    mat.map_Kd = key;
+    images.push_back(std::move(img));
+    image_map.insert(mat.map_Kd, (uint32_t)(images.size() - 1));
+    mtls.push_back(std::move(mat));
 }
 
 void gore::model::translate (gore::vec3 translation) {

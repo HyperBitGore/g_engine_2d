@@ -83,10 +83,14 @@ add_executable(test_crawl ${ENGINE_SOURCES} tests/crawl_test.cpp)
 
 add_executable(test_rotate_cube_soft ${ENGINE_SOURCES} tests/rotating_cube_software.cpp)
 
+add_executable(test_texture_unit_overflow ${ENGINE_SOURCES} tests/texture_unit_overflow.cpp)
+
+add_executable(test_three_dee_texture_split ${ENGINE_SOURCES} tests/three_dee_texture_split.cpp)
+
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
-set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl)
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl test_texture_unit_overflow test_three_dee_texture_split)
 
 if(WIN32)
 foreach(tgt ${VISUAL_TARGETS})
