@@ -77,15 +77,16 @@ namespace gore {
         public:
             hashmap<uint32_t, std::string> image_map;
             model();
+            ~model();
             model (std::vector<model_face> faces);
             // copy
             model (const model& m);
             // move
-            model (model&& m);
+            model (model&& m) noexcept;
             // copy assignment
             model& operator=(const model& m);
             // move assignment
-            model& operator=(model&& m);
+            model& operator=(model&& m) noexcept;
             
             std::vector<model_face>& getFaces();
             std::vector<gore::vec3> getPositions() const;

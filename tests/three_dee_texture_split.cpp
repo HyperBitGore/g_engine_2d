@@ -106,6 +106,7 @@ int main() {
 
     three_r = gore::threedeerender::create(W, H);
 
+    models.reserve(model_count);
     for (int idx = 0; idx < model_count; idx++) {
         uint8_t r, g, b;
         hue_to_rgb((float)idx / (float)model_count, r, g, b);

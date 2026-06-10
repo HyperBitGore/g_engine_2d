@@ -28,7 +28,6 @@ namespace gore{
             bool textureBinded (GLuint texture);
             void setTextureSamplers ();
             // model matrice count
-            uint32_t model_matrice = 0;
             std::vector<matrix> model_matrices;
             GLuint ssbo;
             matrix identity = matrix::generateIdentity(4, 4);

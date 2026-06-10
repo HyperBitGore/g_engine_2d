@@ -26,7 +26,6 @@ void gore::imageloader::createTexture(const IMG& img, GLenum internalformat, GLe
 	glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureStorage2D(img->tex, 1, internalformat, img->w, img->h);
-	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, format, GL_UNSIGNED_BYTE, img->data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -37,21 +36,21 @@ gore::IMG gore::imageloader::copyIMG (const IMG& img) {
 	n_img->w = img->w;
 	n_img->bytes_per_pixel = img->bytes_per_pixel;
 	n_img->data = new uint8_t[(img->w * img->bytes_per_pixel) * img->h];
-	std::memset(img->data, 0, (img->w * img->bytes_per_pixel) * img->h);
+	std::memcpy(n_img->data, img->data, (img->w * img->bytes_per_pixel) * img->h);
 	n_img->size = (img->w * img->bytes_per_pixel * img->h);
 	n_img->format = img->format;
 	n_img->type = img->type;
 	n_img->internalformat = img->internalformat;
-	glGenTextures(1, &img->tex);
-	//glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, img->tex);
-	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureStorage2D(img->tex, 1, n_img->internalformat, img->w, img->h);
-	glTexImage2D(img->tex, 0, 0, 0, img->w, img->h, n_img->format, GL_UNSIGNED_BYTE, img->data);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	n_img->name = img->name;
+	glGenTextures(1, &n_img->tex);
+	glBindTexture(GL_TEXTURE_2D, n_img->tex);
+	glTextureParameteri(n_img->tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(n_img->tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(n_img->tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(n_img->tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D(n_img->tex, 1, n_img->internalformat, n_img->w, n_img->h);
+	glTextureSubImage2D(n_img->tex, 0, 0, 0, n_img->w, n_img->h, n_img->format, n_img->type, n_img->data);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	return std::move(n_img);
 }
 

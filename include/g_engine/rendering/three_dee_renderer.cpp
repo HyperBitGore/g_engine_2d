@@ -65,15 +65,16 @@ void gore::threedeerender::addModel (gore::model& model) {
             gore::IMG& img = model.getImage(i.material_index);
             if (!textureBinded(img->tex) && current_unit == texture_units) {
                 drawBuffer();
+                model_matrices.push_back(model.getMatrix());
             }
             texture_unit = getTextureUnit(img->tex);
             last_unit = texture_unit;
         }
-        vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, model_matrice, texture_unit});
-        vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, model_matrice, texture_unit});
-        vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, model_matrice, texture_unit});
+        vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, (GLuint)model_matrices.size() - 1, texture_unit});
+        vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, (GLuint)model_matrices.size() - 1, texture_unit});
+        vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, (GLuint)model_matrices.size() - 1, texture_unit});
     }
-    model_matrice++;
+    last_unit = 0;
 }
 
 // unskinned vertex
@@ -123,5 +124,4 @@ void gore::threedeerender::drawBuffer() {
     current_unit = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     model_matrices.clear();
-    model_matrice = 0;
 }

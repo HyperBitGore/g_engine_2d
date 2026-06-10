@@ -1,11 +1,16 @@
 #include "model_loader.hpp"
+#include <GL/gl.h>
 #include <stdexcept>
 
 gore::model::model() {
     this->model_matrix = gore::matrix::generateIdentity(4, 4);
     this->image_map.setHashFunction(hash);
 }
-
+gore::model::~model() {
+    for (auto& i : images) {
+        glDeleteTextures(1, &i->tex);
+    }
+}
 // we assume that vertexs are in model space still
 gore::model::model (std::vector<gore::model_face> faces) {
     this->faces = faces;
@@ -26,7 +31,7 @@ gore::model::model (const model& m) {
 }
 
 // move
-gore::model::model (model&& m) {
+gore::model::model (model&& m) noexcept {
     this->image_map.setHashFunction(hash);
     this->faces = std::move(m.faces);
     this->model_matrix = std::move(m.model_matrix);
@@ -53,7 +58,7 @@ gore::model& gore::model::operator=(const model& m) {
 }
 
 // move assignment
-gore::model& gore::model::operator=(model&& m) {
+gore::model& gore::model::operator=(model&& m) noexcept {
     this->image_map.setHashFunction(hash);
     if (this != &m) {
         this->faces = std::move(m.faces);
@@ -142,6 +147,7 @@ void gore::model::addImageMaterial(IMG img, const std::string& key) {
     model_material::mtl_material mat;
     mat.name   = key;
     mat.map_Kd = key;
+    img->name  = key;
     images.push_back(std::move(img));
     image_map.insert(mat.map_Kd, (uint32_t)(images.size() - 1));
     mtls.push_back(std::move(mat));

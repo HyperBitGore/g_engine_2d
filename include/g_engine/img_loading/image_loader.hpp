@@ -17,6 +17,7 @@ struct g_img {
 	GLenum type;
 	GLenum internalformat;
 	size_t size;
+	std::string name;
 };
 typedef std::unique_ptr<g_img> IMG;
 struct Point {

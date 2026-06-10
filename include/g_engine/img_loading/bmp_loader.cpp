@@ -648,5 +648,6 @@ gore::IMG gore::imageloader::loadBMP(std::string path){
     }
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
+    img->name = path;
     return img;
 }
