@@ -1,10 +1,11 @@
+#pragma once
 #include "../util/matrix.hpp"
 
 namespace gore {
     class camera {
         private:
             matrix view = matrix(4, 4);
-            matrix projectoin = matrix(4, 4);
+            matrix projection = matrix(4, 4);
             float yaw;
             float pitch;
             float roll;

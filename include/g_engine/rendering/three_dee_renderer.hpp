@@ -1,5 +1,6 @@
 #pragma once
 #include "renderer.hpp"
+#include "billboard.hpp"
 #include "../file_loading/model_loading/model_loader.hpp"
 // https://www.scratchapixel.com/index.html
 namespace gore{
@@ -9,7 +10,7 @@ namespace gore{
         float z;
         float uvx;
         float uvy;
-        GLuint model_matrice;
+        GLint model_matrice;
         GLuint texture_unit;
     };
     class threedeerender : public renderer<threedeerender, threedee_vertex> {
@@ -40,6 +41,7 @@ namespace gore{
             void addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3);
             void addVertexs(const std::vector<gore::vec3>& vertexs);
             void addModel (gore::model& model);
+            void addBillboard (gore::billboard& billboard, gore::camera& cam);
             void drawBuffer() override;
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;

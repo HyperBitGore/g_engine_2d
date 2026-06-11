@@ -35,7 +35,7 @@ void gore::threedeerender::shader_setup()  {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 3)); //uvs
     glEnableVertexAttribArray(2);
-    glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 5)); // model matrice index
+    glVertexAttribIPointer(2, 1, GL_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 5)); // model matrice index
     glEnableVertexAttribArray(3);
     glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(gore::threedee_vertex), (void*)(sizeof(float) * 6)); // texture unit index
     updateDimensions(this->width, this->height);
@@ -70,23 +70,49 @@ void gore::threedeerender::addModel (gore::model& model) {
             texture_unit = getTextureUnit(img->tex);
             last_unit = texture_unit;
         }
-        vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, (GLuint)model_matrices.size() - 1, texture_unit});
-        vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, (GLuint)model_matrices.size() - 1, texture_unit});
-        vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, (GLuint)model_matrices.size() - 1, texture_unit});
+        vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, (GLint)model_matrices.size() - 1, texture_unit});
+        vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, (GLint)model_matrices.size() - 1, texture_unit});
+        vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, (GLint)model_matrices.size() - 1, texture_unit});
     }
     last_unit = 0;
 }
 
+void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camera& cam) {
+    std::vector<gore::vec3> verts = billboard.getVertexs(cam);
+    if (verts.size() < 6) return;
+
+    GLuint texture_unit = 2000u;
+    if (billboard.img && billboard.img->tex != 0) {
+        if (!textureBinded(billboard.img->tex) && current_unit == texture_units) {
+            drawBuffer();
+        }
+        texture_unit = getTextureUnit(billboard.img->tex);
+    }
+
+    // UV layout matches getVertexs triangle order: tl, bl, br, tl, br, tr
+    const float uvs[6][2] = {
+        {0.0f, 1.0f}, // tl
+        {0.0f, 0.0f}, // bl
+        {1.0f, 0.0f}, // br
+        {0.0f, 1.0f}, // tl
+        {1.0f, 0.0f}, // br
+        {1.0f, 1.0f}, // tr
+    };
+    for (int i = 0; i < 6; i++) {
+        vertexs.push_back({verts[i].x, verts[i].y, verts[i].z, uvs[i][0], uvs[i][1], -1, texture_unit});
+    }
+}
+
 // unskinned vertex
 void gore::threedeerender::addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3) {
-    vertexs.push_back({pos.x, pos.y, pos.z, 0.0, 0.0, 2000u, 2000u});
-    vertexs.push_back({pos2.x, pos2.y, pos2.z, 0.0, 0.0, 2000u, 2000u});
-    vertexs.push_back({pos3.x, pos3.y, pos3.z, 0.0, 0.0, 2000u, 2000u});
+    vertexs.push_back({pos.x, pos.y, pos.z, 0.0, 0.0, -1, 2000u});
+    vertexs.push_back({pos2.x, pos2.y, pos2.z, 0.0, 0.0, -1, 2000u});
+    vertexs.push_back({pos3.x, pos3.y, pos3.z, 0.0, 0.0, -1, 2000u});
 }
 // unskinned vertexs
 void gore::threedeerender::addVertexs(const std::vector<gore::vec3>& vertexs) {
     for (auto& i : vertexs) {
-        this->vertexs.push_back({i.x, i.y, i.z, 0.0, 0.0, 2000u, 2000u});
+        this->vertexs.push_back({i.x, i.y, i.z, 0.0, 0.0, -1, 2000u});
     }
 }
 

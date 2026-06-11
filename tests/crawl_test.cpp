@@ -3,6 +3,7 @@
 #include "../include/g_engine/rendering/wireframe_renderer.hpp"
 #include "../include/g_engine/rendering/three_dee_renderer.hpp"
 #include "../include/g_engine/rendering/camera.hpp"
+#include "../include/g_engine/rendering/billboard.hpp"
 #include "../include/g_engine/file_loading/model_loading/model_loader.hpp"
 #include <memory>
 
@@ -18,12 +19,16 @@ gore::model peng;
 gore::model cube_tex;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 gore::vec3 peng_pos = {0.0, 2.0, 0.0};
+std::unique_ptr<gore::billboard> board = nullptr;
+std::unique_ptr<gore::billboard> static_board = nullptr;
 
 void render () {
     eng.enable(GL_CULL_FACE);
     three_d->addModel(peng);
     gore::IMG& ipg = cube_tex.getImage(0);
     three_d->addModel(cube_tex);
+    if (board) three_d->addBillboard(*board, cam);
+    if (static_board) three_d->addBillboard(*static_board, cam);
     three_d->drawBuffer();
     eng.disable(GL_CULL_FACE);
     image->drawImage(ipg, {100.0f, 100.0f}, {50.0f, 50.0f});
@@ -67,6 +72,21 @@ int main () {
     eng.addRenderer(wireframe_r.get(), false, false, false);
     eng.addRenderer(three_d.get(),     false, false, true);
     three_d->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
+
+    gore::IMG board_img = gore::imageloader::loadPNG("resources/penger.png");
+    gore::IMG test_static = gore::imageloader::loadPNG("resources/test.png");
+    board = std::make_unique<gore::billboard>(
+        gore::vec3{-3.0f, 1.0f, 0.0f},
+        gore::vec2{2.0f, 2.0f},
+        std::move(board_img),
+        gore::billboard_type::DISTANCE_ADJUST_SIZE
+    );
+    static_board = std::make_unique<gore::billboard>(
+        gore::vec3{5.0f, 1.0f, 0.0f},
+        gore::vec2{0.2f, 0.2f},
+        std::move(test_static),
+        gore::billboard_type::FIXED_SIZE
+    );
 
     eng.setClearColor({0.0, 0.5, 1.0, 1.0});
     bool running = true;
