@@ -17,6 +17,7 @@ std::unique_ptr<gore::imagerenderer> image = nullptr;
 std::vector<gore::vec3> penger;
 gore::model peng;
 gore::model cube_tex;
+gore::model duck;
 gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0});
 gore::vec3 peng_pos = {0.0, 2.0, 0.0};
 std::unique_ptr<gore::billboard> board = nullptr;
@@ -56,6 +57,7 @@ void resize(uint32_t w, uint32_t h) {
 int main () {
     cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
     peng = gore::model_loader::loadObj("resources/penger.obj");
+    duck = gore::model_loader::loadGltf("resources/duck/Duck.gltf");
     GLint max_ssbo_size;
     glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &max_ssbo_size);
     std::cout << "Max ssbo: " << max_ssbo_size << "\n";
