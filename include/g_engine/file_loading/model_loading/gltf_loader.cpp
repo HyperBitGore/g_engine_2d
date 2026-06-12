@@ -15,10 +15,12 @@
 /*
 glTF uses a right-handed coordinate system. glTF defines +Y as up, +Z as forward, and -X as right; the front of a glTF asset faces +Z.
 */
-enum class JSONTYPE { STRING, OBJECT };
+enum class JSONTYPE { STRING, OBJECT, ARRAY };
 
 struct Element {
     JSONTYPE type;
+    Element(JSONTYPE t) : type(t) {}
+    virtual ~Element() = default;
 };
 
 // either a string or JSON struct
@@ -30,8 +32,7 @@ struct JSONElement : public Element {
 
 struct JSON {
     std::string label;
-    std::unordered_map<std::string, std::string> values;
-    std::unordered_map<std::string, JSON> children;
+    std::unordered_map<std::string, std::unique_ptr<Element>> children;
 };
 
 // new flow
@@ -93,7 +94,7 @@ std::vector<std::unique_ptr<Element>> readArray (std::string section, size_t* of
                     // process the JSON object
                     std::string new_section = readBrackets(section, &i);
                     JSON child = parseJSONSection(new_section);
-                    std::unique_ptr<JSONElement<JSON>> element = std::make_unique<JSONElement<JSON>>(JSONTYPE::OBJECT, child); 
+                    std::unique_ptr<JSONElement<JSON>> element = std::make_unique<JSONElement<JSON>>(JSONTYPE::OBJECT, std::move(child)); 
                     items.push_back(std::move(element));
                 }
             break;
@@ -138,12 +139,15 @@ JSON parseJSONSection (std::string section) {
                     for (; i < section.size() && (std::isspace(section[i]) || section[i] == ':'); i++);
                     if (section[i] == '{') {
                         // recursive json parse
-                        std::string new_section = readBrackets(section, &offset);
+                        std::string new_section = readBrackets(section, &i);
                         JSON child = parseJSONSection(new_section);
                         child.label = label;
-                        output.children.emplace(label, child);
+                        std::unique_ptr<JSONElement<JSON>> element = std::make_unique<JSONElement<JSON>>(JSONTYPE::OBJECT, std::move(child));
+                        output.children.emplace(label, std::move(element));
                     } else if (section[i] == '[') {
-                        std::vector<std::unique_ptr<Element>> elements = readArray(section, &offset);
+                        std::vector<std::unique_ptr<Element>> elements = readArray(section, &i);
+                        std::unique_ptr<JSONElement<std::vector<std::unique_ptr<Element>>>> element = std::make_unique<JSONElement<std::vector<std::unique_ptr<Element>>>>(JSONTYPE::ARRAY, std::move(elements));
+                        output.children.emplace(label, std::move(element));
                     } else {
                         // read until newline or ,
                         std::string value;
@@ -151,7 +155,8 @@ JSON parseJSONSection (std::string section) {
                             value.push_back(section[i]);
                         }
                         i++;
-                        output.values.emplace(label, value);
+                        std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, value);
+                        output.children.emplace(label, std::move(element));
                     }
                     offset = i;
 
@@ -181,9 +186,20 @@ JSON processJSONFile (std::string str) {
     return parseJSONSection(str);
 }
 
-JSON getLabel (JSON json, std::string label) {
-    return json.children[label];
+JSON* getLabelJSON (JSON* json, std::string label) {
+    auto& it = json->children[label];
+    JSONElement<JSON>* elem = dynamic_cast<JSONElement<JSON>*>(it.get());
+    if (!elem) return nullptr;
+    return &elem->value;
 }
+
+std::vector<std::unique_ptr<Element>>* getLabelArray (JSON* json, std::string label) {
+    auto& it = json->children[label];
+    JSONElement<std::vector<std::unique_ptr<Element>>>* elem = dynamic_cast<JSONElement<std::vector<std::unique_ptr<Element>>>*>(it.get());
+    if (!elem) return nullptr;
+    return &elem->value;
+}
+
 
 gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::stringstream ss;
@@ -194,18 +210,15 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::string str = ss.str();
     JSON processed = processJSONFile(str);
     // parse the asset label
-    JSON asset = getLabel(processed, "asset");
-    if (asset.label == "NULL") {
+    JSON* asset = getLabelJSON(&processed, "asset");
+    if (!asset) {
         throw std::runtime_error("Failed to read asset label, invalid GLTF file! " + file_path);
     }
-    JSON nodes = getLabel(processed, "nodes");
-    if (nodes.label == "NULL") {
-        throw std::runtime_error("Failed to read nodes label!" + file_path);
-    }
-    JSON buffers = getLabel(processed, "buffers");
-    JSON bufferViews = getLabel(processed, "bufferViews");
-    JSON accessors = getLabel(processed, "accessors");
-    JSON cameras = getLabel(processed, "cameras");
+    std::vector<std::unique_ptr<Element>>* nodes = getLabelArray(&processed, "nodes");
+    std::vector<std::unique_ptr<Element>>* buffers = getLabelArray(&processed, "buffers");
+    std::vector<std::unique_ptr<Element>>* bufferViews = getLabelArray(&processed, "bufferViews");
+    std::vector<std::unique_ptr<Element>>* accessors = getLabelArray(&processed, "accessors");
+    std::vector<std::unique_ptr<Element>>* cameras = getLabelArray(&processed, "cameras");
     gore::model m;
 
     return m;
