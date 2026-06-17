@@ -28,8 +28,8 @@ void render () {
     three_d->addModel(peng);
     gore::IMG& ipg = cube_tex.getImage(0);
     three_d->addModel(cube_tex);
-    if (board) three_d->addBillboard(*board, cam);
-    if (static_board) three_d->addBillboard(*static_board, cam);
+    three_d->addBillboard(*board, cam);
+    three_d->addBillboard(*static_board, cam);
     three_d->drawBuffer();
     eng.disable(GL_CULL_FACE);
     image->drawImage(ipg, {100.0f, 100.0f}, {50.0f, 50.0f});

@@ -1,5 +1,7 @@
 #include "model_loader.hpp"
 #include <cctype>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -11,6 +13,8 @@
 #define ACCESSOR_UNSIGNED_SHORT 5123
 #define ACCESSOR_UNSIGNED_INT 5125
 #define ACCESSOR_FLOAT 5126
+#define ARRAY_BUFFER 34962
+#define ELEMENT_ARRAY_BUFFER 34963
 
 /*
 glTF uses a right-handed coordinate system. glTF defines +Y as up, +Z as forward, and -X as right; the front of a glTF asset faces +Z.
@@ -49,6 +53,21 @@ struct JSON {
 // process arrays with values and no labels
 // properly process bufferViews
 // nodes
+
+std::string trimQuotesAndWhitespace(const std::string& str) {
+    size_t start = 0, end = str.size();
+    
+    // Trim leading whitespace
+    while (start < end && std::isspace(str[start])) start++;
+    // Trim trailing whitespace
+    while (end > start && std::isspace(str[end - 1])) end--;
+    
+    // Trim quotes
+    if (start < end && str[start] == '"') start++;
+    if (end > start && str[end - 1] == '"') end--;
+    
+    return str.substr(start, end - start);
+}
 
 std::string readBrackets (std::string section, size_t* offset) {
     size_t i = *offset + 1; // assuming we starting on the bracket
@@ -101,8 +120,13 @@ std::vector<std::unique_ptr<Element>> readArray (std::string section, size_t* of
             case ',':
             case '\n':
                 {
-                    std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, thing); 
-                    items.push_back(std::move(element));
+                    if (!thing.empty()) {
+                        std::string trimmed = trimQuotesAndWhitespace(thing);
+                        if (!trimmed.empty()) {
+                            std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, trimmed); 
+                            items.push_back(std::move(element));
+                        }
+                    }
                     thing.clear();
                     i++;
                 }
@@ -110,7 +134,9 @@ std::vector<std::unique_ptr<Element>> readArray (std::string section, size_t* of
             default:
                 {
                     // combine until newline or ,
-                    thing.push_back(section[i]);
+                    if (!std::isspace(section[i])) {
+                        thing.push_back(section[i]);
+                    }
                     i++;
                 }
             break;
@@ -155,8 +181,11 @@ JSON parseJSONSection (std::string section) {
                             value.push_back(section[i]);
                         }
                         i++;
-                        std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, value);
-                        output.children.emplace(label, std::move(element));
+                        std::string trimmed = trimQuotesAndWhitespace(value);
+                        if (!trimmed.empty()) {
+                            std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, trimmed);
+                            output.children.emplace(label, std::move(element));
+                        }
                     }
                     offset = i;
 
@@ -186,6 +215,13 @@ JSON processJSONFile (std::string str) {
     return parseJSONSection(str);
 }
 
+std::string* getLabelString (JSON* json, std::string label) {
+    auto& it = json->children[label];
+    JSONElement<std::string>* elem = dynamic_cast<JSONElement<std::string>*>(it.get());
+    if (!elem) return nullptr;
+    return &elem->value;
+}
+
 JSON* getLabelJSON (JSON* json, std::string label) {
     auto& it = json->children[label];
     JSONElement<JSON>* elem = dynamic_cast<JSONElement<JSON>*>(it.get());
@@ -200,6 +236,117 @@ std::vector<std::unique_ptr<Element>>* getLabelArray (JSON* json, std::string la
     return &elem->value;
 }
 
+template <class T>
+JSONElement<T>* getElement (std::unique_ptr<Element>& element) {
+    return dynamic_cast<JSONElement<T>*>(element.get());
+}
+
+std::string JSONToString (JSON* json);
+
+std::string elementArrayToString (std::vector<std::unique_ptr<Element>>* elements) {
+    std::string out;
+    out.append(": [\n");
+    for (const auto& arr_elem : *elements) {
+        switch (arr_elem->type) {
+            case JSONTYPE::STRING:
+                {
+                    auto str_elem = dynamic_cast<JSONElement<std::string>*>(arr_elem.get());
+                    if (str_elem) out.append("  \"" + str_elem->value + "\",\n");
+                }
+                break;
+            case JSONTYPE::OBJECT:
+                {
+                    auto obj_elem = dynamic_cast<JSONElement<JSON>*>(arr_elem.get());
+                    if (obj_elem) out.append("  " + JSONToString(&obj_elem->value) + ",\n");
+                }
+                break;
+            case JSONTYPE::ARRAY:
+                auto array_elem = dynamic_cast<std::vector<std::unique_ptr<Element>>*>(arr_elem.get());
+                out.append(elementArrayToString(array_elem));
+                break;
+        }
+    }
+    out.append("]");
+    
+    return out;
+}
+
+std::string JSONToString (JSON* json) {
+    std::string out = json->label + ": {\n";
+    for (auto& i : json->children) {
+        if (i.first == "NULL") {
+            out.push_back(' ');
+        } else {
+            out.append(i.first);
+        }
+        switch (i.second->type) {
+            case JSONTYPE::STRING:
+                {
+                    auto elem = getElement<std::string>(i.second);
+                    if (elem) out.append(": " + elem->value + "\n");
+                }
+            break;
+            case JSONTYPE::OBJECT:
+                {
+                    auto elem = getElement<JSON>(i.second);
+                    if (elem) out.append(": " + JSONToString(&elem->value) + "\n");
+                }
+                break;
+            case JSONTYPE::ARRAY:
+                {
+                    auto elem = getElement<std::vector<std::unique_ptr<Element>>>(i.second);
+                    if (elem) {
+                        out.append(elementArrayToString(&(elem->value)) + "\n");
+                    }
+                }
+              break;
+            }
+    }
+
+    out.push_back('}');
+    return out;
+}
+
+std::vector<std::vector<uint8_t>> readBuffers (std::vector<std::unique_ptr<Element>>* buffers, std::filesystem::path path) {
+    // loop through buffers and read
+    std::vector<std::vector<uint8_t>> out;
+    std::unordered_map<std::string, std::vector<uint8_t>> fileMap;
+    for (auto& i : *buffers) {
+        if (i->type == JSONTYPE::OBJECT) {
+            auto elem = getElement<JSON>(i);
+            std::string* length = getLabelString(&(elem->value), "byteLength");
+            std::string* uri = getLabelString(&(elem->value), "uri");
+            std::vector<uint8_t> p;
+            // now read buffer file
+            try {
+                p = fileMap.at(*uri);
+            } catch (std::out_of_range e) {
+                // ignore and load file
+                std::ifstream file(path / std::filesystem::path(*uri), std::ios::binary);
+                if (!file) {
+                    throw std::runtime_error("Malformed uri in gltf file!");
+                }
+                file.seekg(0, std::ios::end);
+                std::streamsize size = file.tellg();
+                file.seekg(0, std::ios::beg);
+                std::vector<uint8_t> read(size);
+                file.read(reinterpret_cast<char*>(read.data()), size);
+                file.close();
+                fileMap.emplace(*uri, read);
+                p = read;
+            }
+            size_t val = std::stoi(*length);
+            std::vector<uint8_t> new_file;
+            for (size_t off = 0; off < val; off++) {
+                new_file.push_back(p[off]);
+            }
+            out.push_back(new_file);
+        } else {
+            throw std::runtime_error("Malformed buffer in gltf file!");
+        }
+    }
+    return out;
+}
 
 gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::stringstream ss;
@@ -220,6 +367,9 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::vector<std::unique_ptr<Element>>* accessors = getLabelArray(&processed, "accessors");
     std::vector<std::unique_ptr<Element>>* cameras = getLabelArray(&processed, "cameras");
     gore::model m;
-
+    std::cout << JSONToString(&processed);
+    // process the buffers
+    std::filesystem::path file_pick_path = std::filesystem::path(file_path).parent_path();
+    readBuffers(buffers, file_pick_path);
     return m;
 }
