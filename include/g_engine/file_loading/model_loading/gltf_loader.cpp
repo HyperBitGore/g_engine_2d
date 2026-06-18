@@ -520,6 +520,245 @@ std::vector<accessor> parseAccessors (std::vector<std::unique_ptr<Element>>* ele
     return accessors;
 }
 
+enum class MESH_ATTRIBUTES { POSITION, NORMAL, TANGENT, TEXCOORD, COLOR, JOINTS, WEIGHTS};
+
+struct mesh_attribute {
+    MESH_ATTRIBUTES attrib;
+    int index;
+};
+
+struct mesh_primitive {
+    std::vector<mesh_attribute> attributes;
+    int indices;
+    int material;
+    int mode = 4;
+};
+
+struct mesh {
+    std::vector<mesh_primitive> primitives;
+    std::vector<int> weights;
+    std::string name;
+};
+
+std::vector<mesh> parseMeshes (std::vector<std::unique_ptr<Element>>* elements) {
+    std::vector<mesh> meshes;
+    for (auto& i : *elements) {
+        auto obj_elem = dynamic_cast<JSONElement<JSON>*>(i.get());
+        if (!obj_elem) continue;
+        
+        mesh m;
+        JSON* obj = &obj_elem->value;
+        
+        // Parse name
+        auto name_elem = getElement<std::string>(obj->children["name"]);
+        if (name_elem) m.name = name_elem->value;
+        
+        // Parse weights
+        auto weights_elem = getElement<std::vector<std::unique_ptr<Element>>>(obj->children["weights"]);
+        if (weights_elem) {
+            for (const auto& weight_val : weights_elem->value) {
+                auto str_elem = dynamic_cast<JSONElement<std::string>*>(weight_val.get());
+                if (str_elem) {
+                    m.weights.push_back(std::stoi(str_elem->value));
+                }
+            }
+        }
+        
+        // Parse primitives
+        auto primitives_elem = getElement<std::vector<std::unique_ptr<Element>>>(obj->children["primitives"]);
+        if (primitives_elem) {
+            for (const auto& prim_val : primitives_elem->value) {
+                auto prim_elem = dynamic_cast<JSONElement<JSON>*>(prim_val.get());
+                if (!prim_elem) continue;
+                
+                mesh_primitive prim;
+                JSON* prim_obj = &prim_elem->value;
+                
+                // Parse attributes
+                auto attributes_elem = getElement<JSON>(prim_obj->children["attributes"]);
+                if (attributes_elem) {
+                    JSON* attr_obj = &attributes_elem->value;
+                    
+                    // Check for POSITION
+                    auto position_elem = getElement<std::string>(attr_obj->children["POSITION"]);
+                    if (position_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::POSITION;
+                        attr.index = std::stoi(position_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                    
+                    // Check for NORMAL
+                    auto normal_elem = getElement<std::string>(attr_obj->children["NORMAL"]);
+                    if (normal_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::NORMAL;
+                        attr.index = std::stoi(normal_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                    
+                    // Check for TANGENT
+                    auto tangent_elem = getElement<std::string>(attr_obj->children["TANGENT"]);
+                    if (tangent_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::TANGENT;
+                        attr.index = std::stoi(tangent_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                    
+                    // Check for TEXCOORD_0
+                    auto texcoord_elem = getElement<std::string>(attr_obj->children["TEXCOORD_0"]);
+                    if (texcoord_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::TEXCOORD;
+                        attr.index = std::stoi(texcoord_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                    
+                    // Check for COLOR_0
+                    auto color_elem = getElement<std::string>(attr_obj->children["COLOR_0"]);
+                    if (color_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::COLOR;
+                        attr.index = std::stoi(color_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                    
+                    // Check for JOINTS_0
+                    auto joints_elem = getElement<std::string>(attr_obj->children["JOINTS_0"]);
+                    if (joints_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::JOINTS;
+                        attr.index = std::stoi(joints_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                    
+                    // Check for WEIGHTS_0
+                    auto weights_attr_elem = getElement<std::string>(attr_obj->children["WEIGHTS_0"]);
+                    if (weights_attr_elem) {
+                        mesh_attribute attr;
+                        attr.attrib = MESH_ATTRIBUTES::WEIGHTS;
+                        attr.index = std::stoi(weights_attr_elem->value);
+                        prim.attributes.push_back(attr);
+                    }
+                }
+                
+                // Parse indices
+                auto indices_elem = getElement<std::string>(prim_obj->children["indices"]);
+                if (indices_elem) { prim.indices = std::stoi(indices_elem->value); } else { prim.indices = -1; }
+                
+                // Parse material
+                auto material_elem = getElement<std::string>(prim_obj->children["material"]);
+                if (material_elem) prim.material = std::stoi(material_elem->value);
+                
+                // Parse mode (default is 4 for triangles)
+                auto mode_elem = getElement<std::string>(prim_obj->children["mode"]);
+                if (mode_elem) prim.mode = std::stoi(mode_elem->value);
+                
+                m.primitives.push_back(prim);
+            }
+        }
+        
+        meshes.push_back(m);
+    }
+    return meshes;
+}
+
+enum class ACCESSOR_TYPE { SCALAR, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
+
+ACCESSOR_TYPE stringToAccessorType (std::string str) {
+    if (str == "SCALAR") {
+        return ACCESSOR_TYPE::SCALAR;
+    } else if (str == "VEC2") {
+        return ACCESSOR_TYPE::VEC2;
+    } else if (str == "VEC3") {
+        return ACCESSOR_TYPE::VEC3;
+    } else if (str == "VEC4") {
+        return ACCESSOR_TYPE::VEC4;
+    } else if (str == "MAT2") {
+        return ACCESSOR_TYPE::MAT2;
+    } else if (str == "MAT3") {
+        return ACCESSOR_TYPE::MAT3;
+    } else if (str == "MAT4") {
+        return ACCESSOR_TYPE::MAT4;
+    }
+    return ACCESSOR_TYPE::SCALAR;
+}
+
+std::vector<uint8_t> readAccessorData (int index, std::vector<accessor>& accessors, std::vector<buffer_view>& buffer_views, std::vector<std::vector<uint8_t>> buffers) {
+    std::vector<uint8_t> buffer;
+    if (index < accessors.size() && index > 0) {
+        accessor a = accessors[index];
+        buffer_view b = buffer_views[a.bufferView];
+        std::vector<uint8_t> bf = buffers[b.buffer];
+        uint32_t read_at_time = 1;
+        switch (a.componentType) {
+            case ACCESSOR_SIGNED_BYTE:
+            case ACCESSOR_UNSIGNED_BYTE:
+            break;
+            case ACCESSOR_UNSIGNED_INT:
+            case ACCESSOR_FLOAT:
+            read_at_time = 4;
+            break;
+            case ACCESSOR_UNSIGNED_SHORT:
+            case ACCESSOR_SIGNED_SHORT:
+            read_at_time = 2;
+            break;
+        }
+        ACCESSOR_TYPE type = stringToAccessorType(a.type);
+        uint32_t components_at_time = 1;
+        switch (type) {
+            case ACCESSOR_TYPE::SCALAR:
+            break;
+            case ACCESSOR_TYPE::VEC2:
+                components_at_time = 2;
+            break;
+            case ACCESSOR_TYPE::VEC3:
+                components_at_time = 3;
+            break;
+            case ACCESSOR_TYPE::VEC4:
+                components_at_time = 4;
+            break;
+            case ACCESSOR_TYPE::MAT2:
+                components_at_time = 4;
+            break;
+            case ACCESSOR_TYPE::MAT3:
+                components_at_time = 9;
+            break;
+            case ACCESSOR_TYPE::MAT4:
+                components_at_time = 16;
+            break;
+        }
+        size_t c = 0;
+        size_t bc = 0;
+        for (size_t i = a.bufferOffset + b.byteOffset; i < bf.size() && bc < b.byteLength && c < a.count; c++) {
+            // concat bytes for it
+            std::vector<uint8_t> bytes;
+            for (size_t cc = 0; cc < components_at_time; cc++) {
+                uint32_t data = 0;
+                for (size_t bb = 0; bb < read_at_time; bb++) {
+                    if (i < bf.size()) {
+                        data |= (static_cast<uint32_t>(bf[i]) << (bb * 8));
+                        i++;
+                        bc++;
+                    }
+                }
+                bytes.push_back(static_cast<uint8_t>(data & 0xFF));
+                if (read_at_time > 1) bytes.push_back(static_cast<uint8_t>((data >> 8) & 0xFF));
+                if (read_at_time > 2) bytes.push_back(static_cast<uint8_t>((data >> 16) & 0xFF));
+                if (read_at_time > 3) bytes.push_back(static_cast<uint8_t>((data >> 24) & 0xFF));
+            }
+            for (const auto& byte : bytes) {
+                buffer.push_back(byte);
+            }
+            // add byte stride
+            i += (b.byteStride > -1) ? b.byteStride : 0;
+
+        }
+    }
+    return buffer;
+}
+
 gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::stringstream ss;
     std::ifstream f;
@@ -538,12 +777,47 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::vector<std::unique_ptr<Element>>* bufferViews = getLabelArray(&processed, "bufferViews");
     std::vector<std::unique_ptr<Element>>* accessors = getLabelArray(&processed, "accessors");
     std::vector<std::unique_ptr<Element>>* cameras = getLabelArray(&processed, "cameras");
-    gore::model m;
+    std::vector<std::unique_ptr<Element>>* meshes = getLabelArray(&processed, "meshes");
     std::cout << JSONToString(&processed);
     // process the buffers
     std::filesystem::path file_pick_path = std::filesystem::path(file_path).parent_path();
     std::vector<std::vector<uint8_t>> read_buffers = readBuffers(buffers, file_pick_path);
     std::vector<buffer_view> read_views = parseBufferViews(bufferViews);
     std::vector<accessor> read_accessors = parseAccessors(accessors);
+    std::vector<mesh> read_meshes = parseMeshes(meshes);
+    // now construct the model data
+    gore::model m;
+    for (auto& mesh : read_meshes) {
+        for (auto& prim : mesh.primitives) {
+            // `drawElements()` when defined and `drawArrays()` otherwise
+            if (prim.indices == -1) {
+                // non-indexed
+
+            } else {
+                // indexed
+            }
+            for (auto& attrib : prim.attributes) {
+                std::vector<uint8_t> data = readAccessorData(attrib.index, read_accessors, read_views,  read_buffers);
+                switch (attrib.attrib) {
+                case MESH_ATTRIBUTES::POSITION:
+                    
+                break;
+                case MESH_ATTRIBUTES::NORMAL:
+                    
+                break;
+                case MESH_ATTRIBUTES::TANGENT:
+                break;
+                case MESH_ATTRIBUTES::TEXCOORD:
+                break;
+                case MESH_ATTRIBUTES::COLOR:
+                break;
+                case MESH_ATTRIBUTES::JOINTS:
+                break;
+                case MESH_ATTRIBUTES::WEIGHTS:
+                    break;
+                }
+            }
+        }
+    }
     return m;
 }
