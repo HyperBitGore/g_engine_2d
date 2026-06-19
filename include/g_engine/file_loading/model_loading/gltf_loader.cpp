@@ -58,10 +58,10 @@ struct JSON {
 //  - feed up into readJSONLabel
 //  - return said JSON
 
-// TODO: FINISH THIS ->
-// process arrays with values and no labels
-// properly process bufferViews
-// nodes
+// TODO support multiple textures
+// TODO support model primitives that aren't triangles
+// TODO simplify JSON label reading and parsing (make reading simpler, don't need to change underlying representation)
+// TODO simplify convertVectorToType (just flat memcpy?)
 
 std::string trimQuotesAndWhitespace(const std::string& str) {
     size_t start = 0, end = str.size();
@@ -714,7 +714,7 @@ uint32_t getAccessorTypeBytes (int type) {
 
 std::vector<uint8_t> readAccessorData (int index, std::vector<accessor>& accessors, std::vector<buffer_view>& buffer_views, std::vector<std::vector<uint8_t>> buffers) {
     std::vector<uint8_t> buffer;
-    if (index < accessors.size() && index > 0) {
+    if (index < accessors.size() && index >= 0) {
         accessor a = accessors[index];
         buffer_view b = buffer_views[a.bufferView];
         std::vector<uint8_t> bf = buffers[b.buffer];
@@ -861,7 +861,7 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::vector<gore::vec3> normals;
     std::vector<gore::vec2> texcoords;
     std::vector<gore::vec4> tangents;
-    // TODO support multiple textures
+    std::vector<gore::model_face> faces;
     for (auto& mesh : read_meshes) {
         for (auto& prim : mesh.primitives) {
             for (auto& attrib : prim.attributes) {
@@ -949,25 +949,71 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
                     break;
                 }
             }
+            const gore::vec2 zero_uv   = {0.0f, 0.0f};
+            const gore::vec3 zero_norm = {0.0f, 0.0f, 0.0f};
+            auto addVertexIndex = [&](size_t index, size_t index2, size_t index3) {
+                gore::model_face face;
+                face.p1 = positions[index];
+                face.p2 = positions[index2];
+                face.p3 = positions[index3];
+                face.uv1 = index < texcoords.size() ? texcoords[index] : zero_uv;
+                face.uv2 = index2 < texcoords.size() ? texcoords[index2] : zero_uv;
+                face.uv3 = index3 < texcoords.size() ? texcoords[index3] : zero_uv;
+                if (index < normals.size() && index2 < normals.size() && index3 < normals.size()) {
+                    face.norm1 = normals[index];
+                    face.norm2 = normals[index2];
+                    face.norm3 = normals[index3];
+                } else {
+                    // compute flat normal from triangle edges
+                    gore::vec3 edge1 = face.p2 - face.p1;
+                    gore::vec3 edge2 = face.p3 - face.p1;
+                    gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
+                    face.norm1 = face.norm2 = face.norm3 = flat;
+                }
+                faces.push_back(face);
+            };
             // `drawElements()` when defined and `drawArrays()` otherwise
             if (prim.indices == -1) {
-                // non-indexed
-                // TODO
+               // non-indexed: use all vertices in order, group into triangles
+               for (size_t i = 0; i < positions.size(); i += 3) {
+                    addVertexIndex(i, i + 1, i + 2);
+               }
             } else {
-                // indexed
-                // get the accessor data
+                // indexed: use indices to reference vertices, group into triangles
                 std::vector<uint8_t> data = readAccessorData(prim.indices, read_accessors, read_views,  read_buffers);
                 int comp_type = read_accessors[prim.indices].componentType;
+                // read the number of indices per face at a time
                 switch (comp_type) {
-                    case ACCESSOR_UNSIGNED_BYTE:
-                    case ACCESSOR_UNSIGNED_INT:
-                    case ACCESSOR_UNSIGNED_SHORT:
-                    break;
-                    default:
-                    throw std::runtime_error("The accessor componentType is not an unsigned int type!");
+                   case ACCESSOR_UNSIGNED_BYTE:
+                   {
+                        std::vector<uint8_t> index_data = convertVectorToType<uint8_t>(data);
+                        for (size_t i = 0; i < index_data.size(); i+=3) {
+                            addVertexIndex(index_data[i], index_data[i + 1], index_data[i + 2]);
+                        }
+                   }
+                   break;
+                   case ACCESSOR_UNSIGNED_SHORT:
+                   {
+                        std::vector<uint16_t> index_data = convertVectorToType<uint16_t>(data);
+                        for (size_t i = 0; i < index_data.size(); i+=3) {
+                            addVertexIndex(index_data[i], index_data[i + 1], index_data[i + 2]);
+                        }
+                   }
+                   break;
+                   case ACCESSOR_UNSIGNED_INT:
+                   {
+                        std::vector<uint32_t> index_data = convertVectorToType<uint32_t>(data);
+                        for (size_t i = 0; i < index_data.size(); i+=3) {
+                            addVertexIndex(index_data[i], index_data[i + 1], index_data[i + 2]);
+                        }
+                   }
+                   break;
+                   default:
+                        throw std::runtime_error("The accessor componentType for indices is not an unsigned integer type!");
                 }
             }
         }
     }
+    m = model(faces);
     return m;
 }
