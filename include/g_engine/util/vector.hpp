@@ -144,10 +144,6 @@ public:
 		this->x = 0;
 		this->y = 0;
 	}
-	vec2(const vec2& r) {
-		this->x = r.x;
-		this->y = r.y;
-	}
 
 	float dotProduct (const gore::vec2& r) {
 		float f = x * r.x;
@@ -155,11 +151,7 @@ public:
 		return f;
 	} 
 
-	vec2& operator=(const vec2& r) {
-		this->x = r.x;
-		this->y = r.y;
-		return *this;
-	}
+
 	vec2& operator+=(const vec2& r) {
 		x += r.x;
 		y += r.y;
@@ -253,11 +245,6 @@ public:
 		this->y = 0;
 		this->z = 0;
 	}
-	vec3(const vec3& r) {
-		this->x = r.x;
-		this->y = r.y;
-		this->z = r.z;
-	}
 	float dotProduct (const gore::vec3& r) {
 		float f = x * r.x;
 		f += y * r.y;
@@ -266,12 +253,6 @@ public:
 	}
 	vec3 crossProduct (const gore::vec3& r) {
 		return { y*r.z - z*r.y, z*r.x - x * r.z, x*r.y - y*r.x};
-	}
-	vec3& operator=(const vec3& r) {
-		this->x = r.x;
-		this->y = r.y;
-		this->z = r.z;
-		return *this;
 	}
 
 	vec3& operator+=(const vec3& r) {
@@ -382,12 +363,6 @@ public:
 		this->z = 0;
 		this->w = 0;
 	}
-	vec4(const vec4& r) {
-		this->x = r.x;
-		this->y = r.y;
-		this->z = r.z;
-		this->w = r.w;
-	}
 	float dotProduct (const gore::vec4& r) {
 		float f = x * r.x;
 		f += y * r.y;
@@ -395,13 +370,6 @@ public:
 		f += w * r.w;
 		return f;
 	} 
-	vec4& operator=(const vec4& r) {
-		this->x = r.x;
-		this->y = r.y;
-		this->z = r.z;
-		this->w = r.w;
-		return *this;
-	}
 
 	vec4& operator+=(const vec4& r) {
 		x += r.x;

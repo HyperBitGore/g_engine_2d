@@ -1,11 +1,13 @@
 #include "model_loader.hpp"
 #include <cctype>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #define ACCESSOR_SIGNED_BYTE 5120
 #define ACCESSOR_UNSIGNED_BYTE 5121
@@ -15,6 +17,13 @@
 #define ACCESSOR_FLOAT 5126
 #define ARRAY_BUFFER 34962
 #define ELEMENT_ARRAY_BUFFER 34963
+#define MESH_MODE_POINTS 0
+#define MESH_MODE_LINES 1
+#define MESH_MODE_LINE_LOOP 2
+#define MESH_MODE_LINE_STRIP 3
+#define MESH_MODE_TRIANGLES 4
+#define MESH_MODE_TRIANGLE_STRIP 5
+#define MESH_MODE_TRIANGLE_FAN 6
 
 /*
 glTF uses a right-handed coordinate system. glTF defines +Y as up, +Z as forward, and -X as right; the front of a glTF asset faces +Z.
@@ -685,26 +694,31 @@ ACCESSOR_TYPE stringToAccessorType (std::string str) {
     return ACCESSOR_TYPE::SCALAR;
 }
 
+uint32_t getAccessorTypeBytes (int type) {
+    uint32_t read_at_time = 1;
+    switch (type) {
+        case ACCESSOR_SIGNED_BYTE:
+        case ACCESSOR_UNSIGNED_BYTE:
+        break;
+        case ACCESSOR_UNSIGNED_INT:
+        case ACCESSOR_FLOAT:
+        read_at_time = 4;
+        break;
+        case ACCESSOR_UNSIGNED_SHORT:
+        case ACCESSOR_SIGNED_SHORT:
+        read_at_time = 2;
+        break;
+    }
+    return read_at_time;
+}
+
 std::vector<uint8_t> readAccessorData (int index, std::vector<accessor>& accessors, std::vector<buffer_view>& buffer_views, std::vector<std::vector<uint8_t>> buffers) {
     std::vector<uint8_t> buffer;
     if (index < accessors.size() && index > 0) {
         accessor a = accessors[index];
         buffer_view b = buffer_views[a.bufferView];
         std::vector<uint8_t> bf = buffers[b.buffer];
-        uint32_t read_at_time = 1;
-        switch (a.componentType) {
-            case ACCESSOR_SIGNED_BYTE:
-            case ACCESSOR_UNSIGNED_BYTE:
-            break;
-            case ACCESSOR_UNSIGNED_INT:
-            case ACCESSOR_FLOAT:
-            read_at_time = 4;
-            break;
-            case ACCESSOR_UNSIGNED_SHORT:
-            case ACCESSOR_SIGNED_SHORT:
-            read_at_time = 2;
-            break;
-        }
+        uint32_t read_at_time = getAccessorTypeBytes(a.componentType);
         ACCESSOR_TYPE type = stringToAccessorType(a.type);
         uint32_t components_at_time = 1;
         switch (type) {
@@ -759,6 +773,62 @@ std::vector<uint8_t> readAccessorData (int index, std::vector<accessor>& accesso
     return buffer;
 }
 
+template <class G>
+std::vector<G> convertVectorToType (std::vector<uint8_t> data) {
+    static_assert(std::is_trivially_copyable_v<G>);
+    uint8_t* read_data = reinterpret_cast<uint8_t*>(data.data());
+    std::vector<G> new_data;
+    for (size_t i = 0; i < data.size(); i += sizeof(G)) {
+        G g;
+        std::memcpy((void*)&g, read_data + i, sizeof(G));
+        new_data.push_back(g);
+    }
+    return new_data;
+}
+
+void testConvertVectorToType(const std::vector<uint8_t>& data) {
+    std::vector<gore::vec3> positions;
+    std::ofstream f("test.txt");
+    std::vector<float> float_data = convertVectorToType<float>(data);
+    f << "POSITION: positions vector size: " << positions.size() << "\n";
+    for (size_t i = 0; i < float_data.size(); i+=3) {
+        gore::vec3 vec = { float_data[i], float_data[i + 1], float_data[i + 2] };
+        positions.push_back(vec);
+        f << "Index " << i << ": (" << vec.x << ", " << vec.y << ", " << vec.z << ")\n";
+    }
+    f.close();
+    
+    f.open("test2.txt");
+    std::vector<gore::vec3> new_positions = convertVectorToType<gore::vec3>(data);
+    f << "new_positions: Read " << new_positions.size() << " vertices\n";
+    for (auto& i : new_positions) {
+        f << "position: (" << i.x << ", " << i.y << ", " << i.z << ")\n";
+    }
+    f.close();
+    
+    f.open("test3.txt");
+    f << "Comparing positions and new_positions:\n";
+    for (size_t i = 0; i < positions.size(); i++) {
+        auto& p1 = positions[i];
+        auto& p2 = new_positions[i];
+        bool same = (p1.x == p2.x && p1.y == p2.y && p1.z == p2.z);
+        f << "Index " << i << ": (" << p1.x << ", " << p1.y << ", " << p1.z << ") vs (" 
+          << p2.x << ", " << p2.y << ", " << p2.z << ") - same: " << (same ? "true" : "false") << "\n";
+    }
+    f.close();
+}
+
+struct uint16_vec2 {
+    uint16_t x;
+    uint16_t y;
+};
+
+
+struct uint8_vec2 {
+    uint8_t x;
+    uint8_t y;
+};
+
 gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::stringstream ss;
     std::ifstream f;
@@ -787,34 +857,114 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::vector<mesh> read_meshes = parseMeshes(meshes);
     // now construct the model data
     gore::model m;
+    std::vector<gore::vec3> positions;
+    std::vector<gore::vec3> normals;
+    std::vector<gore::vec2> texcoords;
+    std::vector<gore::vec4> tangents;
+    // TODO support multiple textures
     for (auto& mesh : read_meshes) {
         for (auto& prim : mesh.primitives) {
+            for (auto& attrib : prim.attributes) {
+                std::vector<uint8_t> data = readAccessorData(attrib.index, read_accessors, read_views,  read_buffers);
+                int comp_type = read_accessors[attrib.index].componentType;
+                switch (attrib.attrib) {
+                case MESH_ATTRIBUTES::POSITION:
+                    // now read as a vec3
+                    {   
+                        // testConvertVectorToType(data);
+                        std::vector<gore::vec3> new_positions = convertVectorToType<gore::vec3>(data);
+                        for (auto& i : new_positions) {
+                            positions.push_back(i);
+                        }
+                    }
+                break;
+                case MESH_ATTRIBUTES::NORMAL:
+                    {
+                        std::vector<gore::vec3> new_normals = convertVectorToType<gore::vec3>(data);
+                        for (auto& i : new_normals) {
+                            normals.push_back(i);
+                        }
+                    }
+                break;
+                case MESH_ATTRIBUTES::TANGENT:
+                    {
+                         std::vector<gore::vec4> new_tangents = convertVectorToType<gore::vec4>(data);
+                        for (auto& i : new_tangents) {
+                            tangents.push_back(i);
+                        }
+                    }
+                break;
+                case MESH_ATTRIBUTES::TEXCOORD:
+                    {
+                        switch (comp_type) {
+                            case ACCESSOR_FLOAT:
+                                {
+                                    std::vector<gore::vec2> new_texs = convertVectorToType<gore::vec2>(data);
+                                    for (auto& i : new_texs) {
+                                        texcoords.push_back(i);
+                                    }
+                                }
+                            break;
+                            case ACCESSOR_UNSIGNED_SHORT:
+                                {
+                                    // cast to some type of unsigned short version of tex
+                                    std::vector<uint16_vec2> new_texs = convertVectorToType<uint16_vec2>(data);
+                                    for (auto& i : new_texs) {
+                                        // supposed to be normalized
+                                         texcoords.push_back({ 
+                                            (float)i.x / 65535.0f, 
+                                            (float)i.y / 65535.0f
+                                        });
+                                    }
+                                }
+                            break;
+                            case ACCESSOR_UNSIGNED_BYTE:
+                                {
+                                    std::vector<uint8_vec2> new_texs = convertVectorToType<uint8_vec2>(data);
+                                    for (auto& i : new_texs) {
+                                        texcoords.push_back({ 
+                                            (float)i.x / 255.0f, 
+                                            (float)i.y / 255.0f
+                                        });
+                                    }
+                                }
+                            break;
+                        }
+                    }
+                break;
+                case MESH_ATTRIBUTES::COLOR:
+                    {
+                        // TODO
+                    }
+                break;
+                case MESH_ATTRIBUTES::JOINTS:
+                    {
+                        // TODO
+                    }
+                break;
+                case MESH_ATTRIBUTES::WEIGHTS:
+                    {
+                        // TODO
+                    }
+                    break;
+                }
+            }
             // `drawElements()` when defined and `drawArrays()` otherwise
             if (prim.indices == -1) {
                 // non-indexed
-
+                // TODO
             } else {
                 // indexed
-            }
-            for (auto& attrib : prim.attributes) {
-                std::vector<uint8_t> data = readAccessorData(attrib.index, read_accessors, read_views,  read_buffers);
-                switch (attrib.attrib) {
-                case MESH_ATTRIBUTES::POSITION:
-                    
-                break;
-                case MESH_ATTRIBUTES::NORMAL:
-                    
-                break;
-                case MESH_ATTRIBUTES::TANGENT:
-                break;
-                case MESH_ATTRIBUTES::TEXCOORD:
-                break;
-                case MESH_ATTRIBUTES::COLOR:
-                break;
-                case MESH_ATTRIBUTES::JOINTS:
-                break;
-                case MESH_ATTRIBUTES::WEIGHTS:
+                // get the accessor data
+                std::vector<uint8_t> data = readAccessorData(prim.indices, read_accessors, read_views,  read_buffers);
+                int comp_type = read_accessors[prim.indices].componentType;
+                switch (comp_type) {
+                    case ACCESSOR_UNSIGNED_BYTE:
+                    case ACCESSOR_UNSIGNED_INT:
+                    case ACCESSOR_UNSIGNED_SHORT:
                     break;
+                    default:
+                    throw std::runtime_error("The accessor componentType is not an unsigned int type!");
                 }
             }
         }
