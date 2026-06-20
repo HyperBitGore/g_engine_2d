@@ -190,6 +190,7 @@ void gore::g_engine_2d::setWindowResize(std::function<void(uint32_t, uint32_t)> 
 			func(w, h);
 		}
 	};
+	this->resize = f;
 	wind->setWindowResize(f);
 }
 

@@ -75,6 +75,7 @@ private:
 		bool update_view_3d;
 	};
 	std::vector<render_ptr> renderers;
+	std::function<void(uint32_t, uint32_t)> resize;
 public:
 	std::shared_ptr<gore::logger> logger;
 	// parts is a bitmask which tells us what to load
@@ -132,6 +133,7 @@ public:
 	// adds a renderer to be updated on window resize
 	void addRenderer (renderer_base* ptr, bool maintain_viewport, bool update_view, bool update_view_3d) {
 		renderers.push_back({ptr, maintain_viewport, update_view, update_view_3d});
+		resize(window_width, window_height);
 	}
 	// sets the window resize user function
 	void setWindowResize(std::function<void(uint32_t, uint32_t)> func);
