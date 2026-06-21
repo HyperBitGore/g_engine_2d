@@ -3,7 +3,7 @@
 #include <memory>
 
 
-std::function<void(uint32_t, uint32_t)> resizeFunction;
+std::function<void(uint32_t, uint32_t)> globalResize;
 bool globalCapture = false;
 
 void gore::g_window::setMouseMoveFunction (std::function<void()> function) {
@@ -24,8 +24,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 			if (!globalMaintainViewport) {
 				glViewport(0, 0, width, height);
 			}
-			if (resizeFunction) {
-				resizeFunction(width, height);
+			if (globalResize) {
+				globalResize(width, height);
 			}
 			if (globalCapture) {
 				RECT rect;
@@ -89,23 +89,23 @@ bool gore::g_window::ProcessMessage() {
 				case DestroyNotify:
 					return false;
 				case ConfigureNotify:
-					if (resizeFunction) {
+					if (this->resizeFunction) {
 						this->width = event.xconfigure.width;
 						this->height = event.xconfigure.height;
 						if (!maintainViewport) {
 							glViewport(0, 0, width, height);
 						}
-						resizeFunction(width, height);
+						this->resizeFunction(width, height);
 					}
 				break;
 				case Expose:
-					if (resizeFunction) {
+					if (this->resizeFunction) {
 						this->width = event.xexpose.width;
 						this->height = event.xexpose.height;
 						if (!maintainViewport) {
 							glViewport(0, 0, width, height);
 						}
-						resizeFunction(width, height);
+						this->resizeFunction(width, height);
 					}
 				break;
 				case MotionNotify:
@@ -315,7 +315,8 @@ void gore::g_window::toggleFullscreen() {
 }
 
 void gore::g_window::setWindowResize(std::function<void(uint32_t, uint32_t)> func) {
-	resizeFunction = func;
+	this->resizeFunction = func;
+	globalResize = func;
 }
 
 void gore::g_window::captureMouseToggle(bool center){

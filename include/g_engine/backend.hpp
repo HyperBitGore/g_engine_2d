@@ -313,6 +313,7 @@ private:
 	bool maintainViewport = false;
 	std::shared_ptr<gore::logger> logger;
 	std::function<void()> mouseMove;
+	std::function<void(uint32_t, uint32_t)> resizeFunction;
 public:
 	g_window(const char* title, RAW_DISPLAY display, int h, int w, int x, int y, bool fullscreen = false, bool maintainViewport = false, std::shared_ptr<gore::logger> logger = nullptr);
 	g_window(const g_window&) = delete;
