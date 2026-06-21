@@ -105,8 +105,7 @@ bool gore::g_engine_2d::updateWindow() {
 		dr1->unbind();
 		glViewport(0, 0, this->window_width, this->window_height);
 		// blit to screen
-		//basic_image->drawTexture(dr1->getTexture(), {0.0f, 0.0f}, {(float)this->window_width, (float)this->window_height}, {0.0f, 1.0f, 1.0f, -1.0f});
-		// basic_image->drawTexture(dr1->getTexture(), {-1.0f, 1.0f}, {2.0f, -2.0f}, {0.0f, 1.0f, 1.0f, -1.0f});
+		//basic_image->drawTexture(dr1->getTexture(), {0.0f, 0.0f}, {(float)window_width, (float)window_height});
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, dr1->getColorBuffer());
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // screen framebuffer
 		glBlitFramebuffer(0, 0, target_width, target_height, 0, 0, window_width, window_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);

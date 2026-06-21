@@ -1,6 +1,7 @@
 #pragma once
 #include "../img_loading/image_loader.hpp"
 #include "renderer.hpp"
+#include <stdexcept>
 
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
 //https://www.khronos.org/opengl/wiki/Texture
@@ -96,6 +97,9 @@ class drawpass {
 
 		}
 		drawpass(GLsizei width, GLsizei height, GLenum attach) {
+			if (width == 0 || height == 0) {
+				throw std::runtime_error("Can't construct a drawpass with width or height set to zero!");
+			}
 			w = width;
 			h = height;
 			glGenFramebuffers(1, &color_buffer);

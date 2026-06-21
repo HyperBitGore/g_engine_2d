@@ -241,19 +241,23 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
 	logger->log("Texture Units on this machine: " + std::to_string(texture_units));
 	//start modern opengl needed stuff like shaders and vertex buffers
-	if (component_mask & MAINTAIN_ASPECT_RATIO_COMPONENT) {
-		this->basic_image = imagerenderer::create(width, height);
-	}
-	setWindowResize(nullptr);
-	dr1 = std::make_unique<drawpass>(target_width, target_height, GL_COLOR_ATTACHMENT0);
 	this->component_mask = component_mask;
 	this->window_width = width;
 	this->window_height = height;
 	this->target_width = target_width;
 	this->target_height = target_height;
+	if (target_height == 0) {
+		this->target_height = this->window_height;
+	}
+	if (target_width == 0) {
+		this->target_width = this->window_width;
+	}
+	this->basic_image = imagerenderer::create(window_width, window_height);
+	dr1 = std::make_unique<drawpass>(this->target_width, this->target_height, GL_COLOR_ATTACHMENT0);
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);
 	#endif
 	this->view = gore::matrix::calculate2DView(0, 0, 1.0f);
 	this->ortho = gore::matrix::calculateOrtho(width, height, width, height);
+	setWindowResize(nullptr);
 }
