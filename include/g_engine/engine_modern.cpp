@@ -17,7 +17,7 @@ void gore::g_engine_2d::updateInputState(){
 	in->updateState();
 }
 
-gore::vec2 gore::g_engine_2d::getMousePos(bool raw) {
+gore::vec2 gore::g_engine_2d::getMousePos(bool raw, bool skip_view) {
 	vec2 p;
 	#if defined(_WIN32)
 	LPPOINT po = new tagPOINT;
@@ -56,7 +56,7 @@ gore::vec2 gore::g_engine_2d::getMousePos(bool raw) {
 		ppy = ppy * target_height;
 		p.y = ppy;
 	}
-	if (component_mask & USE_VIEW_MATRICE) {
+	if (component_mask & USE_VIEW_MATRICE && !skip_view) {
 		gore::matrix inverseView = view.inverse();
     	gore::vec4 point = inverseView * gore::vec4(p.x, p.y, 1.0, 1.0);
 		p.x = point.x;

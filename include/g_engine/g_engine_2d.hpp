@@ -159,7 +159,7 @@ public:
 	bool getKeyReleased(uint32_t key);
 	void updateInputState();
 
-	vec2 getMousePos(bool raw = false);
+	vec2 getMousePos(bool raw = false, bool skip_view = false);
 	//ease of use
 	bool getMouseLeftDown() { return in->GetKeyDown(g_MouseLeft); }
 	bool getMouseRightDown() { return in->GetKeyDown(g_MouseRight); }

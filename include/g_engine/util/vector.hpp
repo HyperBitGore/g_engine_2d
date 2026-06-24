@@ -229,6 +229,9 @@ public:
     	}
 		return { x / len, y / len};
 	}
+	bool operator==(const vec2& v) {
+		return x == v.x && y == v.y;
+	}
 };
 class vec3 {
 public:
@@ -343,6 +346,9 @@ public:
         	return {0.0f, 0.0f, 0.0f}; // avoid division by zero
     	}
 		return { x / len, y / len, z / len};
+	}
+	bool operator==(const vec3& v) {
+		return x == v.x && y == v.y && z == v.z;
 	}
 };
 class vec4 {
@@ -469,6 +475,9 @@ public:
         	return {0.0f, 0.0f, 0.0f, 0.0f}; // avoid division by zero
     	}
 		return { x / len, y / len, z / len, w / len};
+	}
+	bool operator==(const vec4& v) {
+		return x == v.x && y == v.y && z == v.z && w == v.w;
 	}
 };
 };
