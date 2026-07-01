@@ -66,9 +66,16 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 
 		PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB =
 			(PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-		const char* ext = wglGetExtensionsStringARB(dc);
+		const char* ext = nullptr;
+		if (wglGetExtensionsStringARB) {
+			ext = wglGetExtensionsStringARB(dc);
+		}
+		(void)ext;
 		wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 		wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+		if (!wglChoosePixelFormatARB || !wglCreateContextAttribsARB) {
+			FatalError("Required WGL extensions are unavailable: WGL_ARB_pixel_format and/or WGL_ARB_create_context");
+		}
 
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(rc);

@@ -7,8 +7,8 @@
 
 #include <gl/GL.h>
 #include <gl/GLU.h>
-#include <wglext.h>
-#include <glext.h>
+#include "../GL/wglext.h"
+#include "../GL/glext.h"
 #define _USE_MATH_DEFINES
 #include <cmath>
 #endif

@@ -24,7 +24,7 @@ namespace gore {
             std::string map_d; // transparency map
         };
 
-        enum class AlphaMode { OPAQUE, MASK, BLEND };
+        enum class AlphaMode { ALPHA_OPAQUE, ALPHA_MASK, ALPHA_BLEND };
 
         struct gltf_material {
             std::string name;
@@ -41,8 +41,8 @@ namespace gore {
             int tex_occlusion         = -1;
             int tex_emissive          = -1;
             // alpha
-            AlphaMode alpha_mode      = AlphaMode::OPAQUE;
-            float     alpha_cutoff    = 0.5f; // only used when alpha_mode == MASK
+            AlphaMode alpha_mode      = AlphaMode::ALPHA_OPAQUE;
+            float     alpha_cutoff    = 0.5f; // only used when alpha_mode == ALPHA_MASK
             bool      double_sided    = false;
         };
     }

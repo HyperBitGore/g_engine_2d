@@ -16,7 +16,7 @@ struct SoftwareRendererPoint {
 
 class SoftwareRenderer : public gore::renderer<SoftwareRenderer, SoftwareRendererPoint> {
     private:
-    	friend class renderer<SoftwareRenderer, SoftwareRendererPoint>;
+    	friend class gore::renderer<SoftwareRenderer, SoftwareRendererPoint>;
         void shader_setup() override {
             draw_arrays_mode = GL_LINES;
             shader.bind();

@@ -1,6 +1,5 @@
 #include "audio.hpp"
 #include <algorithm>
-#include <alsa/asoundlib.h>
 #include <cmath>
 #include <cstdint>
 #include <memory>

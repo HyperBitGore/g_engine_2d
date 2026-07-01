@@ -63,8 +63,8 @@ struct invert_vertex{
 
 class Invert : public gore::renderer<Invert, invert_vertex> {
 	protected:
-		friend class renderer<Invert, invert_vertex>;
-		void shader_setup() {
+		friend class gore::renderer<Invert, invert_vertex>;
+		void shader_setup() override {
 			shader.setuniform("screen", width, height);
 			shader.setuniform("mtexture", (GLuint)0);
 			shader.bind();

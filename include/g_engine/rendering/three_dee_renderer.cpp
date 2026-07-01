@@ -1,6 +1,5 @@
 #include "three_dee_renderer.hpp"
 #include "three_dee_renderer_shader.hpp"
-#include <GL/glext.h>
 
 GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
     GLuint* unit = texture_unit_map.get(texture);

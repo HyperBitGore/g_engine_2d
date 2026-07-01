@@ -150,7 +150,7 @@ model_face_index parseFace (std::string str, size_t* offset) {
 std::vector<gore::model_material::mtl_material> gore::model_loader::loadMtl(std::string file_path) {
     std::ifstream file(file_path);
     if (!file) return {};
-    std::string parent_path = std::filesystem::path(file_path).parent_path();
+    std::string parent_path = std::filesystem::path(file_path).parent_path().string();
     std::vector<gore::model_material::mtl_material> materials;
     gore::model_material::mtl_material current;
     bool has_current = false;
