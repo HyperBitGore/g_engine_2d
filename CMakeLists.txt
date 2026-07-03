@@ -57,6 +57,7 @@ set(ENGINE_SOURCES
     include/g_engine/file_loading/model_loading/gltf_loader.cpp
     include/g_engine/file_loading/model_loading/model.cpp
     include/g_engine/rendering/camera.hpp
+    include/g_engine/file_loading/json.cpp
 )
 
 add_executable(g_engine ${ENGINE_SOURCES} tests/example.cpp)
