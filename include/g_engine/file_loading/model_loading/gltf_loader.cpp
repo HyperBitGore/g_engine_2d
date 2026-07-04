@@ -9,7 +9,6 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
-#include "../json.hpp"
 #define ACCESSOR_SIGNED_BYTE 5120
 #define ACCESSOR_UNSIGNED_BYTE 5121
 #define ACCESSOR_SIGNED_SHORT 5122
@@ -481,10 +480,48 @@ struct image {
 
 std::vector<gore::IMG> constructTextures (gore::JSONLoader::JSONFile* json) {
     // convert the texture and image arrays to easy struct access
+    std::vector<texture> textures;
+    gore::JSONArray* texs = json->getArray("textures");
+    for (auto& i : *texs) {
+        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
+        texture t;
+        t.sampler = obj.getElementValue<int>("sampler");
+        t.source = obj.getElementValue<int>("source");
+        t.name = obj.getElementValue<std::string>("name");
+        textures.push_back(t);
+    }
+    std::vector<image> images;
+    gore::JSONArray* imgs = json->getArray("images");
+    for (auto& i : *imgs) {
+        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
+        image t;
+        t.uri = obj.getElementValue<std::string>("uri");
+        t.mimetype = obj.getElementValue<std::string>("mimeType");
+        t.bufferView = obj.getElementValue<int>("bufferView");
+        t.name = obj.getElementValue<std::string>("name");
+        images.push_back(t);
+    }
+    // parse the material
+    std::vector<gore::model_material::gltf_material> materials;
+    gore::JSONArray* mats = json->getArray("materials");
+    for (auto& i : *mats) {
 
+    }
     // get the image data
+    std::vector<gore::IMG> out;
+    for (auto& i : textures) {
+        auto& j = images[i.source];
+    }
+    for (auto& i : images) {
+        // assuming it's a PNG, throw if not
+        if (!i.mimetype.empty() && i.mimetype != "image/png") {
+            throw std::runtime_error("GLTF image not a PNG, no load!");
+        }
+        gore::IMG img = gore::imageloader::loadPNG(i.uri);
+        out.push_back(std::move(img));
+    }
 
-    return {};
+    return out;
 }
 
 gore::model gore::model_loader::loadGltf (std::string file_path) {

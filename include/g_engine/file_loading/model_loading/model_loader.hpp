@@ -4,6 +4,7 @@
 #include "../../util/vector.hpp"
 #include "../../util/matrix.hpp"
 #include "../../img_loading/image_loader.hpp"
+#include "../json.hpp"
 
 namespace gore {
     namespace model_material {
@@ -67,7 +68,7 @@ namespace gore {
         private:
             std::vector<model_face> faces;
             std::vector<model_material::mtl_material> mtls;
-            std::vector<model_material::gltf_material> gltfs;
+            std::vector<JSONLoader::JSONFile> gltfs;
             static int hash(std::string str) {
 		        return (str.size() > 0) ? str[0] + str[str.size() - 1] % 1024 : 0;
 	        }
