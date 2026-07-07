@@ -118,7 +118,7 @@ void gore::model::addMaterials (const std::vector<model_material::mtl_material>&
     }
 }
 
-void gore::model::addMaterials (const std::vector<model_material::gltf_material>& mats) {
+void gore::model::addMaterials (std::vector<gore::JSONLoader::JSONFile>& mats) {
     for (auto& i : mats) {
         gltfs.push_back(i);
     }

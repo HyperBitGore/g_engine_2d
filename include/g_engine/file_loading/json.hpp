@@ -3,6 +3,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -26,16 +27,37 @@ namespace gore {
 
     typedef std::vector<std::unique_ptr<Element>> JSONArray;
 
-    struct JSON {
+    // Maps T to its expected JSONTYPE; static_assert fires at compile time for unrecognised T.
+    template <class T> struct json_type_for {
+        static_assert(sizeof(T) == 0, "getElement<T>: T is not a recognised JSON scalar type");
+    };
+    template <> struct json_type_for<int>         { static constexpr JSONTYPE value = JSONTYPE::INTEGER; };
+    template <> struct json_type_for<float>        { static constexpr JSONTYPE value = JSONTYPE::FLOAT;   };
+    template <> struct json_type_for<std::string>  { static constexpr JSONTYPE value = JSONTYPE::STRING;  };
+
+    class JSON {
         private:
         std::string elementArrayToString (std::vector<std::unique_ptr<Element>>* elements);
+        static JSONArray copyJSONArray (JSONArray& array);
         public:
+        JSON ();
+        // copy
+        JSON (const JSON& j);
+        JSON& operator=(const JSON& j);
+        // move
+        JSON (JSON&& j) noexcept;
+        JSON& operator=(JSON&& j) noexcept;
         std::string label;
         std::unordered_map<std::string, std::unique_ptr<Element>> children;
         template <class T>
         JSONElement<T>* getElement (std::string child) {
             auto it = children.find(child);
             if (it == children.end()) return nullptr;
+            // For scalar types (int, float, string): validate stored type matches T at runtime.
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>) {
+                if (it->second->type != json_type_for<T>::value)
+                    throw std::runtime_error("JSON type mismatch on key '" + child + "'");
+            }
             return reinterpret_cast<JSONElement<T>*>(it->second.get());
         }
         template <class T>
@@ -46,6 +68,10 @@ namespace gore {
         T getElementValue (std::string child) {
             auto it = children.find(child);
             if (it == children.end()) return T{};
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>) {
+                if (it->second->type != json_type_for<T>::value)
+                    throw std::runtime_error("JSON type mismatch on key '" + child + "'");
+            }
             return reinterpret_cast<JSONElement<T>*>(it->second.get())->value;
         }
         JSONArray* getArray (std::string child) {
@@ -55,6 +81,18 @@ namespace gore {
         std::string toString ();
         template <class T>
         static T& readElementAs (std::unique_ptr<Element>& e) {
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>) {
+                if (e->type != json_type_for<T>::value)
+                    throw std::runtime_error("JSON type mismatch in readElementAs");
+            }
+            return reinterpret_cast<JSONElement<T>*>(e.get())->value;
+        }
+        template <class T>
+        static T& readElementAs (const std::unique_ptr<Element>& e) {
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>) {
+                if (e->type != json_type_for<T>::value)
+                    throw std::runtime_error("JSON type mismatch in readElementAs");
+            }
             return reinterpret_cast<JSONElement<T>*>(e.get())->value;
         }
     };
@@ -71,9 +109,15 @@ namespace gore {
                 JSON json_data;
             public:
                 JSONFile (JSON&& json) : json_data(std::move(json)) {}
-                // not copyable — JSON owns unique_ptr children
-                JSONFile (const JSONFile&) = delete;
-                JSONFile& operator=(const JSONFile&) = delete;
+                // copying values in children
+                JSONFile (const JSONFile& f) {
+                    this->json_data.label = f.json_data.label;
+                    this->json_data = f.json_data;
+                }
+                JSONFile& operator=(const JSONFile& f) {
+                    *this = JSONFile(f);
+                    return *this;
+                }
                 // move
                 JSONFile (JSONFile&& f) noexcept {
                     this->json_data.label = std::move(f.json_data.label);
@@ -113,8 +157,10 @@ namespace gore {
                 }
                 template <class T>
                 T& operator[](std::string child) {
-                    auto& it = json_data.children[child];
-                    return (reinterpret_cast<JSONElement<T>*>(it.get()))->value;
+                    auto it = json_data.children.find(child);
+                    if (it == json_data.children.end())
+                        throw std::runtime_error("JSON key not found: " + child);
+                    return (reinterpret_cast<JSONElement<T>*>(it->second.get()))->value;
                 }
                 JSONArray* getArray(std::string label) {
                     return json_data.getArray(label);

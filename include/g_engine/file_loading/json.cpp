@@ -1,6 +1,108 @@
 #include "json.hpp"
+#include <cctype>
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <sstream>
+
+gore::JSON::JSON () {
+    this->label = "NULL";
+}
+
+gore::JSONArray gore::JSON::copyJSONArray (gore::JSONArray& array) {
+    gore::JSONArray result;
+    result.reserve(array.size());
+    for (const auto& elem : array) {
+        switch (elem->type) {
+            case gore::JSONTYPE::STRING: {
+                std::string value = gore::JSON::readElementAs<std::string>(elem);
+                result.push_back(std::make_unique<gore::JSONElement<std::string>>(gore::JSONTYPE::STRING, value));
+                break;
+            }
+            case gore::JSONTYPE::OBJECT: {
+                gore::JSON value = gore::JSON::readElementAs<gore::JSON>(elem);
+                result.push_back(std::make_unique<gore::JSONElement<gore::JSON>>(gore::JSONTYPE::OBJECT, std::move(value)));
+                break;
+            }
+            case gore::JSONTYPE::ARRAY: {
+                gore::JSONArray& nested = gore::JSON::readElementAs<gore::JSONArray>(elem);
+                gore::JSONArray copied = copyJSONArray(nested);
+                result.push_back(std::make_unique<gore::JSONElement<gore::JSONArray>>(gore::JSONTYPE::ARRAY, std::move(copied)));
+                break;
+            }
+            case gore::JSONTYPE::INTEGER: {
+                int value = gore::JSON::readElementAs<int>(elem);
+                result.push_back(std::make_unique<gore::JSONElement<int>>(gore::JSONTYPE::INTEGER, value));
+                break;
+            }
+            case gore::JSONTYPE::FLOAT: {
+                float value = gore::JSON::readElementAs<float>(elem);
+                result.push_back(std::make_unique<gore::JSONElement<float>>(gore::JSONTYPE::FLOAT, value));
+                break;
+            }
+        }
+    }
+    return result;
+}
+// copy
+gore::JSON::JSON (const JSON& j) {
+    this->label = j.label;
+    for (auto& i : j.children) {
+        switch (i.second->type) {
+        case JSONTYPE::STRING:
+        {
+            std::string value = JSON::readElementAs<std::string>(i.second);
+            std::unique_ptr<JSONElement<std::string>> elem = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, value);
+            this->children.emplace(i.first, std::move(elem));
+        }
+            break;
+        case JSONTYPE::OBJECT:
+        {
+            JSON value = JSON::readElementAs<JSON>(i.second);
+            std::unique_ptr<JSONElement<JSON>> elem = std::make_unique<JSONElement<JSON>>(JSONTYPE::OBJECT, value);
+            this->children.emplace(i.first, std::move(elem));
+        }
+            break;
+        case JSONTYPE::ARRAY:
+        {
+            JSONArray& value = JSON::readElementAs<JSONArray>(i.second);
+            JSONArray v2 = copyJSONArray(value);
+            std::unique_ptr<JSONElement<JSONArray>> elem = std::make_unique<JSONElement<JSONArray>>(JSONTYPE::ARRAY, std::move(v2));
+            this->children.emplace(i.first, std::move(elem));
+        }
+            break;
+        case JSONTYPE::INTEGER:
+        {
+            int& value = JSON::readElementAs<int>(i.second);
+            std::unique_ptr<JSONElement<int>> elem = std::make_unique<JSONElement<int>>(JSONTYPE::INTEGER, value);
+            this->children.emplace(i.first, std::move(elem));
+        }
+        break;
+        case JSONTYPE::FLOAT:
+        {
+            float& value = JSON::readElementAs<float>(i.second);
+            std::unique_ptr<JSONElement<float>> elem = std::make_unique<JSONElement<float>>(JSONTYPE::FLOAT, value);
+            this->children.emplace(i.first, std::move(elem));
+        }
+            break;
+        }
+    }
+}
+gore::JSON& gore::JSON::operator=(const JSON& j) {
+    *this = JSON(j);
+    return *this;
+}
+// move
+gore::JSON::JSON (JSON&& j) noexcept {
+    this->label = std::move(j.label);
+    this->children = std::move(j.children);
+}
+gore::JSON& gore::JSON::operator=(JSON&& j) noexcept {
+    this->label = std::move(j.label);
+    this->children = std::move(j.children);
+    return *this;
+}
+
 
 std::string gore::JSON::elementArrayToString (std::vector<std::unique_ptr<Element>>* elements) {
     std::string out;
@@ -187,7 +289,7 @@ std::vector<std::unique_ptr<gore::Element>> gore::JSONLoader::readArray (std::st
 
 gore::JSON gore::JSONLoader::parseJSONSection (std::string section) {
     size_t offset = 0;
-    JSON output = {"NULL", {}};
+    JSON output;
     size_t free = 0;
     for (; offset < section.size();) {
         switch (section[offset]) {
@@ -222,8 +324,45 @@ gore::JSON gore::JSONLoader::parseJSONSection (std::string section) {
                         i++;
                         std::string trimmed = trimQuotesAndWhitespace(value);
                         if (!trimmed.empty()) {
-                            std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, trimmed);
-                            output.children.emplace(label, std::move(element));
+                            // loop string and check if digits
+                            bool isInt = true;
+                            bool isFloat = false;
+                            for (auto& i : trimmed) {
+                                if (i == '.') {
+                                    isFloat = true;
+                                    isInt = false;
+                                } else if (!std::isdigit(i) && i != '-') {
+                                    isInt = false;
+                                    isFloat = false;
+                                    break;
+                                }
+                            }
+                            if (isInt) {
+                                int value = -1;
+                                try {
+                                    value = std::stoi(trimmed);
+                                } catch (const std::invalid_argument& e) {
+                                    std::cerr << "Invalid format! No conversion could be done.\n";
+                                } catch (const std::out_of_range& e) {
+                                    std::cerr << "Value is out of range for an int!\n";
+                                }
+                                std::unique_ptr<JSONElement<int>> element = std::make_unique<JSONElement<int>>(JSONTYPE::INTEGER, value);
+                                output.children.emplace(label, std::move(element));
+                            } else if (isFloat) {
+                                float value = -1.0;
+                                try {
+                                    value = std::stof(trimmed);
+                                } catch (const std::invalid_argument& e) {
+                                    std::cerr << "Invalid format! No conversion could be done.\n";
+                                } catch (const std::out_of_range& e) {
+                                    std::cerr << "Value is out of range for an int!\n";
+                                }
+                                std::unique_ptr<JSONElement<float>> element = std::make_unique<JSONElement<float>>(JSONTYPE::FLOAT, value);
+                                output.children.emplace(label, std::move(element));
+                            } else {
+                                std::unique_ptr<JSONElement<std::string>> element = std::make_unique<JSONElement<std::string>>(JSONTYPE::STRING, trimmed);
+                                output.children.emplace(label, std::move(element));
+                            }
                         }
                     }
                     offset = i;

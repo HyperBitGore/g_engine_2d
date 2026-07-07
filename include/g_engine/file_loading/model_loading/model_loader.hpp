@@ -92,7 +92,7 @@ namespace gore {
             std::vector<model_face>& getFaces();
             std::vector<gore::vec3> getPositions() const;
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
-            void addMaterials (const std::vector<model_material::gltf_material>& mats);
+            void addMaterials (std::vector<gore::JSONLoader::JSONFile>& mats);
             IMG& getImage (int32_t mtl_index);
             // Add a pre-loaded image as a new material, avoiding file I/O.
             // The face's material_index must equal the mtls index this creates.

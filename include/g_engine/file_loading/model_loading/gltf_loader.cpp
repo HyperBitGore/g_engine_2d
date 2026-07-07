@@ -24,6 +24,16 @@
 #define MESH_MODE_TRIANGLES 4
 #define MESH_MODE_TRIANGLE_STRIP 5
 #define MESH_MODE_TRIANGLE_FAN 6
+#define SAMPLER_NEAREST 9728
+#define SAMPLER_LINEAR 9729
+#define SAMPLER_NEAREST_MIPMAP_NEAREST 9984
+#define SAMPLER_LINEAR_MIPMAP_NEAREST 9985
+#define SAMPLER_LINEAR_MIPMAP_NEAREST 9985
+#define SAMPLER_NEAREST_MIPMAP_LINEAR 9986
+#define SAMPLER_LINEAR_MIPMAP_LINEAR 9987
+#define SAMPLER_CLAMP_TO_EDGE 33071
+#define SAMPLER_MIRRORED_REPEAT 33648
+#define SAMPLER_REPEAT 10497
 
 /*
 glTF uses a right-handed coordinate system. glTF defines +Y as up, +Z as forward, and -X as right; the front of a glTF asset faces +Z.
@@ -40,6 +50,7 @@ glTF uses a right-handed coordinate system. glTF defines +Y as up, +Z as forward
 //  - return said JSON
 
 // TODO material reading
+//      - add material images to model
 // TODO support multiple textures
 // TODO support model primitives that aren't triangles
 
@@ -53,7 +64,7 @@ std::vector<std::vector<uint8_t>> readBuffers (gore::JSONLoader::JSONFile* json,
     for (auto& i : *buffers) {
         if (i->type == gore::JSONTYPE::OBJECT) {
             auto& elem = gore::JSON::readElementAs<gore::JSON>(i);
-            std::string length = elem.getElementValue<std::string>("byteLength");
+            int length = elem.getElementValue<int>("byteLength");
             std::string uri = elem.getElementValue<std::string>( "uri");
             std::vector<uint8_t> p;
             // now read buffer file
@@ -74,7 +85,7 @@ std::vector<std::vector<uint8_t>> readBuffers (gore::JSONLoader::JSONFile* json,
                 fileMap.emplace(uri, read);
                 p = read;
             }
-            size_t val = std::stoi(length);
+            size_t val = length;
             std::vector<uint8_t> new_file;
             for (size_t off = 0; off < val; off++) {
                 new_file.push_back(p[off]);
@@ -104,17 +115,17 @@ std::vector<buffer_view> parseBufferViews (gore::JSONLoader::JSONFile* json) {
         auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
         buffer_view view;
 
-        view.buffer = std::stoi(obj.getElementValue<std::string>("buffer"));
-        view.byteLength = std::stoi(obj.getElementValue<std::string>("byteLength"));
+        view.buffer = (obj.getElementValue<int>("buffer"));
+        view.byteLength = (obj.getElementValue<int>("byteLength"));
 
-        auto byteOffset_elem = obj.getElement<std::string>("byteOffset");
-        if (byteOffset_elem) view.byteOffset = std::stoi(byteOffset_elem->value);
+        auto byteOffset_elem = obj.getElement<int>("byteOffset");
+        if (byteOffset_elem) view.byteOffset = (byteOffset_elem->value);
 
-        auto byteStride_elem = obj.getElement<std::string>("byteStride");
-        if (byteStride_elem) view.byteStride = std::stoi(byteStride_elem->value);
+        auto byteStride_elem = obj.getElement<int>("byteStride");
+        if (byteStride_elem) view.byteStride = (byteStride_elem->value);
 
-        auto target_elem = obj.getElement<std::string>("target");
-        if (target_elem) view.target = std::stoi(target_elem->value);
+        auto target_elem = obj.getElement<int>("target");
+        if (target_elem) view.target = (target_elem->value);
 
         auto name_elem = obj.getElement<std::string>("name");
         if (name_elem) view.name = name_elem->value;
@@ -163,13 +174,13 @@ std::vector<accessor> parseAccessors (gore::JSONLoader::JSONFile* json) {
         auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
         accessor acc;
 
-        acc.bufferView    = std::stoi(obj.getElementValue<std::string>("bufferView"));
-        acc.componentType = std::stoi(obj.getElementValue<std::string>("componentType"));
-        acc.count         = std::stoi(obj.getElementValue<std::string>("count"));
+        acc.bufferView    = obj.getElementValue<int>("bufferView");
+        acc.componentType = obj.getElementValue<int>("componentType");
+        acc.count         = obj.getElementValue<int>("count");
         acc.type          = obj.getElementValue<std::string>("type");
 
-        auto byteOffset_elem = obj.getElement<std::string>("byteOffset");
-        if (byteOffset_elem) acc.bufferOffset = std::stoi(byteOffset_elem->value);
+        auto byteOffset_elem = obj.getElement<int>("byteOffset");
+        if (byteOffset_elem) acc.bufferOffset = byteOffset_elem->value;
 
         auto normalized_elem = obj.getElement<std::string>("normalized");
         if (normalized_elem) acc.normalized = (normalized_elem->value == "true");
@@ -199,27 +210,27 @@ std::vector<accessor> parseAccessors (gore::JSONLoader::JSONFile* json) {
         auto sparse_elem = obj.getElement<gore::JSON>("sparse");
         if (sparse_elem) {
             gore::JSON& sparse_obj = sparse_elem->value;
-            auto count_elem = sparse_obj.getElement<std::string>("count");
-            if (count_elem) acc.sparse.count = std::stoi(count_elem->value);
+            auto count_elem = sparse_obj.getElement<int>("count");
+            if (count_elem) acc.sparse.count = count_elem->value;
 
             auto indices_elem = sparse_obj.getElement<gore::JSON>("indices");
             if (indices_elem) {
                 gore::JSON& idx = indices_elem->value;
-                auto bv = idx.getElement<std::string>("bufferView");
-                if (bv) acc.sparse.indices.bufferView = std::stoi(bv->value);
-                auto bo = idx.getElement<std::string>("byteOffset");
-                if (bo) acc.sparse.indices.byteOffset = std::stoi(bo->value);
-                auto ct = idx.getElement<std::string>("componentType");
-                if (ct) acc.sparse.indices.componentType = std::stoi(ct->value);
+                auto bv = idx.getElement<int>("bufferView");
+                if (bv) acc.sparse.indices.bufferView = bv->value;
+                auto bo = idx.getElement<int>("byteOffset");
+                if (bo) acc.sparse.indices.byteOffset = bo->value;
+                auto ct = idx.getElement<int>("componentType");
+                if (ct) acc.sparse.indices.componentType = ct->value;
             }
 
             auto values_elem = sparse_obj.getElement<gore::JSON>("values");
             if (values_elem) {
                 gore::JSON& vals = values_elem->value;
-                auto bv = vals.getElement<std::string>("bufferView");
-                if (bv) acc.sparse.values.bufferView = std::stoi(bv->value);
-                auto bo = vals.getElement<std::string>("byteOffset");
-                if (bo) acc.sparse.values.byteOffset = std::stoi(bo->value);
+                auto bv = vals.getElement<int>("bufferView");
+                if (bv) acc.sparse.values.bufferView = bv->value;
+                auto bo = vals.getElement<int>("byteOffset");
+                if (bo) acc.sparse.values.byteOffset = bo->value;
             }
         }
 
@@ -279,8 +290,8 @@ std::vector<mesh> parseMeshes (gore::JSONLoader::JSONFile* json) {
                 if (attributes_elem) {
                     gore::JSON& attr = attributes_elem->value;
                     auto mkAttr = [&](std::string key, MESH_ATTRIBUTES type) {
-                        auto e = attr.getElement<std::string>(key);
-                        if (e) prim.attributes.push_back({ type, std::stoi(e->value) });
+                        auto e = attr.getElement<int>(key);
+                        if (e) prim.attributes.push_back({ type, e->value });
                     };
                     mkAttr("POSITION",   MESH_ATTRIBUTES::POSITION);
                     mkAttr("NORMAL",     MESH_ATTRIBUTES::NORMAL);
@@ -291,14 +302,14 @@ std::vector<mesh> parseMeshes (gore::JSONLoader::JSONFile* json) {
                     mkAttr("WEIGHTS_0",  MESH_ATTRIBUTES::WEIGHTS);
                 }
 
-                auto indices_elem = prim_obj.getElement<std::string>("indices");
-                prim.indices = indices_elem ? std::stoi(indices_elem->value) : -1;
+                auto indices_elem = prim_obj.getElement<int>("indices");
+                prim.indices = indices_elem ? indices_elem->value : -1;
 
-                auto material_elem = prim_obj.getElement<std::string>("material");
-                if (material_elem) prim.material = std::stoi(material_elem->value);
+                auto material_elem = prim_obj.getElement<int>("material");
+                if (material_elem) prim.material = material_elem->value;
 
-                auto mode_elem = prim_obj.getElement<std::string>("mode");
-                if (mode_elem) prim.mode = std::stoi(mode_elem->value);
+                auto mode_elem = prim_obj.getElement<int>("mode");
+                if (mode_elem) prim.mode = mode_elem->value;
 
                 m.primitives.push_back(prim);
             }
@@ -478,51 +489,13 @@ struct image {
     std::string name;
 };
 
-std::vector<gore::IMG> constructTextures (gore::JSONLoader::JSONFile* json) {
-    // convert the texture and image arrays to easy struct access
-    std::vector<texture> textures;
-    gore::JSONArray* texs = json->getArray("textures");
-    for (auto& i : *texs) {
-        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
-        texture t;
-        t.sampler = obj.getElementValue<int>("sampler");
-        t.source = obj.getElementValue<int>("source");
-        t.name = obj.getElementValue<std::string>("name");
-        textures.push_back(t);
-    }
-    std::vector<image> images;
-    gore::JSONArray* imgs = json->getArray("images");
-    for (auto& i : *imgs) {
-        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
-        image t;
-        t.uri = obj.getElementValue<std::string>("uri");
-        t.mimetype = obj.getElementValue<std::string>("mimeType");
-        t.bufferView = obj.getElementValue<int>("bufferView");
-        t.name = obj.getElementValue<std::string>("name");
-        images.push_back(t);
-    }
-    // parse the material
-    std::vector<gore::model_material::gltf_material> materials;
-    gore::JSONArray* mats = json->getArray("materials");
-    for (auto& i : *mats) {
-
-    }
-    // get the image data
-    std::vector<gore::IMG> out;
-    for (auto& i : textures) {
-        auto& j = images[i.source];
-    }
-    for (auto& i : images) {
-        // assuming it's a PNG, throw if not
-        if (!i.mimetype.empty() && i.mimetype != "image/png") {
-            throw std::runtime_error("GLTF image not a PNG, no load!");
-        }
-        gore::IMG img = gore::imageloader::loadPNG(i.uri);
-        out.push_back(std::move(img));
-    }
-
-    return out;
-}
+struct sampler {
+    int magFilter = -1;
+    int minFilter = -1;
+    int wrapS = GL_REPEAT;
+    int wrapT = GL_REPEAT;
+    std::string name;
+};
 
 gore::model gore::model_loader::loadGltf (std::string file_path) {
     gore::JSONLoader::JSONFile json_p = gore::JSONLoader::loadJSONFile(file_path);
@@ -536,7 +509,79 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::vector<buffer_view> read_views = parseBufferViews(&json_p);
     std::vector<accessor> read_accessors = parseAccessors(&json_p);
     std::vector<mesh> read_meshes = parseMeshes(&json_p);
-    std::vector<gore::IMG> texture_images = constructTextures(&json_p);
+    // convert the texture and image arrays to easy struct access
+    std::vector<texture> textures;
+    gore::JSONArray* texs = json_p.getArray("textures");
+    for (auto& i : *texs) {
+        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
+        texture t;
+        t.sampler = obj.getElementValue<int>("sampler");
+        t.source = obj.getElementValue<int>("source");
+        t.name = obj.getElementValue<std::string>("name");
+        textures.push_back(t);
+    }
+    std::vector<image> images;
+    gore::JSONArray* imgs = json_p.getArray("images");
+    for (auto& i : *imgs) {
+        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
+        image t;
+        t.uri = obj.getElementValue<std::string>("uri");
+        t.mimetype = obj.getElementValue<std::string>("mimeType");
+        t.bufferView = obj.getElementValue<int>("bufferView");
+        t.name = obj.getElementValue<std::string>("name");
+        images.push_back(t);
+    }
+    // sampler
+    std::vector<sampler> samplers;
+    gore::JSONArray* samples = json_p.getArray("samplers");
+    for (auto& i : *samples) {
+        auto& obj = gore::JSON::readElementAs<gore::JSON>(i);
+        sampler s;
+        s.magFilter = obj.getElementValue<int>("magFilter");
+        s.minFilter = obj.getElementValue<int>("minFilter");
+        s.wrapS = obj.getElementValue<int>("wrapS");
+        s.wrapT = obj.getElementValue<int>("wrapT");
+        samplers.push_back(s);
+    }
+    struct temp_mat {
+        gore::IMG img;
+        int material_index;
+    };
+    std::vector<temp_mat> mat_images;
+    // material
+    gore::JSONArray* materials = json_p.getArray("materials");
+    int mat_i = 0;
+    for (auto& i : *materials) {
+        JSON material = JSON::readElementAs<JSON>(i);
+        // parse pbr 
+        JSON pbr = material.getElementValue<JSON>("pbrMetallicRoughness");
+        JSON baseColor = pbr.getElementValue<JSON>("baseColorTexture");
+        int index = baseColor.getElementValue<int>("index");
+        // get the pbr texture
+        auto& texture = textures[index];
+        auto& j = images[texture.source];
+        // assuming it's a PNG, throw if not
+        if (!j.mimetype.empty() && j.mimetype != "image/png") {
+            throw std::runtime_error("GLTF image not a PNG, no load!");
+        }
+        if (j.uri.empty()) {
+            throw std::runtime_error("GLTF error image uri is empty!");
+        }
+        gore::IMG img = gore::imageloader::loadPNG(std::filesystem::path(file_pick_path / j.uri).string());
+        // get the sampler and change the texture mode
+        auto& l = samplers[texture.sampler];
+        glBindTexture(GL_TEXTURE_2D, img->tex);
+        if (l.magFilter > -1) {
+            glTextureParameteri(img->tex, GL_TEXTURE_MAG_FILTER, l.magFilter);
+        }
+        if (l.minFilter > -1) {
+            glTextureParameteri(img->tex, GL_TEXTURE_MIN_FILTER, l.minFilter);
+        }
+        glTextureParameteri(img->tex, GL_TEXTURE_WRAP_S, l.wrapS);
+        glTextureParameteri(img->tex, GL_TEXTURE_WRAP_T, l.wrapT);
+        mat_images.push_back({std::move(img), mat_i});
+        mat_i++;
+    }
     // now construct the model data
     gore::model m;
     std::vector<gore::vec3> positions;
@@ -652,6 +697,7 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
                     gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
                     face.norm1 = face.norm2 = face.norm3 = flat;
                 }
+                face.material_index = prim.material;
                 faces.push_back(face);
             };
             // `drawElements()` when defined and `drawArrays()` otherwise
