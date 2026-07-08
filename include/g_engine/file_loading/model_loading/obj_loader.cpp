@@ -317,7 +317,7 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                 break;
         }
     }
-    model output(faces);
+    model output(faces, ModelType::OBJ);
     if (mtl_path != "") {
         output.addMaterials(mats);
     }

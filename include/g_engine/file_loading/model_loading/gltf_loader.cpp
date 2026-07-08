@@ -49,8 +49,6 @@ glTF uses a right-handed coordinate system. glTF defines +Y as up, +Z as forward
 //  - feed up into readJSONLabel
 //  - return said JSON
 
-// TODO material reading
-//      - add material images to model
 // TODO support multiple textures
 // TODO support model primitives that aren't triangles
 
@@ -742,6 +740,102 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
             }
         }
     }
-    m = model(faces);
+    m = model(faces, ModelType::GLTF);
+    std::vector<gore::model_material::gltf_material> mats_out;
+    std::vector<gore::IMG> imgs_out;
+
+    // Helper: read a float field that may be stored as float or int in JSON.
+    auto getFloat = [](gore::JSON& obj, const std::string& key, float defval) -> float {
+        try { auto* f = obj.getElement<float>(key); if (f) return f->value; } catch (...) {}
+        try { auto* n = obj.getElement<int>(key);   if (n) return (float)n->value; } catch (...) {}
+        return defval;
+    };
+    // Helper: read element k of a primitive (string-encoded) array as float.
+    auto readArrayFloat = [](gore::JSONArray* arr, size_t idx) -> float {
+        if (!arr || idx >= arr->size()) return 0.0f;
+        auto* e = reinterpret_cast<gore::JSONElement<std::string>*>((*arr)[idx].get());
+        return e ? std::stof(e->value) : 0.0f;
+    };
+
+    for (auto& i : mat_images) {
+        auto& j = (*materials)[i.material_index];
+        auto& mat_json = gore::JSON::readElementAs<gore::JSON>(j);
+        model_material::gltf_material mat;
+
+        auto name_elem = mat_json.getElement<std::string>("name");
+        if (name_elem) mat.name = name_elem->value;
+
+        // pbrMetallicRoughness block
+        auto pbr_elem = mat_json.getElement<gore::JSON>("pbrMetallicRoughness");
+        if (pbr_elem) {
+            gore::JSON& pbr = pbr_elem->value;
+
+            auto* bcf = pbr.getArray("baseColorFactor");
+            if (bcf && bcf->size() >= 4) {
+                mat.base_color_factor = {
+                    readArrayFloat(bcf, 0), readArrayFloat(bcf, 1),
+                    readArrayFloat(bcf, 2), readArrayFloat(bcf, 3)
+                };
+            }
+            mat.metallic_factor  = getFloat(pbr, "metallicFactor",  1.0f);
+            mat.roughness_factor = getFloat(pbr, "roughnessFactor", 1.0f);
+
+            auto mrt_elem = pbr.getElement<gore::JSON>("metallicRoughnessTexture");
+            if (mrt_elem) {
+                auto* idx = mrt_elem->value.getElement<int>("index");
+                if (idx) mat.tex_metallic_roughness = idx->value;
+            }
+        }
+
+        // normalTexture
+        auto nt_elem = mat_json.getElement<gore::JSON>("normalTexture");
+        if (nt_elem) {
+            auto* idx = nt_elem->value.getElement<int>("index");
+            if (idx) mat.tex_normal = idx->value;
+            mat.normal_scale = getFloat(nt_elem->value, "scale", 1.0f);
+        }
+
+        // occlusionTexture
+        auto ot_elem = mat_json.getElement<gore::JSON>("occlusionTexture");
+        if (ot_elem) {
+            auto* idx = ot_elem->value.getElement<int>("index");
+            if (idx) mat.tex_occlusion = idx->value;
+            mat.occlusion_strength = getFloat(ot_elem->value, "strength", 1.0f);
+        }
+
+        // emissiveTexture
+        auto et_elem = mat_json.getElement<gore::JSON>("emissiveTexture");
+        if (et_elem) {
+            auto* idx = et_elem->value.getElement<int>("index");
+            if (idx) mat.tex_emissive = idx->value;
+        }
+
+        // emissiveFactor
+        auto* ef = mat_json.getArray("emissiveFactor");
+        if (ef && ef->size() >= 3) {
+            mat.emissive_factor = {
+                readArrayFloat(ef, 0), readArrayFloat(ef, 1), readArrayFloat(ef, 2)
+            };
+        }
+
+        // alphaMode ("OPAQUE" / "MASK" / "BLEND")
+        auto am_elem = mat_json.getElement<std::string>("alphaMode");
+        if (am_elem) {
+            if (am_elem->value == "MASK")       mat.alpha_mode = model_material::AlphaMode::ALPHA_MASK;
+            else if (am_elem->value == "BLEND") mat.alpha_mode = model_material::AlphaMode::ALPHA_BLEND;
+        }
+        mat.alpha_cutoff = getFloat(mat_json, "alphaCutoff", 0.5f);
+
+        // doubleSided (JSON boolean stored as string "true"/"false")
+        auto ds_elem = mat_json.getElement<std::string>("doubleSided");
+        if (ds_elem) mat.double_sided = (ds_elem->value == "true");
+
+        // Associate the pre-loaded base-color image with this material.
+        mat.tex_base_color = (int)imgs_out.size();
+        imgs_out.push_back(std::move(i.img));
+
+        mats_out.push_back(mat);
+    }
+    m.addMaterials(mats_out, imgs_out);
     return m;
 }

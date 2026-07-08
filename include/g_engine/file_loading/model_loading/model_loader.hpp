@@ -7,6 +7,7 @@
 #include "../json.hpp"
 
 namespace gore {
+    enum class ModelType { GLTF, OBJ, UNLOADED };
     namespace model_material {
         struct mtl_material {
             std::string name;
@@ -26,21 +27,23 @@ namespace gore {
         };
 
         enum class AlphaMode { ALPHA_OPAQUE, ALPHA_MASK, ALPHA_BLEND };
-
         struct gltf_material {
             std::string name;
             // PBR metallic-roughness
             gore::vec4 base_color_factor      = {1.0f, 1.0f, 1.0f, 1.0f};
             float      metallic_factor        = 1.0f;
             float      roughness_factor       = 1.0f;
-            // emissive
-            gore::vec3 emissive_factor        = {0.0f, 0.0f, 0.0f};
-            // texture indices into the gltf textures array (-1 = not set)
             int tex_base_color        = -1;
             int tex_metallic_roughness= -1;
+            // normal texture
             int tex_normal            = -1;
+            float normal_scale = 1.0f;
+            // occlusion texture
             int tex_occlusion         = -1;
+            float occlusion_strength = 1.0f;
+            // emissive
             int tex_emissive          = -1;
+            gore::vec3 emissive_factor        = {0.0f, 0.0f, 0.0f};
             // alpha
             AlphaMode alpha_mode      = AlphaMode::ALPHA_OPAQUE;
             float     alpha_cutoff    = 0.5f; // only used when alpha_mode == ALPHA_MASK
@@ -68,18 +71,20 @@ namespace gore {
         private:
             std::vector<model_face> faces;
             std::vector<model_material::mtl_material> mtls;
-            std::vector<JSONLoader::JSONFile> gltfs;
+            std::vector<model_material::gltf_material> gltfs;
             static int hash(std::string str) {
 		        return (str.size() > 0) ? str[0] + str[str.size() - 1] % 1024 : 0;
 	        }
             std::vector<IMG> images;
             matrix model_matrix = matrix(4, 4, 0); // how we project and rotate model into world space
-            model_material::mtl_material* getMTLMat (int32_t index);   
+            model_material::mtl_material* getMTLMat (int32_t index);
+            model_material::gltf_material* getGLTFMat (int32_t index);
         public:
+            ModelType type;
             hashmap<uint32_t, std::string> image_map;
             model();
             ~model();
-            model (std::vector<model_face> faces);
+            model (std::vector<model_face> faces, const ModelType type);
             // copy
             model (const model& m);
             // move
@@ -92,11 +97,12 @@ namespace gore {
             std::vector<model_face>& getFaces();
             std::vector<gore::vec3> getPositions() const;
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
-            void addMaterials (std::vector<gore::JSONLoader::JSONFile>& mats);
-            IMG& getImage (int32_t mtl_index);
+            void addMaterials (std::vector<model_material::gltf_material>& mats);
+            void addMaterials (std::vector<model_material::gltf_material>& mats, std::vector<IMG>& imgs);
+            IMG& getImage (int32_t material_index);
             // Add a pre-loaded image as a new material, avoiding file I/O.
             // The face's material_index must equal the mtls index this creates.
-            void addImageMaterial(IMG img, const std::string& key);
+            void addImageMaterialMTL(IMG img, const std::string& key);
             void translate (vec3 translation);
             void rotate (vec3 axis, float radians);
             void resetMatrix ();

@@ -28,6 +28,7 @@ void render () {
     three_d->addModel(peng);
     gore::IMG& ipg = cube_tex.getImage(0);
     three_d->addModel(cube_tex);
+    three_d->addModel(duck);
     three_d->addBillboard(*board, cam);
     three_d->addBillboard(*static_board, cam);
     three_d->drawBuffer();

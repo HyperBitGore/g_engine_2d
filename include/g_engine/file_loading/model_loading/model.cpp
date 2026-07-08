@@ -2,7 +2,7 @@
 #include <GL/gl.h>
 #include <stdexcept>
 
-gore::model::model() {
+gore::model::model() : type(ModelType::UNLOADED) {
     this->model_matrix = gore::matrix::generateIdentity(4, 4);
     this->image_map.setHashFunction(hash);
 }
@@ -12,13 +12,13 @@ gore::model::~model() {
     }
 }
 // we assume that vertexs are in model space still
-gore::model::model (std::vector<gore::model_face> faces) {
+gore::model::model (std::vector<gore::model_face> faces, const ModelType t) : type(t) {
     this->faces = faces;
     this->model_matrix = matrix::generateIdentity(4, 4);
     this->image_map.setHashFunction(hash);
 }
 // copy
-gore::model::model (const model& m) {
+gore::model::model (const model& m) : type(m.type) {
     this->image_map.setHashFunction(hash);
     this->faces = m.faces;
     this->model_matrix = m.model_matrix;
@@ -31,7 +31,7 @@ gore::model::model (const model& m) {
 }
 
 // move
-gore::model::model (model&& m) noexcept {
+gore::model::model (model&& m) noexcept : type(m.type) {
     this->image_map.setHashFunction(hash);
     this->faces = std::move(m.faces);
     this->model_matrix = std::move(m.model_matrix);
@@ -53,6 +53,7 @@ gore::model& gore::model::operator=(const model& m) {
         this->image_map = m.image_map;
         this->gltfs = m.gltfs;
         this->mtls = m.mtls;
+        this->type = m.type;
     }
     return *this;
 }
@@ -67,6 +68,7 @@ gore::model& gore::model::operator=(model&& m) noexcept {
         this->image_map = std::move(m.image_map);
         this->gltfs = std::move(m.gltfs);
         this->mtls = std::move(m.mtls);
+        this->type = m.type;
     }
     return *this;
 }
@@ -118,22 +120,47 @@ void gore::model::addMaterials (const std::vector<model_material::mtl_material>&
     }
 }
 
-void gore::model::addMaterials (std::vector<gore::JSONLoader::JSONFile>& mats) {
+void gore::model::addMaterials (std::vector<gore::model_material::gltf_material>& mats) {
     for (auto& i : mats) {
         gltfs.push_back(i);
     }
 }
 
-gore::IMG& gore::model::getImage (int32_t mtl_index) {
-    gore::model_material::mtl_material* mtl = getMTLMat(mtl_index);
-    if (mtl) {
-        uint32_t* index = image_map.get(mtl->map_Kd);
-        if (index) {
-            IMG& img = images[*index];
-            return img;
+void gore::model::addMaterials (std::vector<gore::model_material::gltf_material>& mats, std::vector<gore::IMG>& imgs) {
+    for (size_t k = 0; k < mats.size(); k++) {
+        if (k < imgs.size()) {
+            std::string key = mats[k].name.empty()
+                ? "gltf_mat_" + std::to_string(k)
+                : mats[k].name;
+            images.push_back(std::move(imgs[k]));
+            image_map.insert(key, (uint32_t)(images.size() - 1));
         }
+        gltfs.push_back(mats[k]);
     }
-    throw std::runtime_error("Image not found for material index: " + std::to_string(mtl_index));
+}
+
+gore::IMG& gore::model::getImage (int32_t mat_index) {
+    if (this->type == ModelType::OBJ) {
+        gore::model_material::mtl_material* mtl = getMTLMat(mat_index);
+        if (mtl) {
+            uint32_t* index = image_map.get(mtl->map_Kd);
+            if (index) {
+                IMG& img = images[*index];
+                return img;
+            }
+        }
+    } else if (this->type == ModelType::GLTF) {
+        gore::model_material::gltf_material* gltf = getGLTFMat(mat_index);
+        if (gltf) {
+            if (gltf->tex_base_color > -1) {
+                IMG& img = images[gltf->tex_base_color];
+                return img;
+            }
+        }
+    } else {
+        throw std::runtime_error("MODEL not loaded!");
+    }
+    throw std::runtime_error("Image not found for material index: " + std::to_string(mat_index));
 }
 
 gore::model_material::mtl_material* gore::model::getMTLMat (int32_t index) {
@@ -143,7 +170,14 @@ gore::model_material::mtl_material* gore::model::getMTLMat (int32_t index) {
     return nullptr;
 }
 
-void gore::model::addImageMaterial(IMG img, const std::string& key) {
+gore::model_material::gltf_material* gore::model::getGLTFMat (int32_t index) {
+     if (index < gltfs.size() && index >= 0) {
+        return &gltfs[index];
+    } 
+    return nullptr;
+}
+
+void gore::model::addImageMaterialMTL(IMG img, const std::string& key) {
     model_material::mtl_material mat;
     mat.name   = key;
     mat.map_Kd = key;

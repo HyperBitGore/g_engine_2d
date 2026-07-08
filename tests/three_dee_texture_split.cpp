@@ -123,11 +123,11 @@ int main() {
         float cx  = orig_x + col * STEP;
         float cy  = orig_y - row * STEP;
 
-        gore::model m(make_cube(cx, cy, 0.0f, S));
+        gore::model m(make_cube(cx, cy, 0.0f, S), gore::ModelType::OBJ);
         // Tilt each cube so three faces are visible
         m.rotate({0.0f, 1.0f, 0.0f}, 0.5f);
         m.rotate({1.0f, 0.0f, 0.0f}, 0.3f);
-        m.addImageMaterial(std::move(img), "tex_" + std::to_string(idx));
+        m.addImageMaterialMTL(std::move(img), "tex_" + std::to_string(idx));
         models.push_back(std::move(m));
     }
 
