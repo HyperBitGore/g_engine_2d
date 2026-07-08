@@ -101,7 +101,9 @@ bool gore::g_engine_2d::updateWindow() {
 		glViewport(0, 0, this->target_width, this->target_height);
 		dr1->clear();
 		dr1->bind();
-		renderFund();
+		if (renderFund) {
+			renderFund();
+		}
 		dr1->unbind();
 		glViewport(0, 0, this->window_width, this->window_height);
 		// blit to screen
@@ -111,7 +113,9 @@ bool gore::g_engine_2d::updateWindow() {
 		glBlitFramebuffer(0, 0, target_width, target_height, 0, 0, window_width, window_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	} else {
-		renderFund();
+		if (renderFund) {
+			renderFund();
+		}
 	}
 	
 

@@ -67,7 +67,9 @@ bool gore::g_window::ProcessMessage() {
 		if (msg.message == WM_QUIT) {
 			return false;
 		} else if (msg.message == WM_MOUSEMOVE) {
-			this->mouseMove();
+			if (this->mouseMove) {
+				this->mouseMove();
+			}
 			if (this->center && globalCapture) {
 				RECT rect;
 				GetClientRect(m_hwnd, &rect);
