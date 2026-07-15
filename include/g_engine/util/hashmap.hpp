@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <vector>
 #include <functional>
+#include <stdexcept>
 namespace gore {
 template<typename T, typename G>
 	struct mapitem {
@@ -14,6 +15,12 @@ template<typename T, typename G>
 	private:
 		std::vector<mapitem<T, G>*> buckets;
 		std::function<int(G)> hash_func;
+		int hash_checked(G key) {
+			if (!hash_func) {
+				throw std::logic_error("hashmap hash function is not set");
+			}
+			return hash_func(key);
+		}
 	public:
 		hashmap() : hash_func(nullptr) {
 
@@ -83,7 +90,7 @@ template<typename T, typename G>
 			buckets.clear();
 		}
 		void insert(G f, T item) {
-			int n = hash_func(f);
+			int n = hash_checked(f);
 			if (n > int(buckets.size()) - 1) {
 				int dif = n - (buckets.size() - 1);
 				for (; dif > 0; dif--) {
@@ -98,7 +105,7 @@ template<typename T, typename G>
 
 		}
 		T* get(G f) {
-			int n = hash_func(f);
+			int n = hash_checked(f);
 			if (n > int(buckets.size()) - 1 || buckets[n] == nullptr) {
 				return nullptr;
 			}
@@ -115,7 +122,7 @@ template<typename T, typename G>
 			return &buckets[n]->item;
 		}
 		bool remove(G f) {
-			int n = hash_func(f);
+			int n = hash_checked(f);
 			if (n > int(buckets.size()) - 1 || buckets[n] == nullptr) {
 				return false;
 			}
@@ -138,7 +145,7 @@ template<typename T, typename G>
 			return false;
 		}
 		bool remove(G f, T* t) {
-			int n = hash_func(f);
+			int n = hash_checked(f);
 			if (n > int(buckets.size()) - 1 || buckets[n] == nullptr) {
 				return false;
 			}
