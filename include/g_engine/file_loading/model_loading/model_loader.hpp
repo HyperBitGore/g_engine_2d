@@ -105,6 +105,7 @@ namespace gore {
             void addImageMaterialMTL(IMG img, const std::string& key);
             void translate (vec3 translation);
             void rotate (vec3 axis, float radians);
+            void scale (vec3 scale);
             void resetMatrix ();
             matrix getMatrix () {
                 return model_matrix;

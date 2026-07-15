@@ -195,6 +195,10 @@ void gore::model::rotate (gore::vec3 axis, float radians) {
     model_matrix = model_matrix.rotate(axis, radians);
 }
 
+void gore::model::scale (gore::vec3 scale) {
+    model_matrix = model_matrix.scale(scale);
+}
+
 void gore::model::resetMatrix () {
     model_matrix = matrix::generateIdentity(4, 4);
 }

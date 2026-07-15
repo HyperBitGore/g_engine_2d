@@ -59,6 +59,8 @@ int main () {
     cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
     peng = gore::model_loader::loadObj("resources/penger.obj");
     duck = gore::model_loader::loadGltf("resources/duck/Duck.gltf");
+    duck.scale({0.01f, 0.01f, 0.01f});
+    duck.translate({0.0f, 0.0f, 1.0f});
     GLint max_ssbo_size;
     glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &max_ssbo_size);
     std::cout << "Max ssbo: " << max_ssbo_size << "\n";

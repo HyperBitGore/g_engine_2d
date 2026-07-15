@@ -410,8 +410,15 @@ std::vector<uint8_t> readAccessorData (int index, std::vector<accessor>& accesso
             for (const auto& byte : bytes) {
                 buffer.push_back(byte);
             }
-            // add byte stride
-            i += (b.byteStride > -1) ? b.byteStride : 0;
+            // byteStride is the distance between the *starts* of consecutive elements.
+            // The inner loops already advanced i by (components_at_time * read_at_time) bytes,
+            // so only add the remaining padding to reach the next element's start.
+            size_t element_byte_size = components_at_time * read_at_time;
+            size_t stride_padding = (b.byteStride > -1 && (size_t)b.byteStride > element_byte_size)
+                                        ? ((size_t)b.byteStride - element_byte_size)
+                                        : 0;
+            i  += stride_padding;
+            bc += stride_padding;
 
         }
     }
@@ -626,20 +633,18 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
                                 {
                                     std::vector<gore::vec2> new_texs = convertVectorToType<gore::vec2>(data);
                                     for (auto& i : new_texs) {
-                                        texcoords.push_back(i);
+                                        texcoords.push_back({i.x, i.y});
                                     }
                                 }
                             break;
                             case ACCESSOR_UNSIGNED_SHORT:
                                 {
-                                    // cast to some type of unsigned short version of tex
                                     std::vector<uint16_vec2> new_texs = convertVectorToType<uint16_vec2>(data);
                                     for (auto& i : new_texs) {
-                                        // supposed to be normalized
-                                         texcoords.push_back({ 
-                                            (float)i.x / 65535.0f, 
-                                            (float)i.y / 65535.0f
-                                        });
+                                        float u = (float)i.x / 65535.0f;
+                                        float v = (float)i.y / 65535.0f;
+                                        // this might be wrong
+                                        texcoords.push_back({u, 1.0f - v});
                                     }
                                 }
                             break;
@@ -647,10 +652,10 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
                                 {
                                     std::vector<uint8_vec2> new_texs = convertVectorToType<uint8_vec2>(data);
                                     for (auto& i : new_texs) {
-                                        texcoords.push_back({ 
-                                            (float)i.x / 255.0f, 
-                                            (float)i.y / 255.0f
-                                        });
+                                        float u = (float)i.x / 255.0f;
+                                        float v = (float)i.y / 255.0f;
+                                        // this also might be wrong
+                                        texcoords.push_back({u, 1.0f - v});
                                     }
                                 }
                             break;
