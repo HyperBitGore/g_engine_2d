@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -53,7 +54,16 @@ extern PFNGLVALIDATEPROGRAMPROC glValidateProgram;
 extern PFNGLDETACHSHADERPROC glDetachShader;
 extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
 
+extern PFNGLDELETEBUFFERSPROC glDeleteBuffers;
+extern PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+extern PFNGLDELETEPROGRAMPROC glDeleteProgram;
+
+extern PFNGLMAPBUFFERPROC glMapBuffer;
+extern PFNGLUNMAPBUFFERPROC glUnmapBuffer;
+extern PFNGLMAPBUFFERRANGEPROC glMapBufferRange;
+
 extern PFNGLCREATETEXTURESPROC glCreateTextures;
+extern PFNGLBINDTEXTUREUNITPROC glBindTextureUnit;
 extern PFNGLTEXTUREPARAMETERIPROC glTextureParameteri;
 extern PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D;
 extern PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D;
@@ -112,10 +122,26 @@ extern PFNGLUNIFORM2DVPROC glUniform2dv;
 extern PFNGLUNIFORM3DVPROC glUniform3dv;
 extern PFNGLUNIFORM4DVPROC glUniform4dv;
 
+extern PFNGLUNIFORMMATRIX2FVPROC glUniformMatrix2fv;
+extern PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
+extern PFNGLUNIFORMMATRIX2DVPROC glUniformMatrix2dv;
+extern PFNGLUNIFORMMATRIX3DVPROC glUniformMatrix3dv;
+extern PFNGLUNIFORMMATRIX4DVPROC glUniformMatrix4dv;
+
 extern PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
+
+extern PFNGLGETSTRINGIPROC glGetStringi;
+extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback;
+
+extern PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
+extern PFNGLDRAWARRAYSINSTANCEDPROC glDrawArraysInstanced;
+extern PFNGLDRAWELEMENTSINSTANCEDPROC glDrawElementsInstanced;
 
 #if defined(_WIN32)
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
+namespace gore {
+    bool loadGLFunctions (std::function<void*(const char*)> getProc = nullptr);
+}

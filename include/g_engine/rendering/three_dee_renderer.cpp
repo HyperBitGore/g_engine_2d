@@ -27,6 +27,7 @@ void gore::threedeerender::setTextureSamplers () {
 
 void gore::threedeerender::shader_setup()  {
     texture_unit_map.setHashFunction(hash);
+    model_map.setHashFunction(hash_model);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);

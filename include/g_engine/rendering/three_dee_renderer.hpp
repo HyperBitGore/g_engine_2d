@@ -31,7 +31,18 @@ namespace gore{
             // model matrice count
             std::vector<matrix> model_matrices;
             GLuint ssbo;
-            matrix identity = matrix::generateIdentity(4, 4);
+            // instances
+            struct instance {
+                model* model;
+                uint64_t count;
+                size_t buffer_offset;
+            };
+            static int hash_model (model* m) {
+                uint64_t v = (uint64_t)m;
+                return v % 7309;
+            }
+            gore::hashmap<instance, model*> model_map;
+            std::vector<uint8_t> model_data_buffer;
 	        void shader_setup() override;
             threedeerender(size_t w, size_t h);
         public:

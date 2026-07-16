@@ -57,12 +57,12 @@ private:
 	float fps = 60.0f;
 	float frame_time_limit = 0.16f;
 	float accumlator = 0.0f;
-	//function loading
-	//only run this after gl initilized
-	void loadFunctions();
 	#if defined (__unix__)
 	Display* display;
 	GLXContext ctx;
+	#endif
+	#if defined (_WIN32)
+	HGLRC ctx;
 	#endif
 	// matrices
 	gore::matrix view = gore::matrix(4, 4);
@@ -197,5 +197,7 @@ public:
 	RAW_DISPLAY getDisplay () {
 		return wind->getRawDisplay();
 	}
+	// makes opengl context current for this engine
+	void makeContextCurrent ();
 };
 }

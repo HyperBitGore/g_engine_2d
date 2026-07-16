@@ -1,4 +1,5 @@
 #include "g_engine_2d.hpp"
+#include "gl_defines.hpp"
 #include "rendering/font_renderer.hpp"
 #include "rendering/image_renderer.hpp"
 #include "rendering/primitive_renderer.hpp"
@@ -154,6 +155,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	//
 	HGLRC context = wglCreateContextAttribsARB(dc_w, NULL, attrib);
 	//context = wglCreateContext(dc);
+	ctx = context;
 	if (!wglMakeCurrent(dc_w, context)) {
 		std::cerr << "Failed to make context current\n";
 	}
@@ -243,7 +245,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
 
-	loadFunctions();
+	loadGLFunctions();
 	glViewport(0, 0, width, height);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units); //getting the texture units useable at a time on this machine
 	logger->log("Texture Units on this machine: " + std::to_string(texture_units));

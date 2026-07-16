@@ -1,7 +1,6 @@
 #include "g_engine_2d.hpp"
 #include "gl_defines.hpp"
 #include "util/matrix.hpp"
-#include <GL/gl.h>
 #include <chrono>
 #include <cstdint>
 #include <thread>
@@ -222,4 +221,17 @@ void gore::g_engine_2d::toggleFrameLimitActive () {
 void gore::g_engine_2d::setFrameLimit (uint32_t fps) {
 	this->fps = fps;
 	this->frame_time_limit = 1000.0f / this->fps;
+}
+
+void gore::g_engine_2d::makeContextCurrent () {
+	#if defined(_WIN32)
+	if (!wglMakeCurrent(GetDC(this->getWindow()), this->ctx)) {
+		std::cerr << "Failed to make context current\n";
+	}
+	#endif
+	#if defined(__unix__)
+	if (!glXMakeCurrent(this->display, this->getWindow(), this->ctx)) {
+		std::cerr << "Failed to make context current\n";
+	}
+	#endif
 }
