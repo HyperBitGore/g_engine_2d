@@ -68,8 +68,8 @@ int main () {
     penger = peng.getPositions();
     eng.setRenderFunction(render);
     eng.setWindowResize(resize);
-    eng.setFrameLimit(60);
-    eng.toggleFrameLimitActive();
+    //eng.setFrameLimit(60);
+    //eng.toggleFrameLimitActive();
     eng.setMouseMoveFunction(mouseMove);
     wireframe_r = gore::wireframe_renderer::create(W, H);
     three_d = gore::threedeerender::create(W, H);

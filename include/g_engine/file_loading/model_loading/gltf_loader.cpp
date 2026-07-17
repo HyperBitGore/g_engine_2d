@@ -593,9 +593,14 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
     std::vector<gore::vec3> normals;
     std::vector<gore::vec2> texcoords;
     std::vector<gore::vec4> tangents;
-    std::vector<gore::model_face> faces;
+    std::vector<gore::model_vertex> vertexs;
+    std::vector<GLuint> indexs;
     for (auto& mesh : read_meshes) {
         for (auto& prim : mesh.primitives) {
+            // attribute indices in this primitive are relative to these bases
+            size_t pos_base = positions.size();
+            size_t norm_base = normals.size();
+            size_t uv_base = texcoords.size();
             for (auto& attrib : prim.attributes) {
                 std::vector<uint8_t> data = readAccessorData(attrib.index, read_accessors, read_views,  read_buffers);
                 int comp_type = read_accessors[attrib.index].componentType;
@@ -681,32 +686,30 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
             }
             const gore::vec2 zero_uv   = {0.0f, 0.0f};
             const gore::vec3 zero_norm = {0.0f, 0.0f, 0.0f};
+            // number of vertices this primitive contributed
+            size_t prim_vert_count = positions.size() - pos_base;
+            bool has_normals = normals.size() > norm_base;
+            // convert this primitive's vertices; glTF attribute arrays are
+            // already aligned, so vertex i maps straight to model_vertex i
+            size_t vert_base = vertexs.size();
+            size_t index_base = indexs.size();
+            for (size_t i = 0; i < prim_vert_count; i++) {
+                gore::model_vertex vert;
+                vert.pos = positions[pos_base + i];
+                vert.uv = (uv_base + i) < texcoords.size() ? texcoords[uv_base + i] : zero_uv;
+                vert.norm = (norm_base + i) < normals.size() ? normals[norm_base + i] : zero_norm;
+                vert.material_index = prim.material;
+                vertexs.push_back(vert);
+            }
             auto addVertexIndex = [&](size_t index, size_t index2, size_t index3) {
-                gore::model_face face;
-                face.p1 = positions[index];
-                face.p2 = positions[index2];
-                face.p3 = positions[index3];
-                face.uv1 = index < texcoords.size() ? texcoords[index] : zero_uv;
-                face.uv2 = index2 < texcoords.size() ? texcoords[index2] : zero_uv;
-                face.uv3 = index3 < texcoords.size() ? texcoords[index3] : zero_uv;
-                if (index < normals.size() && index2 < normals.size() && index3 < normals.size()) {
-                    face.norm1 = normals[index];
-                    face.norm2 = normals[index2];
-                    face.norm3 = normals[index3];
-                } else {
-                    // compute flat normal from triangle edges
-                    gore::vec3 edge1 = face.p2 - face.p1;
-                    gore::vec3 edge2 = face.p3 - face.p1;
-                    gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
-                    face.norm1 = face.norm2 = face.norm3 = flat;
-                }
-                face.material_index = prim.material;
-                faces.push_back(face);
+                indexs.push_back((GLuint)(vert_base + index));
+                indexs.push_back((GLuint)(vert_base + index2));
+                indexs.push_back((GLuint)(vert_base + index3));
             };
             // `drawElements()` when defined and `drawArrays()` otherwise
             if (prim.indices == -1) {
                // non-indexed: use all vertices in order, group into triangles
-               for (size_t i = 0; i < positions.size(); i += 3) {
+               for (size_t i = 0; i + 2 < prim_vert_count; i += 3) {
                     addVertexIndex(i, i + 1, i + 2);
                }
             } else {
@@ -743,9 +746,21 @@ gore::model gore::model_loader::loadGltf (std::string file_path) {
                         throw std::runtime_error("The accessor componentType for indices is not an unsigned integer type!");
                 }
             }
+            if (!has_normals) {
+                // compute flat normals from triangle edges for this primitive
+                for (size_t i = index_base; i + 2 < indexs.size(); i += 3) {
+                    gore::model_vertex& v1 = vertexs[indexs[i]];
+                    gore::model_vertex& v2 = vertexs[indexs[i + 1]];
+                    gore::model_vertex& v3 = vertexs[indexs[i + 2]];
+                    gore::vec3 edge1 = v2.pos - v1.pos;
+                    gore::vec3 edge2 = v3.pos - v1.pos;
+                    gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
+                    v1.norm = v2.norm = v3.norm = flat;
+                }
+            }
         }
     }
-    m = model(faces, ModelType::GLTF);
+    m = model(gore::index_buffer<gore::model_vertex>(std::move(vertexs), std::move(indexs)), ModelType::GLTF);
     std::vector<gore::model_material::gltf_material> mats_out;
     std::vector<gore::IMG> imgs_out;
 

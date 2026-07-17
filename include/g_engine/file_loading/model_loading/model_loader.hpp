@@ -5,6 +5,7 @@
 #include "../../util/matrix.hpp"
 #include "../../img_loading/image_loader.hpp"
 #include "../json.hpp"
+#include "../../rendering/index_buffer.hpp"
 
 namespace gore {
     enum class ModelType { GLTF, OBJ, UNLOADED };
@@ -66,10 +67,16 @@ namespace gore {
         int material_index = -1;
         WindingOrder winding_order = WindingOrder::CCW;
     };
+    struct model_vertex {
+        gore::vec3 pos;
+        gore::vec3 norm;
+        gore::vec2 uv;
+        int material_index = -1;
+    };
     // treat this kind've like a texture you load and use its contents to create objects you actually feed into render pipeline
     class model {
         private:
-            std::vector<model_face> faces;
+            size_t texture_count = 0;
             std::vector<model_material::mtl_material> mtls;
             std::vector<model_material::gltf_material> gltfs;
             static int hash(std::string str) {
@@ -82,9 +89,10 @@ namespace gore {
         public:
             ModelType type;
             hashmap<uint32_t, std::string> image_map;
+            index_buffer<model_vertex> index_buffer;
             model();
             ~model();
-            model (std::vector<model_face> faces, const ModelType type);
+            model (gore::index_buffer<model_vertex> buffer, const ModelType type);
             // copy
             model (const model& m);
             // move
@@ -94,7 +102,6 @@ namespace gore {
             // move assignment
             model& operator=(model&& m) noexcept;
             
-            std::vector<model_face>& getFaces();
             std::vector<gore::vec3> getPositions() const;
             void addMaterials (const std::vector<model_material::mtl_material>& mats);
             void addMaterials (std::vector<model_material::gltf_material>& mats);
@@ -109,6 +116,9 @@ namespace gore {
             void resetMatrix ();
             matrix getMatrix () {
                 return model_matrix;
+            }
+            size_t textureCount () {
+                return texture_count;
             }
     };
 

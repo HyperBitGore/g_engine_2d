@@ -3,6 +3,9 @@
 #include "billboard.hpp"
 #include "../file_loading/model_loading/model_loader.hpp"
 // https://www.scratchapixel.com/index.html
+// TODO
+//      - element buffer actually static instead of reallocating every frame
+//      - 
 namespace gore{
     struct threedee_vertex {
         float x;
@@ -31,6 +34,9 @@ namespace gore{
             // model matrice count
             std::vector<matrix> model_matrices;
             GLuint ssbo;
+            GLuint element_buffer;
+            std::vector<GLuint> indexs;
+            GLuint index_allocated = 0;
             // instances
             struct instance {
                 model* model;
@@ -53,6 +59,7 @@ namespace gore{
             void addVertexs(const std::vector<gore::vec3>& vertexs);
             void addModel (gore::model& model);
             void addBillboard (gore::billboard& billboard, gore::camera& cam);
+            void addModelInstance (gore::model* model, const matrix& transform);
             void drawBuffer() override;
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;

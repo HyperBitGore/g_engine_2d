@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <algorithm>
+#include <unordered_map>
 
 enum class LineType {VN, VT, V, VP, F, L, MTL, USEMTL, UNKNOWN};
 
@@ -218,13 +219,34 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
     std::vector<gore::vec3> positions;
     std::vector<gore::vec2> uvs;
     std::vector<gore::vec3> normals;
-    std::vector<model_face> faces;
+    std::vector<model_vertex> vertexs;
+    std::vector<GLuint> indexs;
+    // maps a v/vt/vn/material index tuple to its slot in vertexs
+    std::unordered_map<std::string, GLuint> seen;
     std::string mtl_path = "";
     std::vector<model_material::mtl_material> mats;
     int mat_index = -1;
 
     const gore::vec2 zero_uv   = {0.0f, 0.0f};
-    const gore::vec3 zero_norm = {0.0f, 0.0f, 0.0f};
+
+    auto emitVertex = [&](int v, int uv, int n, int mat) {
+        int key_data[4] = {v, uv, n, mat};
+        std::string key((char*)key_data, sizeof(key_data));
+        auto it = seen.find(key);
+        if (it != seen.end()) {
+            indexs.push_back(it->second);
+            return;
+        }
+        model_vertex vert;
+        vert.pos = positions[v];
+        vert.uv = uv >= 0 ? uvs[uv] : zero_uv;
+        vert.norm = n >= 0 ? normals[n] : gore::vec3{0.0f, 0.0f, 0.0f};
+        vert.material_index = mat;
+        GLuint slot = (GLuint)vertexs.size();
+        vertexs.push_back(vert);
+        seen[key] = slot;
+        indexs.push_back(slot);
+    };
 
     for (auto& i : lines) {
         if (i.empty() || i[0] == '#') continue;
@@ -260,41 +282,30 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
             }
             case LineType::F: {
                 model_face_index idx = parseFace(i, &offset);
-                gore::model_face face;
-                face.p1 = positions[idx.v1];
-                face.p2 = positions[idx.v2];
-                face.p3 = positions[idx.v3];
-                face.uv1 = idx.uv1 >= 0 ? uvs[idx.uv1] : zero_uv;
-                face.uv2 = idx.uv2 >= 0 ? uvs[idx.uv2] : zero_uv;
-                face.uv3 = idx.uv3 >= 0 ? uvs[idx.uv3] : zero_uv;
-                if (idx.n1 >= 0 && idx.n2 >= 0 && idx.n3 >= 0) {
-                    face.norm1 = normals[idx.n1];
-                    face.norm2 = normals[idx.n2];
-                    face.norm3 = normals[idx.n3];
+                int mat = (mat_index >= 0 && mat_index < (int)mats.size()) ? mat_index : -1;
+                bool has_normals = idx.n1 >= 0 && idx.n2 >= 0 && idx.n3 >= 0;
+                if (has_normals) {
+                    emitVertex(idx.v1, idx.uv1, idx.n1, mat);
+                    emitVertex(idx.v2, idx.uv2, idx.n2, mat);
+                    emitVertex(idx.v3, idx.uv3, idx.n3, mat);
                 } else {
-                    // compute flat normal from triangle edges
-                    gore::vec3 edge1 = face.p2 - face.p1;
-                    gore::vec3 edge2 = face.p3 - face.p1;
+                    // compute flat normal from triangle edges; normals differ
+                    // per face, so these vertices can't be shared/deduped
+                    gore::vec3 edge1 = positions[idx.v2] - positions[idx.v1];
+                    gore::vec3 edge2 = positions[idx.v3] - positions[idx.v1];
                     gore::vec3 flat  = edge1.crossProduct(edge2).normalize();
-                    face.norm1 = face.norm2 = face.norm3 = flat;
+                    const int face_idx[3] = {idx.v1, idx.v2, idx.v3};
+                    const int face_uv[3]  = {idx.uv1, idx.uv2, idx.uv3};
+                    for (int j = 0; j < 3; j++) {
+                        model_vertex vert;
+                        vert.pos = positions[face_idx[j]];
+                        vert.uv = face_uv[j] >= 0 ? uvs[face_uv[j]] : zero_uv;
+                        vert.norm = flat;
+                        vert.material_index = mat;
+                        indexs.push_back((GLuint)vertexs.size());
+                        vertexs.push_back(vert);
+                    }
                 }
-                {
-                    gore::vec3 edge1 = face.p2 - face.p1;
-                    gore::vec3 edge2 = face.p3 - face.p1;
-                    gore::vec3 geo_normal = edge1.crossProduct(edge2).normalize();
-                    gore::vec3 avg_normal = {
-                        (face.norm1.x + face.norm2.x + face.norm3.x) / 3.0f,
-                        (face.norm1.y + face.norm2.y + face.norm3.y) / 3.0f,
-                        (face.norm1.z + face.norm2.z + face.norm3.z) / 3.0f
-                    };
-                    face.winding_order = (geo_normal.dotProduct(avg_normal) >= 0.0f)
-                        ? gore::WindingOrder::CCW
-                        : gore::WindingOrder::CW;
-                }
-                if (mat_index >= 0 && mat_index < mats.size()) {
-                    face.material_index = mat_index;
-                }
-                faces.push_back(face);
                 break;
             }
             case LineType::MTL: {
@@ -317,7 +328,7 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                 break;
         }
     }
-    model output(faces, ModelType::OBJ);
+    model output(gore::index_buffer<model_vertex>(std::move(vertexs), std::move(indexs)), ModelType::OBJ);
     if (mtl_path != "") {
         output.addMaterials(mats);
     }

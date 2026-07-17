@@ -12,15 +12,14 @@ gore::model::~model() {
     }
 }
 // we assume that vertexs are in model space still
-gore::model::model (std::vector<gore::model_face> faces, const ModelType t) : type(t) {
-    this->faces = faces;
+gore::model::model (gore::index_buffer<model_vertex> buffer, const ModelType t) : type(t) {
+    this->index_buffer = buffer;
     this->model_matrix = matrix::generateIdentity(4, 4);
     this->image_map.setHashFunction(hash);
 }
 // copy
 gore::model::model (const model& m) : type(m.type) {
     this->image_map.setHashFunction(hash);
-    this->faces = m.faces;
     this->model_matrix = m.model_matrix;
     for (auto& i : m.images) {
         this->images.push_back(imageloader::copyIMG(i));
@@ -28,24 +27,26 @@ gore::model::model (const model& m) : type(m.type) {
     this->image_map = m.image_map;
     this->gltfs = m.gltfs;
     this->mtls = m.mtls;
+    this->index_buffer = m.index_buffer;
+    this->texture_count = m.texture_count;
 }
 
 // move
 gore::model::model (model&& m) noexcept : type(m.type) {
     this->image_map.setHashFunction(hash);
-    this->faces = std::move(m.faces);
     this->model_matrix = std::move(m.model_matrix);
     this->images = std::move(m.images);
     this->image_map = std::move(m.image_map);
     this->gltfs = std::move(m.gltfs);
     this->mtls = std::move(m.mtls);
+    this->index_buffer = std::move(m.index_buffer);
+    this->texture_count = std::move(m.texture_count);
 }
 
 // copy assignment
 gore::model& gore::model::operator=(const model& m) {
     this->image_map.setHashFunction(hash);
     if (this != &m) {
-        this->faces = m.faces;
         this->model_matrix = m.model_matrix;
         for (auto& i : m.images) {
             this->images.push_back(imageloader::copyIMG(i));
@@ -54,6 +55,8 @@ gore::model& gore::model::operator=(const model& m) {
         this->gltfs = m.gltfs;
         this->mtls = m.mtls;
         this->type = m.type;
+        this->index_buffer = m.index_buffer;
+        this->texture_count = m.texture_count;
     }
     return *this;
 }
@@ -62,30 +65,25 @@ gore::model& gore::model::operator=(const model& m) {
 gore::model& gore::model::operator=(model&& m) noexcept {
     this->image_map.setHashFunction(hash);
     if (this != &m) {
-        this->faces = std::move(m.faces);
         this->model_matrix = std::move(m.model_matrix);
         this->images = std::move(m.images);
         this->image_map = std::move(m.image_map);
         this->gltfs = std::move(m.gltfs);
         this->mtls = std::move(m.mtls);
         this->type = m.type;
+        this->index_buffer = std::move(m.index_buffer);
+        this->texture_count = std::move(m.texture_count);
     }
     return *this;
 }
 
 std::vector<gore::vec3> gore::model::getPositions() const {
     std::vector<gore::vec3> out;
-    out.reserve(faces.size() * 3);
-    for (const auto& f : faces) {
-        out.push_back(f.p1);
-        out.push_back(f.p2);
-        out.push_back(f.p3);
+    out.reserve(index_buffer.vertexSize());
+    for (const auto& f : index_buffer.getVertexs()) {
+        out.push_back(f.pos);
     }
     return out;
-}
-
-std::vector<gore::model_face>& gore::model::getFaces() {
-    return faces;
 }
 
 void gore::model::addMaterials (const std::vector<model_material::mtl_material>& mats) {
@@ -117,12 +115,14 @@ void gore::model::addMaterials (const std::vector<model_material::mtl_material>&
             image_map.insert(i.map_d, images.size() - 1);
         }
         mtls.push_back(i);
+        texture_count++;
     }
 }
 
 void gore::model::addMaterials (std::vector<gore::model_material::gltf_material>& mats) {
     for (auto& i : mats) {
         gltfs.push_back(i);
+        texture_count++;
     }
 }
 
@@ -136,6 +136,7 @@ void gore::model::addMaterials (std::vector<gore::model_material::gltf_material>
             image_map.insert(key, (uint32_t)(images.size() - 1));
         }
         gltfs.push_back(mats[k]);
+        texture_count++;
     }
 }
 
@@ -185,6 +186,7 @@ void gore::model::addImageMaterialMTL(IMG img, const std::string& key) {
     images.push_back(std::move(img));
     image_map.insert(mat.map_Kd, (uint32_t)(images.size() - 1));
     mtls.push_back(std::move(mat));
+    texture_count++;
 }
 
 void gore::model::translate (gore::vec3 translation) {

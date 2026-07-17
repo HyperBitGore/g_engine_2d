@@ -52,9 +52,10 @@ static void hue_to_rgb(float h, uint8_t& r, uint8_t& g, uint8_t& b) {
     b = (uint8_t)(fb * 255.0f);
 }
 
-// Returns the 12 triangles (6 faces × 2 triangles) of an axis-aligned unit cube
+// Returns an indexed mesh of the 6 faces of an axis-aligned unit cube
 // centred at (cx, cy, cz) with half-side length s. All faces share material 0.
-static std::vector<gore::model_face> make_cube(float cx, float cy, float cz, float s) {
+// 4 unique vertices + 6 indices per face.
+static gore::index_buffer<gore::model_vertex> make_cube(float cx, float cy, float cz, float s) {
     gore::vec3 ftl = {cx-s, cy+s, cz+s};
     gore::vec3 ftr = {cx+s, cy+s, cz+s};
     gore::vec3 fbr = {cx+s, cy-s, cz+s};
@@ -64,13 +65,20 @@ static std::vector<gore::model_face> make_cube(float cx, float cy, float cz, flo
     gore::vec3 bbr = {cx+s, cy-s, cz-s};
     gore::vec3 bbl = {cx-s, cy-s, cz-s};
 
-    std::vector<gore::model_face> faces;
+    std::vector<gore::model_vertex> vertexs;
+    std::vector<GLuint> indexs;
     auto quad = [&](gore::vec3 a, gore::vec3 b, gore::vec3 c, gore::vec3 d) {
-        gore::model_face f1, f2;
-        f1.p1=a; f1.p2=b; f1.p3=c; f1.uv1={0,0}; f1.uv2={1,0}; f1.uv3={1,1}; f1.material_index=0;
-        f2.p1=a; f2.p2=c; f2.p3=d; f2.uv1={0,0}; f2.uv2={1,1}; f2.uv3={0,1}; f2.material_index=0;
-        faces.push_back(f1);
-        faces.push_back(f2);
+        gore::vec3 edge1 = b - a;
+        gore::vec3 edge2 = c - a;
+        gore::vec3 norm = edge1.crossProduct(edge2).normalize();
+        GLuint base = (GLuint)vertexs.size();
+        vertexs.push_back({a, norm, {0,0}, 0});
+        vertexs.push_back({b, norm, {1,0}, 0});
+        vertexs.push_back({c, norm, {1,1}, 0});
+        vertexs.push_back({d, norm, {0,1}, 0});
+        for (GLuint i : {0u, 1u, 2u, 0u, 2u, 3u}) {
+            indexs.push_back(base + i);
+        }
     };
     quad(ftl, ftr, fbr, fbl); // front
     quad(btr, btl, bbl, bbr); // back
@@ -78,7 +86,7 @@ static std::vector<gore::model_face> make_cube(float cx, float cy, float cz, flo
     quad(ftr, btr, bbr, fbr); // right
     quad(btl, btr, ftr, ftl); // top
     quad(fbl, fbr, bbr, bbl); // bottom
-    return faces;
+    return gore::index_buffer<gore::model_vertex>(std::move(vertexs), std::move(indexs));
 }
 
 void render() {

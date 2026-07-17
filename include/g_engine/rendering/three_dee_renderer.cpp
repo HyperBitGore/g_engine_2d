@@ -43,6 +43,8 @@ void gore::threedeerender::shader_setup()  {
     shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
     // ssbo
     glGenBuffers(1, &ssbo);
+    glGenBuffers(1, &element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
 }
 
 void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
@@ -57,24 +59,29 @@ gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::
 }
 
 void gore::threedeerender::addModel (gore::model& model) {
-    model_matrices.push_back(model.getMatrix());
-    uint32_t last_unit = 2000u;
-    for (auto& i : model.getFaces()) {
-        uint32_t texture_unit = 2000u;
-        if (i.material_index >= 0) {
-            gore::IMG& img = model.getImage(i.material_index);
-            if (!textureBinded(img->tex) && current_unit == texture_units) {
-                drawBuffer();
-                model_matrices.push_back(model.getMatrix());
-            }
-            texture_unit = getTextureUnit(img->tex);
-            last_unit = texture_unit;
-        }
-        vertexs.push_back({i.p1.x, i.p1.y, i.p1.z, i.uv1.x, i.uv1.y, (GLint)model_matrices.size() - 1, texture_unit});
-        vertexs.push_back({i.p2.x, i.p2.y, i.p2.z, i.uv2.x, i.uv2.y, (GLint)model_matrices.size() - 1, texture_unit});
-        vertexs.push_back({i.p3.x, i.p3.y, i.p3.z, i.uv3.x, i.uv3.y, (GLint)model_matrices.size() - 1, texture_unit});
+    auto& ib = model.index_buffer;
+    uint32_t needed = model.textureCount();
+    if (current_unit + needed > (uint32_t)texture_units) {
+        drawBuffer();
     }
-    last_unit = 0;
+    model_matrices.push_back(model.getMatrix());
+    GLint mat_slot = (GLint)model_matrices.size() - 1;
+    GLuint base = (GLuint)vertexs.size();
+    for (auto& v : ib.getVertexs()) {
+        uint32_t texture_unit = 2000u;
+        if (v.material_index >= 0) {
+            gore::IMG& img = model.getImage(v.material_index);
+            texture_unit = getTextureUnit(img->tex);
+        }
+        vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, mat_slot, texture_unit});
+    }
+    for (GLuint i : ib.getIndexs()) {
+        indexs.push_back(base + i);
+    }
+}
+
+void gore::threedeerender::addModelInstance (gore::model* model, const matrix& transform) {
+    
 }
 
 void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camera& cam) {
@@ -99,19 +106,24 @@ void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camer
         {1.0f, 1.0f}, // tr
     };
     for (int i = 0; i < 6; i++) {
+        indexs.push_back((GLuint)vertexs.size());
         vertexs.push_back({verts[i].x, verts[i].y, verts[i].z, uvs[i][0], uvs[i][1], -1, texture_unit});
     }
 }
 
 // unskinned vertex
 void gore::threedeerender::addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3) {
+    indexs.push_back((GLuint)vertexs.size());
     vertexs.push_back({pos.x, pos.y, pos.z, 0.0, 0.0, -1, 2000u});
+    indexs.push_back((GLuint)vertexs.size());
     vertexs.push_back({pos2.x, pos2.y, pos2.z, 0.0, 0.0, -1, 2000u});
+    indexs.push_back((GLuint)vertexs.size());
     vertexs.push_back({pos3.x, pos3.y, pos3.z, 0.0, 0.0, -1, 2000u});
 }
 // unskinned vertexs
 void gore::threedeerender::addVertexs(const std::vector<gore::vec3>& vertexs) {
     for (auto& i : vertexs) {
+        this->indexs.push_back((GLuint)this->vertexs.size());
         this->vertexs.push_back({i.x, i.y, i.z, 0.0, 0.0, -1, 2000u});
     }
 }
@@ -141,10 +153,18 @@ void gore::threedeerender::drawBuffer() {
         flat_matrices.data(),
         GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
-    glDrawArraysExt(GL_TRIANGLES, 0, vertexs.size());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    if (indexs.size() > index_allocated) {
+        index_allocated = indexs.size();
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_allocated * sizeof(GLuint), indexs.data(), GL_DYNAMIC_DRAW);
+    } else {
+        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexs.size() * sizeof(GLuint), indexs.data());
+    }
+    glDrawElements(GL_TRIANGLES, (GLsizei)indexs.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     vertexs.clear();
+    indexs.clear();
     texture_unit_map.clear();
     samplers.clear();
     current_unit = 0;
