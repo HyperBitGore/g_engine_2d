@@ -22,13 +22,16 @@ gore::camera cam({0.0, 0.0, 5.0}, {0.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 
 gore::vec3 peng_pos = {0.0, 2.0, 0.0};
 std::unique_ptr<gore::billboard> board = nullptr;
 std::unique_ptr<gore::billboard> static_board = nullptr;
-
+double duck_switch = 0;
+bool duck_rend = false;
 void render () {
     eng.enable(GL_CULL_FACE);
     three_d->addModel(peng);
     gore::IMG& ipg = cube_tex.getImage(0);
     three_d->addModel(cube_tex);
-    three_d->addModel(duck);
+    if (duck_rend) {
+        three_d->addModel(duck);
+    }
     three_d->addBillboard(*board, cam);
     three_d->addBillboard(*static_board, cam);
     three_d->drawBuffer();
@@ -108,12 +111,13 @@ int main () {
         eng.updateInputState();
         double delta = eng.getDelta();
         float speed = 2.5f * (float)delta;
+        duck_switch += delta;
         cube_angle += cube_rot_speed * (float)delta;
         cube_tex.resetMatrix();
         cube_tex.rotate({0.0f, 1.0f, 0.0f}, cube_angle);
 
         peng_count += delta;
-         if (peng_count > 0.1) {
+        if (peng_count > 0.1) {
             peng_count = 0;
             if (peng_pos.y + peng_change < 0.0) {
                 peng_change = 0.05;
@@ -122,6 +126,10 @@ int main () {
             }
             peng_pos.y += peng_change;
             peng.translate(peng_pos);
+        }
+        if (duck_switch > 0.5) {
+            duck_rend = !duck_rend;
+            duck_switch = 0;
         }
         // Escape toggles mouse-look on/off
         if (eng.getKeyReleased(g_Escape)) {

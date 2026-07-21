@@ -72,7 +72,31 @@ namespace gore {
         gore::vec3 norm;
         gore::vec2 uv;
         int material_index = -1;
+
+        bool operator==(const model_vertex& v) const {
+            return pos.x == v.pos.x && pos.y == v.pos.y && pos.z == v.pos.z
+                && norm.x == v.norm.x && norm.y == v.norm.y && norm.z == v.norm.z
+                && uv.x == v.uv.x && uv.y == v.uv.y
+                && material_index == v.material_index;
+        }
     };
+}
+
+template <>
+struct std::hash<gore::model_vertex> {
+    size_t operator()(const gore::model_vertex& v) const noexcept {
+        size_t seed = std::hash<int>{}(v.material_index);
+        auto combine = [&seed](float f) {
+            seed ^= std::hash<float>{}(f) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        };
+        combine(v.pos.x); combine(v.pos.y); combine(v.pos.z);
+        combine(v.norm.x); combine(v.norm.y); combine(v.norm.z);
+        combine(v.uv.x); combine(v.uv.y);
+        return seed;
+    }
+};
+
+namespace gore {
     // treat this kind've like a texture you load and use its contents to create objects you actually feed into render pipeline
     class model {
         private:

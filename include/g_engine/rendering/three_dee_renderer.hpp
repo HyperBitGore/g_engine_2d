@@ -2,10 +2,12 @@
 #include "renderer.hpp"
 #include "billboard.hpp"
 #include "../file_loading/model_loading/model_loader.hpp"
+#include <unordered_map>
 // https://www.scratchapixel.com/index.html
 // TODO
 //      - element buffer actually static instead of reallocating every frame
-//      - 
+//      - texture unit setting with new static element buffer
+//      - model matrices static
 namespace gore{
     struct threedee_vertex {
         float x;
@@ -36,21 +38,34 @@ namespace gore{
             GLuint ssbo;
             GLuint element_buffer;
             std::vector<GLuint> indexs;
+            // per-call cached geometry (triangles/billboards), appended after persistent model geometry
+            std::vector<threedee_vertex> transient_vertexs;
+            struct transient_entry {
+                std::vector<threedee_vertex> verts;
+                size_t offset;           // offset into transient_vertexs
+                uint64_t last_frame;     // residency stamp
+            };
+            std::unordered_map<size_t, transient_entry> transient_map;
+            static size_t hashVertexs (const threedee_vertex* data, size_t count);
+            void addTransient (const threedee_vertex* data, size_t count);
+            void rebuildTransients ();
+            std::vector<GLuint> bound_textures;
+            void rebuildGeometry ();
+            void uploadMatrices ();
             GLuint index_allocated = 0;
             // instances
             struct instance {
-                model* model;
-                uint64_t count;
-                size_t buffer_offset;
+                size_t index_offset, index_count;
+                size_t vertex_offset, vertex_count;
+                GLint mat_slot;          // stable slot while resident
+                uint64_t last_frame;     // residency stamp
             };
-            static int hash_model (model* m) {
-                uint64_t v = (uint64_t)m;
-                return v % 7309;
-            }
-            gore::hashmap<instance, model*> model_map;
-            std::vector<uint8_t> model_data_buffer;
+            std::unordered_map<model*, instance> model_map;
+            uint64_t frame_count = 0;
+            bool buffers_dirty = false;
 	        void shader_setup() override;
             threedeerender(size_t w, size_t h);
+            void updateVertexBuffer ();
         public:
             float vertical_fov = 45.0f;
             float near_clip = 0.1f;

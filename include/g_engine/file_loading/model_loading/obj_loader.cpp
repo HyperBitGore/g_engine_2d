@@ -219,10 +219,9 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
     std::vector<gore::vec3> positions;
     std::vector<gore::vec2> uvs;
     std::vector<gore::vec3> normals;
-    std::vector<model_vertex> vertexs;
-    std::vector<GLuint> indexs;
     // maps a v/vt/vn/material index tuple to its slot in vertexs
     std::unordered_map<std::string, GLuint> seen;
+    index_buffer<model_vertex> index_buffer;
     std::string mtl_path = "";
     std::vector<model_material::mtl_material> mats;
     int mat_index = -1;
@@ -230,22 +229,12 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
     const gore::vec2 zero_uv   = {0.0f, 0.0f};
 
     auto emitVertex = [&](int v, int uv, int n, int mat) {
-        int key_data[4] = {v, uv, n, mat};
-        std::string key((char*)key_data, sizeof(key_data));
-        auto it = seen.find(key);
-        if (it != seen.end()) {
-            indexs.push_back(it->second);
-            return;
-        }
         model_vertex vert;
         vert.pos = positions[v];
         vert.uv = uv >= 0 ? uvs[uv] : zero_uv;
         vert.norm = n >= 0 ? normals[n] : gore::vec3{0.0f, 0.0f, 0.0f};
         vert.material_index = mat;
-        GLuint slot = (GLuint)vertexs.size();
-        vertexs.push_back(vert);
-        seen[key] = slot;
-        indexs.push_back(slot);
+        index_buffer.addVertex(vert);
     };
 
     for (auto& i : lines) {
@@ -302,8 +291,7 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                         vert.uv = face_uv[j] >= 0 ? uvs[face_uv[j]] : zero_uv;
                         vert.norm = flat;
                         vert.material_index = mat;
-                        indexs.push_back((GLuint)vertexs.size());
-                        vertexs.push_back(vert);
+                        index_buffer.addVertex(vert);
                     }
                 }
                 break;
@@ -328,7 +316,8 @@ gore::model gore::model_loader::loadObj (std::string file_path) {
                 break;
         }
     }
-    model output(gore::index_buffer<model_vertex>(std::move(vertexs), std::move(indexs)), ModelType::OBJ);
+    std::cout << "Dupes: " << index_buffer.dupeCount() << "\n";
+    model output(std::move(index_buffer), ModelType::OBJ);
     if (mtl_path != "") {
         output.addMaterials(mats);
     }
