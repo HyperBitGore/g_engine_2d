@@ -138,7 +138,7 @@ namespace gore {
             void rotate (vec3 axis, float radians);
             void scale (vec3 scale);
             void resetMatrix ();
-            matrix getMatrix () {
+            matrix& getMatrix () {
                 return model_matrix;
             }
             size_t textureCount () {
@@ -156,5 +156,4 @@ namespace gore {
         // https://www.khronos.org/gltf/#gltf-spec
         static model loadGltf (std::string file_path);
     };
-
 }

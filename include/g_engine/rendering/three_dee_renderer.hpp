@@ -5,10 +5,19 @@
 #include <unordered_map>
 // https://www.scratchapixel.com/index.html
 // TODO
-//      - element buffer actually static instead of reallocating every frame
-//      - texture unit setting with new static element buffer
-//      - model matrices static
+//      - make transients not re-added, store them in static array and use model matrices to move them, maybe just have seperate drawCalls for addTriangle
+//      - addBillboard can be instanced tho
+//      - glMultiDrawElementsIndirect
 namespace gore{
+    PREVENT_PACKING_STRUCT  DrawElementsIndirectCommand {
+        GLuint count;
+        GLuint instance_count;
+        GLuint first_index;
+        GLint base_vertex;
+        GLuint base_instance;
+    };
+    END_PACKING_STRUCT
+
     struct threedee_vertex {
         float x;
         float y;
@@ -40,15 +49,7 @@ namespace gore{
             std::vector<GLuint> indexs;
             // per-call cached geometry (triangles/billboards), appended after persistent model geometry
             std::vector<threedee_vertex> transient_vertexs;
-            struct transient_entry {
-                std::vector<threedee_vertex> verts;
-                size_t offset;           // offset into transient_vertexs
-                uint64_t last_frame;     // residency stamp
-            };
-            std::unordered_map<size_t, transient_entry> transient_map;
-            static size_t hashVertexs (const threedee_vertex* data, size_t count);
             void addTransient (const threedee_vertex* data, size_t count);
-            void rebuildTransients ();
             std::vector<GLuint> bound_textures;
             void rebuildGeometry ();
             void uploadMatrices ();
@@ -60,9 +61,26 @@ namespace gore{
                 GLint mat_slot;          // stable slot while resident
                 uint64_t last_frame;     // residency stamp
             };
-            std::unordered_map<model*, instance> model_map;
             uint64_t frame_count = 0;
             bool buffers_dirty = false;
+            enum class KEY_TYPE { MODEL, TRIANGLE, BILLBOARD };
+            struct draw_key {
+                size_t value;
+
+                bool operator==(const draw_key& other) const {
+                    return value == other.value;
+                }
+            };
+            struct draw_key_hash {
+                size_t operator()(const draw_key& key) const {
+                    return std::hash<size_t>{}(key.value);
+                }
+            };
+            std::unordered_map<draw_key, instance, draw_key_hash> draw_map;
+            // instancing
+            std::vector<DrawElementsIndirectCommand> draw_commands;
+            std::unordered_map<model*, size_t> draw_call_map;
+            void addDrawCall (gore::model* m, matrix matrix);
 	        void shader_setup() override;
             threedeerender(size_t w, size_t h);
             void updateVertexBuffer ();
@@ -71,7 +89,6 @@ namespace gore{
             float near_clip = 0.1f;
             float far_clip = 100.0f;
             void addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3);
-            void addVertexs(const std::vector<gore::vec3>& vertexs);
             void addModel (gore::model& model);
             void addBillboard (gore::billboard& billboard, gore::camera& cam);
             void addModelInstance (gore::model* model, const matrix& transform);

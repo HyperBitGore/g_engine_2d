@@ -69,7 +69,6 @@ void gore::threedeerender::addModel (gore::model& model) {
     if (current_unit + needed > (uint32_t)texture_units) {
         // out of texture units: flush and drop all resident geometry so units can be reassigned
         drawBuffer();
-        model_map.clear();
         vertexs.clear();
         indexs.clear();
         model_matrices.clear();
@@ -78,12 +77,13 @@ void gore::threedeerender::addModel (gore::model& model) {
         bound_textures.clear();
         current_unit = 0;
         // billboard texture units are invalid after a reset, drop cached transients too
-        transient_map.clear();
+        draw_map.clear();
         transient_vertexs.clear();
         buffers_dirty = true;
     }
-    auto it = model_map.find(&model);
-    if (it != model_map.end()) {
+    const draw_key key{reinterpret_cast<size_t>(&model)};
+    auto it = draw_map.find(key);
+    if (it != draw_map.end()) {
         // geometry already resident, just refresh the transform and residency stamp
         it->second.last_frame = frame_count;
         model_matrices[it->second.mat_slot] = model.getMatrix();
@@ -111,12 +111,46 @@ void gore::threedeerender::addModel (gore::model& model) {
     in.vertex_offset = base;
     in.last_frame = frame_count;
     in.mat_slot = mat_slot;
-    model_map[&model] = in;
+    draw_map.emplace(key, in);
     buffers_dirty = true;
 }
 
-void gore::threedeerender::addModelInstance (gore::model* model, const matrix& transform) {
+void gore::threedeerender::addDrawCall (gore::model* m, matrix matrix) {
+    if (m == nullptr) return;
     
+    auto it = draw_call_map.find(m);
+    if (it != draw_call_map.end()) {
+        auto& call = draw_commands[it->second];
+        // add an instance and matrix
+        call.instance_count++;
+        // this needs to align with the instance location
+        model_matrices.insert(model_matrices.begin() + call.base_instance + call.instance_count, matrix);
+        // update base instance down the line
+        for (size_t i = it->second; i < draw_commands.size(); i++) {
+            draw_commands[i].base_instance++;
+        }
+        return;
+    }
+    // add a new draw_command and model gets inserted with addModel
+    DrawElementsIndirectCommand command;
+    command.base_instance = draw_commands[draw_commands.size() - 1].base_instance + draw_commands[draw_commands.size() - 1].instance_count;
+    command.instance_count = 1;
+    command.base_vertex = 0;
+    command.count = m->index_buffer.indexSize();
+    command.first_index = indexs.size();
+    draw_call_map.emplace(m, draw_commands.size());
+    draw_commands.push_back(command);
+    // addModel?
+    
+}
+
+void gore::threedeerender::addModelInstance (gore::model* model, const matrix& transform) {
+    const draw_key key{reinterpret_cast<size_t>(&model)};
+    auto it = draw_map.find(key);
+    if (it != draw_map.end()) {
+        
+    }
+
 }
 
 void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camera& cam) {
@@ -156,52 +190,9 @@ void gore::threedeerender::addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::ve
     };
     addTransient(tri, 3);
 }
-// unskinned vertexs
-void gore::threedeerender::addVertexs(const std::vector<gore::vec3>& vertexs) {
-    std::vector<threedee_vertex> vs;
-    vs.reserve(vertexs.size());
-    for (auto& i : vertexs) {
-        vs.push_back({i.x, i.y, i.z, 0.0, 0.0, -1, 2000u});
-    }
-    addTransient(vs.data(), vs.size());
-}
-
-size_t gore::threedeerender::hashVertexs (const threedee_vertex* data, size_t count) {
-    // FNV-1a over the raw vertex bytes
-    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(data);
-    size_t n = count * sizeof(threedee_vertex);
-    size_t h = 1469598103934665603ull;
-    for (size_t i = 0; i < n; i++) {
-        h ^= bytes[i];
-        h *= 1099511628211ull;
-    }
-    return h;
-}
 
 void gore::threedeerender::addTransient (const threedee_vertex* data, size_t count) {
-    size_t key = hashVertexs(data, count);
-    auto it = transient_map.find(key);
-    if (it != transient_map.end()) {
-        // identical call already resident, just refresh residency stamp
-        it->second.last_frame = frame_count;
-        return;
-    }
-    transient_entry e;
-    e.verts.assign(data, data + count);
-    e.offset = transient_vertexs.size();
-    e.last_frame = frame_count;
     transient_vertexs.insert(transient_vertexs.end(), data, data + count);
-    transient_map.emplace(key, std::move(e));
-    buffers_dirty = true;
-}
-
-// repacks transient_vertexs from surviving map entries
-void gore::threedeerender::rebuildTransients () {
-    transient_vertexs.clear();
-    for (auto& entry : transient_map) {
-        entry.second.offset = transient_vertexs.size();
-        transient_vertexs.insert(transient_vertexs.end(), entry.second.verts.begin(), entry.second.verts.end());
-    }
     buffers_dirty = true;
 }
 
@@ -221,23 +212,18 @@ void gore::threedeerender::drawBuffer() {
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    // evict models not submitted this frame
+    transient_vertexs.clear();
     bool evicted = false;
-    for (auto it = model_map.begin(); it != model_map.end();) {
-        if (it->second.last_frame < frame_count) { it = model_map.erase(it); evicted = true; }
-        else { ++it; }
+    for (auto it = draw_map.begin(); it != draw_map.end();) {
+        if (it->second.last_frame < frame_count) {
+            it = draw_map.erase(it);
+            evicted = true;
+        } else {
+            ++it;
+        }
     }
     if (evicted) {
         rebuildGeometry();
-    }
-    // evict transient calls not submitted this frame
-    bool transient_evicted = false;
-    for (auto it = transient_map.begin(); it != transient_map.end();) {
-        if (it->second.last_frame < frame_count) { it = transient_map.erase(it); transient_evicted = true; }
-        else { ++it; }
-    }
-    if (transient_evicted) {
-        rebuildTransients();
     }
     frame_count++;
 }
@@ -251,10 +237,13 @@ void gore::threedeerender::rebuildGeometry () {
     samplers.clear();
     bound_textures.clear();
     current_unit = 0;
-    auto temp_map = model_map;
-    model_map.clear();
-    for (auto& entry : temp_map) {
-        addModel(*(entry.first));
+    std::vector<gore::model*> models;
+    for (auto it = draw_map.begin(); it != draw_map.end();) {
+        models.push_back(reinterpret_cast<gore::model*>(it->first.value));
+        it = draw_map.erase(it);
+    }
+    for (gore::model* model : models) {
+        addModel(*model);
     }
     buffers_dirty = true;
 }
