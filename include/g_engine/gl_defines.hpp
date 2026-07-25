@@ -138,6 +138,7 @@ extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback;
 extern PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 extern PFNGLDRAWARRAYSINSTANCEDPROC glDrawArraysInstanced;
 extern PFNGLDRAWELEMENTSINSTANCEDPROC glDrawElementsInstanced;
+extern PFNGLMULTIDRAWELEMENTSINDIRECTPROC glMultiDrawElementsIndirect;
 
 #if defined(_WIN32)
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;

@@ -137,6 +137,7 @@ PFNGLUNIFORMMATRIX4DVPROC glUniformMatrix4dv;
 
 PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
 
+PFNGLMULTIDRAWELEMENTSINDIRECTPROC glMultiDrawElementsIndirect;
 #if defined(_WIN32)
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
@@ -261,7 +262,7 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 	glUniformMatrix4dv = (PFNGLUNIFORMMATRIX4DVPROC)loadFunc("glUniformMatrix4dv");
 
 	glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)loadFunc("glBlitFramebuffer");
-
+	glMultiDrawElementsIndirect = (PFNGLMULTIDRAWELEMENTSINDIRECTPROC)loadFunc("glMultiDrawElementsIndirect");
 	#if defined(_WIN32)
 	glActiveTexture = (PFNGLACTIVETEXTUREPROC)loadFunc("glActiveTexture");
 	#endif

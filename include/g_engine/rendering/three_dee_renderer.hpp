@@ -5,9 +5,9 @@
 #include <unordered_map>
 // https://www.scratchapixel.com/index.html
 // TODO
-//      - make transients not re-added, store them in static array and use model matrices to move them, maybe just have seperate drawCalls for addTriangle
-//      - addBillboard can be instanced tho
 //      - glMultiDrawElementsIndirect
+//      - first matrix always an identity matrix (billboard and transients target this, so first drawcommand should be transients)
+//      - write seperate glMultiDraw elementsIndirect, then convert three renderer from that
 namespace gore{
     PREVENT_PACKING_STRUCT  DrawElementsIndirectCommand {
         GLuint count;
@@ -47,6 +47,7 @@ namespace gore{
             GLuint ssbo;
             GLuint element_buffer;
             std::vector<GLuint> indexs;
+            enum class KEY_TYPE { MODEL, TRIANGLE, BILLBOARD };
             // per-call cached geometry (triangles/billboards), appended after persistent model geometry
             std::vector<threedee_vertex> transient_vertexs;
             void addTransient (const threedee_vertex* data, size_t count);
@@ -63,10 +64,9 @@ namespace gore{
             };
             uint64_t frame_count = 0;
             bool buffers_dirty = false;
-            enum class KEY_TYPE { MODEL, TRIANGLE, BILLBOARD };
             struct draw_key {
                 size_t value;
-
+                KEY_TYPE type;
                 bool operator==(const draw_key& other) const {
                     return value == other.value;
                 }
@@ -81,9 +81,16 @@ namespace gore{
             std::vector<DrawElementsIndirectCommand> draw_commands;
             std::unordered_map<model*, size_t> draw_call_map;
             void addDrawCall (gore::model* m, matrix matrix);
+            void addModelData (gore::model* m);
+            GLuint indirect_buffer = 0;
 	        void shader_setup() override;
             threedeerender(size_t w, size_t h);
             void updateVertexBuffer ();
+            instance& getModelInstance (model* m) {
+                const draw_key key{reinterpret_cast<size_t>(m), KEY_TYPE::MODEL};
+                auto it = draw_map.find(key);
+                return it->second;
+            }
         public:
             float vertical_fov = 45.0f;
             float near_clip = 0.1f;
