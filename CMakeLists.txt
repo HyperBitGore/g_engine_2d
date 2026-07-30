@@ -89,6 +89,8 @@ add_executable(test_texture_unit_overflow ${ENGINE_SOURCES} tests/texture_unit_o
 
 add_executable(test_three_dee_texture_split ${ENGINE_SOURCES} tests/three_dee_texture_split.cpp)
 
+add_executable(test_instance_render ${ENGINE_SOURCES} tests/instance_render.cpp)
+
 add_executable(test_maintain_renderer_view ${ENGINE_SOURCES} tests/maintain_renderer_view.cpp)
 
 add_executable(test_dual_engine ${ENGINE_SOURCES} tests/dual_engine.cpp)
@@ -96,7 +98,7 @@ add_executable(test_dual_engine ${ENGINE_SOURCES} tests/dual_engine.cpp)
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
-set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl test_texture_unit_overflow test_three_dee_texture_split test_maintain_renderer_view test_dual_engine)
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl test_texture_unit_overflow test_three_dee_texture_split test_instance_render test_maintain_renderer_view test_dual_engine)
 
 if(WIN32)
 foreach(tgt ${VISUAL_TARGETS})

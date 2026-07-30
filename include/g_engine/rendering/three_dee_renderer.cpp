@@ -1,5 +1,6 @@
 #include "three_dee_renderer.hpp"
 #include "three_dee_renderer_shader.hpp"
+#include <GL/glext.h>
 
 GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
     GLuint* unit = texture_unit_map.get(texture);
@@ -292,4 +293,119 @@ void gore::threedeerender::updateVertexBuffer () {
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, all_indexs.size() * sizeof(GLuint), all_indexs.data());
     }
     buffers_dirty = false;
+}
+
+gore::instance_render::instance_render(size_t w, size_t h) : gore::renderer<gore::instance_render, gore::instance_vertex> (instance_renderer_vertex, three_dee_renderer_fragment, w, h) {
+
+}
+
+void gore::instance_render::shader_setup()  {
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(gore::instance_vertex), (void*)0); //position
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gore::instance_vertex), (void*)(sizeof(float) * 3)); //uvs
+    glEnableVertexAttribArray(2);
+    glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, sizeof(gore::instance_vertex), (void*)(sizeof(float) * 5)); // texture unit index
+    updateDimensions(this->width, this->height);
+    updateView({0, 0, 5}, {0, 0, 0}, gore::vec3(0,1,0));
+    shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
+    // ssbo
+    glGenBuffers(1, &ssbo);
+    glGenBuffers(1, &element_buffer);
+    glGenBuffers(1, &draw_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
+}
+
+
+void gore::instance_render::addModelInstance (gore::model* model, const matrix& transform) {
+    if (model == nullptr) return;
+    
+    auto it = instance_map.find(model);
+    if (it != instance_map.end()) {
+        auto& call = commands[it->second.command];
+        // add an instance and matrix
+        // this needs to align with the instance location
+        model_matrices.insert(model_matrices.begin() + call.base_instance + call.instance_count, transform);
+        call.instance_count++;
+        // update base instance down the line
+        for (size_t i = it->second.command + 1; i < commands.size(); i++) {
+            commands[i].base_instance++;
+        }
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER,
+            commands.size() * sizeof(DrawElementsIndirectCommand),
+            commands.data(),
+            GL_DYNAMIC_DRAW);
+        return;
+    }
+    // add a new draw_command and model gets inserted with addModel
+    DrawElementsIndirectCommand command;
+    auto& ib = model->index_buffer;
+    command.base_instance = commands.empty() ? 0 : commands.back().base_instance + commands.back().instance_count;
+    command.instance_count = 1;
+    command.base_vertex = 0;
+    command.count = model->index_buffer.indexSize();
+    command.first_index = indexs.size();
+    instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize() };
+    instance_map.emplace(model, in);
+    commands.push_back(command);
+    model_matrices.push_back(transform);
+    // add model data
+    size_t base = vertexs.size();
+    for (auto& v : ib.getVertexs()) {
+        uint32_t texture_unit = 2000u;
+        vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, texture_unit});
+    }
+    GLuint index_base = indexs.size();
+    for (GLuint i : ib.getIndexs()) {
+        indexs.push_back(base + i);
+    }
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, vertexs.size() * sizeof(instance_vertex), vertexs.data(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexs.size() * sizeof(GLuint), indexs.data(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
+    glBufferData(GL_DRAW_INDIRECT_BUFFER, commands.size() * sizeof(DrawElementsIndirectCommand), commands.data(), GL_DYNAMIC_DRAW);
+}
+// matrices
+void gore::instance_render::updateDimensions (uint32_t width, uint32_t height) {
+    this->width = width;
+    this->height = height;
+    gore::matrix perspective = gore::matrix::perspective(toRadians(this->vertical_fov), (float)this->width / (float)this->height, this->near_clip, this->far_clip);
+    shader.setuniform("projection", 1, true, perspective);
+}
+void gore::instance_render::drawBuffer() {
+    assert(created && "call createRenderer before use!");
+    if (vertexs.empty() || commands.empty()) return;
+    shader.bind();
+    // transforms can change, update the them every frame
+    std::vector<float> flat_matrices;
+    flat_matrices.reserve(model_matrices.size() * 16);
+    for (auto& m : model_matrices) {
+        float* d = m.data();
+        flat_matrices.insert(flat_matrices.end(), d, d + 16);
+    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        flat_matrices.size() * sizeof(float),
+        flat_matrices.data(),
+        GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
+    glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)0, commands.size(), 0);
+    glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    model_matrices.clear();
+    for (auto& command : commands) {
+        command.instance_count = 0;
+        command.base_instance = 0;
+    }
 }

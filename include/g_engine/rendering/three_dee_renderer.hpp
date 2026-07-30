@@ -103,4 +103,38 @@ namespace gore{
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;
     };
+    struct instance_vertex {
+        float x;
+        float y;
+        float z;
+        float uvx;
+        float uvy;
+        GLuint texture_unit;
+    };
+    class instance_render : public renderer<instance_render, instance_vertex> {
+        private:
+            friend class renderer<instance_render, instance_vertex>;
+            std::vector<GLuint> indexs;
+            std::vector<DrawElementsIndirectCommand> commands;
+            std::vector<matrix> model_matrices;
+            GLuint ssbo;
+            GLuint element_buffer;
+            GLuint draw_buffer;
+            struct instance {
+                int32_t command; // index of command
+                size_t index_offset, index_count;
+                size_t vertex_offset, vertex_count;
+            };
+            std::unordered_map<model*, instance> instance_map;
+            void shader_setup() override;
+            instance_render(size_t w, size_t h);
+        public:
+            float vertical_fov = 45.0f;
+            float near_clip = 0.1f;
+            float far_clip = 100.0f;
+            void addModelInstance (gore::model* model, const matrix& transform);
+            // matrices
+            void updateDimensions (uint32_t width, uint32_t height) override;
+            void drawBuffer() override;
+    };
 }
