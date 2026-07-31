@@ -314,6 +314,20 @@ void gore::instance_render::updateDrawBuffers () {
         glBufferData(GL_DRAW_INDIRECT_BUFFER, commands.size() * sizeof(DrawElementsIndirectCommand), commands.data(), GL_DYNAMIC_DRAW);
         draw_buffer_dirty = false;
     }
+    if (matrix_buffer_dirty) {
+        std::vector<float> flat_matrices;
+        flat_matrices.reserve(model_matrices.size() * 16);
+        for (auto& m : model_matrices) {
+            float* d = m.data();
+            flat_matrices.insert(flat_matrices.end(), d, d + 16);
+        }
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+        glBufferData(GL_SHADER_STORAGE_BUFFER,
+            flat_matrices.size() * sizeof(float),
+            flat_matrices.data(),
+            GL_DYNAMIC_DRAW);
+        matrix_buffer_dirty = false;
+    }
 }
 
 void gore::instance_render::shader_setup()  {
@@ -360,12 +374,14 @@ int32_t gore::instance_render::addModelInstance (gore::model* model, const matri
             commands[i].base_instance++;
         }
         draw_buffer_dirty = true;
+        matrix_buffer_dirty = true;
         return  call.base_instance + call.instance_count - 1;
     }
     return -1;
 }
 
 void gore::instance_render::addModelData(gore::model* model, size_t preallocate) {
+    if (model == nullptr || instance_map.find(model) == instance_map.end()) return;
     // add a new draw_command and model gets inserted
     DrawElementsIndirectCommand command;
     auto& ib = model->index_buffer;
@@ -388,18 +404,27 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
         indexs.push_back(base + i);
     }
     buffers_dirty = true;
+    matrix_buffer_dirty = true;
+    draw_buffer_dirty = true;
 }
 void gore::instance_render::removeModelInstance (gore::model* model, int32_t index) {
     auto it = instance_map.find(model);
     if (it != instance_map.end()) {
         auto& call =  commands[it->second.command];
-        model_matrices.erase(model_matrices.begin() + call.base_instance + call.instance_count);
+        model_matrices.erase(model_matrices.begin() + index);
         call.instance_count--;
         // update base instance down the line
         for (size_t i = it->second.command + 1; i < commands.size(); i++) {
             commands[i].base_instance--;
         }
         draw_buffer_dirty = true;
+        matrix_buffer_dirty = true;
+    }
+}
+
+void gore::instance_render::updateModelInstance (int32_t index, const matrix& transform) {
+    if (index >= 0 && index < model_matrices.size()) {
+        model_matrices[index] = transform;
     }
 }
 
@@ -408,18 +433,6 @@ void gore::instance_render::drawBuffer() {
     if (vertexs.empty() || commands.empty()) return;
     shader.bind();
     updateDrawBuffers();
-    // transforms can change, update the them every frame
-    std::vector<float> flat_matrices;
-    flat_matrices.reserve(model_matrices.size() * 16);
-    for (auto& m : model_matrices) {
-        float* d = m.data();
-        flat_matrices.insert(flat_matrices.end(), d, d + 16);
-    }
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,
-        flat_matrices.size() * sizeof(float),
-        flat_matrices.data(),
-        GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);

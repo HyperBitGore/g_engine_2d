@@ -120,6 +120,9 @@ namespace gore{
     //  - removeModelInstance
     //      - removes instance index
     //      - copies ones ahead of it back
+    // TODO
+    //  - custom allocations
+    //  - texturing
     class instance_render : public renderer<instance_render, instance_vertex> {
         private:
             friend class renderer<instance_render, instance_vertex>;
@@ -139,6 +142,7 @@ namespace gore{
             instance_render(size_t w, size_t h);
             bool buffers_dirty = false;
             bool draw_buffer_dirty = false;
+            bool matrix_buffer_dirty = false;
             void updateDrawBuffers ();
         public:
             float vertical_fov = 45.0f;
@@ -147,6 +151,7 @@ namespace gore{
             int32_t addModelInstance (gore::model* model, const matrix& transform);
             void addModelData(gore::model* model, size_t preallocate);
             void removeModelInstance (gore::model* model, int32_t index);
+            void updateModelInstance (int32_t index, const matrix& transform);
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;
             void drawBuffer() override;
