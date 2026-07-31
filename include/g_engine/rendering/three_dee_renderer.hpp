@@ -111,6 +111,15 @@ namespace gore{
         float uvy;
         GLuint texture_unit;
     };
+    // new flow
+    //  - addModelData
+    //      - adds model data and you preallocate the amt of instances you need?
+    //  - addModelInstance
+    //      - adds model instance in open space, and updates matrix
+    //      - use returned index to modify the matrix
+    //  - removeModelInstance
+    //      - removes instance index
+    //      - copies ones ahead of it back
     class instance_render : public renderer<instance_render, instance_vertex> {
         private:
             friend class renderer<instance_render, instance_vertex>;
@@ -128,11 +137,16 @@ namespace gore{
             std::unordered_map<model*, instance> instance_map;
             void shader_setup() override;
             instance_render(size_t w, size_t h);
+            bool buffers_dirty = false;
+            bool draw_buffer_dirty = false;
+            void updateDrawBuffers ();
         public:
             float vertical_fov = 45.0f;
             float near_clip = 0.1f;
             float far_clip = 100.0f;
-            void addModelInstance (gore::model* model, const matrix& transform);
+            int32_t addModelInstance (gore::model* model, const matrix& transform);
+            void addModelData(gore::model* model, size_t preallocate);
+            void removeModelInstance (gore::model* model, int32_t index);
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;
             void drawBuffer() override;

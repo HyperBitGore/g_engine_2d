@@ -82,9 +82,6 @@ static bool capture = false;
 static const float sensitivity = 0.002f;
 
 static void render() {
-    for (const model_instance& instance : instances) {
-        instance_r->addModelInstance(instance.model, instance.transform);
-    }
     instance_r->drawBuffer();
 }
 
@@ -110,9 +107,15 @@ int main() {
     gore::model penguin = gore::model_loader::loadObj("resources/penger.obj");
     gore::model duck = gore::model_loader::loadGltf("resources/duck/Duck.gltf");
 
-    // One shared mesh, submitted as 10,000 instances.
+    // Upload each model's static geometry once. Instance transforms are then
+    // registered once and retained by the renderer across frames.
     constexpr int GRID_SIZE = 100;
     constexpr float SPACING = 3.5f;
+    instance_r->addModelData(&cube, 3334);
+    instance_r->addModelData(&penguin, 3333);
+    instance_r->addModelData(&duck, 3333);
+
+    // One shared mesh per model, submitted as 10,000 persistent instances.
     instances.reserve(GRID_SIZE * GRID_SIZE);
     for (int y = 0; y < GRID_SIZE; ++y) {
         for (int x = 0; x < GRID_SIZE; ++x) {
@@ -132,6 +135,9 @@ int main() {
             }
             instances.push_back({model, std::move(transform)});
         }
+    }
+    for (const model_instance& instance : instances) {
+        instance_r->addModelInstance(instance.model, instance.transform);
     }
 
     eng.addRenderer(instance_r.get(), false, false, true);
