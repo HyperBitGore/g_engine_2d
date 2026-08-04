@@ -98,7 +98,6 @@ namespace gore{
             void addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3);
             void addModel (gore::model& model);
             void addBillboard (gore::billboard& billboard, gore::camera& cam);
-            void addModelInstance (gore::model* model, const matrix& transform);
             void drawBuffer() override;
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;
@@ -122,6 +121,8 @@ namespace gore{
     //      - copies ones ahead of it back
     // TODO
     //  - custom allocations
+    //      - size preallocations
+    //      - if you add over preallocations we copy everything forward
     //  - texturing
     class instance_render : public renderer<instance_render, instance_vertex> {
         private:
@@ -129,6 +130,14 @@ namespace gore{
             std::vector<GLuint> indexs;
             std::vector<DrawElementsIndirectCommand> commands;
             std::vector<matrix> model_matrices;
+            // model allocations
+            std::vector<float> matrix_array;
+            size_t current_matrix_size = 0;
+            void preallocateMatrixArray (model* model);
+            void reallocateMatrixArray (model* model);
+            int32_t addModelMatrix (model* model, const matrix& transform);
+            void removeModelMatrix (model* model, int32_t index);
+            // gl
             GLuint ssbo;
             GLuint element_buffer;
             GLuint draw_buffer;
@@ -136,6 +145,9 @@ namespace gore{
                 int32_t command; // index of command
                 size_t index_offset, index_count;
                 size_t vertex_offset, vertex_count;
+                size_t matrix_offset;
+                size_t matrix_size;
+                size_t current_matrix_index = 0;
             };
             std::unordered_map<model*, instance> instance_map;
             void shader_setup() override;
