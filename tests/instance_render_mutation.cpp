@@ -84,7 +84,7 @@ static void mutate_instances(float delta) {
             instance.origin.z,
             model_scale(instance.model)
         );
-        renderer->updateModelInstance(instance.index, instance.transform);
+        renderer->updateModelInstance(instance.model, instance.index, instance.transform);
     }
 
     // Remove 100 random instances in descending slot order so index shifts

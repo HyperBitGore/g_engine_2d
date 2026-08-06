@@ -120,23 +120,20 @@ namespace gore{
     //      - removes instance index
     //      - copies ones ahead of it back
     // TODO
-    //  - custom allocations
-    //      - size preallocations
-    //      - if you add over preallocations we copy everything forward
     //  - texturing
     class instance_render : public renderer<instance_render, instance_vertex> {
         private:
             friend class renderer<instance_render, instance_vertex>;
             std::vector<GLuint> indexs;
             std::vector<DrawElementsIndirectCommand> commands;
-            std::vector<matrix> model_matrices;
             // model allocations
             std::vector<float> matrix_array;
             size_t current_matrix_size = 0;
             void preallocateMatrixArray (model* model);
             void reallocateMatrixArray (model* model);
             int32_t addModelMatrix (model* model, const matrix& transform);
-            void removeModelMatrix (model* model, int32_t index);
+            int32_t removeModelMatrix (model* model, int32_t index);
+            void setModelMatrix (model* model, int32_t index);
             // gl
             GLuint ssbo;
             GLuint element_buffer;
@@ -149,7 +146,8 @@ namespace gore{
                 size_t matrix_size;
                 size_t current_matrix_index = 0;
             };
-            std::unordered_map<model*, instance> instance_map;
+            std::vector<instance> instance_array;
+            std::unordered_map<model*, size_t> instance_map;
             void shader_setup() override;
             instance_render(size_t w, size_t h);
             bool buffers_dirty = false;
@@ -163,7 +161,7 @@ namespace gore{
             int32_t addModelInstance (gore::model* model, const matrix& transform);
             void addModelData(gore::model* model, size_t preallocate);
             void removeModelInstance (gore::model* model, int32_t index);
-            void updateModelInstance (int32_t index, const matrix& transform);
+            void updateModelInstance (gore::model* model, int32_t index, const matrix& transform);
             // matrices
             void updateDimensions (uint32_t width, uint32_t height) override;
             void drawBuffer() override;

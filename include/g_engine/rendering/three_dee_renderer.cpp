@@ -349,23 +349,27 @@ void gore::instance_render::updateDimensions (uint32_t width, uint32_t height) {
 int32_t gore::instance_render::addModelInstance (gore::model* model, const matrix& transform) {
     if (model == nullptr) return -1;
     
-    auto it = instance_map.find(model); // indexing will create a new instance
-    if (it != instance_map.end()) {
-        auto& call = commands[it->second.command];
-        // add an instance and matrix
-        // this needs to align with the instance location
-        addModelMatrix(model, transform);
-        model_matrices.insert(model_matrices.begin() + call.base_instance + call.instance_count, transform);
-        call.instance_count++;
-        // update base instance down the line
-        for (size_t i = it->second.command + 1; i < commands.size(); i++) {
-            commands[i].base_instance++;
-        }
-        draw_buffer_dirty = true;
-        matrix_buffer_dirty = true;
-        return  call.base_instance + call.instance_count - 1;
+    auto i_in = instance_map.find(model); // indexing will create a new instance
+    if (i_in == instance_map.end() || i_in->second >= instance_array.size()) {
+        return -1;
     }
-    return -1;
+    auto& it = instance_array[i_in->second];
+    auto& call = commands[it.command];
+    // add an instance and matrix
+    // this needs to align with the instance location
+    int index = addModelMatrix(model, transform);
+    if (index < 0) {
+        return -1;
+    }
+    // model_matrices.insert(model_matrices.begin() + call.base_instance + call.instance_count, transform);
+    call.instance_count++;
+    // update base instance down the line
+    for (size_t i = it.command + 1; i < commands.size(); i++) {
+        commands[i].base_instance++;
+    }
+    draw_buffer_dirty = true;
+    matrix_buffer_dirty = true;
+    return index;
 }
 
 void gore::instance_render::addModelData(gore::model* model, size_t preallocate) {
@@ -379,7 +383,8 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     command.count = model->index_buffer.indexSize();
     command.first_index = indexs.size();
     instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate };
-    instance_map.emplace(model, in);
+    instance_map.emplace(model, instance_array.size());
+    instance_array.push_back(in);
     commands.push_back(command);
     current_matrix_size += preallocate;
     preallocateMatrixArray(model);
@@ -398,24 +403,33 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     draw_buffer_dirty = true;
 }
 void gore::instance_render::removeModelInstance (gore::model* model, int32_t index) {
-    auto it = instance_map.find(model);
-    if (it != instance_map.end()) {
-        auto& call =  commands[it->second.command];
-        removeModelMatrix(model, index);
-        model_matrices.erase(model_matrices.begin() + index);
-        call.instance_count--;
-        // update base instance down the line
-        for (size_t i = it->second.command + 1; i < commands.size(); i++) {
-            commands[i].base_instance--;
-        }
-        draw_buffer_dirty = true;
-        matrix_buffer_dirty = true;
+    auto i_in = instance_map.find(model);
+     if (i_in == instance_map.end() || i_in->second >= instance_array.size()) {
+        return;
     }
+    auto& it = instance_array[i_in->second];
+    auto& call =  commands[it.command];
+    int m_index = removeModelMatrix(model, index);
+    if (m_index < 0) {
+        return;
+    }
+    call.instance_count--;
+    // update base instance down the line
+    for (size_t i = it.command + 1; i < commands.size(); i++) {
+        commands[i].base_instance--;
+    }
+    draw_buffer_dirty = true;
+    matrix_buffer_dirty = true;
 }
 
-void gore::instance_render::updateModelInstance (int32_t index, const matrix& transform) {
-    if (index >= 0 && index < model_matrices.size()) {
-        model_matrices[index] = transform;
+void gore::instance_render::updateModelInstance (gore::model* model, int32_t index, const matrix& transform) {
+    auto it = instance_map.find(model);
+    if (it == instance_map.end()) {
+        return;
+    }
+    auto& in = instance_array[it->second];
+    if (index >= 0 && index * 16 < matrix_array.size() && index >= in.matrix_offset && index < in.matrix_size) {
+        memcpy(matrix_array.data() + ( in.matrix_offset + index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
         matrix_buffer_dirty = true;
     }
 }
@@ -423,11 +437,12 @@ void gore::instance_render::updateModelInstance (int32_t index, const matrix& tr
 void gore::instance_render::preallocateMatrixArray (model* model) {
     auto it = instance_map.find(model);
     if (it != instance_map.end()) {
+        auto& in = instance_array[it->second];
         if (matrix_array.empty()) {
-            matrix_array = std::vector(it->second.matrix_size * 16, 0.0f);
+            matrix_array = std::vector(in.matrix_size * 16, 0.0f);
             return;
         }
-        matrix_array.resize(matrix_array.size() + (it->second.matrix_size * 16), 0.0f);
+        matrix_array.resize(matrix_array.size() + (in.matrix_size * 16), 0.0f);
     }
 }
 
@@ -437,42 +452,27 @@ void gore::instance_render::preallocateMatrixArray (model* model) {
 void gore::instance_render::reallocateMatrixArray (model* model) {
     auto it = instance_map.find(model);
     size_t new_size = 0;
-    for (auto& i : instance_map) {
-        if (i.first == it->first) {
-            new_size += ( i.second.matrix_size * 16 ) * 2;
+    for (size_t i = 0; i < instance_array.size(); i++) {
+        if (i == it->second) {
+            new_size += ( instance_array[i].matrix_size * 16 ) * 2;
         } else {
-            new_size += ( i.second.matrix_size * 16 );
+            new_size += ( instance_array[i].matrix_size * 16 );
         }
     }
     // reallocate and copy the matrices forward
     std::vector<float> new_array(new_size, 0.0f);
-    // unordered_map iteration order is arbitrary; process regions in
-    // draw call (command) order so new offsets pack correctly
-    std::vector<instance*> ordered;
-    for (auto& i : commands) {
-        instance* u = nullptr;
-        for (auto& j : instance_map) {
-            if (j.second.index_offset == i.first_index) {
-                u = &(j.second);
-            }
-        }
-        ordered.push_back(u);
-    }
     size_t new_offset = 0; // in matrix slots
-    for (instance* in : ordered) {
-        if (in == nullptr) continue;
-        // only copy the region of memory that is in use
-        // so wherever the index of model region goes up to
-        std::copy(matrix_array.begin() + (in->matrix_offset * 16), 
-        matrix_array.begin() + ((in->matrix_offset + in->current_matrix_index) * 16), 
+    for (size_t i = 0; i < instance_array.size(); i++) {
+        auto& in = instance_array[i];
+        std::copy(matrix_array.begin() + (in.matrix_offset * 16), 
+        matrix_array.begin() + ((in.matrix_offset + in.current_matrix_index) * 16), 
         new_array.begin() + (new_offset * 16));
-
-        in->matrix_offset = new_offset;
-        if (in == &it->second) {
-            in->matrix_size *= 2;
+        in.matrix_offset = new_offset;
+        if (i == it->second) {
+            in.matrix_size *= 2;
         }
-        commands[in->command].base_instance = (GLuint)new_offset;
-        new_offset += in->matrix_size;
+        commands[in.command].base_instance = (GLuint)new_offset;
+        new_offset += in.matrix_size;
     }
     matrix_array = std::move(new_array);
     matrix_buffer_dirty = true;
@@ -484,24 +484,35 @@ int32_t gore::instance_render::addModelMatrix (model* model, const matrix& trans
     if (it == instance_map.end()) {
         return -1;
     }
-    auto& in = it->second;
+    auto& in = instance_array[it->second];
     if (in.current_matrix_index >= in.matrix_size) {
         reallocateMatrixArray(model);
     }
-    memcpy(matrix_array.data() + (it->second.matrix_offset + it->second.current_matrix_index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
+    memcpy(matrix_array.data() + (in.matrix_offset + in.current_matrix_index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
     matrix_buffer_dirty = true;
-    instance_map[it->first].current_matrix_index++;
-    return instance_map[it->first].current_matrix_index - 1;
+    in.current_matrix_index++;
+    return in.current_matrix_index - 1;
 }
-void gore::instance_render::removeModelMatrix (model* model, int32_t index) {
+// this has issues,
+// also fix the 0.01 matrix getting copied into the wrong model space btw
+int32_t gore::instance_render::removeModelMatrix (model* model, int32_t index) {
     auto it = instance_map.find(model);
-    if (it == instance_map.end()) {
-        return;
+    if (it == instance_map.end() || index < 0) {
+        return -1;
     }
-    auto& in = it->second;
-    if (in.current_matrix_index > 0) {
-        
+    auto& in = instance_array[it->second];
+    if (index < in.matrix_offset || index > in.matrix_offset + in.matrix_size) {
+        return -1;
     }
+    const size_t remaining = in.current_matrix_index - index - 1;
+    if (remaining > 0) {
+        std::memmove(
+            matrix_array.data() + (in.matrix_offset + index) * 16,
+            matrix_array.data() + (in.matrix_offset + index + 1) * 16,
+            remaining * 16 * sizeof(float));
+    }
+    in.current_matrix_index -= 1;
+    return index;
 }
 
 void gore::instance_render::drawBuffer() {
