@@ -164,6 +164,10 @@ gore::IMG& gore::model::getImage (int32_t mat_index) {
     throw std::runtime_error("Image not found for material index: " + std::to_string(mat_index));
 }
 
+std::vector<gore::IMG>& gore::model::getImages () {
+    return images;
+}
+
 gore::model_material::mtl_material* gore::model::getMTLMat (int32_t index) {
     if (index < mtls.size() && index >= 0) {
         return &mtls[index];

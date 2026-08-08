@@ -315,6 +315,16 @@ void gore::instance_render::updateDrawBuffers () {
             GL_DYNAMIC_DRAW);
         matrix_buffer_dirty = false;
     }
+    if (instance_texture_units_dirty) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, texure_ssbo);
+        glBufferData(
+            GL_SHADER_STORAGE_BUFFER,
+            instance_texture_units.size() * sizeof(GLuint),
+            instance_texture_units.data(),
+            GL_DYNAMIC_DRAW
+        );
+        instance_texture_units_dirty = false;
+    }
 }
 
 void gore::instance_render::shader_setup()  {
@@ -331,6 +341,7 @@ void gore::instance_render::shader_setup()  {
     shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
     // ssbo
     glGenBuffers(1, &ssbo);
+    glGenBuffers(1, &texure_ssbo);
     glGenBuffers(1, &element_buffer);
     glGenBuffers(1, &draw_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
@@ -382,7 +393,16 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     command.base_vertex = 0;
     command.count = model->index_buffer.indexSize();
     command.first_index = indexs.size();
-    instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate };
+    gore::IMG& img = model->getImage(0);
+    size_t tex_unit = tm.getTextureUnit(img->tex);
+    if (draw_calls.empty()) {
+        draw_calls.push_back({0, 1});
+    } else if (tm.currentUnit() >= texture_units) {
+        draw_calls.push_back({draw_calls[draw_calls.size() - 1].draw_command_call_count, 1});
+    } else {
+        draw_calls[draw_calls.size() - 1].draw_command_call_count += 1;
+    }
+    instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate, 0, tex_unit, img };
     instance_map.emplace(model, instance_array.size());
     instance_array.push_back(in);
     commands.push_back(command);
@@ -392,7 +412,7 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     size_t base = vertexs.size();
     for (auto& v : ib.getVertexs()) {
         uint32_t texture_unit = 2000u;
-        vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, texture_unit});
+        vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y});
     }
     GLuint index_base = indexs.size();
     for (GLuint i : ib.getIndexs()) {
@@ -420,6 +440,7 @@ void gore::instance_render::removeModelInstance (gore::model* model, int32_t ind
     }
     draw_buffer_dirty = true;
     matrix_buffer_dirty = true;
+    instance_texture_units_dirty = true;
 }
 
 void gore::instance_render::updateModelInstance (gore::model* model, int32_t index, const matrix& transform) {
@@ -490,6 +511,11 @@ int32_t gore::instance_render::addModelMatrix (model* model, const matrix& trans
     }
     memcpy(matrix_array.data() + (in.matrix_offset + in.current_matrix_index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
     matrix_buffer_dirty = true;
+    instance_texture_units.insert(
+        instance_texture_units.begin() + in.matrix_offset + in.current_matrix_index,
+        static_cast<GLuint>(in.tex_unit)
+    );
+    instance_texture_units_dirty = true;
     in.current_matrix_index++;
     return in.current_matrix_index - 1;
 }
@@ -521,10 +547,19 @@ void gore::instance_render::drawBuffer() {
     shader.bind();
     updateDrawBuffers();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texure_ssbo);
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
-    glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)0, commands.size(), 0);
+    for (auto& i : draw_calls) {
+        /*tm.clearUnits();
+        for (size_t ii = i.draw_command_offset, iii = 0; ii < instance_array.size() && iii < i.draw_command_call_count; iii++, ii++) {
+            tm.getTextureUnit(instance_array[ii].img->tex);
+        }*/
+        tm.setTextureSamplers("textures", this->shader);
+        glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(i.draw_command_offset * sizeof(DrawElementsIndirectCommand)), i.draw_command_call_count, 0);
+    }
+    //glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(draw_command_offset * sizeof(DrawElementsIndirectCommand)), commands.size(), 0);
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

@@ -2,6 +2,7 @@
 #include "renderer.hpp"
 #include "billboard.hpp"
 #include "../file_loading/model_loading/model_loader.hpp"
+#include "texture_unit_manager.hpp"
 #include <unordered_map>
 // https://www.scratchapixel.com/index.html
 // TODO
@@ -108,11 +109,10 @@ namespace gore{
         float z;
         float uvx;
         float uvy;
-        GLuint texture_unit;
     };
     // new flow
     //  - addModelData
-    //      - adds model data and you preallocate the amt of instances you need?
+    //      - adds model data and you preallocate the amt of instances you need
     //  - addModelInstance
     //      - adds model instance in open space, and updates matrix
     //      - use returned index to modify the matrix
@@ -121,6 +121,13 @@ namespace gore{
     //      - copies ones ahead of it back
     // TODO
     //  - texturing
+    //      - same texture binding as three_dee_renderer
+    //      - split the draw commands once we get to texture unit max of machine
+    //      - use the texture_unit_manager class
+    //      - use ssbo for texure indexs
+    //      - issue with texture binding is probably how we are accessing the index???
+    //      - texture offsets aren't the same as matrix arrays, make it function like the matrix allocations
+    //      - model texture access is shit rework that
     class instance_render : public renderer<instance_render, instance_vertex> {
         private:
             friend class renderer<instance_render, instance_vertex>;
@@ -145,14 +152,29 @@ namespace gore{
                 size_t matrix_offset;
                 size_t matrix_size;
                 size_t current_matrix_index = 0;
+                size_t tex_unit;
+                gore::IMG& img;
             };
             std::vector<instance> instance_array;
             std::unordered_map<model*, size_t> instance_map;
+            // texturing
+            texture_unit_manager tm;
+            size_t draw_command_offset = 0;
+            size_t draw_command_call_count = 0;
+            struct draw_call {
+                size_t draw_command_offset;
+                size_t draw_command_call_count;
+            };
+            std::vector<draw_call> draw_calls;
+            std::vector<GLuint> instance_texture_units;
+            GLuint texure_ssbo;
+            // gl 2
             void shader_setup() override;
             instance_render(size_t w, size_t h);
             bool buffers_dirty = false;
             bool draw_buffer_dirty = false;
             bool matrix_buffer_dirty = false;
+            bool instance_texture_units_dirty = false;
             void updateDrawBuffers ();
         public:
             float vertical_fov = 45.0f;
