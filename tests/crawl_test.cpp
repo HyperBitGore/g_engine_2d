@@ -57,7 +57,7 @@ void resize(uint32_t w, uint32_t h) {
     H = h;
     center = {(float)W / 2.0f, (float)H / 2.0f};
 }
-
+// fix mouse look on windows
 int main () {
     cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
     peng = gore::model_loader::loadObj("resources/penger.obj");

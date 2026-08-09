@@ -18,7 +18,8 @@ namespace gore {
 		float roty;
 		GLuint texture_unit;
 	};
-
+// issue with the triangles getting wrong textures is probably a memory copying issue??
+// switch to using bindless textures
 class imagerenderer : public renderer<imagerenderer, image_render_vertex> {
 protected:
 	friend class renderer<imagerenderer, image_render_vertex>;

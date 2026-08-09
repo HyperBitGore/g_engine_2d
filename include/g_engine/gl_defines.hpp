@@ -12,6 +12,7 @@
 #include "../GL/glext.h"
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <corecrt_math_defines.h>
 #endif
 
 #if defined(__unix__)
@@ -22,7 +23,7 @@
 
 extern float toRadians (float degrees);
 
-
+extern void* GetGLFuncAddress(const char* name);
 
 extern PFNGLBINDBUFFERPROC glBindBuffer;
 extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;

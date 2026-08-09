@@ -1,6 +1,5 @@
 #include "three_dee_renderer.hpp"
 #include "three_dee_renderer_shader.hpp"
-#include <GL/glext.h>
 #include <cstdint>
 #include <stdexcept>
 
@@ -393,16 +392,19 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     command.base_vertex = 0;
     command.count = model->index_buffer.indexSize();
     command.first_index = indexs.size();
-    gore::IMG& img = model->getImage(0);
-    size_t tex_unit = tm.getTextureUnit(img->tex);
-    if (draw_calls.empty()) {
-        draw_calls.push_back({0, 1});
-    } else if (tm.currentUnit() >= texture_units) {
-        draw_calls.push_back({draw_calls[draw_calls.size() - 1].draw_command_call_count, 1});
-    } else {
-        draw_calls[draw_calls.size() - 1].draw_command_call_count += 1;
+    size_t tex_unit = 2000u;
+    if (!model->getImages().empty()) {
+        gore::IMG& img = model->getImages()[0];
+        tex_unit = tm.getTextureUnit(img->tex);
+        if (draw_calls.empty()) {
+            draw_calls.push_back({0, 1});
+        } else if (tm.currentUnit() >= texture_units) {
+            draw_calls.push_back({draw_calls[draw_calls.size() - 1].draw_command_call_count, 1});
+        } else {
+            draw_calls[draw_calls.size() - 1].draw_command_call_count += 1;
+        }
     }
-    instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate, 0, tex_unit, img };
+    instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate, 0, tex_unit };
     instance_map.emplace(model, instance_array.size());
     instance_array.push_back(in);
     commands.push_back(command);

@@ -153,7 +153,6 @@ namespace gore{
                 size_t matrix_size;
                 size_t current_matrix_index = 0;
                 size_t tex_unit;
-                gore::IMG& img;
             };
             std::vector<instance> instance_array;
             std::unordered_map<model*, size_t> instance_map;
