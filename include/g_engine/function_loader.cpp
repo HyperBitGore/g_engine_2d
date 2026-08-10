@@ -12,6 +12,9 @@ void* GetGLFuncAddress(const char* name) {
 		p = (void*)GetProcAddress(module, name);
 	}
 	#endif
+	if (p == nullptr) {
+		std::cout << "Failed to load OpenGL function: " << name << std::endl;
+	}
 	return p;
 }
 
@@ -138,6 +141,15 @@ PFNGLUNIFORMMATRIX4DVPROC glUniformMatrix4dv;
 PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
 
 PFNGLMULTIDRAWELEMENTSINDIRECTPROC glMultiDrawElementsIndirect;
+
+PFNGLDISPATCHCOMPUTEPROC glDispatchCompute;
+PFNGLDISPATCHCOMPUTEINDIRECTPROC glDispatchComputeIndirect;
+PFNGLGETTEXTUREHANDLEARBPROC glGetTextureHandleARB;
+PFNGLMAKETEXTUREHANDLERESIDENTARBPROC glMakeTextureHandleResidentARB;
+PFNGLMAKETEXTUREHANDLENONRESIDENTARBPROC glMakeTextureHandleNonResidentARB;
+PFNGLISTEXTUREHANDLERESIDENTARBPROC glIsTextureHandleResidentARB;
+PFNGLVERTEXATTRIBLPOINTERPROC glVertexAttribLPointer;
+
 #if defined(_WIN32)
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
@@ -263,6 +275,15 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 
 	glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)loadFunc("glBlitFramebuffer");
 	glMultiDrawElementsIndirect = (PFNGLMULTIDRAWELEMENTSINDIRECTPROC)loadFunc("glMultiDrawElementsIndirect");
+
+	glDispatchCompute = (PFNGLDISPATCHCOMPUTEPROC)loadFunc("glDispatchCompute");
+	glDispatchComputeIndirect = (PFNGLDISPATCHCOMPUTEINDIRECTPROC)loadFunc("glDispatchComputeIndirect");
+	glGetTextureHandleARB = (PFNGLGETTEXTUREHANDLEARBPROC)loadFunc("glGetTextureHandleARB");
+	glMakeTextureHandleResidentARB = (PFNGLMAKETEXTUREHANDLERESIDENTARBPROC)loadFunc("glMakeTextureHandleResidentARB");
+	glMakeTextureHandleNonResidentARB = (PFNGLMAKETEXTUREHANDLENONRESIDENTARBPROC)loadFunc("glMakeTextureHandleNonResidentARB");
+	glIsTextureHandleResidentARB = (PFNGLISTEXTUREHANDLERESIDENTARBPROC)loadFunc("glIsTextureHandleResidentARB");
+	glVertexAttribLPointer = (PFNGLVERTEXATTRIBLPOINTERPROC)loadFunc("glVertexAttribLPointer");
+
 	#if defined(_WIN32)
 	glActiveTexture = (PFNGLACTIVETEXTUREPROC)loadFunc("glActiveTexture");
 	#endif

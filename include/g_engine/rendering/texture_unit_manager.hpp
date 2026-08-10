@@ -87,5 +87,78 @@ namespace gore{
                 return current_unit;
             }
     };
+    // simplify this to just a get and a sampler array access
+    class bindless_texture_manager {
+        private:
+            std::unordered_map<GLuint, size_t> texture_handle_map;
+            std::vector<GLuint64> samplers;
+        public:
+            bindless_texture_manager() = default;
+            bindless_texture_manager (const bindless_texture_manager& btm) {
+                this->texture_handle_map = btm.texture_handle_map;
+                this->samplers = btm.samplers;
+            }
+            bindless_texture_manager (bindless_texture_manager&& btm) {
+                this->texture_handle_map = std::move(btm.texture_handle_map);
+                this->samplers = std::move(btm.samplers);
+            }
+            bindless_texture_manager& operator=(const bindless_texture_manager& btm) {
+                this->texture_handle_map = btm.texture_handle_map;
+                this->samplers = btm.samplers;
+                return *this;
+            }
+            bindless_texture_manager& operator=(bindless_texture_manager&& btm) {
+                this->texture_handle_map = std::move(btm.texture_handle_map);
+                this->samplers = std::move(btm.samplers);
+                return *this;
+            }
+            ~bindless_texture_manager() {
+                for (auto& pair : texture_handle_map) {
+                    auto& handle = samplers[pair.second];
+                    if (glIsTextureHandleResidentARB(handle)) {
+                        glMakeTextureHandleNonResidentARB(handle);
+                    }
+                }
+            }
+            size_t getTextureIndex (GLuint texture) {
+                auto it = texture_handle_map.find(texture);
+                if (it == texture_handle_map.end()) {
+                    GLuint64 handle = glGetTextureHandleARB(texture);
+                    glMakeTextureHandleResidentARB(handle);
+                    size_t index = samplers.size();
+                    texture_handle_map.emplace(texture, index);
+                    samplers.push_back(handle);
+                    return index;
+                }
+                return it->second;
+            }
+            void removeTextureHandle (GLuint texture) {
+                auto it = texture_handle_map.find(texture);
+                if (it != texture_handle_map.end()) {
+                    GLuint64 handle = samplers[it->second];
+                    if (glIsTextureHandleResidentARB(handle)) {
+                        glMakeTextureHandleNonResidentARB(handle);
+                    }
+                    texture_handle_map.erase(it);
+                    samplers.erase(std::remove(samplers.begin(), samplers.end(), handle), samplers.end());
+                }
+            }
+            GLuint64 getTextureHandle (GLuint texture) {
+                auto it = texture_handle_map.find(texture);
+                if (it != texture_handle_map.end()) {
+                    return samplers[it->second];
+                }
+                return 0;
+            }
+            void makeTextureHandleNonResident (GLuint64 handle) {
+                glMakeTextureHandleNonResidentARB(handle);
+            }
+            void makeTextureHandleResident (GLuint64 handle) {
+                glMakeTextureHandleResidentARB(handle);
+            }
+            std::vector<GLuint64>& getSamplers () {
+                return samplers;
+            }
+    };
 
 }

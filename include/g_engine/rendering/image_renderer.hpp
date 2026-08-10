@@ -1,7 +1,10 @@
 #pragma once
 #include "../img_loading/image_loader.hpp"
 #include "renderer.hpp"
+#include "texture_unit_manager.hpp"
 #include <stdexcept>
+#include <cstdint>
+#include <cstddef>
 
 //switch to using multiple buffers so we can use all of the texture units on the gpu, but also have to dynamically generate the 
 //https://www.khronos.org/opengl/wiki/Texture
@@ -16,26 +19,18 @@ namespace gore {
 		float rot;
 		float rotx;
 		float roty;
-		GLuint texture_unit;
+		uint32_t texture_unit;
 	};
 // issue with the triangles getting wrong textures is probably a memory copying issue??
 // switch to using bindless textures
 class imagerenderer : public renderer<imagerenderer, image_render_vertex> {
 protected:
 	friend class renderer<imagerenderer, image_render_vertex>;
-	imagerenderer () {
-		texture_unit_map.setHashFunction(hash);
-	}
-	uint32_t current_unit = 0;
-	static int hash(GLuint texture) {
-		return texture % 512;
-	}
-	gore::hashmap<GLuint, GLuint> texture_unit_map;
-	std::vector<GLint> samplers;
-	GLuint getTextureUnit (GLuint texture);
+	imagerenderer () = default;
+	bindless_texture_manager texture_map;
+	GLuint texture_ssbo;
 	void setTextureSamplers ();
 	void shader_setup() override {
-		texture_unit_map.setHashFunction(hash);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
@@ -47,10 +42,12 @@ protected:
 		glEnableVertexAttribArray(3);
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 5)); //rotation point
 		glEnableVertexAttribArray(4);
-		glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(image_render_vertex), (void*)(sizeof(float) * 7)); // texture unit
-		shader.setuniform("mtexture", (GLuint)0);
+		glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(image_render_vertex), (void*)offsetof(image_render_vertex, texture_unit)); // texture unit
 		updateView(0.0f, 0.0f, 1.0f);
 		updateDimensions(this->width, this->height);
+		glGenBuffers(1, &texture_ssbo);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, texture_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texture_ssbo);
 	}
 	imagerenderer(size_t w, size_t h);
 public:
@@ -70,7 +67,6 @@ class grayscalerenderer : public imagerenderer {
 	protected:
 	friend class renderer<imagerenderer, image_render_vertex>;
 	void shader_setup() override {
-		texture_unit_map.setHashFunction(hash);
 		updateView(0.0f, 0.0f, 1.0f);
 		updateDimensions(this->width, this->height);
 	}
