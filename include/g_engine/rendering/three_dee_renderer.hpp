@@ -26,22 +26,14 @@ namespace gore{
         float uvx;
         float uvy;
         GLint model_matrice;
-        GLuint texture_unit;
+        GLuint texture_index;
     };
     class threedeerender : public renderer<threedeerender, threedee_vertex> {
         private:
-            threedeerender () {
-                texture_unit_map.setHashFunction(hash);
-            }
+            threedeerender () = default;
             friend class renderer<threedeerender, threedee_vertex>;
-            uint32_t current_unit = 0;
-            static int hash(GLuint texture) {
-                return texture % 512;
-            }
-            gore::hashmap<GLuint, GLuint> texture_unit_map;
-            std::vector<GLint> samplers;
-            GLuint getTextureUnit (GLuint texture);
-            bool textureBinded (GLuint texture);
+            GLuint texture_ssbo;
+            gore::bindless_texture_manager tm;
             void setTextureSamplers ();
             // model matrice count
             std::vector<matrix> model_matrices;
@@ -78,12 +70,6 @@ namespace gore{
                 }
             };
             std::unordered_map<draw_key, instance, draw_key_hash> draw_map;
-            // instancing
-            std::vector<DrawElementsIndirectCommand> draw_commands;
-            std::unordered_map<model*, size_t> draw_call_map;
-            void addDrawCall (gore::model* m, matrix matrix);
-            void addModelData (gore::model* m);
-            GLuint indirect_buffer = 0;
 	        void shader_setup() override;
             threedeerender(size_t w, size_t h);
             void updateVertexBuffer ();

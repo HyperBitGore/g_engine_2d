@@ -3,38 +3,14 @@
 #include <cstdint>
 #include <stdexcept>
 
-GLuint gore::threedeerender::getTextureUnit (GLuint texture) {
-    GLuint* unit = texture_unit_map.get(texture);
-    if (unit == nullptr) {
-        uint32_t f_unit = GL_TEXTURE0 + current_unit;
-        texture_unit_map.insert(texture, current_unit);
-        glActiveTexture(f_unit);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        samplers.push_back(current_unit);
-        bound_textures.push_back(texture);
-        current_unit += 1;
-        return current_unit - 1;
-        
-    }
-    return *unit;
-}
-
-bool gore::threedeerender::textureBinded (GLuint texture) {
-    GLuint* unit = texture_unit_map.get(texture);
-    return unit != nullptr;
-}
-
 void gore::threedeerender::setTextureSamplers () {
-    // rebind textures in case another renderer clobbered the units between frames
-    for (size_t i = 0; i < samplers.size(); i++) {
-        glActiveTexture(GL_TEXTURE0 + samplers[i]);
-        glBindTexture(GL_TEXTURE_2D, bound_textures[i]);
-    }
-    shader.setuniform("textures", samplers.size(), samplers.data());
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, texture_ssbo);
+    auto& samplers = tm.getSamplers();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, samplers.size() * sizeof(GLuint64), samplers.data(), GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texture_ssbo);
 }
 
 void gore::threedeerender::shader_setup()  {
-    texture_unit_map.setHashFunction(hash);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);
@@ -50,8 +26,13 @@ void gore::threedeerender::shader_setup()  {
     shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
     // ssbo
     glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
     glGenBuffers(1, &element_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glGenBuffers(1, &texture_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, texture_ssbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texture_ssbo);
 }
 
 void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
@@ -67,22 +48,6 @@ gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::
 
 void gore::threedeerender::addModel (gore::model& model) {
     auto& ib = model.index_buffer;
-    uint32_t needed = model.textureCount();
-    if (current_unit + needed > (uint32_t)texture_units) {
-        // out of texture units: flush and drop all resident geometry so units can be reassigned
-        drawBuffer();
-        vertexs.clear();
-        indexs.clear();
-        model_matrices.clear();
-        texture_unit_map.clear();
-        samplers.clear();
-        bound_textures.clear();
-        current_unit = 0;
-        // billboard texture units are invalid after a reset, drop cached transients too
-        draw_map.clear();
-        transient_vertexs.clear();
-        buffers_dirty = true;
-    }
     const draw_key key{reinterpret_cast<size_t>(&model)};
     auto it = draw_map.find(key);
     if (it != draw_map.end()) {
@@ -95,12 +60,12 @@ void gore::threedeerender::addModel (gore::model& model) {
     GLint mat_slot = (GLint)model_matrices.size() - 1;
     GLuint base = (GLuint)vertexs.size();
     for (auto& v : ib.getVertexs()) {
-        uint32_t texture_unit = 2000u;
+        uint32_t texture_index = 2000u;
         if (v.material_index >= 0) {
             gore::IMG& img = model.getImage(v.material_index);
-            texture_unit = getTextureUnit(img->tex);
+            texture_index = tm.getTextureIndex(img->tex);
         }
-        vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, mat_slot, texture_unit});
+        vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, mat_slot, texture_index});
     }
     GLuint index_base = indexs.size();
     for (GLuint i : ib.getIndexs()) {
@@ -117,45 +82,13 @@ void gore::threedeerender::addModel (gore::model& model) {
     buffers_dirty = true;
 }
 
-void gore::threedeerender::addDrawCall (gore::model* m, matrix matrix) {
-    if (m == nullptr) return;
-    
-    auto it = draw_call_map.find(m);
-    if (it != draw_call_map.end()) {
-        auto& call = draw_commands[it->second];
-        // add an instance and matrix
-        call.instance_count++;
-        // this needs to align with the instance location
-        model_matrices.insert(model_matrices.begin() + call.base_instance + call.instance_count, matrix);
-        // update base instance down the line
-        for (size_t i = it->second; i < draw_commands.size(); i++) {
-            draw_commands[i].base_instance++;
-        }
-        return;
-    }
-    // add a new draw_command and model gets inserted with addModel
-    DrawElementsIndirectCommand command;
-    command.base_instance = draw_commands[draw_commands.size() - 1].base_instance + draw_commands[draw_commands.size() - 1].instance_count;
-    command.instance_count = 1;
-    command.base_vertex = 0;
-    command.count = m->index_buffer.indexSize();
-    command.first_index = indexs.size();
-    draw_call_map.emplace(m, draw_commands.size());
-    draw_commands.push_back(command);
-    // addModel?
-    
-}
-
 void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camera& cam) {
     std::vector<gore::vec3> verts = billboard.getVertexs(cam);
     if (verts.size() < 6) return;
 
-    GLuint texture_unit = 2000u;
+    GLuint texture_index = 2000u;
     if (billboard.img && billboard.img->tex != 0) {
-        if (!textureBinded(billboard.img->tex) && current_unit == texture_units) {
-            drawBuffer();
-        }
-        texture_unit = getTextureUnit(billboard.img->tex);
+        texture_index = tm.getTextureIndex(billboard.img->tex);
     }
 
     // UV layout matches getVertexs triangle order: tl, bl, br, tl, br, tr
@@ -169,7 +102,7 @@ void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camer
     };
     threedee_vertex billboard_verts[6];
     for (int i = 0; i < 6; i++) {
-        billboard_verts[i] = {verts[i].x, verts[i].y, verts[i].z, uvs[i][0], uvs[i][1], -1, texture_unit};
+        billboard_verts[i] = {verts[i].x, verts[i].y, verts[i].z, uvs[i][0], uvs[i][1], -1, texture_index};
     }
     addTransient(billboard_verts, 6);
 }
@@ -226,10 +159,8 @@ void gore::threedeerender::rebuildGeometry () {
     vertexs.clear();
     indexs.clear();
     model_matrices.clear();
-    texture_unit_map.clear();
-    samplers.clear();
+    tm.clear();
     bound_textures.clear();
-    current_unit = 0;
     std::vector<gore::model*> models;
     for (auto it = draw_map.begin(); it != draw_map.end();) {
         models.push_back(reinterpret_cast<gore::model*>(it->first.value));
@@ -253,7 +184,7 @@ void gore::threedeerender::uploadMatrices () {
         flat_matrices.size() * sizeof(float),
         flat_matrices.data(),
         GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 }
 
 // uploads resident + transient geometry; only called when the draw calls changed

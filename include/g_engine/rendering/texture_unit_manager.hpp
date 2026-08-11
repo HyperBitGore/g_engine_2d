@@ -160,6 +160,15 @@ namespace gore{
             std::vector<GLuint64>& getSamplers () {
                 return samplers;
             }
+            void clear() {
+                for (auto& i : samplers) {
+                    if (glIsTextureHandleResidentARB(i)) {
+                        glMakeTextureHandleNonResidentARB(i);
+                    }
+                }
+                samplers.clear();
+                texture_handle_map.clear();
+            }
     };
 
 }
