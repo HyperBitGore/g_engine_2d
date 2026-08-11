@@ -107,11 +107,7 @@ namespace gore{
     //      - copies ones ahead of it back
     // TODO
     //  - texturing
-    //      - same texture binding as three_dee_renderer
-    //      - split the draw commands once we get to texture unit max of machine
-    //      - use the texture_unit_manager class
-    //      - use ssbo for texure indexs
-    //      - issue with texture binding is probably how we are accessing the index???
+    //      - fix windows vector iterator out of range error
     //      - texture offsets aren't the same as matrix arrays, make it function like the matrix allocations
     //      - model texture access is shit rework that
     class instance_render : public renderer<instance_render, instance_vertex> {
@@ -143,14 +139,7 @@ namespace gore{
             std::vector<instance> instance_array;
             std::unordered_map<model*, size_t> instance_map;
             // texturing
-            texture_unit_manager tm;
-            size_t draw_command_offset = 0;
-            size_t draw_command_call_count = 0;
-            struct draw_call {
-                size_t draw_command_offset;
-                size_t draw_command_call_count;
-            };
-            std::vector<draw_call> draw_calls;
+            bindless_texture_manager tm;
             std::vector<GLuint> instance_texture_units;
             GLuint texure_ssbo;
             // gl 2

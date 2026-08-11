@@ -243,6 +243,7 @@ void gore::instance_render::updateDrawBuffers () {
             matrix_array.size() * sizeof(float),
             matrix_array.data(),
             GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
         matrix_buffer_dirty = false;
     }
     if (instance_texture_units_dirty) {
@@ -253,6 +254,7 @@ void gore::instance_render::updateDrawBuffers () {
             instance_texture_units.data(),
             GL_DYNAMIC_DRAW
         );
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texure_ssbo);
         instance_texture_units_dirty = false;
     }
 }
@@ -323,17 +325,10 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     command.base_vertex = 0;
     command.count = model->index_buffer.indexSize();
     command.first_index = indexs.size();
-    size_t tex_unit = 2000u;
+    size_t tex_unit = 0;
     if (!model->getImages().empty()) {
         gore::IMG& img = model->getImages()[0];
-        tex_unit = tm.getTextureUnit(img->tex);
-        if (draw_calls.empty()) {
-            draw_calls.push_back({0, 1});
-        } else if (tm.currentUnit() >= texture_units) {
-            draw_calls.push_back({draw_calls[draw_calls.size() - 1].draw_command_call_count, 1});
-        } else {
-            draw_calls[draw_calls.size() - 1].draw_command_call_count += 1;
-        }
+        tex_unit = tm.getTextureIndex(img->tex);
     }
     instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate, 0, tex_unit };
     instance_map.emplace(model, instance_array.size());
@@ -444,6 +439,7 @@ int32_t gore::instance_render::addModelMatrix (model* model, const matrix& trans
     }
     memcpy(matrix_array.data() + (in.matrix_offset + in.current_matrix_index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
     matrix_buffer_dirty = true;
+    // issue here, switch to same manner of management as matrix array, maybe do a class for fixed size array with dynamic growth, or just use std::vector and manage the offsets
     instance_texture_units.insert(
         instance_texture_units.begin() + in.matrix_offset + in.current_matrix_index,
         static_cast<GLuint>(in.tex_unit)
@@ -484,15 +480,7 @@ void gore::instance_render::drawBuffer() {
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
-    for (auto& i : draw_calls) {
-        /*tm.clearUnits();
-        for (size_t ii = i.draw_command_offset, iii = 0; ii < instance_array.size() && iii < i.draw_command_call_count; iii++, ii++) {
-            tm.getTextureUnit(instance_array[ii].img->tex);
-        }*/
-        tm.setTextureSamplers("textures", this->shader);
-        glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(i.draw_command_offset * sizeof(DrawElementsIndirectCommand)), i.draw_command_call_count, 0);
-    }
-    //glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(draw_command_offset * sizeof(DrawElementsIndirectCommand)), commands.size(), 0);
+    glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(0), commands.size(), 0);
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
