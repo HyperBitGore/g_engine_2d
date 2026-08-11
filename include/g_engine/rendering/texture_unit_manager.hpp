@@ -1,5 +1,6 @@
 #pragma once
 #include "renderer.hpp"
+#include <algorithm>
 
 namespace gore{
 
