@@ -104,6 +104,7 @@ int main() {
         makeCube(),
         gore::ModelType::OBJ
     );
+    gore::model cube2 = gore::model_loader::loadObj("resources/cube-tex.obj");
     gore::model penguin = gore::model_loader::loadObj("resources/penger.obj");
     gore::model duck = gore::model_loader::loadGltf("resources/duck/Duck.gltf");
 

@@ -3,6 +3,7 @@
 #include "billboard.hpp"
 #include "../file_loading/model_loading/model_loader.hpp"
 #include "texture_unit_manager.hpp"
+#include "../util/partition_array.hpp"
 #include <unordered_map>
 // https://www.scratchapixel.com/index.html
 // TODO
@@ -134,14 +135,16 @@ namespace gore{
                 size_t matrix_offset;
                 size_t matrix_size;
                 size_t current_matrix_index = 0;
-                size_t tex_unit;
+                uint32_t tex_unit;
             };
             std::vector<instance> instance_array;
             std::unordered_map<model*, size_t> instance_map;
             // texturing
             bindless_texture_manager tm;
-            std::vector<GLuint> instance_texture_units;
+            partition_array texture_partition_array;
             GLuint texure_ssbo;
+            GLuint texture_index_buffer;
+            bool texture_partition_dirty = false;
             // gl 2
             void shader_setup() override;
             instance_render(size_t w, size_t h);
