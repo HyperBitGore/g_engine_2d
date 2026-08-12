@@ -160,7 +160,7 @@ int main() {
     renderer->addModelData(cube_model, 334);
     renderer->addModelData(penguin_model, 333);
     renderer->addModelData(duck_model, 333);
-
+    eng.enable(GL_CULL_FACE);
     // Register each model as a contiguous range. Removing duck instances
     // from the end then leaves cube and penguin indices unchanged.
     for (int i = 0; i < 334; ++i) {

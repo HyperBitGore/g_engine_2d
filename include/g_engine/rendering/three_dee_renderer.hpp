@@ -108,9 +108,7 @@ namespace gore{
     //      - copies ones ahead of it back
     // TODO
     //  - texturing
-    //      - fix windows vector iterator out of range error
-    //      - texture offsets aren't the same as matrix arrays, make it function like the matrix allocations
-    //      - model texture access is shit rework that
+    //  - fix texture index removal, so we don't get messed up texture selection when removing instances
     class instance_render : public renderer<instance_render, instance_vertex> {
         private:
             friend class renderer<instance_render, instance_vertex>;

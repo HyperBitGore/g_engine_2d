@@ -82,6 +82,7 @@ static bool capture = false;
 static const float sensitivity = 0.002f;
 
 static void render() {
+
     instance_r->drawBuffer();
 }
 
@@ -152,7 +153,7 @@ int main() {
     });
     instance_r->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
     eng.setClearColor({0.05f, 0.05f, 0.08f, 1.0f});
-
+    eng.enable(GL_CULL_FACE);
     while (eng.updateWindow()) {
         gore::vec2 cur_mouse = eng.getMousePos(true);
         eng.updateInputState();
