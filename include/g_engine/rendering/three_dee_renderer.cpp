@@ -326,10 +326,6 @@ int32_t gore::instance_render::addModelInstance (gore::model* model, const matri
     }
     // model_matrices.insert(model_matrices.begin() + call.base_instance + call.instance_count, transform);
     call.instance_count++;
-    // update base instance down the line
-    for (size_t i = it.command + 1; i < commands.size(); i++) {
-        commands[i].base_instance++;
-    }
     draw_buffer_dirty = true;
     matrix_buffer_dirty = true;
     return index;
@@ -340,7 +336,8 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     // add a new draw_command and model gets inserted
     DrawElementsIndirectCommand command;
     auto& ib = model->index_buffer;
-    command.base_instance = commands.empty() ? 0 : commands.back().base_instance + commands.back().instance_count;
+    // base_instance is the model's fixed offset into the matrix / texture-unit SSBOs
+    command.base_instance = (GLuint)current_matrix_size;
     command.instance_count = 0;
     command.base_vertex = 0;
     command.count = model->index_buffer.indexSize();
@@ -384,11 +381,8 @@ void gore::instance_render::removeModelInstance (gore::model* model, int32_t ind
     if (m_index < 0) {
         return;
     }
+    texture_partition_array.removePartitionData(reinterpret_cast<size_t>(model), m_index * sizeof(GLuint), sizeof(GLuint));
     call.instance_count--;
-    // update base instance down the line
-    for (size_t i = it.command + 1; i < commands.size(); i++) {
-        commands[i].base_instance--;
-    }
     draw_buffer_dirty = true;
     matrix_buffer_dirty = true;
     instance_texture_units_dirty = true;
@@ -401,7 +395,7 @@ void gore::instance_render::updateModelInstance (gore::model* model, int32_t ind
         return;
     }
     auto& in = instance_array[it->second];
-    if (index >= 0 && index * 16 < matrix_array.size() && index >= in.matrix_offset && index < in.matrix_size) {
+    if (index >= 0 && index < in.current_matrix_index) {
         memcpy(matrix_array.data() + ( in.matrix_offset + index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
         matrix_buffer_dirty = true;
     }
@@ -442,6 +436,8 @@ void gore::instance_render::reallocateMatrixArray (model* model) {
         new_array.begin() + (new_offset * 16));
         in.matrix_offset = new_offset;
         if (i == it->second) {
+            // keep the texture-unit partition the same capacity as the matrix region
+            texture_partition_array.extendPartition(reinterpret_cast<size_t>(model), in.matrix_size * sizeof(GLuint));
             in.matrix_size *= 2;
         }
         commands[in.command].base_instance = (GLuint)new_offset;
@@ -450,6 +446,7 @@ void gore::instance_render::reallocateMatrixArray (model* model) {
     matrix_array = std::move(new_array);
     matrix_buffer_dirty = true;
     draw_buffer_dirty = true;
+    texture_partition_dirty = true;
 }
 
 int32_t gore::instance_render::addModelMatrix (model* model, const matrix& transform) {
@@ -477,7 +474,8 @@ int32_t gore::instance_render::removeModelMatrix (model* model, int32_t index) {
         return -1;
     }
     auto& in = instance_array[it->second];
-    if (index < in.matrix_offset || index > in.matrix_offset + in.matrix_size) {
+    // index is relative to this model's instances
+    if (index >= in.current_matrix_index) {
         return -1;
     }
     const size_t remaining = in.current_matrix_index - index - 1;

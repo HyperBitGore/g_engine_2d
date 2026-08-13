@@ -5,10 +5,14 @@
 #include "../include/g_engine/rendering/three_dee_renderer.hpp"
 #include "../include/g_engine/rendering/camera.hpp"
 #include "../include/g_engine/file_loading/model_loading/model_loader.hpp"
+#include "../include/g_engine/file_loading/font_loader.hpp"
+#include "../include/g_engine/rendering/font_renderer.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <memory>
 #include <random>
+#include <string>
 #include <vector>
 
 static const uint32_t W = 900;
@@ -46,9 +50,17 @@ static gore::camera camera(
 static bool view_dirty = false;
 static bool capture = false;
 static const float sensitivity = 0.002f;
+static std::unique_ptr<gore::fontrenderer> font_r;
+static gore::font fps_font;
+static std::string fps_text = "FPS: --";
+static uint32_t dpi = 96;
 
 static void render() {
     renderer->drawBuffer();
+
+    font_r->setColor({1.0f, 1.0f, 0.2f, 1.0f});
+    font_r->drawText(fps_text, &fps_font, 10.0f,
+                     static_cast<float>(window_height) - 30.0f, 18, dpi);
 }
 
 static void spawn_instance(gore::model* model, float x, float y, float z, float scale) {
@@ -141,7 +153,7 @@ static void mouseMove(gore::g_engine_2d& eng) {
     float dx = std::trunc(eng.getMousePos().x - (window_width / 2.0f));
     float dy = std::trunc(eng.getMousePos().y - (window_height / 2.0f));
     camera.setYaw(camera.getYaw() + dx * sensitivity);
-    camera.setPitch(camera.getPitch() - dy * sensitivity);
+    camera.setPitch(camera.getPitch() + dy * sensitivity);
     camera.update();
     view_dirty = true;
 }
@@ -149,6 +161,10 @@ static void mouseMove(gore::g_engine_2d& eng) {
 int main() {
     gore::g_engine_2d eng("Instance Renderer Mutation Test", W, H, 0, gore::LogType::NONE);
     renderer = gore::instance_render::create(W, H);
+    font_r = gore::fontrenderer::create(W, H);
+    fps_font = gore::fontloader::loadFont("resources/EnvyCodeR.ttf", 32, 127);
+    font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+    dpi = eng.getDPI();
 
     gore::model cube = gore::model_loader::loadObj("resources/cube-tex.obj");
     gore::model penguin = gore::model_loader::loadObj("resources/penger.obj");
@@ -180,6 +196,7 @@ int main() {
     }
 
     eng.addRenderer(renderer.get(), false, false, true);
+    eng.addRenderer(font_r.get(), false, false, false);
     eng.setRenderFunction(render);
     eng.setWindowResize([](uint32_t width, uint32_t height) {
         window_width = width;
@@ -195,11 +212,23 @@ int main() {
     );
     eng.setClearColor({0.05f, 0.05f, 0.08f, 1.0f});
 
+    double fps_timer = 0.0;
+    uint32_t frame_count = 0;
     while (eng.updateWindow()) {
         double delta = eng.getDelta();
+        fps_timer += delta;
+        ++frame_count;
+        if (fps_timer >= 0.1) {
+            char buffer[32];
+            std::snprintf(buffer, sizeof(buffer), "FPS: %.1f",
+                          frame_count / fps_timer);
+            fps_text = buffer;
+            fps_timer = 0.0;
+            frame_count = 0;
+        }
         mutate_instances(static_cast<float>(delta));
         eng.updateInputState();
-        float speed = 2.5f * static_cast<float>(delta);
+        float speed = 10.5f * static_cast<float>(delta);
 
         if (eng.getKeyReleased(g_Escape)) {
             eng.toggleMouseCapture(true);

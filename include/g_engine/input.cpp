@@ -17,7 +17,7 @@ bool gore::input::getState() {
 	#if defined(_WIN32)
 	bool success = GetKeyboardState((PBYTE)keys);
 	for (size_t i = 0; i < keys_size; i++) {
-		keys[i] = keys[i] >> 7;
+		keys[i] = (keys[i] & 0x80) ? 1 : 0;
 	}
 	#endif
 	#if defined(__unix__)

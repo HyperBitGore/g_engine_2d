@@ -48,7 +48,7 @@ void mouseMove () {
      float dx = std::trunc(eng.getMousePos().x - (W / 2.0f));  // delta from center
      float dy = std::trunc(eng.getMousePos().y - (H / 2.0f));
      cam.setYaw(cam.getYaw() + dx * sensitivity);
-     cam.setPitch(cam.getPitch() - dy * sensitivity);
+     cam.setPitch(cam.getPitch() + dy * sensitivity);
      cam.update();
      view_dirty = true;
 }
@@ -57,7 +57,6 @@ void resize(uint32_t w, uint32_t h) {
     H = h;
     center = {(float)W / 2.0f, (float)H / 2.0f};
 }
-// fix mouse look on windows
 int main () {
     cube_tex = gore::model_loader::loadObj("resources/cube-tex.obj");
     peng = gore::model_loader::loadObj("resources/penger.obj");

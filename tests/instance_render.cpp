@@ -92,7 +92,7 @@ static void mouseMove(gore::g_engine_2d& eng) {
     float dx = std::trunc(eng.getMousePos().x - (W / 2.0f));
     float dy = std::trunc(eng.getMousePos().y - (H / 2.0f));
     cam.setYaw(cam.getYaw() + dx * sensitivity);
-    cam.setPitch(cam.getPitch() - dy * sensitivity);
+    cam.setPitch(cam.getPitch() + dy * sensitivity);
     cam.update();
     view_dirty = true;
 }
@@ -158,7 +158,7 @@ int main() {
         gore::vec2 cur_mouse = eng.getMousePos(true);
         eng.updateInputState();
         double delta = eng.getDelta();
-        float speed = 2.5f * (float)delta;
+        float speed = 10.5f * (float)delta;
 
         if (eng.getKeyReleased(g_Escape)) {
             eng.toggleMouseCapture(true);

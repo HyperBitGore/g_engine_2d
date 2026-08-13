@@ -38,7 +38,8 @@ gore::vec2 gore::g_engine_2d::getMousePos(bool raw, bool skip_view) {
 		&win_x, &win_y, // Window-relative coords
 		&mask_return);
 	p.x = (float)win_x;
-	p.y = (float)win_y;
+	//gotta translate the y axis for my coord system (matches the Windows path)
+	p.y = std::abs((float)win_y - (float)wind->getHeight());
 	#endif
 
 	#if defined(_WIN32)

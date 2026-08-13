@@ -309,6 +309,7 @@ private:
 	bool fullscreen = false;
 	bool captured = false;
 	bool center = false;
+	bool warping = false;
 	bool mouseHide = true;
 	bool maintainViewport = false;
 	std::shared_ptr<gore::logger> logger;

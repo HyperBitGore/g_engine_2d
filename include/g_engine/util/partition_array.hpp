@@ -29,6 +29,7 @@ namespace gore {
                 data = new_data;
                 total_size = new_size;
             }
+        public:
             void extendPartition(size_t key, size_t byte_additional_size) {
                 auto it = partitions.find(key);
                 if (it != partitions.end()) {
@@ -47,28 +48,30 @@ namespace gore {
                     total_size += byte_additional_size;
                 }
             }
-        public:
             partition_array() : data(nullptr), total_size(0) {}
             ~partition_array() {
                 delete[] data;
             }
         // rule of 5
-            partition_array(const partition_array& other) : data(nullptr), total_size(0) {
-                for (const auto& [key, index] : other.partitions) {
-                    const auto& part = other.partition_list[index];
-                    addPartition(key, part.size);
+            partition_array(const partition_array& other)
+                : data(nullptr), partition_list(other.partition_list), partitions(other.partitions), total_size(other.total_size) {
+                if (other.data && total_size > 0) {
+                    data = new uint8_t[total_size];
+                    std::copy(other.data, other.data + total_size, data);
                 }
             }
             partition_array& operator=(const partition_array& other) {
                 if (this != &other) {
-                    delete[] data;
-                    data = nullptr;
-                    total_size = 0;
-                    partitions.clear();
-                    for (const auto& [key, index] : other.partitions) {
-                        const auto& part = other.partition_list[index];
-                        addPartition(key, part.size);
+                    uint8_t* new_data = nullptr;
+                    if (other.data && other.total_size > 0) {
+                        new_data = new uint8_t[other.total_size];
+                        std::copy(other.data, other.data + other.total_size, new_data);
                     }
+                    delete[] data;
+                    data = new_data;
+                    partition_list = other.partition_list;
+                    partitions = other.partitions;
+                    total_size = other.total_size;
                 }
                 return *this;
             }
@@ -95,8 +98,7 @@ namespace gore {
                 }
                 partition_list.push_back({total_size, size, 0});
                 partitions[key] = partition_list.size() - 1;
-                total_size += size;
-                extend(total_size);
+                extend(total_size + size); // extend() copies the old total_size bytes and updates total_size
                 return true;
             }
             uint8_t* getData () {
@@ -126,11 +128,33 @@ namespace gore {
                         auto& next_part = partition_list[i];
                         std::memmove(data + next_part.offset - size_to_remove, data + next_part.offset, next_part.size);
                         next_part.offset -= size_to_remove;
-                        next_part.index--;
                     }
                     partition_list.erase(partition_list.begin() + index);
                     partitions.erase(it);
+                    // fix up map entries that pointed past the erased partition
+                    for (auto& [other_key, other_index] : partitions) {
+                        if (other_index > index) {
+                            --other_index;
+                        }
+                    }
                     total_size -= size_to_remove;
+                }
+            }
+            void removePartitionData(size_t key, size_t index, size_t size) {
+                auto it = partitions.find(key);
+                if (it != partitions.end()) {
+                    auto& part = partition_list[it->second];
+                    // check if index is valid (index/size are byte offsets within the partition)
+                    if (index >= part.index) {
+                        return; // invalid index, nothing to remove
+                    }
+                    if (index + size > part.index) {
+                        size = part.index - index; // can't remove more than what's there
+                    }
+                    std::memmove(data + part.offset + index, data + part.offset + index + size, part.index - index - size);
+                    part.index -= size;
+                    // zero the now-unused tail so stale data isn't uploaded/reused
+                    std::fill(data + part.offset + part.index, data + part.offset + part.index + size, static_cast<uint8_t>(0));
                 }
             }
     };
