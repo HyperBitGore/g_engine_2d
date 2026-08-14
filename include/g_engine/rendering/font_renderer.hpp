@@ -11,6 +11,20 @@ namespace gore {
 		protected:
 		friend class renderer<fontrenderer, gore::vec2>;
 		void shader_setup () override {
+			gl_function_tagger tags({
+				"glBindVertexArray",
+				"glBindBuffer",
+				"glEnableVertexAttribArray",
+				"glVertexAttribPointer",
+				"glBufferData",
+				"glBufferSubData",
+				"glDrawArrays"
+			});
+			try {
+				tags.hardwareSupports();
+			} catch (render_function_not_supported& e) {
+
+			}
 			glBindVertexArray(vao);
 			glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 			glEnableVertexAttribArray(0);

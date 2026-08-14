@@ -1,5 +1,6 @@
 #pragma once
 #include "renderer.hpp"
+#include "../util/gl_tagger.hpp"
 
 namespace gore {
 
@@ -24,6 +25,20 @@ class trianglerenderer : public renderer<trianglerenderer, gore::vec2> {
 	private:
 	friend class renderer<trianglerenderer, gore::vec2>;
 	void shader_setup() override {
+		gl_function_tagger tags({
+			"glBindVertexArray",
+			"glBindBuffer",
+			"glEnableVertexAttribArray",
+			"glVertexAttribPointer",
+			"glBufferData",
+			"glBufferSubData",
+			"glDrawArrays"
+		});
+		try {
+			tags.hardwareSupports();
+		} catch (render_function_not_supported& e) {
+
+		}
 		shader.bind();
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -47,6 +62,20 @@ class pointrenderer : public renderer<pointrenderer, gore::vec2> {
 	private:
 	friend class renderer<pointrenderer, gore::vec2>;
 	void shader_setup() override {
+		gl_function_tagger tags({
+			"glBindVertexArray",
+			"glBindBuffer",
+			"glEnableVertexAttribArray",
+			"glVertexAttribPointer",
+			"glBufferData",
+			"glBufferSubData",
+			"glDrawArrays"
+		});
+		try {
+			tags.hardwareSupports();
+		} catch (render_function_not_supported& e) {
+
+		}
 		draw_arrays_mode = GL_POINTS;
 		shader.bind();
 		glBindVertexArray(vao);
@@ -67,6 +96,20 @@ class linerenderer : public renderer<linerenderer, gore::vec2> {
 	private:
 	friend class renderer<linerenderer, gore::vec2>;
 	void shader_setup() override {
+		gl_function_tagger tags({
+			"glBindVertexArray",
+			"glBindBuffer",
+			"glEnableVertexAttribArray",
+			"glVertexAttribPointer",
+			"glBufferData",
+			"glBufferSubData",
+			"glDrawArrays"
+		});
+		try {
+			tags.hardwareSupports();
+		} catch (render_function_not_supported& e) {
+
+		}
 		draw_arrays_mode = GL_LINES;
 		shader.bind();
 		glBindVertexArray(vao);

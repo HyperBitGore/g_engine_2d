@@ -5,8 +5,12 @@
 #include "../include/g_engine/rendering/three_dee_renderer.hpp"
 #include "../include/g_engine/rendering/camera.hpp"
 #include "../include/g_engine/file_loading/model_loading/model_loader.hpp"
+#include "../include/g_engine/file_loading/font_loader.hpp"
+#include "../include/g_engine/rendering/font_renderer.hpp"
 #include <cmath>
+#include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 static uint32_t W = 900;
@@ -80,10 +84,16 @@ static gore::vec2 last_mouse = {(float)W / 2.0f, (float)H / 2.0f};
 static bool view_dirty = false;
 static bool capture = false;
 static const float sensitivity = 0.002f;
+static std::unique_ptr<gore::fontrenderer> font_r;
+static gore::font fps_font;
+static std::string fps_text = "FPS: --";
+static uint32_t dpi = 96;
 
 static void render() {
-
     instance_r->drawBuffer();
+    font_r->setColor({1.0f, 1.0f, 0.2f, 1.0f});
+    font_r->drawText(fps_text, &fps_font, 10.0f,
+                     static_cast<float>(H) - 30.0f, 18, dpi);
 }
 
 static void mouseMove(gore::g_engine_2d& eng) {
@@ -100,6 +110,9 @@ static void mouseMove(gore::g_engine_2d& eng) {
 int main() {
     gore::g_engine_2d eng("Instance Renderer Test", W, H, 0, gore::LogType::NONE);
     instance_r = gore::instance_render::create(W, H);
+    font_r = gore::fontrenderer::create(W, H);
+    fps_font = gore::fontloader::loadFont("resources/EnvyCodeR.ttf", 32, 127);
+    dpi = eng.getDPI();
 
     gore::model cube(
         makeCube(),
@@ -143,6 +156,7 @@ int main() {
     }
 
     eng.addRenderer(instance_r.get(), false, false, true);
+    eng.addRenderer(font_r.get(), false, false, false);
     eng.setRenderFunction(render);
     eng.setWindowResize([](uint32_t w, uint32_t h) {
         W = w;
@@ -154,10 +168,23 @@ int main() {
     instance_r->updateView(cam.getPos(), cam.getPos() + cam.getFront(), cam.getUp());
     eng.setClearColor({0.05f, 0.05f, 0.08f, 1.0f});
     eng.enable(GL_CULL_FACE);
+    double fps_timer = 0.0;
+    uint32_t frame_count = 0;
+    constexpr double fps_update_interval = 0.1;
     while (eng.updateWindow()) {
         gore::vec2 cur_mouse = eng.getMousePos(true);
         eng.updateInputState();
         double delta = eng.getDelta();
+        fps_timer += delta;
+        ++frame_count;
+        if (fps_timer >= fps_update_interval) {
+            char buffer[32];
+            std::snprintf(buffer, sizeof(buffer), "FPS: %.1f",
+                          frame_count / fps_timer);
+            fps_text = buffer;
+            fps_timer -= fps_update_interval;
+            frame_count = 0;
+        }
         float speed = 10.5f * (float)delta;
 
         if (eng.getKeyReleased(g_Escape)) {

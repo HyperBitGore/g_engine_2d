@@ -4,6 +4,7 @@
 #include "../file_loading/model_loading/model_loader.hpp"
 #include "texture_unit_manager.hpp"
 #include "../util/partition_array.hpp"
+#include <cstdint>
 #include <unordered_map>
 // https://www.scratchapixel.com/index.html
 // TODO
@@ -44,38 +45,38 @@ namespace gore{
             enum class KEY_TYPE { MODEL, TRIANGLE, BILLBOARD };
             // per-call cached geometry (triangles/billboards), appended after persistent model geometry
             std::vector<threedee_vertex> transient_vertexs;
-            void addTransient (const threedee_vertex* data, size_t count);
+            void addTransient (const threedee_vertex* data, uint32_t count);
             std::vector<GLuint> bound_textures;
             void rebuildGeometry ();
             void uploadMatrices ();
             GLuint index_allocated = 0;
             // instances
             struct instance {
-                size_t index_offset, index_count;
-                size_t vertex_offset, vertex_count;
+                uint32_t index_offset, index_count;
+                uint32_t vertex_offset, vertex_count;
                 GLint mat_slot;          // stable slot while resident
                 uint64_t last_frame;     // residency stamp
             };
             uint64_t frame_count = 0;
             bool buffers_dirty = false;
             struct draw_key {
-                size_t value;
+                uintptr_t value;
                 KEY_TYPE type;
                 bool operator==(const draw_key& other) const {
                     return value == other.value;
                 }
             };
             struct draw_key_hash {
-                size_t operator()(const draw_key& key) const {
-                    return std::hash<size_t>{}(key.value);
+                uintptr_t operator()(const draw_key& key) const {
+                    return std::hash<uintptr_t>{}(key.value);
                 }
             };
             std::unordered_map<draw_key, instance, draw_key_hash> draw_map;
 	        void shader_setup() override;
-            threedeerender(size_t w, size_t h);
+            threedeerender(uint32_t w, uint32_t h);
             void updateVertexBuffer ();
             instance& getModelInstance (model* m) {
-                const draw_key key{reinterpret_cast<size_t>(m), KEY_TYPE::MODEL};
+                const draw_key key{reinterpret_cast<uintptr_t>(m), KEY_TYPE::MODEL};
                 auto it = draw_map.find(key);
                 return it->second;
             }
@@ -116,7 +117,7 @@ namespace gore{
             std::vector<DrawElementsIndirectCommand> commands;
             // model allocations
             std::vector<float> matrix_array;
-            size_t current_matrix_size = 0;
+            uint32_t current_matrix_size = 0;
             void preallocateMatrixArray (model* model);
             void reallocateMatrixArray (model* model);
             int32_t addModelMatrix (model* model, const matrix& transform);
@@ -128,15 +129,15 @@ namespace gore{
             GLuint draw_buffer;
             struct instance {
                 int32_t command; // index of command
-                size_t index_offset, index_count;
-                size_t vertex_offset, vertex_count;
-                size_t matrix_offset;
-                size_t matrix_size;
-                size_t current_matrix_index = 0;
+                uint32_t index_offset, index_count;
+                uint32_t vertex_offset, vertex_count;
+                uint32_t matrix_offset;
+                uint32_t matrix_size;
+                uint32_t current_matrix_index = 0;
                 uint32_t tex_unit;
             };
             std::vector<instance> instance_array;
-            std::unordered_map<model*, size_t> instance_map;
+            std::unordered_map<model*, uint32_t> instance_map;
             // texturing
             bindless_texture_manager tm;
             partition_array texture_partition_array;
@@ -145,7 +146,7 @@ namespace gore{
             bool texture_partition_dirty = false;
             // gl 2
             void shader_setup() override;
-            instance_render(size_t w, size_t h);
+            instance_render(uint32_t w, uint32_t h);
             bool buffers_dirty = false;
             bool draw_buffer_dirty = false;
             bool matrix_buffer_dirty = false;
@@ -156,7 +157,7 @@ namespace gore{
             float near_clip = 0.1f;
             float far_clip = 100.0f;
             int32_t addModelInstance (gore::model* model, const matrix& transform);
-            void addModelData(gore::model* model, size_t preallocate);
+            void addModelData(gore::model* model, uint32_t preallocate);
             void removeModelInstance (gore::model* model, int32_t index);
             void updateModelInstance (gore::model* model, int32_t index, const matrix& transform);
             // matrices

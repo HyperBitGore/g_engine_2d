@@ -1,5 +1,6 @@
 #include "three_dee_renderer.hpp"
 #include "three_dee_renderer_shader.hpp"
+#include "../util/gl_tagger.hpp"
 #include <cstdint>
 #include <stdexcept>
 
@@ -11,6 +12,27 @@ void gore::threedeerender::setTextureSamplers () {
 }
 
 void gore::threedeerender::shader_setup()  {
+    gl_function_tagger tags({
+        "glBindVertexArray",
+        "glBindBuffer",
+        "glEnableVertexAttribArray",
+        "glVertexAttribPointer",
+        "glVertexAttribIPointer",
+        "glGenBuffers",
+        "glBindBufferBase",
+        "glBufferData",
+        "glBufferSubData",
+        "glDrawElements",
+        "glGetTextureHandleARB",
+        "glMakeTextureHandleResidentARB",
+        "glMakeTextureHandleNonResidentARB",
+        "glIsTextureHandleResidentARB"
+    });
+    try {
+        tags.hardwareSupports();
+    } catch (render_function_not_supported& e) {
+
+    }
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);
@@ -42,13 +64,13 @@ void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
     shader.setuniform("projection", 1, true, perspective);
 }
 
-gore::threedeerender::threedeerender(size_t w, size_t h) : gore::renderer<gore::threedeerender, gore::threedee_vertex> (three_dee_renderer_vertex, three_dee_renderer_fragment, w, h) {
+gore::threedeerender::threedeerender(uint32_t w, uint32_t h) : gore::renderer<gore::threedeerender, gore::threedee_vertex> (three_dee_renderer_vertex, three_dee_renderer_fragment, w, h) {
 
 }
 
 void gore::threedeerender::addModel (gore::model& model) {
     auto& ib = model.index_buffer;
-    const draw_key key{reinterpret_cast<size_t>(&model)};
+    const draw_key key{reinterpret_cast<uintptr_t>(&model)};
     auto it = draw_map.find(key);
     if (it != draw_map.end()) {
         // geometry already resident, just refresh the transform and residency stamp
@@ -57,8 +79,8 @@ void gore::threedeerender::addModel (gore::model& model) {
         return;
     }
     model_matrices.push_back(model.getMatrix());
-    GLint mat_slot = (GLint)model_matrices.size() - 1;
-    GLuint base = (GLuint)vertexs.size();
+    GLint mat_slot = static_cast<GLint>(model_matrices.size()) - 1;
+    GLuint base = static_cast<GLuint>(vertexs.size());
     for (auto& v : ib.getVertexs()) {
         uint32_t texture_index = 2000u;
         if (v.material_index >= 0) {
@@ -67,13 +89,13 @@ void gore::threedeerender::addModel (gore::model& model) {
         }
         vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, mat_slot, texture_index});
     }
-    GLuint index_base = indexs.size();
+    GLuint index_base = static_cast<GLuint>(indexs.size());
     for (GLuint i : ib.getIndexs()) {
         indexs.push_back(base + i);
     }
     instance in;
-    in.index_count = ib.getIndexs().size();
-    in.vertex_count = ib.getVertexs().size();
+    in.index_count = static_cast<uint32_t>(ib.getIndexs().size());
+    in.vertex_count = static_cast<uint32_t>(ib.getVertexs().size());
     in.index_offset = index_base;
     in.vertex_offset = base;
     in.last_frame = frame_count;
@@ -117,7 +139,7 @@ void gore::threedeerender::addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::ve
     addTransient(tri, 3);
 }
 
-void gore::threedeerender::addTransient (const threedee_vertex* data, size_t count) {
+void gore::threedeerender::addTransient (const threedee_vertex* data, uint32_t count) {
     transient_vertexs.insert(transient_vertexs.end(), data, data + count);
     buffers_dirty = true;
 }
@@ -133,7 +155,7 @@ void gore::threedeerender::drawBuffer() {
     uploadMatrices(); // transforms can change every frame, always upload
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-    GLsizei draw_count = (GLsizei)(indexs.size() + transient_vertexs.size());
+    GLsizei draw_count = static_cast<GLsizei>(indexs.size() + transient_vertexs.size());
     glDrawElements(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -191,7 +213,7 @@ void gore::threedeerender::uploadMatrices () {
 void gore::threedeerender::updateVertexBuffer () {
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    size_t total = vertexs.size() + transient_vertexs.size();
+    uint32_t total = static_cast<uint32_t>(vertexs.size() + transient_vertexs.size());
     if (total > allocated) {
         allocated = total;
         glBufferData(GL_ARRAY_BUFFER, allocated * sizeof(threedee_vertex), nullptr, GL_DYNAMIC_DRAW);
@@ -205,12 +227,12 @@ void gore::threedeerender::updateVertexBuffer () {
     // element buffer: resident indices followed by sequential indices for transient vertexs
     std::vector<GLuint> all_indexs = indexs;
     all_indexs.reserve(indexs.size() + transient_vertexs.size());
-    for (size_t i = 0; i < transient_vertexs.size(); i++) {
-        all_indexs.push_back((GLuint)(vertexs.size() + i));
+    for (uint32_t i = 0; i < transient_vertexs.size(); i++) {
+        all_indexs.push_back(static_cast<GLuint>(vertexs.size() + i));
     }
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     if (all_indexs.size() > index_allocated) {
-        index_allocated = all_indexs.size();
+        index_allocated = static_cast<GLuint>(all_indexs.size());
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_allocated * sizeof(GLuint), all_indexs.data(), GL_DYNAMIC_DRAW);
     } else {
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, all_indexs.size() * sizeof(GLuint), all_indexs.data());
@@ -218,7 +240,7 @@ void gore::threedeerender::updateVertexBuffer () {
     buffers_dirty = false;
 }
 
-gore::instance_render::instance_render(size_t w, size_t h) : gore::renderer<gore::instance_render, gore::instance_vertex> (instance_renderer_vertex, three_dee_renderer_fragment, w, h) {
+gore::instance_render::instance_render(uint32_t w, uint32_t h) : gore::renderer<gore::instance_render, gore::instance_vertex> (instance_renderer_vertex, three_dee_renderer_fragment, w, h) {
 
 }
 
@@ -273,6 +295,26 @@ void gore::instance_render::updateDrawBuffers () {
 }
 
 void gore::instance_render::shader_setup()  {
+    gl_function_tagger tags({
+        "glBindVertexArray",
+        "glBindBuffer",
+        "glEnableVertexAttribArray",
+        "glVertexAttribPointer",
+        "glVertexAttribIPointer",
+        "glGenBuffers",
+        "glBindBufferBase",
+        "glBufferData",
+        "glMultiDrawElementsIndirect",
+        "glGetTextureHandleARB",
+        "glMakeTextureHandleResidentARB",
+        "glMakeTextureHandleNonResidentARB",
+        "glIsTextureHandleResidentARB"
+    });
+    try {
+        tags.hardwareSupports();
+    } catch (render_function_not_supported& e) {
+
+    }
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);
@@ -331,7 +373,7 @@ int32_t gore::instance_render::addModelInstance (gore::model* model, const matri
     return index;
 }
 
-void gore::instance_render::addModelData(gore::model* model, size_t preallocate) {
+void gore::instance_render::addModelData(gore::model* model, uint32_t preallocate) {
     if (model == nullptr || instance_map.find(model) != instance_map.end()) return;
     // add a new draw_command and model gets inserted
     DrawElementsIndirectCommand command;
@@ -340,27 +382,37 @@ void gore::instance_render::addModelData(gore::model* model, size_t preallocate)
     command.base_instance = (GLuint)current_matrix_size;
     command.instance_count = 0;
     command.base_vertex = 0;
-    command.count = model->index_buffer.indexSize();
-    command.first_index = indexs.size();
-    size_t tex_index = UINT32_MAX;
+    command.count = static_cast<GLuint>(model->index_buffer.indexSize());
+    command.first_index = static_cast<GLuint>(indexs.size());
+    uint32_t tex_index = UINT32_MAX;
     if (!model->getImages().empty()) {
         gore::IMG& img = model->getImages()[0];
         tex_index = tm.getTextureIndex(img->tex);
     }
-    instance in = { (int32_t)commands.size(), command.first_index, command.count, vertexs.size(), model->index_buffer.vertexSize(), current_matrix_size, preallocate, 0, tex_index };
-    instance_map.emplace(model, instance_array.size());
+    instance in = {
+        static_cast<int32_t>(commands.size()),
+        command.first_index,
+        command.count,
+        static_cast<uint32_t>(vertexs.size()),
+        static_cast<uint32_t>(model->index_buffer.vertexSize()),
+        current_matrix_size,
+        preallocate,
+        0,
+        tex_index
+    };
+    instance_map.emplace(model, static_cast<uint32_t>(instance_array.size()));
     instance_array.push_back(in);
     commands.push_back(command);
     current_matrix_size += preallocate;
-    texture_partition_array.addPartition(reinterpret_cast<size_t>(model), sizeof(GLuint) * preallocate);
+    texture_partition_array.addPartition(reinterpret_cast<uintptr_t>(model), sizeof(GLuint) * preallocate);
     preallocateMatrixArray(model);
     // add model data
-    size_t base = vertexs.size();
+    uint32_t base = static_cast<uint32_t>(vertexs.size());
     for (auto& v : ib.getVertexs()) {
         uint32_t texture_unit = 2000u;
         vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y});
     }
-    GLuint index_base = indexs.size();
+    GLuint index_base = static_cast<GLuint>(indexs.size());
     for (GLuint i : ib.getIndexs()) {
         indexs.push_back(base + i);
     }
@@ -381,7 +433,7 @@ void gore::instance_render::removeModelInstance (gore::model* model, int32_t ind
     if (m_index < 0) {
         return;
     }
-    texture_partition_array.removePartitionData(reinterpret_cast<size_t>(model), m_index * sizeof(GLuint), sizeof(GLuint));
+    texture_partition_array.removePartitionData(reinterpret_cast<uintptr_t>(model), m_index * sizeof(GLuint), sizeof(GLuint));
     call.instance_count--;
     draw_buffer_dirty = true;
     matrix_buffer_dirty = true;
@@ -418,8 +470,8 @@ void gore::instance_render::preallocateMatrixArray (model* model) {
 // only double the target region
 void gore::instance_render::reallocateMatrixArray (model* model) {
     auto it = instance_map.find(model);
-    size_t new_size = 0;
-    for (size_t i = 0; i < instance_array.size(); i++) {
+    uint32_t new_size = 0;
+    for (uint32_t i = 0; i < instance_array.size(); i++) {
         if (i == it->second) {
             new_size += ( instance_array[i].matrix_size * 16 ) * 2;
         } else {
@@ -428,8 +480,8 @@ void gore::instance_render::reallocateMatrixArray (model* model) {
     }
     // reallocate and copy the matrices forward
     std::vector<float> new_array(new_size, 0.0f);
-    size_t new_offset = 0; // in matrix slots
-    for (size_t i = 0; i < instance_array.size(); i++) {
+    uint32_t new_offset = 0; // in matrix slots
+    for (uint32_t i = 0; i < instance_array.size(); i++) {
         auto& in = instance_array[i];
         std::copy(matrix_array.begin() + (in.matrix_offset * 16), 
         matrix_array.begin() + ((in.matrix_offset + in.current_matrix_index) * 16), 
@@ -437,7 +489,7 @@ void gore::instance_render::reallocateMatrixArray (model* model) {
         in.matrix_offset = new_offset;
         if (i == it->second) {
             // keep the texture-unit partition the same capacity as the matrix region
-            texture_partition_array.extendPartition(reinterpret_cast<size_t>(model), in.matrix_size * sizeof(GLuint));
+            texture_partition_array.extendPartition(reinterpret_cast<uintptr_t>(model), in.matrix_size * sizeof(GLuint));
             in.matrix_size *= 2;
         }
         commands[in.command].base_instance = (GLuint)new_offset;
@@ -461,7 +513,7 @@ int32_t gore::instance_render::addModelMatrix (model* model, const matrix& trans
     memcpy(matrix_array.data() + (in.matrix_offset + in.current_matrix_index ) * 16, const_cast<matrix&>(transform).data(), 16 * sizeof(float));
     matrix_buffer_dirty = true;
     // issue here, switch to same manner of management as matrix array, maybe do a class for fixed size array with dynamic growth, or just use std::vector and manage the offsets
-    texture_partition_array.addPartitionData(reinterpret_cast<size_t>(model), reinterpret_cast<const uint8_t*>(&in.tex_unit), sizeof(GLuint));
+    texture_partition_array.addPartitionData(reinterpret_cast<uintptr_t>(model), reinterpret_cast<const uint8_t*>(&in.tex_unit), sizeof(GLuint));
     texture_partition_dirty = true;
     in.current_matrix_index++;
     return in.current_matrix_index - 1;
@@ -478,7 +530,7 @@ int32_t gore::instance_render::removeModelMatrix (model* model, int32_t index) {
     if (index >= in.current_matrix_index) {
         return -1;
     }
-    const size_t remaining = in.current_matrix_index - index - 1;
+    const uint32_t remaining = in.current_matrix_index - index - 1;
     if (remaining > 0) {
         std::memmove(
             matrix_array.data() + (in.matrix_offset + index) * 16,
@@ -500,7 +552,7 @@ void gore::instance_render::drawBuffer() {
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer);
-    glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(0), commands.size(), 0);
+    glMultiDrawElementsIndirect(GL_TRIANGLES,  GL_UNSIGNED_INT, (void*)(0), static_cast<GLsizei>(commands.size()), 0);
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

@@ -1,6 +1,7 @@
 #pragma once
 #include "../img_loading/image_loader.hpp"
 #include "renderer.hpp"
+#include "../util/gl_tagger.hpp"
 #include "texture_unit_manager.hpp"
 #include <stdexcept>
 #include <cstdint>
@@ -31,6 +32,28 @@ protected:
 	GLuint texture_ssbo;
 	void setTextureSamplers ();
 	void shader_setup() override {
+		gl_function_tagger tags({
+			"glBindVertexArray",
+			"glBindBuffer",
+			"glEnableVertexAttribArray",
+			"glVertexAttribPointer",
+			"glVertexAttribIPointer",
+			"glGenBuffers",
+			"glBindBufferBase",
+			"glBufferData",
+			"glBufferSubData",
+			"glDrawArrays",
+			"glDrawArraysExt",
+			"glGetTextureHandleARB",
+			"glMakeTextureHandleResidentARB",
+			"glMakeTextureHandleNonResidentARB",
+			"glIsTextureHandleResidentARB"
+		});
+		try {
+			tags.hardwareSupports();
+		} catch (render_function_not_supported& e) {
+			std::cout << e.what() << "do smth\n";
+		}
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
@@ -67,6 +90,28 @@ class grayscalerenderer : public imagerenderer {
 	protected:
 	friend class renderer<imagerenderer, image_render_vertex>;
 	void shader_setup() override {
+		gl_function_tagger tags({
+			"glGenVertexArrays",
+			"glGenBuffers",
+			"glBindVertexArray",
+			"glBindBuffer",
+			"glEnableVertexAttribArray",
+			"glVertexAttribPointer",
+			"glVertexAttribIPointer",
+			"glBindBufferBase",
+			"glBufferData",
+			"glBufferSubData",
+			"glDrawArrays",
+			"glGetTextureHandleARB",
+			"glMakeTextureHandleResidentARB",
+			"glMakeTextureHandleNonResidentARB",
+			"glIsTextureHandleResidentARB"
+		});
+		try {
+			tags.hardwareSupports();
+		} catch (render_function_not_supported& e) {
+
+		}
 		updateView(0.0f, 0.0f, 1.0f);
 		updateDimensions(this->width, this->height);
 	}

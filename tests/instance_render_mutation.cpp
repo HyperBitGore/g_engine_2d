@@ -214,16 +214,17 @@ int main() {
 
     double fps_timer = 0.0;
     uint32_t frame_count = 0;
+    constexpr double fps_update_interval = 0.1;
     while (eng.updateWindow()) {
         double delta = eng.getDelta();
         fps_timer += delta;
         ++frame_count;
-        if (fps_timer >= 0.1) {
+        if (fps_timer >= fps_update_interval) {
             char buffer[32];
             std::snprintf(buffer, sizeof(buffer), "FPS: %.1f",
                           frame_count / fps_timer);
             fps_text = buffer;
-            fps_timer = 0.0;
+            fps_timer -= fps_update_interval;
             frame_count = 0;
         }
         mutate_instances(static_cast<float>(delta));

@@ -1,10 +1,15 @@
 #pragma once
 #include "../gl_defines.hpp"
+#include <stdexcept>
 #include <string>
-#include <unordered_map>
 
 // use this object to tag classes for their gl function usage, use it for backup rendering/errors when hardware doesn't support gl functions
 namespace gore {
+    class render_function_not_supported : public std::runtime_error {
+        public:
+            explicit render_function_not_supported (const std::string& message) : std::runtime_error (message) {}
+    };
+
     class gl_function_tagger {
         private:
             std::vector<std::string> function_names;
@@ -30,17 +35,19 @@ namespace gore {
                 return *this;
             }
             ~gl_function_tagger() = default;
+            gl_function_tagger (std::vector<std::string> function_names) {
+                this->function_names = function_names;
+            }
             
             void tagFunction(const std::string& function_name, bool available) {
                 function_names.push_back(function_name);
             }
-            bool hardwareSupports() {
+            void hardwareSupports() {
                 for (auto& name : function_names) {
                     if (GetGLFuncAddress(name.c_str()) == nullptr) {
-                        return false;
+                        throw render_function_not_supported("Function: " + name + " , not supported on this systems drivers!");
                     }
                 }
-                return true; // all functions are available
             }
     };
 }

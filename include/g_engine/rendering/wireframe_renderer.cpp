@@ -1,7 +1,23 @@
 #include "wireframe_renderer.hpp"
 #include "wireframe_renderer_shader.hpp"
+#include "../util/gl_tagger.hpp"
 
 void gore::wireframe_renderer::shader_setup() {
+    gl_function_tagger tags({
+        "glBindVertexArray",
+        "glBindBuffer",
+        "glEnableVertexAttribArray",
+        "glVertexAttribPointer",
+        "glVertexAttribIPointer",
+        "glBufferData",
+        "glBufferSubData",
+        "glDrawArrays"
+    });
+    try {
+        tags.hardwareSupports();
+    } catch (render_function_not_supported& e) {
+
+    }
     setColor({1.0f, 1.0f, 1.0f, 1.0f});
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
