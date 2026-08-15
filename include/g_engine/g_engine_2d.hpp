@@ -13,15 +13,10 @@
 #define USE_VIEW_MATRICE 0x2
 #define ALL_COMPONENTS MAINTAIN_ASPECT_RATIO_COMPONENT | USE_VIEW_MATRICE
 
-// add frame limiting
-// add casting mouse pointer coords into viewspace
-// add optimized image renderer
-
-//add 3d support
-//add 3d line rendering
-//add 3d primitives
-//voxel engine plug-in
-//isometric engine plug-in
+// unit testing
+//	- math, test proper outputs
+//	- opengl, test proper command streams, and test the color output is correct with drawpasses
+//	- systems, test behavior of windows and audio is maintained
 
 // https://victorlecomte.com/cp-geo.pdf
 
