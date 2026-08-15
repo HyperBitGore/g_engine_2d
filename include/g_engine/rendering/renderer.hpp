@@ -36,7 +36,6 @@ namespace gore {
                 
             }
             renderer (std::string vertex_shader, std::string fragment_shader, uint32_t width, uint32_t height, bool file = false) {
-                static_assert(!std::is_abstract_v<Derived>, "Derived class must implement shader_setup()");
                 vertexs.reserve(1000);
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
                 allocated = 0;
@@ -95,6 +94,8 @@ namespace gore {
             static std::unique_ptr<FactoryDerived> create(Args&&... args) {
                 static_assert(std::is_base_of_v<Derived, FactoryDerived>,
                     "Factory type must derive from the renderer's root derived type");
+                static_assert(!std::is_abstract_v<FactoryDerived>,
+                    "Factory type must implement all renderer methods");
                 std::unique_ptr<FactoryDerived> r = std::unique_ptr<FactoryDerived>(
                     new FactoryDerived(std::forward<Args>(args)...)
                 );

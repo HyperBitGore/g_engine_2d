@@ -47,7 +47,7 @@ private:
 	int texture_units;
 	uint32_t component_mask = 0;
 	std::unique_ptr<drawpass> dr1 = nullptr;
-	std::unique_ptr<imagerenderer> basic_image = nullptr;
+	std::unique_ptr<image_renderer> basic_image = nullptr;
 	uint32_t target_width;
 	uint32_t target_height;
 	uint32_t window_width;

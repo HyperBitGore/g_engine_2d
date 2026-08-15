@@ -2,16 +2,25 @@
 #include "three_dee_renderer_shader.hpp"
 #include "../util/gl_tagger.hpp"
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 
-void gore::threedeerender::setTextureSamplers () {
+void gore::bindless_threedeerender::setTextureSamplers () {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, texture_ssbo);
     auto& samplers = tm.getSamplers();
     glBufferData(GL_SHADER_STORAGE_BUFFER, samplers.size() * sizeof(GLuint64), samplers.data(), GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texture_ssbo);
 }
 
-void gore::threedeerender::shader_setup()  {
+GLuint gore::bindless_threedeerender::textureIndex(GLuint texture) {
+    return static_cast<GLuint>(tm.getTextureIndex(texture));
+}
+
+void gore::bindless_threedeerender::clearTextures() {
+    tm.clear();
+}
+
+void gore::bindless_threedeerender::shader_setup()  {
     gl_function_tagger tags({
         "glBindVertexArray",
         "glBindBuffer",
@@ -28,11 +37,7 @@ void gore::threedeerender::shader_setup()  {
         "glMakeTextureHandleNonResidentARB",
         "glIsTextureHandleResidentARB"
     });
-    try {
-        tags.hardwareSupports();
-    } catch (render_function_not_supported& e) {
-
-    }
+    tags.hardwareSupports();
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);
@@ -64,8 +69,66 @@ void gore::threedeerender::updateDimensions (uint32_t width, uint32_t height) {
     shader.setuniform("projection", 1, true, perspective);
 }
 
-gore::threedeerender::threedeerender(uint32_t w, uint32_t h) : gore::renderer<gore::threedeerender, gore::threedee_vertex> (three_dee_renderer_vertex, three_dee_renderer_fragment, w, h) {
+gore::bindless_threedeerender::bindless_threedeerender(uint32_t w, uint32_t h) : gore::threedeerender(three_dee_renderer_vertex, three_dee_renderer_fragment, w, h) {
 
+}
+
+gore::texture_unit_threedeerender::texture_unit_threedeerender(
+    uint32_t w, uint32_t h)
+    : gore::threedeerender(
+        three_dee_renderer_vertex, three_dee_renderer_fragment_texture_unit, w, h) {
+}
+
+GLuint gore::texture_unit_threedeerender::textureIndex(GLuint texture) {
+    if (!tm.textureBinded(texture) && tm.full()) {
+        flushTextureBatch();
+    }
+    return tm.getTextureUnit(texture);
+}
+
+void gore::texture_unit_threedeerender::setTextureSamplers() {
+    tm.setTextureSamplers("tex_array", shader);
+}
+
+void gore::texture_unit_threedeerender::clearTextures() {
+    tm.clearUnits();
+}
+
+void gore::texture_unit_threedeerender::shader_setup() {
+    gl_function_tagger tags({
+        "glBindVertexArray",
+        "glBindBuffer",
+        "glEnableVertexAttribArray",
+        "glVertexAttribPointer",
+        "glVertexAttribIPointer",
+        "glGenBuffers",
+        "glBindBufferBase",
+        "glBufferData",
+        "glBufferSubData",
+        "glDrawElements"
+    });
+    tags.hardwareSupports();
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(gore::threedee_vertex), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gore::threedee_vertex),
+                          (void*)(sizeof(float) * 3));
+    glEnableVertexAttribArray(2);
+    glVertexAttribIPointer(2, 1, GL_INT, sizeof(gore::threedee_vertex),
+                           (void*)(sizeof(float) * 5));
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(gore::threedee_vertex),
+                           (void*)(sizeof(float) * 6));
+    updateDimensions(width, height);
+    updateView({0, 0, 5}, {0, 0, 0}, gore::vec3(0, 1, 0));
+    shader.setuniform("set_color", {1.0f, 1.0f, 1.0f, 1.0f});
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
+    glGenBuffers(1, &element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
 }
 
 void gore::threedeerender::addModel (gore::model& model) {
@@ -78,14 +141,20 @@ void gore::threedeerender::addModel (gore::model& model) {
         model_matrices[it->second.mat_slot] = model.getMatrix();
         return;
     }
+    for (auto& v : ib.getVertexs()) {
+        if (v.material_index >= 0) {
+            gore::IMG& img = model.getImage(v.material_index);
+            textureIndex(img->tex);
+        }
+    }
     model_matrices.push_back(model.getMatrix());
     GLint mat_slot = static_cast<GLint>(model_matrices.size()) - 1;
     GLuint base = static_cast<GLuint>(vertexs.size());
     for (auto& v : ib.getVertexs()) {
-        uint32_t texture_index = 2000u;
+        uint32_t texture_index = UINT32_MAX;
         if (v.material_index >= 0) {
             gore::IMG& img = model.getImage(v.material_index);
-            texture_index = tm.getTextureIndex(img->tex);
+            texture_index = textureIndex(img->tex);
         }
         vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y, mat_slot, texture_index});
     }
@@ -108,9 +177,9 @@ void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camer
     std::vector<gore::vec3> verts = billboard.getVertexs(cam);
     if (verts.size() < 6) return;
 
-    GLuint texture_index = 2000u;
+    GLuint texture_index = UINT32_MAX;
     if (billboard.img && billboard.img->tex != 0) {
-        texture_index = tm.getTextureIndex(billboard.img->tex);
+        texture_index = textureIndex(billboard.img->tex);
     }
 
     // UV layout matches getVertexs triangle order: tl, bl, br, tl, br, tr
@@ -132,9 +201,9 @@ void gore::threedeerender::addBillboard (gore::billboard& billboard, gore::camer
 // unskinned vertex
 void gore::threedeerender::addTriangle(gore::vec3 pos, gore::vec3 pos2, gore::vec3 pos3) {
     threedee_vertex tri[3] = {
-        {pos.x, pos.y, pos.z, 0.0, 0.0, -1, 2000u},
-        {pos2.x, pos2.y, pos2.z, 0.0, 0.0, -1, 2000u},
-        {pos3.x, pos3.y, pos3.z, 0.0, 0.0, -1, 2000u},
+        {pos.x, pos.y, pos.z, 0.0, 0.0, -1, UINT32_MAX},
+        {pos2.x, pos2.y, pos2.z, 0.0, 0.0, -1, UINT32_MAX},
+        {pos3.x, pos3.y, pos3.z, 0.0, 0.0, -1, UINT32_MAX},
     };
     addTransient(tri, 3);
 }
@@ -181,7 +250,7 @@ void gore::threedeerender::rebuildGeometry () {
     vertexs.clear();
     indexs.clear();
     model_matrices.clear();
-    tm.clear();
+    clearTextures();
     bound_textures.clear();
     std::vector<gore::model*> models;
     for (auto it = draw_map.begin(); it != draw_map.end();) {
@@ -192,6 +261,35 @@ void gore::threedeerender::rebuildGeometry () {
         addModel(*model);
     }
     buffers_dirty = true;
+}
+
+void gore::threedeerender::flushTextureBatch() {
+    if (vertexs.empty() && transient_vertexs.empty()) {
+        clearTextures();
+        return;
+    }
+    shader.bind();
+    setTextureSamplers();
+    if (buffers_dirty) {
+        updateVertexBuffer();
+    }
+    uploadMatrices();
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    const GLsizei draw_count =
+        static_cast<GLsizei>(indexs.size() + transient_vertexs.size());
+    glDrawElements(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    vertexs.clear();
+    transient_vertexs.clear();
+    indexs.clear();
+    model_matrices.clear();
+    draw_map.clear();
+    clearTextures();
+    buffers_dirty = false;
+    index_allocated = 0;
 }
 
 void gore::threedeerender::uploadMatrices () {
@@ -240,8 +338,9 @@ void gore::threedeerender::updateVertexBuffer () {
     buffers_dirty = false;
 }
 
-gore::instance_render::instance_render(uint32_t w, uint32_t h) : gore::renderer<gore::instance_render, gore::instance_vertex> (instance_renderer_vertex, three_dee_renderer_fragment, w, h) {
-
+gore::instance_render::instance_render(uint32_t w, uint32_t h)
+    : gore::renderer<gore::instance_render, gore::instance_vertex>(
+        instance_renderer_vertex, three_dee_renderer_fragment, w, h) {
 }
 
 void gore::instance_render::updateDrawBuffers () {
@@ -271,7 +370,6 @@ void gore::instance_render::updateDrawBuffers () {
     if (instance_texture_units_dirty) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, texure_ssbo);
         std::vector<GLuint64> samplers = tm.getSamplers();
-        //samplers.insert(samplers.begin(), 0); // add a dummy sampler for untextured instances
         glBufferData(
             GL_SHADER_STORAGE_BUFFER,
             samplers.size() * sizeof(GLuint64),
@@ -310,11 +408,7 @@ void gore::instance_render::shader_setup()  {
         "glMakeTextureHandleNonResidentARB",
         "glIsTextureHandleResidentARB"
     });
-    try {
-        tags.hardwareSupports();
-    } catch (render_function_not_supported& e) {
-
-    }
+    tags.hardwareSupports();
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(0);
@@ -409,7 +503,6 @@ void gore::instance_render::addModelData(gore::model* model, uint32_t preallocat
     // add model data
     uint32_t base = static_cast<uint32_t>(vertexs.size());
     for (auto& v : ib.getVertexs()) {
-        uint32_t texture_unit = 2000u;
         vertexs.push_back({v.pos.x, v.pos.y, v.pos.z, v.uv.x, v.uv.y});
     }
     GLuint index_base = static_cast<GLuint>(indexs.size());
@@ -557,4 +650,31 @@ void gore::instance_render::drawBuffer() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+}
+
+std::unique_ptr<gore::threedeerender> gore::threedeerender::create(
+    uint32_t width, uint32_t height) {
+    return gore::createThreeDeeRenderer(width, height);
+}
+
+std::unique_ptr<gore::threedeerender> gore::createThreeDeeRenderer(
+    uint32_t width, uint32_t height) {
+    try {
+        return gore::renderer<gore::threedeerender,
+                              gore::threedee_vertex>::template create<
+            gore::bindless_threedeerender>(width, height);
+    } catch (const gore::render_function_not_supported& e) {
+        std::cout << e.what()
+                  << " bindless three-dee renderer construction failed; "
+                     "trying texture-unit renderer.\n";
+    }
+    try {
+        return gore::renderer<gore::threedeerender,
+                              gore::threedee_vertex>::template create<
+            gore::texture_unit_threedeerender>(width, height);
+    } catch (const gore::render_function_not_supported& e) {
+        std::cout << e.what()
+                  << " texture-unit three-dee renderer construction failed.\n";
+    }
+    return nullptr;
 }

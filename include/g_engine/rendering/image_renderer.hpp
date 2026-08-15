@@ -3,6 +3,7 @@
 #include "renderer.hpp"
 #include "../util/gl_tagger.hpp"
 #include "texture_unit_manager.hpp"
+#include <memory>
 #include <stdexcept>
 #include <cstdint>
 #include <cstddef>
@@ -22,12 +23,42 @@ namespace gore {
 		float roty;
 		uint32_t texture_unit;
 	};
-// issue with the triangles getting wrong textures is probably a memory copying issue??
-// switch to using bindless textures
-class imagerenderer : public renderer<imagerenderer, image_render_vertex> {
+// parent class - image_renderer
+//	- childs, bindless_image_renderer
+//	- childs, texture_unit_renderer
+// call static function
+//	- createImageRenderer, returns a unique ptr with imagerenderer with proper child
+// shader setup throw should get caught by static function
+
+class image_renderer : public renderer <image_renderer, image_render_vertex> {
+	private:
+		friend class renderer<image_renderer, image_render_vertex>;
+
+	protected:
+		image_renderer(std::string vertex_shader, std::string fragment_shader,
+			size_t width, size_t height)
+			: renderer<image_renderer, image_render_vertex>(
+				std::move(vertex_shader), std::move(fragment_shader),
+				width, height) {}
+
+	public:
+		virtual ~image_renderer() = default;
+		virtual void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions) = 0;
+		virtual void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot) = 0;
+		virtual void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot) = 0;
+		virtual void drawBuffer() = 0;
+		virtual void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions) = 0;
+		virtual void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs) = 0;
+		virtual void drawImageRotated(const IMG& img, gore::vec2 pos, gore::vec2 dimensions, float rot) = 0;
+		virtual void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions) = 0;
+		virtual void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs) = 0;
+		virtual void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot) = 0;
+};
+
+class bindless_image_renderer : public image_renderer {
 protected:
-	friend class renderer<imagerenderer, image_render_vertex>;
-	imagerenderer () = default;
+	friend class renderer<image_renderer, image_render_vertex>;
+	friend class renderer<bindless_image_renderer, image_render_vertex>;
 	bindless_texture_manager texture_map;
 	GLuint texture_ssbo;
 	void setTextureSamplers ();
@@ -49,11 +80,7 @@ protected:
 			"glMakeTextureHandleNonResidentARB",
 			"glIsTextureHandleResidentARB"
 		});
-		try {
-			tags.hardwareSupports();
-		} catch (render_function_not_supported& e) {
-			std::cout << e.what() << "do smth\n";
-		}
+		tags.hardwareSupports();
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 		glEnableVertexAttribArray(0);
@@ -72,23 +99,74 @@ protected:
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, texture_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texture_ssbo);
 	}
-	imagerenderer(size_t w, size_t h);
+	bindless_image_renderer(size_t w, size_t h);
 public:
-	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
-	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
-	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot);
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions) override;
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot) override;
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot) override;
 	void drawBuffer() override;
-	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions);
-	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
-	void drawImageRotated(const IMG& img,gore::vec2 pos, gore::vec2 dimensions, float rot);
-	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions);
-	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs);
-	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot);
+	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions) override;
+	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs) override;
+	void drawImageRotated(const IMG& img, gore::vec2 pos, gore::vec2 dimensions, float rot) override;
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions) override;
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs) override;
+	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot) override;
 };
 
-class grayscalerenderer : public imagerenderer {
+class texture_unit_image_renderer : public image_renderer {
+protected:
+	friend class renderer<image_renderer, image_render_vertex>;
+	texture_unit_manager texture_map;
+
+	void shader_setup() override {
+		gl_function_tagger tags({
+			"glBindVertexArray",
+			"glBindBuffer",
+			"glEnableVertexAttribArray",
+			"glVertexAttribPointer",
+			"glVertexAttribIPointer",
+			"glGenBuffers",
+			"glBufferData",
+			"glBufferSubData",
+			"glDrawArrays"
+		});
+		tags.hardwareSupports();
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 2));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 4));
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(image_render_vertex), (void*)(sizeof(float) * 5));
+		glEnableVertexAttribArray(4);
+		glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(image_render_vertex), (void*)offsetof(image_render_vertex, texture_unit));
+		updateView(0.0f, 0.0f, 1.0f);
+		updateDimensions(this->width, this->height);
+	}
+	void addVertex(GLuint texture, vec2 pos, vec2 dim, vec4 uvs, float rot);
+	void setTextureSamplers();
+	texture_unit_image_renderer(size_t w, size_t h);
+
+public:
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions) override;
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot) override;
+	void addImageVertex(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs, float rot) override;
+	void drawBuffer() override;
+	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions) override;
+	void drawImage(const gore::IMG& img, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs) override;
+	void drawImageRotated(const IMG& img, gore::vec2 pos, gore::vec2 dimensions, float rot) override;
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions) override;
+	void drawTexture(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, gore::vec4 uvs) override;
+	void drawTextureRotated(GLuint texture, gore::vec2 pos, gore::vec2 dimensions, float rot) override;
+};
+
+class grayscalerenderer : public bindless_image_renderer {
 	protected:
-	friend class renderer<imagerenderer, image_render_vertex>;
+	friend class renderer<image_renderer, image_render_vertex>;
+	friend class renderer<bindless_image_renderer, image_render_vertex>;
 	void shader_setup() override {
 		gl_function_tagger tags({
 			"glGenVertexArrays",
@@ -122,6 +200,8 @@ class grayscalerenderer : public imagerenderer {
 		shader.setuniform("withAlpha", withAlpha);
 	}
 };
+
+extern std::unique_ptr<image_renderer> createImageRenderer (uint32_t w, uint32_t h);
 
 //https://open.gl/framebuffers
 //https://www.youtube.com/watch?v=QQ3jr-9Rc1o

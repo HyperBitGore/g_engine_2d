@@ -10,7 +10,7 @@ static const uint32_t H = 700;
 gore::g_engine_2d eng("Text Test", W, H, 0, gore::LogType::NONE);
 
 static std::unique_ptr<gore::fontrenderer>  font_r;
-static std::unique_ptr<gore::imagerenderer> img_r;
+static std::unique_ptr<gore::image_renderer> img_r;
 
 static gore::font f_mono;
 static gore::font f_sans;
@@ -52,7 +52,7 @@ int main() {
     gore::fontraster::rasterizeFont(&f_sans, 64, eng.getDPI(), 0xFFFFFFFF, 32, 127);
 
     font_r = gore::fontrenderer::create(W, H);
-    img_r  = gore::imagerenderer::create(W, H);
+    img_r  = gore::createImageRenderer(W, H);
     eng.addRenderer(font_r.get(), false, false, false);
     eng.addRenderer(img_r.get(),  false, false, false);
 

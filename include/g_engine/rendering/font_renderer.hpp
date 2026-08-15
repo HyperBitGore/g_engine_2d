@@ -49,8 +49,8 @@ namespace gore {
 		public:
 		static void rasterizeGlyph(gore::glyph* g, uint32_t color, int ptsize, uint32_t dpi, gore::font* Font);
 		static void rasterizeFont(gore::font* font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end);
-		static void drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
-		static void drawRasterText(gore::font* font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi);
+		static void drawRasterText(gore::font* font, image_renderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
+		static void drawRasterText(gore::font* font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi);
 
 	};
 }

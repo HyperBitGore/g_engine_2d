@@ -13,7 +13,7 @@ gore::g_engine_2d eng2("Test Window", 640, 480, USE_VIEW_MATRICE, gore::LogType:
 std::unique_ptr<gore::trianglerenderer>  triangle_r;
 std::unique_ptr<gore::linerenderer>      line_r;
 std::unique_ptr<gore::pointrenderer>     point_r;
-std::unique_ptr<gore::imagerenderer>     img_r;
+std::unique_ptr<gore::image_renderer>     img_r;
 std::unique_ptr<gore::grayscalerenderer> gray_r;
 std::unique_ptr<gore::fontrenderer>      font_r;
 gore::drawpass dr(640, 480, GL_COLOR_ATTACHMENT0);
@@ -387,8 +387,8 @@ int main() {
 	triangle_r = gore::trianglerenderer::create(640, 480);
 	line_r     = gore::linerenderer::create(640, 480);
 	point_r    = gore::pointrenderer::create(640, 480);
-	img_r      = gore::imagerenderer::create(640, 480);
-	gray_r     = gore::imagerenderer::create<gore::grayscalerenderer>(640, 480);
+	img_r      = gore::createImageRenderer(640, 480);
+	gray_r     = gore::image_renderer::create<gore::grayscalerenderer>(640, 480);
 	font_r     = gore::fontrenderer::create(640, 480);
 	eng2.addRenderer(triangle_r.get(), false, true,  false);
 	eng2.addRenderer(line_r.get(),     false, true,  false);

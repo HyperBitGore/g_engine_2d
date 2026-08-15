@@ -112,7 +112,7 @@ int main() {
     const float orig_x = -(COLS / 2.0f) * STEP + STEP * 0.5f;
     const float orig_y =  1.2f;
 
-    three_r = gore::threedeerender::create(W, H);
+    three_r = gore::createThreeDeeRenderer(W, H);
 
     models.reserve(model_count);
     for (int idx = 0; idx < model_count; idx++) {

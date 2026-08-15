@@ -21,7 +21,7 @@ static const uint32_t H = 600;
 
 gore::g_engine_2d eng("Texture Unit Overflow Test", W, H, 0, gore::LogType::NONE);
 
-static std::unique_ptr<gore::imagerenderer> img_r;
+static std::unique_ptr<gore::image_renderer> img_r;
 static std::vector<gore::IMG> textures;
 static int max_units = 0;
 static int tile_count = 0;
@@ -99,7 +99,7 @@ int main() {
         textures.push_back(std::move(img));
     }
 
-    img_r = gore::imagerenderer::create(W, H);
+    img_r = gore::createImageRenderer(W, H);
     eng.addRenderer(img_r.get(), false, false, false);
     eng.setRenderFunction(render);
 

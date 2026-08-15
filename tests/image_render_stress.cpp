@@ -23,7 +23,7 @@ static gore::font f_mono;
 
 gore::g_engine_2d eng("Image Renderer Stress Test", W, H, 0, gore::LogType::NONE);
 
-static std::unique_ptr<gore::imagerenderer> img_r;
+static std::unique_ptr<gore::image_renderer> img_r;
 static std::unique_ptr<gore::fontrenderer>  font_r;
 
 // all textures used in the batch
@@ -118,7 +118,7 @@ int main() {
 
     init_sprites(sprite_count);
 
-    img_r  = gore::imagerenderer::create(W, H);
+    img_r  = gore::createImageRenderer(W, H);
     font_r = gore::fontrenderer::create(W, H);
     eng.addRenderer(img_r.get(),  false, false, false);
     eng.addRenderer(font_r.get(), false, false, false);

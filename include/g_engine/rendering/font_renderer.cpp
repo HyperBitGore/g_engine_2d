@@ -120,7 +120,7 @@ int findFontChar(gore::font* f, uint16_t c) {
 	return 0;
 }
 
-void gore::fontraster::drawRasterText(gore::font* Font, imagerenderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontraster::drawRasterText(gore::font* Font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
 	if (Font->atlas.getImg() == nullptr) {
 		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
 		return;
@@ -152,7 +152,7 @@ void gore::fontraster::drawRasterText(gore::font* Font, imagerenderer* img_r, st
 	img_r->drawBuffer();
 }
 
-void gore::fontraster::drawRasterText(gore::font* font, imagerenderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
+void gore::fontraster::drawRasterText(gore::font* font, image_renderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
 	drawRasterText(font, img_r, gore::fontloader::convertToU16String(text), x, y, ptsize, dpi);
 }
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf

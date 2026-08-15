@@ -66,6 +66,9 @@ namespace gore{
                 auto it = texture_unit_map.find(texture);
                 return it != texture_unit_map.end();
             }
+            bool full () const {
+                return current_unit >= static_cast<uint32_t>(texture_units);
+            }
             void setTextureSamplers (const std::string& sampler_array_target, gore::shader& shader) {
                 // rebind textures in case another renderer clobbered the units between frames
                 for (size_t i = 0; i < samplers.size(); i++) {
@@ -78,8 +81,11 @@ namespace gore{
                 return samplers;
             }
             void clearUnits () {
+                texture_unit_map.clear();
                 samplers.clear();
                 bound_textures.clear();
+                current_unit = 0;
+                draw_split = 1;
             }
             size_t drawsplits () {
                 return draw_split;

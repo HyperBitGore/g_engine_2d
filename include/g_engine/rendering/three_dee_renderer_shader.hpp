@@ -1,3 +1,5 @@
+#pragma once
+
 const char* three_dee_renderer_vertex = "#version 450 core\n"
     "\n"
     "layout(location = 0) in vec3 pos;\n"
@@ -42,6 +44,25 @@ const char* three_dee_renderer_fragment = "#version 450 core\n"
     "        color = texture(textures[tex_unit], uv_c);\n"
     "    }\n"
     "}";
+
+const char* three_dee_renderer_fragment_texture_unit = "#version 430 core\n"
+    "#define UINT32_MAX 0xffffffffu\n"
+    "in vec2 uv_c;\n"
+    "out vec4 color;\n"
+    "uniform vec4 set_color;\n"
+    "flat in uint tex_unit;\n"
+    "uniform sampler2D tex_array[TEXTURE_UNIT];\n"
+    "void main(){\n"
+    "    if (tex_unit == UINT32_MAX) {\n"
+    "        color = set_color;\n"
+    "    } else {\n"
+    "        color = vec4(0.0);\n"
+    "        switch (tex_unit) {\n"
+    "            TEXTURE_SWITCH tex_array uv_c\n"
+    "        }\n"
+    "    }\n"
+    "}";
+
 const char* instance_renderer_vertex = "#version 450 core\n"
 "\n"
 "#extension GL_ARB_shader_draw_parameters : require\n"

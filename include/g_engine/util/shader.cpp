@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cctype>
+#include <stdexcept>
 
 void gore::shader::bind() {
 	glUseProgram(program);
@@ -630,6 +632,46 @@ std::string gore::shader::textureUnitSub (std::string shader_code) {
 	if (index != std::string::npos) {
 		std::string tex_string = std::to_string(texture_units);
 		shader_code.replace(index, 12, tex_string);
+	}
+	index = shader_code.find("TEXTURE_SWITCH");
+	if (index != std::string::npos) {
+		const size_t token_length = 14;
+		size_t argument_index = index + token_length;
+		while (argument_index < shader_code.size() &&
+			std::isspace(static_cast<unsigned char>(shader_code[argument_index]))) {
+			++argument_index;
+		}
+		const size_t texture_array_start = argument_index;
+		while (argument_index < shader_code.size() &&
+			(std::isalnum(static_cast<unsigned char>(shader_code[argument_index])) ||
+				shader_code[argument_index] == '_')) {
+			++argument_index;
+		}
+		const std::string texture_array_name =
+			shader_code.substr(texture_array_start, argument_index - texture_array_start);
+		while (argument_index < shader_code.size() &&
+			std::isspace(static_cast<unsigned char>(shader_code[argument_index]))) {
+			++argument_index;
+		}
+		const size_t texcoord_start = argument_index;
+		while (argument_index < shader_code.size() &&
+			(std::isalnum(static_cast<unsigned char>(shader_code[argument_index])) ||
+				shader_code[argument_index] == '_')) {
+			++argument_index;
+		}
+		const std::string texcoord_name =
+			shader_code.substr(texcoord_start, argument_index - texcoord_start);
+		if (texture_array_name.empty() || texcoord_name.empty()) {
+			throw std::runtime_error(
+				"TEXTURE_SWITCH requires a sampler array and texture coordinate name");
+		}
+		std::string switch_string;
+		for (int32_t unit = 0; unit < texture_units; ++unit) {
+			switch_string += "case " + std::to_string(unit) +
+				"u: color = texture(" + texture_array_name + "[" +
+				std::to_string(unit) + "], " + texcoord_name + "); break;\n";
+		}
+		shader_code.replace(index, argument_index - index, switch_string);
 	}
 
 	return shader_code;

@@ -11,7 +11,7 @@ static const uint32_t H = 600;
 
 gore::g_engine_2d eng("Image Test", W, H, 0, gore::LogType::NONE);
 
-static std::unique_ptr<gore::imagerenderer>    img_r;
+static std::unique_ptr<gore::image_renderer>    img_r;
 static std::unique_ptr<gore::grayscalerenderer> gray_r;
 
 static gore::IMG img_png;
@@ -83,8 +83,8 @@ int main() {
     gore::imageloader::createTexture(img_blank, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
     gore::imageloader::updateIMG(img_blank);
 
-    img_r  = gore::imagerenderer::create(W, H);
-    gray_r = gore::imagerenderer::create<gore::grayscalerenderer>(W, H);
+    img_r  = gore::createImageRenderer(W, H);
+    gray_r = gore::image_renderer::create<gore::grayscalerenderer>(W, H);
     eng.addRenderer(img_r.get(),  false, false, false);
     eng.addRenderer(gray_r.get(), false, false, false);
 

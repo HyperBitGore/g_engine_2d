@@ -261,7 +261,7 @@ gore::g_engine_2d::g_engine_2d(const char* window_name, uint32_t width, uint32_t
 	if (target_width == 0) {
 		this->target_width = this->window_width;
 	}
-	this->basic_image = imagerenderer::create(window_width, window_height);
+	this->basic_image = createImageRenderer(window_width, window_height);
 	dr1 = std::make_unique<drawpass>(this->target_width, this->target_height, GL_COLOR_ATTACHMENT0);
 	#if defined(_WIN32)
 	ShowWindow(wind->getRawWindow(), SW_SHOW);
