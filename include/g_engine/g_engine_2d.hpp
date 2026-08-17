@@ -14,7 +14,6 @@
 #define ALL_COMPONENTS MAINTAIN_ASPECT_RATIO_COMPONENT | USE_VIEW_MATRICE
 
 // unit testing
-//	- math, test proper outputs
 //	- opengl, test proper command streams, and test the color output is correct with drawpasses
 //	- systems, test behavior of windows and audio is maintained
 
