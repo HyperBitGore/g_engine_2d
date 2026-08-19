@@ -10,6 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(UNIT_TEST "Enable unit-test-only code" OFF)
+if(UNIT_TEST)
+    add_compile_definitions(_UNIT_TEST_)
+endif()
+
+enable_testing()
+
 set(ENGINE_SOURCES
     include/g_engine/g_engine_2d.hpp
     include/g_engine/audio/audio_player.cpp
@@ -101,6 +108,13 @@ add_executable(test_instance_render_mutation ${ENGINE_SOURCES} tests/instance_re
 add_executable(test_maintain_renderer_view ${ENGINE_SOURCES} tests/maintain_renderer_view.cpp)
 
 add_executable(test_dual_engine ${ENGINE_SOURCES} tests/dual_engine.cpp)
+
+add_test(NAME matrix_vector COMMAND test_matrix_vector)
+add_test(NAME primitive_unit COMMAND test_primitive_unit)
+add_test(NAME image_unit COMMAND test_image_unit)
+add_test(NAME wireframe_unit COMMAND test_wireframe_unit)
+add_test(NAME font_unit COMMAND test_font_unit)
+add_test(NAME three_dee_unit COMMAND test_three_dee_unit)
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)

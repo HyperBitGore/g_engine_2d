@@ -1,4 +1,83 @@
 #include "g_engine_2d.hpp"
+#include "gl_defines.hpp"
+
+#if defined(_UNIT_TEST_)
+gore::gl_logger gore::draw_arrays_log("glDrawArrays");
+gore::gl_logger gore::bind_buffer_log("glBindBuffer");
+gore::gl_logger gore::buffer_data_log("glBufferData");
+gore::gl_logger gore::buffer_sub_data_log("glBufferSubData");
+gore::gl_logger gore::bind_vertex_array_log("glBindVertexArray");
+gore::gl_logger gore::enable_vertex_attrib_array_log("glEnableVertexAttribArray");
+gore::gl_logger gore::vertex_attrib_log("glVertexAttribPointer");
+gore::gl_logger gore::vertex_attrib_i_log("glVertexAttribIPointer");
+gore::gl_logger gore::bind_buffer_base_log("glBindBufferBase");
+gore::gl_logger gore::draw_elements_log("glDrawElements");
+
+namespace {
+PFNGLDRAWARRAYSEXTPROC loaded_draw_arrays = nullptr;
+PFNGLBINDBUFFERPROC loaded_bind_buffer = nullptr;
+PFNGLBUFFERDATAPROC loaded_buffer_data = nullptr;
+PFNGLBUFFERSUBDATAPROC loaded_buffer_sub_data = nullptr;
+PFNGLBINDVERTEXARRAYPROC loaded_bind_vertex_array = nullptr;
+PFNGLENABLEVERTEXATTRIBARRAYPROC loaded_enable_vertex_attrib_array = nullptr;
+PFNGLVERTEXATTRIBPOINTERPROC loaded_vertex_attrib = nullptr;
+PFNGLVERTEXATTRIBIPOINTERPROC loaded_vertex_attrib_i = nullptr;
+PFNGLBINDBUFFERBASEPROC loaded_bind_buffer_base = nullptr;
+PFNGLDRAWELEMENTSEXTPROC loaded_draw_elements = nullptr;
+
+void draw_array_call(GLenum mode, GLint first, GLsizei count) {
+	gore::draw_arrays_log.logCall(mode, first, count);
+	loaded_draw_arrays(mode, first, count);
+}
+
+void bind_buffer_call(GLenum target, GLuint buffer) {
+	gore::bind_buffer_log.logCall(target, buffer);
+	loaded_bind_buffer(target, buffer);
+}
+
+void buffer_data_call(GLenum target, GLsizeiptr size, const void* data, GLenum usage) {
+	gore::buffer_data_log.logCall(target, size, data, usage);
+	loaded_buffer_data(target, size, data, usage);
+}
+
+void buffer_sub_data_call(GLenum target, GLintptr offset, GLsizeiptr size, const void* data) {
+	gore::buffer_sub_data_log.logCall(target, offset, size, data);
+	loaded_buffer_sub_data(target, offset, size, data);
+}
+
+void bind_vertex_array_call(GLuint array) {
+	gore::bind_vertex_array_log.logCall(array);
+	loaded_bind_vertex_array(array);
+}
+
+void enable_vertex_attrib_array_call(GLuint index) {
+	gore::enable_vertex_attrib_array_log.logCall(index);
+	loaded_enable_vertex_attrib_array(index);
+}
+
+void vertex_attrib_call(GLuint index, GLint size, GLenum type, GLboolean normalized,
+	GLsizei stride, const void* pointer) {
+	gore::vertex_attrib_log.logCall(index, size, type, normalized, stride, pointer);
+	loaded_vertex_attrib(index, size, type, normalized, stride, pointer);
+}
+
+void vertex_attrib_i_call(GLuint index, GLint size, GLenum type, GLsizei stride,
+	const void* pointer) {
+	gore::vertex_attrib_i_log.logCall(index, size, type, stride, pointer);
+	loaded_vertex_attrib_i(index, size, type, stride, pointer);
+}
+
+void bind_buffer_base_call(GLenum target, GLuint index, GLuint buffer) {
+	gore::bind_buffer_base_log.logCall(target, index, buffer);
+	loaded_bind_buffer_base(target, index, buffer);
+}
+
+void draw_elements_call(GLenum mode, GLsizei count, GLenum type, const void* indices) {
+	gore::draw_elements_log.logCall(mode, count, type, indices);
+	loaded_draw_elements(mode, count, type, indices);
+}
+}
+#endif
 
 //to load new gl functions
 void* GetGLFuncAddress(const char* name) {
@@ -71,6 +150,7 @@ PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D;
 PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D;
 
 PFNGLDRAWARRAYSEXTPROC glDrawArraysExt;
+PFNGLDRAWELEMENTSEXTPROC glDrawElementsExt;
 
 PFNGLBINDBUFFERBASEPROC glBindBufferBase;
 PFNGLGETSTRINGIPROC glGetStringi;
@@ -162,13 +242,28 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 		loadFunc = getProc;
 	}
 
-	glBindBuffer = (PFNGLBINDBUFFERPROC)loadFunc("glBindBuffer");
+	auto loaded_bind_buffer_function = (PFNGLBINDBUFFERPROC)loadFunc("glBindBuffer");
+	#if defined(_UNIT_TEST_)
+	loaded_bind_buffer = loaded_bind_buffer_function;
+	glBindBuffer = bind_buffer_call;
+	#else
+	glBindBuffer = loaded_bind_buffer_function;
+	#endif
 	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)loadFunc("glGenVertexArrays");
 	glGenBuffers = (PFNGLGENBUFFERSPROC)loadFunc("glGenBuffers");
 	glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)loadFunc("glDeleteBuffers");
 	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)loadFunc("glDeleteVertexArrays");
-	glBufferData = (PFNGLBUFFERDATAPROC)loadFunc("glBufferData");
-	glBufferSubData = (PFNGLBUFFERSUBDATAPROC)loadFunc("glBufferSubData");
+	auto loaded_buffer_data_function = (PFNGLBUFFERDATAPROC)loadFunc("glBufferData");
+	auto loaded_buffer_sub_data_function = (PFNGLBUFFERSUBDATAPROC)loadFunc("glBufferSubData");
+	#if defined(_UNIT_TEST_)
+	loaded_buffer_data = loaded_buffer_data_function;
+	loaded_buffer_sub_data = loaded_buffer_sub_data_function;
+	glBufferData = buffer_data_call;
+	glBufferSubData = buffer_sub_data_call;
+	#else
+	glBufferData = loaded_buffer_data_function;
+	glBufferSubData = loaded_buffer_sub_data_function;
+	#endif
 	glMapBuffer = (PFNGLMAPBUFFERPROC)loadFunc("glMapBuffer");
 	glUnmapBuffer = (PFNGLUNMAPBUFFERPROC)loadFunc("glUnmapBuffer");
 	glMapBufferRange = (PFNGLMAPBUFFERRANGEPROC)loadFunc("glMapBufferRange");
@@ -180,17 +275,42 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 	glCreateShader = (PFNGLCREATESHADERPROC)loadFunc("glCreateShader");
 	glDeleteShader = (PFNGLDELETESHADERPROC)loadFunc("glDeleteShader");
 	glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)loadFunc("glDisableVertexAttribArray");
-	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)loadFunc("glEnableVertexAttribArray");
+	auto loaded_enable_vertex_attrib_array_function =
+		(PFNGLENABLEVERTEXATTRIBARRAYPROC)loadFunc("glEnableVertexAttribArray");
+	#if defined(_UNIT_TEST_)
+	loaded_enable_vertex_attrib_array = loaded_enable_vertex_attrib_array_function;
+	glEnableVertexAttribArray = enable_vertex_attrib_array_call;
+	#else
+	glEnableVertexAttribArray = loaded_enable_vertex_attrib_array_function;
+	#endif
 	glGetProgramiv = (PFNGLGETPROGRAMIVPROC)loadFunc("glGetProgramiv");
 	glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)loadFunc("glGetProgramInfoLog");
 	glLinkProgram = (PFNGLLINKPROGRAMPROC)loadFunc("glLinkProgram");
 	glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)loadFunc("glGetShaderInfoLog");
-	glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)loadFunc("glBindVertexArray");
+	auto loaded_bind_vertex_array_function =
+		(PFNGLBINDVERTEXARRAYPROC)loadFunc("glBindVertexArray");
+	#if defined(_UNIT_TEST_)
+	loaded_bind_vertex_array = loaded_bind_vertex_array_function;
+	glBindVertexArray = bind_vertex_array_call;
+	#else
+	glBindVertexArray = loaded_bind_vertex_array_function;
+	#endif
 	glShaderSource = (PFNGLSHADERSOURCEPROC)loadFunc("glShaderSource");
 	glGetShaderiv = (PFNGLGETSHADERIVPROC)loadFunc("glGetShaderiv");
 	glUseProgram = (PFNGLUSEPROGRAMPROC)loadFunc("glUseProgram");
-	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)loadFunc("glVertexAttribPointer");
-	glVertexAttribIPointer = (PFNGLVERTEXATTRIBIPOINTERPROC)loadFunc("glVertexAttribIPointer");
+	auto loaded_vertex_attrib_function =
+		(PFNGLVERTEXATTRIBPOINTERPROC)loadFunc("glVertexAttribPointer");
+	auto loaded_vertex_attrib_i_function =
+		(PFNGLVERTEXATTRIBIPOINTERPROC)loadFunc("glVertexAttribIPointer");
+	#if defined(_UNIT_TEST_)
+	loaded_vertex_attrib = loaded_vertex_attrib_function;
+	loaded_vertex_attrib_i = loaded_vertex_attrib_i_function;
+	glVertexAttribPointer = vertex_attrib_call;
+	glVertexAttribIPointer = vertex_attrib_i_call;
+	#else
+	glVertexAttribPointer = loaded_vertex_attrib_function;
+	glVertexAttribIPointer = loaded_vertex_attrib_i_function;
+	#endif
 	glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)loadFunc("glGetUniformLocation");
 	glIsShader = (PFNGLISSHADERPROC)loadFunc("glIsShader");
 	glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)loadFunc("glGetAttribLocation");
@@ -203,7 +323,14 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 	glTextureParameteri = (PFNGLTEXTUREPARAMETERIPROC)loadFunc("glTextureParameteri");
 	glTextureStorage2D = (PFNGLTEXTURESTORAGE2DPROC)loadFunc("glTextureStorage2D");
 	glTextureSubImage2D = (PFNGLTEXTURESUBIMAGE2DPROC)loadFunc("glTextureSubImage2D");
-	glDrawArraysExt = (PFNGLDRAWARRAYSEXTPROC)loadFunc("glDrawArrays");
+	auto loaded_draw_arrays_function =
+		(PFNGLDRAWARRAYSEXTPROC)loadFunc("glDrawArrays");
+	#if defined(_UNIT_TEST_)
+	loaded_draw_arrays = loaded_draw_arrays_function;
+	glDrawArraysExt = draw_array_call;
+	#else
+	glDrawArraysExt = loaded_draw_arrays_function;
+	#endif
 
 	glUniform3f = (PFNGLUNIFORM3FPROC)loadFunc("glUniform3f");
 	glUniform2f = (PFNGLUNIFORM2FPROC)loadFunc("glUniform2f");
@@ -245,7 +372,14 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 	glUniform3dv = (PFNGLUNIFORM3DVPROC)loadFunc("glUniform3dv");
 	glUniform4dv = (PFNGLUNIFORM4DVPROC)loadFunc("glUniform4dv");
 
-	glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)loadFunc("glBindBufferBase");
+	auto loaded_bind_buffer_base_function =
+		(PFNGLBINDBUFFERBASEPROC)loadFunc("glBindBufferBase");
+	#if defined(_UNIT_TEST_)
+	loaded_bind_buffer_base = loaded_bind_buffer_base_function;
+	glBindBufferBase = bind_buffer_base_call;
+	#else
+	glBindBufferBase = loaded_bind_buffer_base_function;
+	#endif
 	glGetStringi = (PFNGLGETSTRINGIPROC)loadFunc("glGetStringi");
 	glDebugMessageCallback = (PFNGLDEBUGMESSAGECALLBACKPROC)loadFunc("glDebugMessageCallback");
 
@@ -274,6 +408,14 @@ bool gore::loadGLFunctions(std::function<void*(const char*)> getProc) {
 	glUniformMatrix4dv = (PFNGLUNIFORMMATRIX4DVPROC)loadFunc("glUniformMatrix4dv");
 
 	glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)loadFunc("glBlitFramebuffer");
+	auto loaded_draw_elements_function =
+		(PFNGLDRAWELEMENTSEXTPROC)loadFunc("glDrawElements");
+	#if defined(_UNIT_TEST_)
+	loaded_draw_elements = loaded_draw_elements_function;
+	glDrawElementsExt = draw_elements_call;
+	#else
+	glDrawElementsExt = loaded_draw_elements_function;
+	#endif
 	glMultiDrawElementsIndirect = (PFNGLMULTIDRAWELEMENTSINDIRECTPROC)loadFunc("glMultiDrawElementsIndirect");
 
 	glDispatchCompute = (PFNGLDISPATCHCOMPUTEPROC)loadFunc("glDispatchCompute");

@@ -1,5 +1,6 @@
 #include "../../include/g_engine/g_engine_2d.hpp"
 #include "../../include/g_engine/rendering/wireframe_renderer.hpp"
+#include "gl_logger_output.hpp"
 #include <cstdint>
 #include <cstdio>
 
@@ -43,6 +44,15 @@ int main() {
             }
         }
     }
+    const bool gl_logging_passed =
+        check_gl_logger("glDrawArrays", gore::draw_arrays_log) &&
+        check_gl_logger("glBindBuffer", gore::bind_buffer_log) &&
+        check_gl_logger("glBufferData", gore::buffer_data_log) &&
+        check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    const bool draw_data_passed = check_gl_logger_call(
+        "glDrawArrays wireframe", gore::draw_arrays_log,
+        static_cast<GLenum>(GL_LINES), static_cast<GLint>(0), static_cast<GLsizei>(2));
+    print_gl_logger_output();
     std::printf("wireframe line color: %s\n", passed ? "PASS" : "FAIL");
-    return passed ? 0 : 1;
+    return passed && gl_logging_passed && draw_data_passed ? 0 : 1;
 }

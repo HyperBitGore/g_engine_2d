@@ -1,6 +1,7 @@
 #include "../../include/g_engine/g_engine_2d.hpp"
 #include "../../include/g_engine/file_loading/font_loader.hpp"
 #include "../../include/g_engine/rendering/font_renderer.hpp"
+#include "gl_logger_output.hpp"
 #include <cstdint>
 #include <cstdio>
 
@@ -45,6 +46,15 @@ int main() {
             }
         }
     }
+    const bool gl_logging_passed =
+        check_gl_logger("glDrawArrays", gore::draw_arrays_log) &&
+        check_gl_logger("glBindBuffer", gore::bind_buffer_log) &&
+        check_gl_logger("glBufferData", gore::buffer_data_log) &&
+        check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    const bool draw_data_passed = check_gl_logger_call(
+        "glDrawArrays font", gore::draw_arrays_log,
+        static_cast<GLenum>(GL_LINES), static_cast<GLint>(0));
+    print_gl_logger_output();
     std::printf("font outline color: %s\n", found ? "PASS" : "FAIL");
-    return found ? 0 : 1;
+    return found && gl_logging_passed && draw_data_passed ? 0 : 1;
 }

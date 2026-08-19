@@ -225,7 +225,7 @@ void gore::threedeerender::drawBuffer() {
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     GLsizei draw_count = static_cast<GLsizei>(indexs.size() + transient_vertexs.size());
-    glDrawElements(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, 0);
+    glDrawElementsExt(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -278,7 +278,7 @@ void gore::threedeerender::flushTextureBatch() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     const GLsizei draw_count =
         static_cast<GLsizei>(indexs.size() + transient_vertexs.size());
-    glDrawElements(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, 0);
+    glDrawElementsExt(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

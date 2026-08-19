@@ -1,4 +1,5 @@
 #include "../../include/g_engine/g_engine_2d.hpp"
+#include "gl_logger_output.hpp"
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -105,6 +106,14 @@ int main() {
     check_color_near("point color", pass, 32, 32, {255, 255, 0, 255});
     check_color("clear color outside primitives", sample(pass, 56, 56), {0, 0, 0, 255});
 
+    failures += !check_gl_logger("glDrawArrays", gore::draw_arrays_log);
+    failures += !check_gl_logger("glBindBuffer", gore::bind_buffer_log);
+    failures += !check_gl_logger("glBufferData", gore::buffer_data_log);
+    failures += !check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    failures += !check_gl_logger_call(
+        "glDrawArrays triangle", gore::draw_arrays_log,
+        static_cast<GLenum>(GL_TRIANGLES), static_cast<GLint>(0), static_cast<GLsizei>(3));
+    print_gl_logger_output();
     std::printf("\n%d failed\n", failures);
     return failures == 0 ? 0 : 1;
 }

@@ -1,5 +1,6 @@
 #include "../../include/g_engine/g_engine_2d.hpp"
 #include "../../include/g_engine/img_loading/image_loader.hpp"
+#include "gl_logger_output.hpp"
 #include <cstdint>
 #include <cstdio>
 
@@ -55,7 +56,16 @@ int main() {
     const pixel gray = sample(pass, 42, 54);
     const bool passed = matches(source, {200, 30, 60, 255}) &&
                         matches(gray, {200, 200, 200, 255});
+    const bool gl_logging_passed =
+        check_gl_logger("glDrawArrays", gore::draw_arrays_log) &&
+        check_gl_logger("glBindBuffer", gore::bind_buffer_log) &&
+        check_gl_logger("glBufferData", gore::buffer_data_log) &&
+        check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    const bool draw_data_passed = check_gl_logger_call(
+        "glDrawArrays image", gore::draw_arrays_log,
+        static_cast<GLenum>(GL_TRIANGLES), static_cast<GLint>(0), static_cast<GLsizei>(6));
+    print_gl_logger_output();
     std::printf("image color: %s\n", matches(source, {200, 30, 60, 255}) ? "PASS" : "FAIL");
     std::printf("grayscale color: %s\n", matches(gray, {200, 200, 200, 255}) ? "PASS" : "FAIL");
-    return passed ? 0 : 1;
+    return passed && gl_logging_passed && draw_data_passed ? 0 : 1;
 }

@@ -1,5 +1,6 @@
 #include "../../include/g_engine/g_engine_2d.hpp"
 #include "../../include/g_engine/rendering/three_dee_renderer.hpp"
+#include "gl_logger_output.hpp"
 #include <cstdint>
 #include <cstdio>
 
@@ -38,6 +39,17 @@ int main() {
     const pixel center = sample(pass, 64, 64);
     const bool passed = center.r > 200 && center.g > 200 &&
                         center.b > 200 && center.a == 255;
+    const bool gl_logging_passed =
+        check_gl_logger("glDrawElements", gore::draw_elements_log) &&
+        check_gl_logger("glBindBuffer", gore::bind_buffer_log) &&
+        check_gl_logger("glBufferData", gore::buffer_data_log) &&
+        check_gl_logger("glBindBufferBase", gore::bind_buffer_base_log) &&
+        check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    const bool draw_data_passed = check_gl_logger_call(
+        "glDrawElements triangle", gore::draw_elements_log,
+        static_cast<GLenum>(GL_TRIANGLES), static_cast<GLsizei>(3),
+        static_cast<GLenum>(GL_UNSIGNED_INT), static_cast<const void*>(nullptr));
+    print_gl_logger_output();
     std::printf("three-dee triangle color: %s\n", passed ? "PASS" : "FAIL");
-    return passed ? 0 : 1;
+    return passed && gl_logging_passed && draw_data_passed ? 0 : 1;
 }

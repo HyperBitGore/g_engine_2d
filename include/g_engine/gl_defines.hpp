@@ -1,6 +1,11 @@
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
 #include <functional>
+#include <string>
+#include <type_traits>
+#include <vector>
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -20,6 +25,9 @@
 #include <GL/glext.h>
 #include <GL/glx.h>  // For Linux (X11)
 #endif
+
+typedef void (APIENTRYP PFNGLDRAWELEMENTSEXTPROC)
+    (GLenum mode, GLsizei count, GLenum type, const void* indices);
 
 extern float toRadians (float degrees);
 
@@ -69,6 +77,7 @@ extern PFNGLTEXTUREPARAMETERIPROC glTextureParameteri;
 extern PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D;
 extern PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D;
 extern PFNGLDRAWARRAYSEXTPROC glDrawArraysExt;
+extern PFNGLDRAWELEMENTSEXTPROC glDrawElementsExt;
 
 
 extern PFNGLBINDBUFFERBASEPROC glBindBufferBase;
@@ -155,3 +164,83 @@ extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 namespace gore {
     bool loadGLFunctions (std::function<void*(const char*)> getProc = nullptr);
 }
+
+#if defined(_UNIT_TEST_)
+namespace gore {
+class gl_logger {
+public:
+    std::vector<uint8_t> buffer_data;
+    std::vector<std::vector<uint8_t>> calls;
+    std::string function_name;
+    // rule of 5
+    gl_logger (std::string function_name) {
+        this->function_name = function_name;
+    }
+    template <typename... Args>
+    void logCall(const Args&... args) {
+        static_assert((std::is_trivially_copyable_v<Args> && ...));
+        std::vector<uint8_t> call_data;
+        (append(call_data, args), ...);
+        buffer_data = call_data;
+        calls.push_back(std::move(call_data));
+    }
+    template <typename... Args>
+    bool hasCallWithPrefix(const Args&... args) const {
+        static_assert((std::is_trivially_copyable_v<Args> && ...));
+        std::vector<uint8_t> expected;
+        (append(expected, args), ...);
+        for (const auto& call : calls) {
+            if (call.size() >= expected.size() &&
+                std::equal(expected.begin(), expected.end(), call.begin())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    gl_logger (const gl_logger& gl) {
+        this->buffer_data = gl.buffer_data;
+        this->calls = gl.calls;
+        this->function_name = gl.function_name;
+    }
+    gl_logger (gl_logger&& gl) {
+        this->buffer_data = std::move(gl.buffer_data);
+        this->calls = std::move(gl.calls);
+        this->function_name = std::move(gl.function_name);
+    }
+    gl_logger& operator=(const gl_logger& gl) {
+        if (this != &gl) {
+            this->buffer_data = gl.buffer_data;
+            this->calls = gl.calls;
+            this->function_name = gl.function_name;
+        }
+        return *this;
+    }
+    gl_logger& operator=(gl_logger&& gl) {
+        if (this != &gl) {
+            this->buffer_data = std::move(gl.buffer_data);
+            this->calls = std::move(gl.calls);
+            this->function_name = std::move(gl.function_name);
+        }
+        return *this;
+    }
+
+private:
+    template <typename T>
+    static void append(std::vector<uint8_t>& destination, const T& value) {
+        const auto* bytes = reinterpret_cast<const uint8_t*>(&value);
+        destination.insert(destination.end(), bytes, bytes + sizeof(T));
+    }
+};
+
+extern gl_logger draw_arrays_log;
+extern gl_logger bind_buffer_log;
+extern gl_logger buffer_data_log;
+extern gl_logger buffer_sub_data_log;
+extern gl_logger bind_vertex_array_log;
+extern gl_logger enable_vertex_attrib_array_log;
+extern gl_logger vertex_attrib_log;
+extern gl_logger vertex_attrib_i_log;
+extern gl_logger bind_buffer_base_log;
+extern gl_logger draw_elements_log;
+}
+#endif
