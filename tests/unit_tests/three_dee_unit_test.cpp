@@ -3,7 +3,7 @@
 #include "gl_logger_output.hpp"
 #include <cstdint>
 #include <cstdio>
-
+#if defined(_UNIT_TEST_)
 namespace {
 struct pixel { uint8_t r, g, b, a; };
 
@@ -84,3 +84,4 @@ int main() {
     std::printf("three-dee triangle color: %s\n", passed ? "PASS" : "FAIL");
     return passed && gl_logging_passed && call_data_passed && draw_data_passed ? 0 : 1;
 }
+#endif

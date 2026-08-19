@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <memory>
-
+#if defined(_UNIT_TEST_)
 namespace {
 
 constexpr uint32_t WIDTH = 64;
@@ -144,3 +144,4 @@ int main() {
     std::printf("\n%d failed\n", failures);
     return failures == 0 ? 0 : 1;
 }
+#endif

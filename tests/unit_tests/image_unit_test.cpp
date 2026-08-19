@@ -3,7 +3,7 @@
 #include "gl_logger_output.hpp"
 #include <cstdint>
 #include <cstdio>
-
+#if defined(_UNIT_TEST_)
 namespace {
 constexpr uint32_t SIZE = 64;
 
@@ -96,3 +96,4 @@ int main() {
     std::printf("grayscale color: %s\n", matches(gray, {200, 200, 200, 255}) ? "PASS" : "FAIL");
     return passed && gl_logging_passed && call_data_passed && draw_data_passed ? 0 : 1;
 }
+#endif

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-
+#if defined(_UNIT_TEST_)
 static int s_pass = 0;
 static int s_fail = 0;
 static const float EPS = 1e-4f;
@@ -339,3 +339,4 @@ int main () {
     std::printf("\n%d passed, %d failed\n", s_pass, s_fail);
     return s_fail > 0 ? 1 : 0;
 }
+#endif

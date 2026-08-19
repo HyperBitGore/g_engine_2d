@@ -81,18 +81,6 @@ add_executable(test_primitives  ${ENGINE_SOURCES} tests/primitives.cpp)
 add_executable(test_text        ${ENGINE_SOURCES} tests/text.cpp)
 add_executable(test_frame_limit ${ENGINE_SOURCES} tests/frame_limit.cpp)
 add_executable(test_image_stress ${ENGINE_SOURCES} tests/image_render_stress.cpp)
-add_executable(test_matrix_vector
-    include/g_engine/util/matrix.cpp
-    include/g_engine/util/matrix.hpp
-    include/g_engine/util/vector.cpp
-    include/g_engine/util/vector.hpp
-    tests/unit_tests/matrix_vector_test.cpp
-)
-add_executable(test_primitive_unit ${ENGINE_SOURCES} tests/unit_tests/primitive_unit_test.cpp)
-add_executable(test_image_unit ${ENGINE_SOURCES} tests/unit_tests/image_unit_test.cpp)
-add_executable(test_wireframe_unit ${ENGINE_SOURCES} tests/unit_tests/wireframe_unit_test.cpp)
-add_executable(test_font_unit ${ENGINE_SOURCES} tests/unit_tests/font_unit_test.cpp)
-add_executable(test_three_dee_unit ${ENGINE_SOURCES} tests/unit_tests/three_dee_unit_test.cpp)
 add_executable(test_crawl ${ENGINE_SOURCES} tests/crawl_test.cpp)
 
 add_executable(test_rotate_cube_soft ${ENGINE_SOURCES} tests/rotating_cube_software.cpp)
@@ -109,17 +97,35 @@ add_executable(test_maintain_renderer_view ${ENGINE_SOURCES} tests/maintain_rend
 
 add_executable(test_dual_engine ${ENGINE_SOURCES} tests/dual_engine.cpp)
 
-add_test(NAME matrix_vector COMMAND test_matrix_vector)
-add_test(NAME primitive_unit COMMAND test_primitive_unit)
-add_test(NAME image_unit COMMAND test_image_unit)
-add_test(NAME wireframe_unit COMMAND test_wireframe_unit)
-add_test(NAME font_unit COMMAND test_font_unit)
-add_test(NAME three_dee_unit COMMAND test_three_dee_unit)
+if(UNIT_TEST)
+    add_executable(test_matrix_vector
+        include/g_engine/util/matrix.cpp
+        include/g_engine/util/matrix.hpp
+        include/g_engine/util/vector.cpp
+        include/g_engine/util/vector.hpp
+        tests/unit_tests/matrix_vector_test.cpp
+    )
+    add_executable(test_primitive_unit ${ENGINE_SOURCES} tests/unit_tests/primitive_unit_test.cpp)
+    add_executable(test_image_unit ${ENGINE_SOURCES} tests/unit_tests/image_unit_test.cpp)
+    add_executable(test_wireframe_unit ${ENGINE_SOURCES} tests/unit_tests/wireframe_unit_test.cpp)
+    add_executable(test_font_unit ${ENGINE_SOURCES} tests/unit_tests/font_unit_test.cpp)
+    add_executable(test_three_dee_unit ${ENGINE_SOURCES} tests/unit_tests/three_dee_unit_test.cpp)
+
+    add_test(NAME matrix_vector COMMAND test_matrix_vector)
+    add_test(NAME primitive_unit COMMAND test_primitive_unit)
+    add_test(NAME image_unit COMMAND test_image_unit)
+    add_test(NAME wireframe_unit COMMAND test_wireframe_unit)
+    add_test(NAME font_unit COMMAND test_font_unit)
+    add_test(NAME three_dee_unit COMMAND test_three_dee_unit)
+endif()
 
 #target_compile_options(g_engine PRIVATE /utf-8)
 find_package(OpenGL REQUIRED)
 
-set(VISUAL_TARGETS g_engine test_images test_primitives test_primitive_unit test_image_unit test_wireframe_unit test_font_unit test_three_dee_unit test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl test_texture_unit_overflow test_three_dee_texture_split test_instance_render test_instance_render_mutation test_maintain_renderer_view test_dual_engine)
+set(VISUAL_TARGETS g_engine test_images test_primitives test_text test_frame_limit test_image_stress test_rotate_cube_soft test_crawl test_texture_unit_overflow test_three_dee_texture_split test_instance_render test_instance_render_mutation test_maintain_renderer_view test_dual_engine)
+if(UNIT_TEST)
+    list(APPEND VISUAL_TARGETS test_primitive_unit test_image_unit test_wireframe_unit test_font_unit test_three_dee_unit)
+endif()
 
 if(WIN32)
 foreach(tgt ${VISUAL_TARGETS})

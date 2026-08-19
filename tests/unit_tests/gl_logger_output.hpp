@@ -2,7 +2,7 @@
 
 #include "../../include/g_engine/gl_defines.hpp"
 #include <cstdio>
-
+#if defined(_UNIT_TEST_)
 inline void print_gl_logger(const gore::gl_logger& logger) {
     std::printf("  %s: %zu call(s)\n", logger.function_name.c_str(), logger.calls.size());
     for (size_t call_index = 0; call_index < logger.calls.size(); ++call_index) {
@@ -40,3 +40,4 @@ bool check_gl_logger_call(const char* name, const gore::gl_logger& logger,
     std::printf("  %s argument data: %s\n", name, passed ? "PASS" : "FAIL");
     return passed;
 }
+#endif
