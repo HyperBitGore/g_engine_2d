@@ -109,7 +109,34 @@ int main() {
     failures += !check_gl_logger("glDrawArrays", gore::draw_arrays_log);
     failures += !check_gl_logger("glBindBuffer", gore::bind_buffer_log);
     failures += !check_gl_logger("glBufferData", gore::buffer_data_log);
+    failures += !check_gl_logger("glBindVertexArray", gore::bind_vertex_array_log);
+    failures += !check_gl_logger("glEnableVertexAttribArray", gore::enable_vertex_attrib_array_log);
     failures += !check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    failures += !check_gl_logger("glVertexAttribIPointer", gore::vertex_attrib_i_log);
+    failures += !check_gl_logger("glBindBufferBase", gore::bind_buffer_base_log);
+    failures += !check_gl_logger_call(
+        "glBindBuffer array", gore::bind_buffer_log,
+        static_cast<GLenum>(GL_ARRAY_BUFFER));
+    failures += !check_gl_logger_call(
+        "glBufferData array", gore::buffer_data_log,
+        static_cast<GLenum>(GL_ARRAY_BUFFER), static_cast<GLsizeiptr>(sizeof(gore::vec2) * 3));
+    failures += !check_gl_logger_call(
+        "glBindVertexArray unbind", gore::bind_vertex_array_log,
+        static_cast<GLuint>(0));
+    failures += !check_gl_logger_call(
+        "glEnableVertexAttribArray position", gore::enable_vertex_attrib_array_log,
+        static_cast<GLuint>(0));
+    failures += !check_gl_logger_call(
+        "glVertexAttribPointer position", gore::vertex_attrib_log,
+        static_cast<GLuint>(0), static_cast<GLint>(2), static_cast<GLenum>(GL_FLOAT),
+        static_cast<GLboolean>(GL_FALSE), static_cast<GLsizei>(sizeof(gore::vec2)),
+        static_cast<const void*>(nullptr));
+    failures += !check_gl_logger_call(
+        "glVertexAttribIPointer texture", gore::vertex_attrib_i_log,
+        static_cast<GLuint>(4), static_cast<GLint>(1), static_cast<GLenum>(GL_UNSIGNED_INT));
+    failures += !check_gl_logger_call(
+        "glBindBufferBase shader storage", gore::bind_buffer_base_log,
+        static_cast<GLenum>(GL_SHADER_STORAGE_BUFFER), static_cast<GLuint>(0));
     failures += !check_gl_logger_call(
         "glDrawArrays triangle", gore::draw_arrays_log,
         static_cast<GLenum>(GL_TRIANGLES), static_cast<GLint>(0), static_cast<GLsizei>(3));

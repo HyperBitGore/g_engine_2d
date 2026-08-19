@@ -60,12 +60,39 @@ int main() {
         check_gl_logger("glDrawArrays", gore::draw_arrays_log) &&
         check_gl_logger("glBindBuffer", gore::bind_buffer_log) &&
         check_gl_logger("glBufferData", gore::buffer_data_log) &&
+        check_gl_logger("glBindVertexArray", gore::bind_vertex_array_log) &&
+        check_gl_logger("glEnableVertexAttribArray", gore::enable_vertex_attrib_array_log) &&
+        check_gl_logger("glVertexAttribIPointer", gore::vertex_attrib_i_log) &&
+        check_gl_logger("glBindBufferBase", gore::bind_buffer_base_log) &&
         check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    const bool call_data_passed =
+        check_gl_logger_call("glBindBuffer array", gore::bind_buffer_log,
+                             static_cast<GLenum>(GL_ARRAY_BUFFER)) &&
+        check_gl_logger_call("glBindBuffer shader storage", gore::bind_buffer_log,
+                             static_cast<GLenum>(GL_SHADER_STORAGE_BUFFER)) &&
+        check_gl_logger_call("glBufferData image", gore::buffer_data_log,
+                             static_cast<GLenum>(GL_ARRAY_BUFFER),
+                             static_cast<GLsizeiptr>(sizeof(gore::image_render_vertex) * 6)) &&
+        check_gl_logger_call("glBindVertexArray unbind", gore::bind_vertex_array_log,
+                             static_cast<GLuint>(0)) &&
+        check_gl_logger_call("glEnableVertexAttribArray position",
+                             gore::enable_vertex_attrib_array_log, static_cast<GLuint>(0)) &&
+        check_gl_logger_call("glVertexAttribPointer position", gore::vertex_attrib_log,
+                             static_cast<GLuint>(0), static_cast<GLint>(2),
+                             static_cast<GLenum>(GL_FLOAT), static_cast<GLboolean>(GL_FALSE),
+                             static_cast<GLsizei>(sizeof(gore::image_render_vertex)),
+                             static_cast<const void*>(nullptr)) &&
+        check_gl_logger_call("glVertexAttribIPointer texture", gore::vertex_attrib_i_log,
+                             static_cast<GLuint>(4), static_cast<GLint>(1),
+                             static_cast<GLenum>(GL_UNSIGNED_INT)) &&
+        check_gl_logger_call("glBindBufferBase texture", gore::bind_buffer_base_log,
+                             static_cast<GLenum>(GL_SHADER_STORAGE_BUFFER),
+                             static_cast<GLuint>(0));
     const bool draw_data_passed = check_gl_logger_call(
         "glDrawArrays image", gore::draw_arrays_log,
         static_cast<GLenum>(GL_TRIANGLES), static_cast<GLint>(0), static_cast<GLsizei>(6));
     print_gl_logger_output();
     std::printf("image color: %s\n", matches(source, {200, 30, 60, 255}) ? "PASS" : "FAIL");
     std::printf("grayscale color: %s\n", matches(gray, {200, 200, 200, 255}) ? "PASS" : "FAIL");
-    return passed && gl_logging_passed && draw_data_passed ? 0 : 1;
+    return passed && gl_logging_passed && call_data_passed && draw_data_passed ? 0 : 1;
 }

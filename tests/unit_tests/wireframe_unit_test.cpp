@@ -48,11 +48,32 @@ int main() {
         check_gl_logger("glDrawArrays", gore::draw_arrays_log) &&
         check_gl_logger("glBindBuffer", gore::bind_buffer_log) &&
         check_gl_logger("glBufferData", gore::buffer_data_log) &&
+        check_gl_logger("glBindVertexArray", gore::bind_vertex_array_log) &&
+        check_gl_logger("glEnableVertexAttribArray", gore::enable_vertex_attrib_array_log) &&
+        check_gl_logger("glVertexAttribIPointer", gore::vertex_attrib_i_log) &&
         check_gl_logger("glVertexAttribPointer", gore::vertex_attrib_log);
+    const bool call_data_passed =
+        check_gl_logger_call("glBindBuffer array", gore::bind_buffer_log,
+                             static_cast<GLenum>(GL_ARRAY_BUFFER)) &&
+        check_gl_logger_call("glBufferData wireframe", gore::buffer_data_log,
+                             static_cast<GLenum>(GL_ARRAY_BUFFER),
+                             static_cast<GLsizeiptr>(sizeof(gore::wireframe_vertex) * 2)) &&
+        check_gl_logger_call("glBindVertexArray unbind", gore::bind_vertex_array_log,
+                             static_cast<GLuint>(0)) &&
+        check_gl_logger_call("glEnableVertexAttribArray position",
+                             gore::enable_vertex_attrib_array_log, static_cast<GLuint>(0)) &&
+        check_gl_logger_call("glVertexAttribPointer position", gore::vertex_attrib_log,
+                             static_cast<GLuint>(0), static_cast<GLint>(3),
+                             static_cast<GLenum>(GL_FLOAT), static_cast<GLboolean>(GL_FALSE),
+                             static_cast<GLsizei>(sizeof(gore::wireframe_vertex)),
+                             static_cast<const void*>(nullptr)) &&
+        check_gl_logger_call("glVertexAttribIPointer axis", gore::vertex_attrib_i_log,
+                             static_cast<GLuint>(3), static_cast<GLint>(1),
+                             static_cast<GLenum>(GL_UNSIGNED_INT));
     const bool draw_data_passed = check_gl_logger_call(
         "glDrawArrays wireframe", gore::draw_arrays_log,
         static_cast<GLenum>(GL_LINES), static_cast<GLint>(0), static_cast<GLsizei>(2));
     print_gl_logger_output();
     std::printf("wireframe line color: %s\n", passed ? "PASS" : "FAIL");
-    return passed && gl_logging_passed && draw_data_passed ? 0 : 1;
+    return passed && gl_logging_passed && call_data_passed && draw_data_passed ? 0 : 1;
 }
