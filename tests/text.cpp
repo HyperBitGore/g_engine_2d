@@ -19,10 +19,11 @@ static double cooldown = 0.0;
 void render() {
     // --- vector (outline) renderer ---
     font_r->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-    font_r->drawText("Vector outline - 16pt", &f_mono, 20.0f, 40.0f,  16, eng.getDPI());
-    font_r->drawText("Vector outline - 24pt", &f_mono, 20.0f, 80.0f,  24, eng.getDPI());
-    font_r->drawText("Vector outline - 32pt", &f_sans, 20.0f, 130.0f, 32, eng.getDPI());
-    font_r->drawText("The quick brown fox 0123456789", &f_sans, 20.0f, 180.0f, 20, eng.getDPI());
+    font_r->addText("Vector outline - 16pt", &f_mono, 20.0f, 40.0f,  16, eng.getDPI());
+    font_r->addText("Vector outline - 24pt", &f_mono, 20.0f, 80.0f,  24, eng.getDPI());
+    font_r->addText("Vector outline - 32pt", &f_sans, 20.0f, 130.0f, 32, eng.getDPI());
+    font_r->addText("The quick brown fox 0123456789", &f_sans, 20.0f, 180.0f, 20, eng.getDPI());
+    font_r->drawBuffer();
 
     font_r->setColor({1.0f, 0.5f, 0.2f, 1.0f});
     font_r->drawText("Colored vector text", &f_mono, 20.0f, 230.0f, 28, eng.getDPI());
@@ -34,13 +35,14 @@ void render() {
 
     // --- raster renderer ---
     eng.enable(GL_BLEND);
-    gore::fontraster::drawRasterText(&f_mono, img_r.get(), "Raster - 16pt", 20.0f, 350.0f, 16, eng.getDPI());
-    gore::fontraster::drawRasterText(&f_mono, img_r.get(), "Raster - 32pt", 20.0f, 400.0f, 32, eng.getDPI());
-    gore::fontraster::drawRasterText(&f_sans, img_r.get(), "Sans raster - 24pt", 20.0f, 460.0f, 24, eng.getDPI());
-    gore::fontraster::drawRasterText(&f_sans, img_r.get(),
+    gore::fontraster::addRasterText(&f_mono, img_r.get(), "Raster - 16pt", 20.0f, 350.0f, 16, eng.getDPI());
+    gore::fontraster::addRasterText(&f_mono, img_r.get(), "Raster - 32pt", 20.0f, 400.0f, 32, eng.getDPI());
+    gore::fontraster::addRasterText(&f_sans, img_r.get(), "Sans raster - 24pt", 20.0f, 460.0f, 24, eng.getDPI());
+    gore::fontraster::addRasterText(&f_sans, img_r.get(),
         "abcdefghijklmnopqrstuvwxyz 0123456789", 20.0f, 520.0f, 18, eng.getDPI());
-    gore::fontraster::drawRasterText(&f_mono, img_r.get(),
+    gore::fontraster::addRasterText(&f_mono, img_r.get(),
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 20.0f, 570.0f, 18, eng.getDPI());
+    img_r->drawBuffer();
     eng.disable(GL_BLEND);
 }
 

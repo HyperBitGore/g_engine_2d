@@ -38,6 +38,9 @@ namespace gore {
 		//font drawing
 		void drawText(std::string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
 		void drawText(std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
+		void addText (std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
+		void addText(std::string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi);
+		void drawBuffer() override;
 		// set color of rendered text
 		void setColor(vec4 color) {
 			shader.bind();
@@ -51,6 +54,7 @@ namespace gore {
 		static void rasterizeFont(gore::font* font, int ptsize, uint32_t dpi, uint32_t color, uint32_t start, uint32_t end);
 		static void drawRasterText(gore::font* font, image_renderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
 		static void drawRasterText(gore::font* font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi);
-
+		static void addRasterText (gore::font* font, image_renderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi);
+		static void addRasterText(gore::font* font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi);
 	};
 }

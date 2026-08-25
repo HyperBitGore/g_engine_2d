@@ -21,8 +21,11 @@ int main() {
     constexpr uint32_t size = 128;
     gore::g_engine_2d engine("Font Renderer Unit Test", size, size, 0, gore::LogType::NONE);
     gore::font font = gore::fontloader::loadFont("resources/EnvyCodeR.ttf", 0, 735);
+    gore::fontraster::rasterizeFont(&font, 32, engine.getDPI(), 0xFFFFFFFF, 32, 127);
     auto renderer = gore::fontrenderer::create(size, size);
+    auto image_renderer = gore::createImageRenderer(size, size);
     gore::drawpass pass(size, size, GL_COLOR_ATTACHMENT0);
+    bool batching_passed = false;
 
     engine.setRenderFunction([&] {
         pass.bind();
@@ -30,19 +33,43 @@ int main() {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderer->setColor({1, 0, 0, 1});
-        renderer->drawText("A", &font, 16, 32, 32, engine.getDPI());
+        const size_t outline_draws_before_add = gore::draw_arrays_log.calls.size();
+        renderer->addText("A", &font, 16, 32, 32, engine.getDPI());
+        const bool add_text_batched =
+            gore::draw_arrays_log.calls.size() == outline_draws_before_add;
+        renderer->drawBuffer();
+        const bool outline_draw_buffer_called =
+            gore::draw_arrays_log.hasCallWithPrefix(static_cast<GLenum>(GL_LINES),
+                                                    static_cast<GLint>(0));
+
+        engine.enable(GL_BLEND);
+        const size_t raster_draws_before_add = gore::draw_arrays_log.calls.size();
+        gore::fontraster::addRasterText(&font, image_renderer.get(), "A",
+                                        64, 64, 32, engine.getDPI());
+        const bool add_raster_text_batched =
+            gore::draw_arrays_log.calls.size() == raster_draws_before_add;
+        image_renderer->drawBuffer();
+        engine.disable(GL_BLEND);
         pass.unbind();
+
+        batching_passed = add_text_batched && outline_draw_buffer_called &&
+                          add_raster_text_batched;
     });
 
     if (!engine.updateWindow()) return 1;
 
-    bool found = false;
-    for (GLint y = 0; y < static_cast<GLint>(size) && !found; ++y) {
+    bool outline_found = false;
+    bool raster_found = false;
+    for (GLint y = 0; y < static_cast<GLint>(size) &&
+                       (!outline_found || !raster_found); ++y) {
         for (GLint x = 0; x < static_cast<GLint>(size); ++x) {
             const pixel value = sample(pass, x, y);
             if (value.r > 200 && value.g < 10 && value.b < 10 && value.a > 0) {
-                found = true;
-                break;
+                outline_found = true;
+            }
+            if (value.r > 200 && value.g > 200 && value.b > 200 && value.a > 0 &&
+                x >= 64) {
+                raster_found = true;
             }
         }
     }
@@ -70,8 +97,14 @@ int main() {
     const bool draw_data_passed = check_gl_logger_call(
         "glDrawArrays font", gore::draw_arrays_log,
         static_cast<GLenum>(GL_LINES), static_cast<GLint>(0));
+    const bool raster_draw_data_passed = check_gl_logger_call(
+        "glDrawArrays raster font", gore::draw_arrays_log,
+        static_cast<GLenum>(GL_TRIANGLES), static_cast<GLint>(0));
     print_gl_logger_output();
-    std::printf("font outline color: %s\n", found ? "PASS" : "FAIL");
-    return found && gl_logging_passed && call_data_passed && draw_data_passed ? 0 : 1;
+    std::printf("font outline color: %s\n", outline_found ? "PASS" : "FAIL");
+    std::printf("font raster color: %s\n", raster_found ? "PASS" : "FAIL");
+    std::printf("font batching: %s\n", batching_passed ? "PASS" : "FAIL");
+    return outline_found && raster_found && batching_passed && gl_logging_passed && call_data_passed &&
+           draw_data_passed && raster_draw_data_passed ? 0 : 1;
 }
 #endif

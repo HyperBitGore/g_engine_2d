@@ -120,72 +120,64 @@ int findFontChar(gore::font* f, uint16_t c) {
 	return 0;
 }
 
-void gore::fontraster::drawRasterText(gore::font* Font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
-	if (Font->atlas.getImg() == nullptr) {
-		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
-		return;
-	}
-	float x1 = x;
-	float y1 = y;
-	//have to scale images based on ptsize
-	float scale = (float)Font->ptsize / ((float)Font->ptsize / (float)ptsize);
-	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
-	for (size_t i = 0; i < text.size(); i++) {
-		int index = findFontChar(Font, text[i]);
-		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
-		float lsb_pixels = (float)Font->glyphs[index].lsb * scale_factor;
-		if (text[i] >= 33) {
-			float tempy = y1 + (Font->glyphs[index].y_offset * scale_factor);
-			x1 += lsb_pixels;
-			std::string name = "";
-			name.push_back(Font->glyphs[index].c);
-			vec4 uv = Font->atlas.getImagePos(name, true);
-			if (Font->ptsize < uv.w) {
-				int dif = uv.w - Font->ptsize;
-				float diff = (float)dif * scale_factor;
-				tempy += diff;
-			}
-			img_r->addImageVertex(Font->atlas.getImg()->tex, {x1, tempy}, {scale, scale}, uv, 0.0f);
-		}
-		x1 += adv_pixels;
-	}
+void gore::fontraster::drawRasterText(gore::font* font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
+	addRasterText(font, img_r, text, x, y, ptsize, dpi);
 	img_r->drawBuffer();
 }
 
 void gore::fontraster::drawRasterText(gore::font* font, image_renderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
 	drawRasterText(font, img_r, gore::fontloader::convertToU16String(text), x, y, ptsize, dpi);
 }
+
+void gore::fontraster::addRasterText (gore::font* font, image_renderer* img_r, std::string text, float x, float y, int ptsize, uint32_t dpi) {
+	addRasterText(font, img_r, gore::fontloader::convertToU16String(text), x, y, ptsize, dpi);
+}
+void gore::fontraster::addRasterText(gore::font* font, image_renderer* img_r, std::u16string text, float x, float y, int ptsize, uint32_t dpi) {
+	if (font->atlas.getImg() == nullptr) {
+		std::cout << "Trying to draw an empty raster gore::Font " << std::endl;
+		return;
+	}
+	float x1 = x;
+	float y1 = y;
+	//have to scale images based on ptsize
+	float scale = (float)font->ptsize / ((float)font->ptsize / (float)ptsize);
+	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * font->unitsPerEm);
+	for (size_t i = 0; i < text.size(); i++) {
+		int index = findFontChar(font, text[i]);
+		float adv_pixels = (float)font->glyphs[index].advanceWidth * scale_factor;
+		float lsb_pixels = (float)font->glyphs[index].lsb * scale_factor;
+		if (text[i] >= 33) {
+			float tempy = y1 + (font->glyphs[index].y_offset * scale_factor);
+			x1 += lsb_pixels;
+			std::string name = "";
+			name.push_back(font->glyphs[index].c);
+			vec4 uv = font->atlas.getImagePos(name, true);
+			if (font->ptsize < uv.w) {
+				int dif = uv.w - font->ptsize;
+				float diff = (float)dif * scale_factor;
+				tempy += diff;
+			}
+			img_r->addImageVertex(font->atlas.getImg()->tex, {x1, tempy}, {scale, scale}, uv, 0.0f);
+		}
+		x1 += adv_pixels;
+	}
+}
+
 //https://lspwww.epfl.ch/publications/typography/frsa.pdf
 //https://handmade.network/forums/wip/t/7610-reading_ttf_files_and_rasterizing_them_using_a_handmade_approach%252C_part_2__rasterization#23880
 //2.4.4
 //cutout memory inefficient parts of glyph like points
 // have to use LSB LMAO
-void gore::fontrenderer::drawText(std::u16string text, gore::font* Font, float x, float y, int ptsize, uint32_t dpi) {
-	float x1 = x;
-	float y1 = y;
-	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * Font->unitsPerEm);
-	for (size_t i = 0; i < text.size(); i++) {
-		int index = findFontChar(Font, text[i]);
-		float adv_pixels = (float)Font->glyphs[index].advanceWidth * scale_factor;
-		float lsb_pixels = (float)Font->glyphs[index].lsb * scale_factor;
-		if (text[i] >= 33) {
-			//draw the glyph
-			x1 += lsb_pixels;
-			for (size_t j = 0; j < Font->glyphs[index].contours.size(); j++) {
-				line l = Font->glyphs[index].contours[j];
-				//converting line points to ptsize
-				l.p1.x = x1 + (l.p1.x * scale_factor);
-				l.p1.y = y1 - (l.p1.y * scale_factor);
+void gore::fontrenderer::drawText(std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi) {
+	addText(text, font, x, y, ptsize, dpi);
+	drawBuffer();
+}
 
+void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, float y, int ptsize, uint32_t dpi) {
+	drawText(gore::fontloader::convertToU16String(text), Font, x, y, ptsize, dpi);
+}
 
-				l.p2.x = x1 + (l.p2.x * scale_factor);
-				l.p2.y = y1 - (l.p2.y * scale_factor);
-				vertexs.push_back(l.p1);
-				vertexs.push_back(l.p2);
-			}
-		}
-		x1 += adv_pixels;
-	}
+void gore::fontrenderer::drawBuffer() {
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     shader.bind();
@@ -200,11 +192,38 @@ void gore::fontrenderer::drawText(std::u16string text, gore::font* Font, float x
     glDrawArraysExt(GL_LINES, 0, (GLsizei)vertexs.size());
     vertexs.clear();
     glBindVertexArray(0);
-   	glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_LINE_SMOOTH);
 }
 
-void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, float y, int ptsize, uint32_t dpi) {
-	drawText(gore::fontloader::convertToU16String(text), Font, x, y, ptsize, dpi);
+void gore::fontrenderer::addText (std::u16string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi) {
+	float x1 = x;
+	float y1 = y;
+	float scale_factor = (ptsize * dpi) / (DENSITY_CONSTANT * font->unitsPerEm);
+	for (size_t i = 0; i < text.size(); i++) {
+		int index = findFontChar(font, text[i]);
+		float adv_pixels = (float)font->glyphs[index].advanceWidth * scale_factor;
+		float lsb_pixels = (float)font->glyphs[index].lsb * scale_factor;
+		if (text[i] >= 33) {
+			//draw the glyph
+			x1 += lsb_pixels;
+			for (size_t j = 0; j < font->glyphs[index].contours.size(); j++) {
+				line l = font->glyphs[index].contours[j];
+				//converting line points to ptsize
+				l.p1.x = x1 + (l.p1.x * scale_factor);
+				l.p1.y = y1 - (l.p1.y * scale_factor);
+
+
+				l.p2.x = x1 + (l.p2.x * scale_factor);
+				l.p2.y = y1 - (l.p2.y * scale_factor);
+				vertexs.push_back(l.p1);
+				vertexs.push_back(l.p2);
+			}
+		}
+		x1 += adv_pixels;
+	}
+}
+void gore::fontrenderer::addText(std::string text, gore::font* font, float x, float y, int ptsize, uint32_t dpi) {
+	addText(gore::fontloader::convertToU16String(text), font, x, y, ptsize, dpi);
 }
 
 gore::fontrenderer::fontrenderer(uint32_t w, uint32_t h) : renderer<gore::fontrenderer, gore::vec2> (vertexShaderSourceFont, fragmentShaderSourceFont, w, h) {
