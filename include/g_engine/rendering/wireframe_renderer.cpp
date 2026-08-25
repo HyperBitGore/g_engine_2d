@@ -86,6 +86,9 @@ void gore::wireframe_renderer::addTriangle (gore::vec3 p1, gore::vec3 p2, gore::
 
 void gore::wireframe_renderer::drawBuffer() {
     assert(created && "call createRenderer before use!");
+    if (vertexs.empty()) {
+        return;
+    }
     glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     shader.bind();

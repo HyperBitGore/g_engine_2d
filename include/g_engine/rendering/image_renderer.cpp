@@ -48,6 +48,9 @@ void gore::bindless_image_renderer::addImageVertex(GLuint texture, vec2 pos, vec
 
 void gore::bindless_image_renderer::drawBuffer() {
     assert(created && "call createRenderer before use!");
+    if (vertexs.empty()) {
+        return;
+    }
     shader.bind();
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);

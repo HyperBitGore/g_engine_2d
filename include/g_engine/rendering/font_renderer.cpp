@@ -178,6 +178,9 @@ void gore::fontrenderer::drawText(std::string text, gore::font* Font, float x, f
 }
 
 void gore::fontrenderer::drawBuffer() {
+	if (vertexs.empty()) {
+		return;
+	}
 	glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     shader.bind();

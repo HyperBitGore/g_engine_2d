@@ -87,6 +87,9 @@ void gore::linerenderer::drawLine(vec2 p1, vec2 p2){
 }
 void gore::linerenderer::drawBuffer(){
     assert(created && "call createRenderer before use!");
+    if (vertexs.empty()) {
+        return;
+    }
     glEnable(GL_LINE_SMOOTH);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     shader.bind();
